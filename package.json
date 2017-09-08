@@ -1,0 +1,40 @@
+{
+  "name": "semasim-gateway",
+  "description": "Semasim server for gateways (raspberry pi)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "version": "0.5.0",
+  "scripts": {
+    "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
+    "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
+    "start": "DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/lib/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/garronej/semasim-gateway.git"
+  },
+  "author": "Joseph Garrone",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "chan-dongle-extended-client": "git+https://a30f7432b117d8320cc21cc03513817c3f08d4b6:x-oauth-basic@github.com/garronej/chan-dongle-extended-client.git",
+    "colors": "^1.1.2",
+    "debug": "^2.6.8",
+    "md5": "^2.2.1",
+    "mysql": "^2.13.0",
+    "rejection-tracker": "github:garronej/rejection-tracker",
+    "run-exclusive": "garronej/run-exclusive",
+    "sip": "github:garronej/sip.js",
+    "ts-async-agi": "garronej/ts-async-agi",
+    "ts-events-extended": "garronej/ts-events-extended"
+  },
+  "devDependencies": {
+    "@types/colors": "^1.1.3",
+    "@types/debug": "0.0.29",
+    "@types/md5": "^2.1.32",
+    "@types/mysql": "0.0.32",
+    "@types/node": "^4.0.0",
+    "nodemon": "^1.11.0",
+    "typescript": "^2.4.1"
+  }
+}
