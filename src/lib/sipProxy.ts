@@ -1,5 +1,6 @@
 import * as tls from "tls";
 import * as net from "net";
+import * as network from "network";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import { DongleExtendedClient } from "chan-dongle-extended-client";
 import * as sipLibrary from "../tools/sipLibrary";
@@ -16,8 +17,7 @@ import "colors";
 import * as _debug from "debug";
 let debug = _debug("_sipProxy");
 
-//TODO change that otherwise only work on raspberry pi
-const localIp = os.networkInterfaces()["eth0"].filter(({ family }) => family === "IPv4")[0]["address"];
+let localIp: string | undefined= undefined;
 
 const informativeHostname= "semasim-gateway.invalid";
 
@@ -61,6 +61,12 @@ export async function getAsteriskSockets(): Promise<sipLibrary.Store> {
 export async function start() {
 
     debug("(re)Staring !");
+
+    if( !localIp ) localIp = await new Promise<string>(
+        (resolve,reject)=> network.get_private_ip(
+            (err, ip)=> err?reject(err):resolve(ip)
+        )
+    );
 
     asteriskSockets = new sipLibrary.Store();
 

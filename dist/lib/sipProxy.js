@@ -47,10 +47,10 @@ var __values = (this && this.__values) || function (o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var tls = require("tls");
 var net = require("net");
+var network = require("network");
 var ts_events_extended_1 = require("ts-events-extended");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var sipLibrary = require("../tools/sipLibrary");
-var os = require("os");
 var sipApiBackend = require("./sipApiClientBackend");
 var sipApi_1 = require("./sipApi");
 var sipContact_1 = require("./sipContact");
@@ -59,11 +59,7 @@ var _constants_1 = require("./_constants");
 require("colors");
 var _debug = require("debug");
 var debug = _debug("_sipProxy");
-//TODO change that otherwise only work on raspberry pi
-var localIp = os.networkInterfaces()["eth0"].filter(function (_a) {
-    var family = _a.family;
-    return family === "IPv4";
-})[0]["address"];
+var localIp = undefined;
 var informativeHostname = "semasim-gateway.invalid";
 exports.evtIncomingMessage = new ts_events_extended_1.SyncEvent();
 exports.evtOutgoingMessage = new ts_events_extended_1.SyncEvent();
@@ -105,187 +101,196 @@ function start() {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
         return __generator(this, function (_a) {
-            debug("(re)Staring !");
-            asteriskSockets = new sipLibrary.Store();
-            backendSocket = new sipLibrary.Socket(tls.connect({
-                "host": _constants_1.c.shared.backendHostname,
-                "port": _constants_1.c.shared.backendSipProxyListeningPortForGateways
-            }));
-            backendSocket.setKeepAlive(true);
-            sipApi_1.startListening(backendSocket);
-            /*
-            backendSocket.evtPacket.attach(sipPacket =>
-                console.log("From backend:\n", sip.stringify(sipPacket).yellow, "\n\n")
-            );
-            backendSocket.evtData.attach(chunk =>
-                console.log("From backend:\n", chunk.yellow, "\n\n")
-            );
-            */
-            backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
-                var set, _a, _b, imei, e_1_1, _c, _d, imei, e_2_1, set_1, set_1_1, imei, e_1, _e, e_2, _f, e_3, _g;
-                return __generator(this, function (_h) {
-                    switch (_h.label) {
-                        case 0:
-                            debug("connection established with backend");
-                            evtNewBackendSocketConnect.post();
-                            set = new Set();
-                            _h.label = 1;
-                        case 1:
-                            _h.trys.push([1, 6, 7, 8]);
-                            return [4 /*yield*/, db.asterisk.queryEndpoints()];
-                        case 2:
-                            _a = __values.apply(void 0, [_h.sent()]), _b = _a.next();
-                            _h.label = 3;
-                        case 3:
-                            if (!!_b.done) return [3 /*break*/, 5];
-                            imei = _b.value;
-                            set.add(imei);
-                            _h.label = 4;
-                        case 4:
-                            _b = _a.next();
-                            return [3 /*break*/, 3];
-                        case 5: return [3 /*break*/, 8];
-                        case 6:
-                            e_1_1 = _h.sent();
-                            e_1 = { error: e_1_1 };
-                            return [3 /*break*/, 8];
-                        case 7:
-                            try {
-                                if (_b && !_b.done && (_e = _a.return)) _e.call(_a);
-                            }
-                            finally { if (e_1) throw e_1.error; }
-                            return [7 /*endfinally*/];
-                        case 8:
-                            _h.trys.push([8, 13, 14, 15]);
-                            return [4 /*yield*/, chan_dongle_extended_client_1.DongleExtendedClient.localhost().getConnectedDongles()];
-                        case 9:
-                            _c = __values.apply(void 0, [_h.sent()]), _d = _c.next();
-                            _h.label = 10;
-                        case 10:
-                            if (!!_d.done) return [3 /*break*/, 12];
-                            imei = _d.value;
-                            set.add(imei);
-                            _h.label = 11;
-                        case 11:
-                            _d = _c.next();
-                            return [3 /*break*/, 10];
-                        case 12: return [3 /*break*/, 15];
-                        case 13:
-                            e_2_1 = _h.sent();
-                            e_2 = { error: e_2_1 };
-                            return [3 /*break*/, 15];
-                        case 14:
-                            try {
-                                if (_d && !_d.done && (_f = _c.return)) _f.call(_c);
-                            }
-                            finally { if (e_2) throw e_2.error; }
-                            return [7 /*endfinally*/];
-                        case 15:
-                            try {
-                                for (set_1 = __values(set), set_1_1 = set_1.next(); !set_1_1.done; set_1_1 = set_1.next()) {
-                                    imei = set_1_1.value;
-                                    sipApiBackend.claimDongle.makeCall(imei);
-                                }
-                            }
-                            catch (e_3_1) { e_3 = { error: e_3_1 }; }
-                            finally {
-                                try {
-                                    if (set_1_1 && !set_1_1.done && (_g = set_1.return)) _g.call(set_1);
-                                }
-                                finally { if (e_3) throw e_3.error; }
-                            }
-                            return [2 /*return*/];
-                    }
-                });
-            }); });
-            backendSocket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {
-                var _this = this;
-                var flowToken, asteriskSocket, branch;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                            asteriskSocket = asteriskSockets.get(flowToken);
-                            if (!asteriskSocket)
-                                asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
-                            if (!!asteriskSocket.evtConnect.postCount) return [3 /*break*/, 2];
-                            return [4 /*yield*/, asteriskSocket.evtConnect.waitFor()];
-                        case 1:
-                            _a.sent();
-                            _a.label = 2;
-                        case 2:
-                            if (sipRequest.method === "REGISTER") {
-                                sipRequest.headers["user-agent"] = sipContact_1.Contact.buildValueOfUserAgentField(sipLibrary.parseUri(sipRequest.headers.from.uri).user, sipRequest.headers.contact[0].params["+sip.instance"], sipRequest.headers["user-agent"]);
-                                asteriskSocket.addPathHeader(sipRequest);
-                            }
-                            else
-                                asteriskSocket.shiftRouteAndAddRecordRoute(sipRequest);
-                            branch = asteriskSocket.addViaHeader(sipRequest);
-                            //TODO match with authentication
-                            if (sipLibrary.isPlainMessageRequest(sipRequest)) {
-                                asteriskSocket.evtResponse.attachOncePrepend(function (_a) {
-                                    var headers = _a.headers;
-                                    return headers.via[0].params["branch"] === branch;
-                                }, function (sipResponse) { return __awaiter(_this, void 0, void 0, function () {
-                                    var fromContact;
-                                    return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0:
-                                                if (sipResponse.status !== 202)
-                                                    return [2 /*return*/];
-                                                return [4 /*yield*/, sipContact_1.contactIo.getContactFromAstSocketSrcPort(asteriskSocket.localPort)];
-                                            case 1:
-                                                fromContact = _a.sent();
-                                                if (!fromContact) {
-                                                    //TODO? Change result code, is it possible ?
-                                                    debug("Contact not found for incoming message!!!");
-                                                    return [2 /*return*/];
-                                                }
-                                                exports.evtIncomingMessage.post({ fromContact: fromContact, sipRequest: sipRequest });
-                                                return [2 /*return*/];
+            switch (_a.label) {
+                case 0:
+                    debug("(re)Staring !");
+                    if (!!localIp) return [3 /*break*/, 2];
+                    return [4 /*yield*/, new Promise(function (resolve, reject) { return network.get_private_ip(function (err, ip) { return err ? reject(err) : resolve(ip); }); })];
+                case 1:
+                    localIp = _a.sent();
+                    _a.label = 2;
+                case 2:
+                    asteriskSockets = new sipLibrary.Store();
+                    backendSocket = new sipLibrary.Socket(tls.connect({
+                        "host": _constants_1.c.shared.backendHostname,
+                        "port": _constants_1.c.shared.backendSipProxyListeningPortForGateways
+                    }));
+                    backendSocket.setKeepAlive(true);
+                    sipApi_1.startListening(backendSocket);
+                    /*
+                    backendSocket.evtPacket.attach(sipPacket =>
+                        console.log("From backend:\n", sip.stringify(sipPacket).yellow, "\n\n")
+                    );
+                    backendSocket.evtData.attach(chunk =>
+                        console.log("From backend:\n", chunk.yellow, "\n\n")
+                    );
+                    */
+                    backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
+                        var set, _a, _b, imei, e_1_1, _c, _d, imei, e_2_1, set_1, set_1_1, imei, e_1, _e, e_2, _f, e_3, _g;
+                        return __generator(this, function (_h) {
+                            switch (_h.label) {
+                                case 0:
+                                    debug("connection established with backend");
+                                    evtNewBackendSocketConnect.post();
+                                    set = new Set();
+                                    _h.label = 1;
+                                case 1:
+                                    _h.trys.push([1, 6, 7, 8]);
+                                    return [4 /*yield*/, db.asterisk.queryEndpoints()];
+                                case 2:
+                                    _a = __values.apply(void 0, [_h.sent()]), _b = _a.next();
+                                    _h.label = 3;
+                                case 3:
+                                    if (!!_b.done) return [3 /*break*/, 5];
+                                    imei = _b.value;
+                                    set.add(imei);
+                                    _h.label = 4;
+                                case 4:
+                                    _b = _a.next();
+                                    return [3 /*break*/, 3];
+                                case 5: return [3 /*break*/, 8];
+                                case 6:
+                                    e_1_1 = _h.sent();
+                                    e_1 = { error: e_1_1 };
+                                    return [3 /*break*/, 8];
+                                case 7:
+                                    try {
+                                        if (_b && !_b.done && (_e = _a.return)) _e.call(_a);
+                                    }
+                                    finally { if (e_1) throw e_1.error; }
+                                    return [7 /*endfinally*/];
+                                case 8:
+                                    _h.trys.push([8, 13, 14, 15]);
+                                    return [4 /*yield*/, chan_dongle_extended_client_1.DongleExtendedClient.localhost().getConnectedDongles()];
+                                case 9:
+                                    _c = __values.apply(void 0, [_h.sent()]), _d = _c.next();
+                                    _h.label = 10;
+                                case 10:
+                                    if (!!_d.done) return [3 /*break*/, 12];
+                                    imei = _d.value;
+                                    set.add(imei);
+                                    _h.label = 11;
+                                case 11:
+                                    _d = _c.next();
+                                    return [3 /*break*/, 10];
+                                case 12: return [3 /*break*/, 15];
+                                case 13:
+                                    e_2_1 = _h.sent();
+                                    e_2 = { error: e_2_1 };
+                                    return [3 /*break*/, 15];
+                                case 14:
+                                    try {
+                                        if (_d && !_d.done && (_f = _c.return)) _f.call(_c);
+                                    }
+                                    finally { if (e_2) throw e_2.error; }
+                                    return [7 /*endfinally*/];
+                                case 15:
+                                    try {
+                                        for (set_1 = __values(set), set_1_1 = set_1.next(); !set_1_1.done; set_1_1 = set_1.next()) {
+                                            imei = set_1_1.value;
+                                            sipApiBackend.claimDongle.makeCall(imei);
                                         }
-                                    });
-                                }); });
+                                    }
+                                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                                    finally {
+                                        try {
+                                            if (set_1_1 && !set_1_1.done && (_g = set_1.return)) _g.call(set_1);
+                                        }
+                                        finally { if (e_3) throw e_3.error; }
+                                    }
+                                    return [2 /*return*/];
                             }
-                            asteriskSocket.write(sipRequest);
-                            return [2 /*return*/];
-                    }
-                });
-            }); });
-            backendSocket.evtResponse.attach(function (sipResponse) {
-                var flowToken;
-                try {
-                    flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                }
-                catch (error) {
-                    console.log(error.message);
-                    console.log(JSON.stringify(sipResponse, null, 2));
-                    return;
-                }
-                var asteriskSocket = asteriskSockets.get(flowToken);
-                if (!asteriskSocket)
-                    return;
-                asteriskSocket.rewriteRecordRoute(sipResponse);
-                sipResponse.headers.via.shift();
-                asteriskSocket.write(sipResponse);
-            });
-            backendSocket.evtClose.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            debug("Backend socket closed, waiting and restarting");
-                            return [4 /*yield*/, asteriskSockets.destroyAll()];
-                        case 1:
-                            _a.sent();
-                            return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
-                        case 2:
-                            _a.sent();
-                            start();
-                            return [2 /*return*/];
-                    }
-                });
-            }); });
-            return [2 /*return*/];
+                        });
+                    }); });
+                    backendSocket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {
+                        var _this = this;
+                        var flowToken, asteriskSocket, branch;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
+                                    asteriskSocket = asteriskSockets.get(flowToken);
+                                    if (!asteriskSocket)
+                                        asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
+                                    if (!!asteriskSocket.evtConnect.postCount) return [3 /*break*/, 2];
+                                    return [4 /*yield*/, asteriskSocket.evtConnect.waitFor()];
+                                case 1:
+                                    _a.sent();
+                                    _a.label = 2;
+                                case 2:
+                                    if (sipRequest.method === "REGISTER") {
+                                        sipRequest.headers["user-agent"] = sipContact_1.Contact.buildValueOfUserAgentField(sipLibrary.parseUri(sipRequest.headers.from.uri).user, sipRequest.headers.contact[0].params["+sip.instance"], sipRequest.headers["user-agent"]);
+                                        asteriskSocket.addPathHeader(sipRequest);
+                                    }
+                                    else
+                                        asteriskSocket.shiftRouteAndAddRecordRoute(sipRequest);
+                                    branch = asteriskSocket.addViaHeader(sipRequest);
+                                    //TODO match with authentication
+                                    if (sipLibrary.isPlainMessageRequest(sipRequest)) {
+                                        asteriskSocket.evtResponse.attachOncePrepend(function (_a) {
+                                            var headers = _a.headers;
+                                            return headers.via[0].params["branch"] === branch;
+                                        }, function (sipResponse) { return __awaiter(_this, void 0, void 0, function () {
+                                            var fromContact;
+                                            return __generator(this, function (_a) {
+                                                switch (_a.label) {
+                                                    case 0:
+                                                        if (sipResponse.status !== 202)
+                                                            return [2 /*return*/];
+                                                        return [4 /*yield*/, sipContact_1.contactIo.getContactFromAstSocketSrcPort(asteriskSocket.localPort)];
+                                                    case 1:
+                                                        fromContact = _a.sent();
+                                                        if (!fromContact) {
+                                                            //TODO? Change result code, is it possible ?
+                                                            debug("Contact not found for incoming message!!!");
+                                                            return [2 /*return*/];
+                                                        }
+                                                        exports.evtIncomingMessage.post({ fromContact: fromContact, sipRequest: sipRequest });
+                                                        return [2 /*return*/];
+                                                }
+                                            });
+                                        }); });
+                                    }
+                                    asteriskSocket.write(sipRequest);
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                    backendSocket.evtResponse.attach(function (sipResponse) {
+                        var flowToken;
+                        try {
+                            flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
+                        }
+                        catch (error) {
+                            console.log(error.message);
+                            console.log(JSON.stringify(sipResponse, null, 2));
+                            return;
+                        }
+                        var asteriskSocket = asteriskSockets.get(flowToken);
+                        if (!asteriskSocket)
+                            return;
+                        asteriskSocket.rewriteRecordRoute(sipResponse);
+                        sipResponse.headers.via.shift();
+                        asteriskSocket.write(sipResponse);
+                    });
+                    backendSocket.evtClose.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    debug("Backend socket closed, waiting and restarting");
+                                    return [4 /*yield*/, asteriskSockets.destroyAll()];
+                                case 1:
+                                    _a.sent();
+                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                                case 2:
+                                    _a.sent();
+                                    start();
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
+                    return [2 /*return*/];
+            }
         });
     });
 }

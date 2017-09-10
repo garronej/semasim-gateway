@@ -3,7 +3,7 @@
   "description": "Semasim server for gateways (raspberry pi)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "scripts": {
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
@@ -23,6 +23,7 @@
     "debug": "^2.6.8",
     "md5": "^2.2.1",
     "mysql": "^2.13.0",
+    "network": "^0.3.2",
     "rejection-tracker": "github:garronej/rejection-tracker",
     "run-exclusive": "garronej/run-exclusive",
     "save": "^2.3.1",
