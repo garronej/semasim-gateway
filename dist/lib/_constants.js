@@ -30,8 +30,6 @@ var c = /** @class */ (function () {
         type: "adaptive",
         params: "default"
     };
-    //TODO: not defined here get from chan-dongle-extended-client
-    c.dongleCallContext = "from-dongle";
     c.phoneNumber = "_[+0-9].";
     c.sipCallContext = "from-sip-call";
     c.sipMessageContext = "from-sip-message";

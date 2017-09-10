@@ -34,9 +34,6 @@ export class c {
         params: "default"
     };
 
-    //TODO: not defined here get from chan-dongle-extended-client
-    public static readonly dongleCallContext = "from-dongle";
-
     public static readonly phoneNumber = "_[+0-9].";
 
     public static readonly sipCallContext = "from-sip-call";

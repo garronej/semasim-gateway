@@ -19,7 +19,6 @@ export declare class c {
         type: string;
         params: string;
     };
-    static readonly dongleCallContext: string;
     static readonly phoneNumber: string;
     static readonly sipCallContext: string;
     static readonly sipMessageContext: string;

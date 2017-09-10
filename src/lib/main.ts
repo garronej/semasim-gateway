@@ -15,337 +15,361 @@ import { c } from "./_constants";
 import * as _debug from "debug";
 let debug = _debug("_main");
 
+const dongleClient = DongleExtendedClient.localhost();
+
 debug("Starting semasim gateway !");
 
-let scripts: agi.Scripts= {};
+(async function callee() {
 
-scripts[c.sipCallContext] = {};
-scripts[c.sipCallContext][c.phoneNumber] = async (channel: agi.AGIChannel)=> {
+    try{
 
-    let _ = channel.relax;
+        let { defaults }= await dongleClient.getConfig();
 
-    debug("FROM SIP CALL!");
+        start(defaults.context);
 
-    let imei = channel.request.callerid;
+    }catch(error){
 
-    await _.setVariable(`JITTERBUFFER(${c.jitterBuffer.type})`, c.jitterBuffer.params);
+        debug("dongle extended not initialized yet, scheduling retry...");
 
-    await _.setVariable("AGC(rx)", c.gain);
+        await new Promise(resolve=>setTimeout(resolve, 5000));
 
-    await _.exec("Dial", [`Dongle/i:${imei}/${channel.request.extension}`]);
-
-    //TODO: Increase volume on TX
-
-    debug("call terminated");
-
-};
-
-
-scripts[c.dongleCallContext] = {};
-scripts[c.dongleCallContext][c.phoneNumber] = async (channel: agi.AGIChannel)=> { 
-
-    let _ = channel.relax;
-
-    let number= channel.request.callerid;
-    let imei = (await _.getVariable("DONGLEIMEI"))!;
-
-    debug(`Call from ${number} !`);
-
-    //let wakeUpAllContactsPromise= wakeUpAllContacts(imei, 9000);
-    //let name = await DongleExtendedClient.localhost().getContactName(imei, channel.request.callerid);
-    //await _.setVariable("CALLERID(name-charset)", "utf8");
-    //await _.setVariable("CALLERID(name)", name || "");
-    //let dialString = (await wakeUpAllContactsPromise)
-
-    let dialString = (await contactIo.wakeUpAllContacts(imei, 9000))
-    .reachableContacts
-    .map(({ uri }) => `PJSIP/${imei}/${uri}`).join("&");
-
-    if (!dialString) {
-
-        //TODO send missed call to all contacts!
-        debug("No contact to dial!");
-
-        return;
+        callee();
 
     }
 
-    debug("Dialing...");
+})();
 
-    debug({ dialString });
+function start(dongleCallContext: string) {
 
-    let failure= await agi.dialAndGetOutboundChannel(
-        channel,
-        dialString,
-        async (outboundChannel) => {
+    debug("Dongle extended initialized!");
 
-            let _ = outboundChannel.relax;
+    let scripts: agi.Scripts = {};
 
-            await _.setVariable(`JITTERBUFFER(${c.jitterBuffer.type})`, c.jitterBuffer.params);
+    scripts[c.sipCallContext] = {};
+    scripts[c.sipCallContext][c.phoneNumber] = async (channel: agi.AGIChannel) => {
 
-            await _.setVariable("AGC(rx)", c.gain);
+        let _ = channel.relax;
 
-            //TODO: Increase volume on TX
+        debug("FROM SIP CALL!");
+
+        let imei = channel.request.callerid;
+
+        await _.setVariable(`JITTERBUFFER(${c.jitterBuffer.type})`, c.jitterBuffer.params);
+
+        await _.setVariable("AGC(rx)", c.gain);
+
+        await _.exec("Dial", [`Dongle/i:${imei}/${channel.request.extension}`]);
+
+        //TODO: Increase volume on TX
+
+        debug("call terminated");
+
+    };
+
+    scripts[dongleCallContext] = {};
+    scripts[dongleCallContext][c.phoneNumber] = async (channel: agi.AGIChannel) => {
+
+        let _ = channel.relax;
+
+        let number = channel.request.callerid;
+        let imei = (await _.getVariable("DONGLEIMEI"))!;
+
+        debug(`Call from ${number} !`);
+
+        //let wakeUpAllContactsPromise= wakeUpAllContacts(imei, 9000);
+        //let name = await DongleExtendedClient.localhost().getContactName(imei, channel.request.callerid);
+        //await _.setVariable("CALLERID(name-charset)", "utf8");
+        //await _.setVariable("CALLERID(name)", name || "");
+        //let dialString = (await wakeUpAllContactsPromise)
+
+        let dialString = (await contactIo.wakeUpAllContacts(imei, 9000))
+            .reachableContacts
+            .map(({ uri }) => `PJSIP/${imei}/${uri}`).join("&");
+
+        if (!dialString) {
+
+            //TODO send missed call to all contacts!
+            debug("No contact to dial!");
+
+            return;
+
+        }
+
+        debug("Dialing...");
+
+        debug({ dialString });
+
+        let failure = await agi.dialAndGetOutboundChannel(
+            channel,
+            dialString,
+            async (outboundChannel) => {
+
+                let _ = outboundChannel.relax;
+
+                await _.setVariable(`JITTERBUFFER(${c.jitterBuffer.type})`, c.jitterBuffer.params);
+
+                await _.setVariable("AGC(rx)", c.gain);
+
+                //TODO: Increase volume on TX
+
+            }
+        );
+
+        if (failure) {
+
+            await db.semasim.addMessageTowardSip(
+                number,
+                c.strMissedCall,
+                new Date(),
+                { "allUaInstanceOfImei": imei }
+            );
+
+            notifyNewSipMessagesToSend();
+
+        } else debug("...Call ended");
+
+    }
+
+    agi.startServer(scripts);
+
+
+    async function onNewActiveDongle(dongle: t.DongleActive) {
+
+        debug("onNewActiveDongle", dongle);
+
+        await db.semasim.addDongleAndSim(dongle.imei, dongle.iccid);
+
+        let password = dongle.iccid.substring(dongle.iccid.length - 4);
+
+        await db.asterisk.addOrUpdateEndpoint(dongle.imei, password);
+
+        sendDonglePendingMessages(dongle.imei);
+
+    }
+
+
+
+    (async function findActiveDongleAndStartSipProxy() {
+
+        for (let activeDongle of await dongleClient.getActiveDongles())
+            await onNewActiveDongle(activeDongle);
+
+        sipProxy.start();
+
+    })();
+
+    dongleClient.evtNewActiveDongle.attach(async dongle => {
+
+        await onNewActiveDongle(dongle);
+
+        sipApiBackend.claimDongle.makeCall(dongle.imei);
+
+    });
+
+    dongleClient.evtActiveDongleDisconnect.attach(async dongle => {
+
+        debug("onDongleDisconnect", dongle);
+
+    });
+
+
+
+    contactIo.getEvtNewContact().attach(async contact => {
+
+        //debug("New contact", Contact.pretty(contact));
+        debug("New contact", Contact.readInstanceId(contact));
+
+        let isNew = await db.semasim.addUaInstance(Contact.buildUaInstancePk(contact))
+
+        if (isNew) {
+
+            debug("TODO: it's a new UA, send initialization messages");
+
+        }
+
+        senPendingSipMessagesToReachableContact(contact);
+
+    });
+
+    contactIo.getEvtExpiredContact().attach(async contactUri => {
+
+        debug("Expired contact: ", contactUri);
+
+        await sipApiBackend.wakeUpUserAgent.makeCall(contactUri);
+
+    });
+
+    sipMessage.startAccepting();
+
+    const sendDonglePendingMessages = runExclusive.build(
+        async (imei: string) => {
+
+            let messages = await db.semasim.getUnsentMessageOfDongleSim(imei);
+
+            for (let { pk, sender, to_number, text } of messages) {
+
+                let sentMessageId: number;
+
+                try {
+
+                    sentMessageId = await dongleClient.sendMessage(imei, to_number, text);
+
+                    if (isNaN(sentMessageId)) throw new Error("Send message failed");
+
+                } catch (error) {
+
+                    debug(`Error sending message: ${error.message}`);
+
+                    continue;
+
+                }
+
+                await db.semasim.setMessageToGsmSentId(pk, sentMessageId);
+
+                await db.semasim.addMessageTowardSip(
+                    to_number,
+                    `---Message send, sentMessageId: ${sentMessageId}---`,
+                    new Date(),
+                    { "uaInstance": sender }
+                );
+
+                notifyNewSipMessagesToSend();
+
+            }
 
         }
     );
 
-    if (failure) {
+    const senPendingSipMessagesToReachableContact = runExclusive.build(
+        async (contact: Contact) => {
 
-        await db.semasim.addMessageTowardSip(
-            number,
-            c.strMissedCall,
-            new Date(),
-            { "allUaInstanceOfImei": imei }
-        );
+            let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(
+                Contact.buildUaInstancePk(contact)
+            );
 
-        notifyNewSipMessagesToSend();
+            for (let message of messages) {
 
-    }else debug("...Call ended");
+                debug(`Sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
 
-}
+                let received: boolean;
 
-agi.startServer(scripts);
+                try {
 
-const dongleClient = DongleExtendedClient.localhost();
+                    received = await sipMessage.sendMessage(
+                        contact,
+                        message.from_number,
+                        {},
+                        message.text
+                    );
 
-async function onNewActiveDongle(dongle: t.DongleActive) {
+                } catch (error) {
+                    debug("error:", error.message);
+                    break;
+                }
 
-    debug("onNewActiveDongle", dongle);
+                if (!received) {
+                    debug("Not, received, break!");
+                    break;
+                }
 
-    await db.semasim.addDongleAndSim(dongle.imei, dongle.iccid);
-
-    let password = dongle.iccid.substring(dongle.iccid.length - 4);
-
-    await db.asterisk.addOrUpdateEndpoint(dongle.imei, password);
-
-    sendDonglePendingMessages(dongle.imei);
-
-}
-
-
-
-(async function findActiveDongleAndStartSipProxy() {
-
-    for (let activeDongle of await dongleClient.getActiveDongles())
-        await onNewActiveDongle(activeDongle);
-
-    sipProxy.start();
-
-})();
-
-dongleClient.evtNewActiveDongle.attach(async dongle => {
-
-    await onNewActiveDongle(dongle);
-
-    sipApiBackend.claimDongle.makeCall(dongle.imei);
-
-});
-
-dongleClient.evtActiveDongleDisconnect.attach(async dongle => {
-
-    debug("onDongleDisconnect", dongle);
-
-});
-
-
-
-contactIo.getEvtNewContact().attach(async contact => {
-
-    //debug("New contact", Contact.pretty(contact));
-    debug("New contact", Contact.readInstanceId(contact));
-
-    let isNew = await db.semasim.addUaInstance(Contact.buildUaInstancePk(contact))
-
-    if (isNew) {
-
-        debug("TODO: it's a new UA, send initialization messages");
-
-    }
-
-    senPendingSipMessagesToReachableContact(contact);
-
-});
-
-contactIo.getEvtExpiredContact().attach(async contactUri => {
-
-    debug("Expired contact: ", contactUri);
-
-    await sipApiBackend.wakeUpUserAgent.makeCall(contactUri);
-
-});
-
-
-
-sipMessage.startAccepting();
-
-const sendDonglePendingMessages = runExclusive.build(
-    async (imei: string) => {
-
-        let messages = await db.semasim.getUnsentMessageOfDongleSim(imei);
-
-        for (let { pk, sender, to_number, text } of messages) {
-
-            let sentMessageId: number;
-
-            try {
-
-                sentMessageId = await dongleClient.sendMessage(imei, to_number, text);
-
-                if (isNaN(sentMessageId)) throw new Error("Send message failed");
-
-            } catch (error) {
-
-                debug(`Error sending message: ${error.message}`);
-
-                continue;
+                await db.semasim.setMessageTowardSipDelivered(Contact.buildUaInstancePk(contact), message.creation_timestamp);
 
             }
 
-            await db.semasim.setMessageToGsmSentId(pk, sentMessageId);
+        }
+    );
+
+
+    async function notifyNewSipMessagesToSend() {
+
+        (await db.asterisk.queryContacts()).forEach(async contact => {
+
+            let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(
+                Contact.buildUaInstancePk(contact)
+            );
+
+            if (!messages.length) return;
+
+            try {
+
+                let evtTracer: contactIo.WakeUpContactTracer = new SyncEvent();
+
+                contactIo.wakeUpContact(contact, 0, evtTracer);
+
+                let status = await evtTracer.waitFor();
+
+                if (status !== "REACHABLE") return;
+
+                await senPendingSipMessagesToReachableContact(contact);
+
+            } catch (error) { return; }
+
+        });
+
+    }
+
+
+    sipMessage.evtMessage.attach(
+        async ({ fromContact, toNumber, text }) => {
+
+            debug("FROM SIP MESSAGE", { toNumber, text });
+
+            await db.semasim.addMessageTowardGsm(
+                toNumber,
+                text,
+                Contact.buildUaInstancePk(fromContact)
+            );
+
+            sendDonglePendingMessages(fromContact.endpoint);
+
+        }
+    );
+
+    dongleClient.evtNewMessage.attach(
+        async ({ imei, number, text, date }) => {
+
+            debug("FROM DONGLE MESSAGE", { text });
 
             await db.semasim.addMessageTowardSip(
-                to_number,
-                `---Message send, sentMessageId: ${sentMessageId}---`,
-                new Date(),
-                { "uaInstance": sender }
+                number,
+                text,
+                date,
+                { "allUaInstanceOfImei": imei }
             );
 
             notifyNewSipMessagesToSend();
 
         }
+    );
 
-    }
-);
+    dongleClient.evtMessageStatusReport.attach(
+        async ({ imei, messageId, isDelivered, dischargeTime, recipient, status }) => {
 
-const senPendingSipMessagesToReachableContact = runExclusive.build(
-    async (contact: Contact) => {
+            debug("FROM DONGLE STATUS REPORT", status);
 
-        let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(
-            Contact.buildUaInstancePk(contact)
-        );
+            let resp = await db.semasim.getSenderAndTextOfSentMessageToGsm(imei, messageId);
 
-        for (let message of messages) {
+            if (!resp) return;
 
-            debug(`Sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
+            let { sender, text } = resp;
 
-            let received: boolean;
+            await db.semasim.addMessageTowardSip(
+                recipient,
+                `---STATUS REPORT FOR MESSAGE ID ${messageId}: ${status}---`,
+                dischargeTime,
+                { "uaInstance": sender }
+            );
 
-            try {
+            await db.semasim.addMessageTowardSip(
+                recipient,
+                `YOU:\n${text}`,
+                new Date(dischargeTime.getTime() + 1),
+                { "allUaInstanceOfEndpointOtherThan": sender }
+            );
 
-                received = await sipMessage.sendMessage(
-                    contact,
-                    message.from_number,
-                    {},
-                    message.text
-                );
-
-            } catch (error) {
-                debug("error:", error.message);
-                break;
-            }
-
-            if (!received) {
-                debug("Not, received, break!");
-                break;
-            }
-
-            await db.semasim.setMessageTowardSipDelivered(Contact.buildUaInstancePk(contact), message.creation_timestamp);
+            notifyNewSipMessagesToSend();
 
         }
-
-    }
-);
-
-
-async function notifyNewSipMessagesToSend() {
-
-    (await db.asterisk.queryContacts()).forEach(async contact => {
-
-        let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(
-            Contact.buildUaInstancePk(contact)
-        );
-
-        if (!messages.length) return;
-
-        try {
-
-            let evtTracer: contactIo.WakeUpContactTracer = new SyncEvent();
-
-            contactIo.wakeUpContact(contact, 0, evtTracer);
-
-            let status = await evtTracer.waitFor();
-
-            if (status !== "REACHABLE") return;
-
-            await senPendingSipMessagesToReachableContact(contact);
-
-        } catch (error) { return; }
-
-    });
+    );
 
 }
-
-
-sipMessage.evtMessage.attach(
-    async ({ fromContact, toNumber, text }) => {
-
-        debug("FROM SIP MESSAGE", { toNumber, text });
-
-        await db.semasim.addMessageTowardGsm(
-            toNumber,
-            text,
-            Contact.buildUaInstancePk(fromContact)
-        );
-
-        sendDonglePendingMessages(fromContact.endpoint);
-
-    }
-);
-
-dongleClient.evtNewMessage.attach(
-    async ({ imei, number, text, date }) => {
-
-        debug("FROM DONGLE MESSAGE", { text });
-
-        await db.semasim.addMessageTowardSip(
-            number,
-            text,
-            date,
-            { "allUaInstanceOfImei": imei }
-        );
-
-        notifyNewSipMessagesToSend();
-
-    }
-);
-
-dongleClient.evtMessageStatusReport.attach(
-    async ({ imei, messageId, isDelivered, dischargeTime, recipient, status }) => {
-
-        debug("FROM DONGLE STATUS REPORT", status);
-
-        let resp = await db.semasim.getSenderAndTextOfSentMessageToGsm(imei, messageId);
-
-        if (!resp) return;
-
-        let { sender, text } = resp;
-
-        await db.semasim.addMessageTowardSip(
-            recipient,
-            `---STATUS REPORT FOR MESSAGE ID ${messageId}: ${status}---`,
-            dischargeTime,
-            { "uaInstance": sender }
-        );
-
-        await db.semasim.addMessageTowardSip(
-            recipient,
-            `YOU:\n${text}`,
-            new Date(dischargeTime.getTime() + 1),
-            { "allUaInstanceOfEndpointOtherThan": sender }
-        );
-
-        notifyNewSipMessagesToSend();
-
-    }
-);
