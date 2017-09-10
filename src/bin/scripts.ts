@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 
-const serviceName= "semasim-gateway";
+import { c } from "../lib/_constants";
 
 import * as path from "path";
 const modulePath = path.join(__dirname, "..", "..");
-const systemdServicePath = path.join("/etc", "systemd", "system", `${serviceName}.service`);
+const systemdServicePath = path.join("/etc", "systemd", "system", `${c.serviceName}.service`);
 
 require("rejection-tracker").main(modulePath);
 
-import { exec } from "child_process";
-import * as readline from "readline";
-import { readFileSync, writeFile, unlinkSync, existsSync } from "fs";
 import * as program from "commander";
+import * as _ from "../tools/commanderFunctions";
+import { unlinkSync } from "fs";
 import "colors";
 
 program
@@ -50,9 +49,9 @@ async function installService() {
         "Now you will be ask to choose the user that will run the service\n",
     ].join("").yellow);
 
-    const user = (await ask("User? (press enter for root)")) || "root";
+    const user = (await _.ask("User? (press enter for root)")) || "root";
 
-    const group = (await ask("Group? (press enter for root)")) || "root";
+    const group = (await _.ask("Group? (press enter for root)")) || "root";
 
     let service = [
         `[Unit]`,
@@ -77,95 +76,36 @@ async function installService() {
         ``
     ].join("\n");
 
-    await writeFileAssertSuccess(systemdServicePath, service);
+    await _.writeFileAssertSuccess(systemdServicePath, service);
 
-    await run("systemctl daemon-reload");
+    await _.run("systemctl daemon-reload");
 
     console.log([
-        `Semasim gateway service successfully installed!`.green,
+        `Service successfully installed!`.green,
         `${systemdServicePath}: \n\n ${service}`,
         `To run the service:`.yellow,
-        `sudo systemctl start ${serviceName}`,
+        `sudo systemctl start ${c.serviceName}`,
         `To automatically start the service on boot:`.yellow,
-        `sudo systemctl enable ${serviceName}`,
+        `sudo systemctl enable ${c.serviceName}`,
     ].join("\n"));
 
 }
+
 
 async function removeService() {
 
     try {
 
-        await run(`systemctl stop ${serviceName}.service`);
+        await _.run(`systemctl stop ${c.serviceName}.service`);
 
-        await run(`systemctl disable ${serviceName}.service`);
+        await _.run(`systemctl disable ${c.serviceName}.service`);
 
     } catch (error) { }
 
     try { unlinkSync(systemdServicePath); } catch (error) { }
 
-    await run("systemctl daemon-reload");
+    await _.run("systemctl daemon-reload");
 
-    console.log(`${serviceName}.service removed from systemd`.green);
-
-}
-
-export function run(command: string): Promise<string> {
-
-    return new Promise<string>((resolve, reject) => {
-
-        exec(command, (error, stdout) => {
-
-            if (error) {
-                reject(new Error(error.message));
-                return;
-            }
-
-            resolve(stdout);
-
-        });
-
-    });
-
-}
-
-export function ask(question): Promise<string> {
-
-    const rl = readline.createInterface({
-        "input": process.stdin,
-        "output": process.stdout
-    })
-
-    return new Promise<string>(resolve => {
-
-        rl.question(question + "\n> ", answer => {
-
-            resolve(answer);
-
-            rl.close();
-
-        });
-
-
-    });
-
-}
-
-export function writeFileAssertSuccess(filename: string, data: string): Promise<void> {
-
-    return new Promise<void>(
-        resolve => writeFile(
-            filename,
-            data,
-            { "encoding": "utf8", "flag": "w" },
-            error => {
-                if (error) {
-                    console.log(`Error: Failed to write ${filename}: ${error.message}`.red);
-                    process.exit(1);
-                }
-                resolve();
-            }
-        )
-    );
+    console.log(`${c.serviceName}.service removed from systemd`.green);
 
 }

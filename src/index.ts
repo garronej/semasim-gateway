@@ -1,6 +1,7 @@
 import * as sipLibrary from "./tools/sipLibrary";
 import * as mySqlFunctions from "./tools/mySqlFunctions";
 import * as sipApiFramework from "./tools/sipApiFramework";
+import * as commanderFunctions from "./tools/commanderFunctions";
 
 import * as sipApiClientBackend from "./lib/sipApiClientBackend";
 import * as sipApiClientGateway from "./lib/sipApiClient";
@@ -17,5 +18,6 @@ export {
     sipApiFramework, 
     sipApiClientBackend, 
     sipApiClientGateway,
-    Contact
+    Contact,
+    commanderFunctions
 };

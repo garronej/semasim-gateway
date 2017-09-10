@@ -37,15 +37,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
-var serviceName = "semasim-gateway";
+var _constants_1 = require("../lib/_constants");
 var path = require("path");
 var modulePath = path.join(__dirname, "..", "..");
-var systemdServicePath = path.join("/etc", "systemd", "system", serviceName + ".service");
+var systemdServicePath = path.join("/etc", "systemd", "system", _constants_1.c.serviceName + ".service");
 require("rejection-tracker").main(modulePath);
-var child_process_1 = require("child_process");
-var readline = require("readline");
-var fs_1 = require("fs");
 var program = require("commander");
+var _ = require("../tools/commanderFunctions");
+var fs_1 = require("fs");
 require("colors");
 program
     .command("postinstall")
@@ -90,10 +89,10 @@ function installService() {
                     console.log([
                         "Now you will be ask to choose the user that will run the service\n",
                     ].join("").yellow);
-                    return [4 /*yield*/, ask("User? (press enter for root)")];
+                    return [4 /*yield*/, _.ask("User? (press enter for root)")];
                 case 1:
                     user = (_a.sent()) || "root";
-                    return [4 /*yield*/, ask("Group? (press enter for root)")];
+                    return [4 /*yield*/, _.ask("Group? (press enter for root)")];
                 case 2:
                     group = (_a.sent()) || "root";
                     service = [
@@ -118,19 +117,19 @@ function installService() {
                         "WantedBy=multi-user.target",
                         ""
                     ].join("\n");
-                    return [4 /*yield*/, writeFileAssertSuccess(systemdServicePath, service)];
+                    return [4 /*yield*/, _.writeFileAssertSuccess(systemdServicePath, service)];
                 case 3:
                     _a.sent();
-                    return [4 /*yield*/, run("systemctl daemon-reload")];
+                    return [4 /*yield*/, _.run("systemctl daemon-reload")];
                 case 4:
                     _a.sent();
                     console.log([
-                        "Semasim gateway service successfully installed!".green,
+                        "Service successfully installed!".green,
                         systemdServicePath + ": \n\n " + service,
                         "To run the service:".yellow,
-                        "sudo systemctl start " + serviceName,
+                        "sudo systemctl start " + _constants_1.c.serviceName,
                         "To automatically start the service on boot:".yellow,
-                        "sudo systemctl enable " + serviceName,
+                        "sudo systemctl enable " + _constants_1.c.serviceName,
                     ].join("\n"));
                     return [2 /*return*/];
             }
@@ -144,10 +143,10 @@ function removeService() {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 3, , 4]);
-                    return [4 /*yield*/, run("systemctl stop " + serviceName + ".service")];
+                    return [4 /*yield*/, _.run("systemctl stop " + _constants_1.c.serviceName + ".service")];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, run("systemctl disable " + serviceName + ".service")];
+                    return [4 /*yield*/, _.run("systemctl disable " + _constants_1.c.serviceName + ".service")];
                 case 2:
                     _a.sent();
                     return [3 /*break*/, 4];
@@ -159,47 +158,12 @@ function removeService() {
                         fs_1.unlinkSync(systemdServicePath);
                     }
                     catch (error) { }
-                    return [4 /*yield*/, run("systemctl daemon-reload")];
+                    return [4 /*yield*/, _.run("systemctl daemon-reload")];
                 case 5:
                     _a.sent();
-                    console.log((serviceName + ".service removed from systemd").green);
+                    console.log((_constants_1.c.serviceName + ".service removed from systemd").green);
                     return [2 /*return*/];
             }
         });
     });
 }
-function run(command) {
-    return new Promise(function (resolve, reject) {
-        child_process_1.exec(command, function (error, stdout) {
-            if (error) {
-                reject(new Error(error.message));
-                return;
-            }
-            resolve(stdout);
-        });
-    });
-}
-exports.run = run;
-function ask(question) {
-    var rl = readline.createInterface({
-        "input": process.stdin,
-        "output": process.stdout
-    });
-    return new Promise(function (resolve) {
-        rl.question(question + "\n> ", function (answer) {
-            resolve(answer);
-            rl.close();
-        });
-    });
-}
-exports.ask = ask;
-function writeFileAssertSuccess(filename, data) {
-    return new Promise(function (resolve) { return fs_1.writeFile(filename, data, { "encoding": "utf8", "flag": "w" }, function (error) {
-        if (error) {
-            console.log(("Error: Failed to write " + filename + ": " + error.message).red);
-            process.exit(1);
-        }
-        resolve();
-    }); });
-}
-exports.writeFileAssertSuccess = writeFileAssertSuccess;

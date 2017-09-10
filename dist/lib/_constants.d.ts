@@ -8,6 +8,7 @@ export declare class c {
         readonly regExpImei: RegExp;
         readonly regExpFourDigits: RegExp;
     };
+    static readonly serviceName: string;
     static readonly dbParamsGateway: {
         "host": string;
         "user": string;

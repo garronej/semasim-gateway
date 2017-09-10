@@ -16,6 +16,8 @@ export class c {
 
     }
 
+    public static readonly serviceName= "semasim-gateway";
+
     public static readonly dbParamsGateway = {
         "host": "127.0.0.1",
         "user": "root",

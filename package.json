@@ -7,7 +7,7 @@
   "scripts": {
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
-    "start": "DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/lib/main.js"
+    "start": "sudo systemctl stop semasim-gateway && DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/lib/main.js"
   },
   "repository": {
     "type": "git",

@@ -15,6 +15,7 @@ var c = /** @class */ (function () {
         _a.regExpImei = /^[0-9]{15}$/,
         _a.regExpFourDigits = /^[0-9]{4}$/,
         _a);
+    c.serviceName = "semasim-gateway";
     c.dbParamsGateway = {
         "host": "127.0.0.1",
         "user": "root",
