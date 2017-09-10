@@ -145,7 +145,7 @@ export namespace asterisk {
                     "aors": endpoint,
                     "auth": endpoint,
                     "force_rport": null,
-                    "from_domain": "semasim.com", //TODO see if mandatory
+                    "from_domain": c.shared.backendHostname,
                     "ice_support": "yes",
                     "direct_media": null,
                     "asymmetric_rtp_codec": null,

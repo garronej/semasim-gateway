@@ -209,7 +209,7 @@ var asterisk;
                             "aors": endpoint,
                             "auth": endpoint,
                             "force_rport": null,
-                            "from_domain": "semasim.com",
+                            "from_domain": _constants_1.c.shared.backendHostname,
                             "ice_support": "yes",
                             "direct_media": null,
                             "asymmetric_rtp_codec": null,
