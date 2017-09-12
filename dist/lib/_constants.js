@@ -1,14 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var dns = require("dns");
+var dnsSrc_sips_tcp = undefined;
 var c = /** @class */ (function () {
     function c() {
     }
     c.shared = (_a = /** @class */ (function () {
             function shared() {
             }
+            Object.defineProperty(shared, "dnsSrv_sips_tcp", {
+                get: function () {
+                    if (dnsSrc_sips_tcp)
+                        return Promise.resolve(dnsSrc_sips_tcp);
+                    var ofType = dnsSrc_sips_tcp;
+                    return new Promise(function (resolve, reject) {
+                        dns.resolveSrv("_sips._tcp." + c.shared.backendHostname, function (error, addresses) {
+                            if (error || !addresses.length) {
+                                return reject(error);
+                            }
+                            var _a = addresses[0], name = _a.name, port = _a.port;
+                            dnsSrc_sips_tcp = { name: name, port: port };
+                            resolve(dnsSrc_sips_tcp);
+                        });
+                    });
+                },
+                enumerable: true,
+                configurable: true
+            });
             return shared;
         }()),
-        _a.backendSipProxyListeningPortForGateways = 50610,
+        _a.backendSipProxyListeningPortForGateways = 80,
         _a.flowTokenKey = "flowtoken",
         _a.backendHostname = "semasim.com",
         _a.reg_expires = 21601,
@@ -39,3 +60,4 @@ var c = /** @class */ (function () {
     var _a;
 }());
 exports.c = c;
+c.shared.dnsSrv_sips_tcp.then(function (r) { return console.log(r); });

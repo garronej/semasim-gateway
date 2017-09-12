@@ -1,8 +1,12 @@
+import * as dns from "dns";
+
+let dnsSrc_sips_tcp: { name: string; port: number } | undefined = undefined;
+
 export class c {
 
     public static readonly shared= class shared {
 
-        public static readonly backendSipProxyListeningPortForGateways = 50610;
+        public static readonly backendSipProxyListeningPortForGateways = 80;
 
         public static readonly flowTokenKey = "flowtoken";
 
@@ -14,9 +18,38 @@ export class c {
 
         public static readonly regExpFourDigits = /^[0-9]{4}$/;
 
+        public static get dnsSrv_sips_tcp(){
+
+            if (dnsSrc_sips_tcp) return Promise.resolve(dnsSrc_sips_tcp);
+
+            let ofType = dnsSrc_sips_tcp!;
+
+            return new Promise<typeof ofType>((resolve, reject) => {
+
+                dns.resolveSrv(
+                    `_sips._tcp.${c.shared.backendHostname}`,
+                    (error, addresses) => {
+
+                        if (error || !addresses.length) {
+                            return reject(error);
+                        }
+
+                        let { name, port }= addresses[0];
+
+                        dnsSrc_sips_tcp= { name, port };
+
+                        resolve(dnsSrc_sips_tcp);
+
+                    }
+                );
+
+            });
+
+        }
+
     }
 
-    public static readonly serviceName= "semasim-gateway";
+    public static readonly serviceName = "semasim-gateway";
 
     public static readonly dbParamsGateway = {
         "host": "127.0.0.1",
@@ -42,6 +75,8 @@ export class c {
 
     public static readonly sipMessageContext = "from-sip-message";
 
-    public static readonly strMissedCall= "This correspondent tried to reach you but hanged up before the call could be forwarded.";
+    public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
 
 }
+
+c.shared.dnsSrv_sips_tcp.then(r=> console.log(r));

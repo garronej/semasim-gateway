@@ -17,7 +17,7 @@ import "colors";
 import * as _debug from "debug";
 let debug = _debug("_sipProxy");
 
-let localIp: string | undefined= undefined;
+let localIp= "";
 
 const informativeHostname= "semasim-gateway.invalid";
 
@@ -62,17 +62,19 @@ export async function start() {
 
     debug("(re)Staring !");
 
-    if( !localIp ) localIp = await new Promise<string>(
-        (resolve,reject)=> network.get_private_ip(
-            (err, ip)=> err?reject(err):resolve(ip)
-        )
-    );
+    if (!localIp) {
+        localIp = await new Promise<string>(
+            (resolve, reject) => network.get_private_ip(
+                (err, ip) => err ? reject(err) : resolve(ip)
+            )
+        );
+    }
 
     asteriskSockets = new sipLibrary.Store();
 
     backendSocket = new sipLibrary.Socket(
         tls.connect({
-            "host": c.shared.backendHostname,
+            "host": (await c.shared.dnsSrv_sips_tcp).name,
             "port": c.shared.backendSipProxyListeningPortForGateways
         }) as any
     );
@@ -96,15 +98,15 @@ export async function start() {
 
         evtNewBackendSocketConnect.post();
 
-        let set= new Set<string>();
+        let set = new Set<string>();
 
-        for( let imei of await db.asterisk.queryEndpoints())
+        for (let imei of await db.asterisk.queryEndpoints())
             set.add(imei);
 
-        for( let imei of await DongleExtendedClient.localhost().getConnectedDongles() )
+        for (let imei of await DongleExtendedClient.localhost().getConnectedDongles())
             set.add(imei);
 
-        for (let imei of set )
+        for (let imei of set)
             sipApiBackend.claimDongle.makeCall(imei);
 
     });
@@ -217,7 +219,7 @@ export async function start() {
 
 
 function createAsteriskSocket(
-    flowToken: string, 
+    flowToken: string,
     backendSocket: sipLibrary.Socket
 ): sipLibrary.Socket {
 

@@ -59,7 +59,7 @@ var _constants_1 = require("./_constants");
 require("colors");
 var _debug = require("debug");
 var debug = _debug("_sipProxy");
-var localIp = undefined;
+var localIp = "";
 var informativeHostname = "semasim-gateway.invalid";
 exports.evtIncomingMessage = new ts_events_extended_1.SyncEvent();
 exports.evtOutgoingMessage = new ts_events_extended_1.SyncEvent();
@@ -100,21 +100,27 @@ exports.getAsteriskSockets = getAsteriskSockets;
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a, _b, _c, _d, _e, _f;
+        return __generator(this, function (_g) {
+            switch (_g.label) {
                 case 0:
                     debug("(re)Staring !");
                     if (!!localIp) return [3 /*break*/, 2];
                     return [4 /*yield*/, new Promise(function (resolve, reject) { return network.get_private_ip(function (err, ip) { return err ? reject(err) : resolve(ip); }); })];
                 case 1:
-                    localIp = _a.sent();
-                    _a.label = 2;
+                    localIp = _g.sent();
+                    _g.label = 2;
                 case 2:
                     asteriskSockets = new sipLibrary.Store();
-                    backendSocket = new sipLibrary.Socket(tls.connect({
-                        "host": _constants_1.c.shared.backendHostname,
-                        "port": _constants_1.c.shared.backendSipProxyListeningPortForGateways
-                    }));
+                    _b = (_a = sipLibrary.Socket).bind;
+                    _d = (_c = tls).connect;
+                    _e = {};
+                    _f = "host";
+                    return [4 /*yield*/, _constants_1.c.shared.dnsSrv_sips_tcp];
+                case 3:
+                    backendSocket = new (_b.apply(_a, [void 0, _d.apply(_c, [(_e[_f] = (_g.sent()).name,
+                                _e["port"] = _constants_1.c.shared.backendSipProxyListeningPortForGateways,
+                                _e)])]))();
                     backendSocket.setKeepAlive(true);
                     sipApi_1.startListening(backendSocket);
                     /*
