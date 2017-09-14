@@ -75,7 +75,7 @@ export async function start() {
     backendSocket = new sipLibrary.Socket(
         tls.connect({
             "host": (await c.shared.dnsSrv_sips_tcp).name,
-            "port": c.shared.backendSipProxyListeningPortForGateways
+            "port": c.shared.gatewayPort
         }) as any
     );
 
@@ -209,7 +209,13 @@ export async function start() {
 
         await asteriskSockets.destroyAll();
 
-        await new Promise<void>(resolve => setTimeout(resolve, 3000));
+        let delay = (function getRandomArbitrary(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        })(2000, 10000);
+
+        debug(`Delay before restarting: ${delay}ms`);
+
+        await new Promise<void>(resolve => setTimeout(resolve, delay));
 
         start();
 

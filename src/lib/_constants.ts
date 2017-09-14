@@ -6,11 +6,11 @@ export class c {
 
     public static readonly shared= class shared {
 
-        public static readonly backendSipProxyListeningPortForGateways = 80;
+        public static readonly gatewayPort = 80;
 
         public static readonly flowTokenKey = "flowtoken";
 
-        public static readonly backendHostname = "semasim.com";
+        public static readonly domain = "semasim.com";
 
         public static readonly reg_expires = 21601;
 
@@ -27,7 +27,7 @@ export class c {
             return new Promise<typeof ofType>((resolve, reject) => {
 
                 dns.resolveSrv(
-                    `_sips._tcp.${c.shared.backendHostname}`,
+                    `_sips._tcp.${c.shared.domain}`,
                     (error, addresses) => {
 
                         if (error || !addresses.length) {
@@ -78,5 +78,3 @@ export class c {
     public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
 
 }
-
-c.shared.dnsSrv_sips_tcp.then(r=> console.log(r));

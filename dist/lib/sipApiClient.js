@@ -101,3 +101,29 @@ var unlockDongle;
     }
     unlockDongle.makeCall = makeCall;
 })(unlockDongle = exports.unlockDongle || (exports.unlockDongle = {}));
+var getSimPhonebook;
+(function (getSimPhonebook) {
+    getSimPhonebook.methodName = "getSimPhonebook";
+    function makeCall(gatewaySocket, iccid) {
+        return __awaiter(this, void 0, void 0, function () {
+            var params, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        debug("call " + getSimPhonebook.methodName);
+                        params = { iccid: iccid };
+                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, getSimPhonebook.methodName, params)];
+                    case 1:
+                        response = _a.sent();
+                        debug("Response: ", { response: response });
+                        if ((function (response) { return !!response.infos; })(response))
+                            return [2 /*return*/, response];
+                        else
+                            return [2 /*return*/, undefined];
+                        return [2 /*return*/];
+                }
+            });
+        });
+    }
+    getSimPhonebook.makeCall = makeCall;
+})(getSimPhonebook = exports.getSimPhonebook || (exports.getSimPhonebook = {}));

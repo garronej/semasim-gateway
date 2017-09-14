@@ -1,6 +1,7 @@
 import * as sipLibrary from "../tools/sipLibrary";
 import { typesDef } from "chan-dongle-extended-client";
 import LockedDongle = typesDef.LockedDongle;
+import Phonebook = typesDef.Phonebook;
 export declare namespace isDongleConnected {
     const methodName = "isDongleConnected";
     interface Params {
@@ -45,4 +46,14 @@ export declare namespace unlockDongle {
         serviceProvider: string | undefined;
     };
     function makeCall(gatewaySocket: sipLibrary.Socket, params: Params): Promise<Response>;
+}
+export declare namespace getSimPhonebook {
+    const methodName = "getSimPhonebook";
+    interface Params {
+        iccid: string;
+    }
+    type Response = Phonebook | {
+        errorMessage: string;
+    };
+    function makeCall(gatewaySocket: sipLibrary.Socket, iccid: string): Promise<Phonebook | undefined>;
 }

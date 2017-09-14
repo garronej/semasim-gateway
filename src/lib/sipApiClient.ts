@@ -2,6 +2,7 @@ import * as framework from "../tools/sipApiFramework";
 import * as sipLibrary from "../tools/sipLibrary";
 import { typesDef } from "chan-dongle-extended-client";
 import LockedDongle = typesDef.LockedDongle;
+import Phonebook= typesDef.Phonebook;
 
 import * as _debug from "debug";
 let debug = _debug("_sipApiClient");
@@ -118,6 +119,42 @@ export namespace unlockDongle {
         debug("Response: ", { response });
 
         return response;
+
+    }
+
+}
+
+export namespace getSimPhonebook {
+
+    export const methodName = "getSimPhonebook";
+
+    export interface Params {
+        iccid: string;
+    }
+
+    export type Response = Phonebook | { errorMessage: string };
+
+    export async function makeCall(
+        gatewaySocket: sipLibrary.Socket,
+        iccid: string
+    ): Promise<Phonebook | undefined> {
+
+        debug(`call ${methodName}`);
+
+        let params: Params= { iccid };
+
+        let response = await framework.sendRequest(
+            gatewaySocket,
+            methodName,
+            params
+        ) as Response;
+
+        debug("Response: ", { response });
+
+        if( ( (response: Response): response is Phonebook => !!(response as Phonebook).infos )(response) )
+            return response;
+        else
+            return undefined;
 
     }
 

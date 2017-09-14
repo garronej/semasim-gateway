@@ -119,7 +119,7 @@ function start() {
                     return [4 /*yield*/, _constants_1.c.shared.dnsSrv_sips_tcp];
                 case 3:
                     backendSocket = new (_b.apply(_a, [void 0, _d.apply(_c, [(_e[_f] = (_g.sent()).name,
-                                _e["port"] = _constants_1.c.shared.backendSipProxyListeningPortForGateways,
+                                _e["port"] = _constants_1.c.shared.gatewayPort,
                                 _e)])]))();
                     backendSocket.setKeepAlive(true);
                     sipApi_1.startListening(backendSocket);
@@ -280,6 +280,7 @@ function start() {
                         asteriskSocket.write(sipResponse);
                     });
                     backendSocket.evtClose.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
+                        var delay;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
@@ -287,7 +288,11 @@ function start() {
                                     return [4 /*yield*/, asteriskSockets.destroyAll()];
                                 case 1:
                                     _a.sent();
-                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                                    delay = (function getRandomArbitrary(min, max) {
+                                        return Math.floor(Math.random() * (max - min) + min);
+                                    })(2000, 10000);
+                                    debug("Delay before restarting: " + delay + "ms");
+                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, delay); })];
                                 case 2:
                                     _a.sent();
                                     start();

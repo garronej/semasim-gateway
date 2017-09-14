@@ -2,6 +2,7 @@ import { DongleExtendedClient, typesDef as t } from "chan-dongle-extended-client
 import * as framework from "../tools/sipApiFramework";
 import * as sipLibrary from "../tools/sipLibrary";
 import { asterisk as dbAsterisk } from "./db";
+import * as phone from "../tools/phoneNumberLibrary";
 import * as _ from "./sipApiClient";
 
 import * as _debug from "debug";
@@ -82,15 +83,74 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
     type Params = _.unlockDongle.Params;
     type Response = _.unlockDongle.Response;
 
-    function isValidPass(iccid: string, last_four_digits_of_iccid: string) {
+    function checkIfIccidMatch(iccid: string, last_four_digits_of_iccid: string) {
         return !iccid || iccid.substring(iccid.length - 4) === last_four_digits_of_iccid;
     }
+
+    function readServiceProvider( 
+        spFromDongle: string | undefined, 
+        imsi: string
+    ): string | undefined {
+
+        let imsiInfos = phone.getImsiInfos(imsi);
+
+        if (!imsiInfos) return spFromDongle;
+
+        return imsiInfos.network_name;
+
+    }
+
+    function buildSuccessResponse(dongle: t.DongleActive): Response {
+
+        return {
+            "dongleFound": true,
+            "pinState": "READY",
+            "iccid": dongle.iccid,
+            "number": phone.toNationalNumber(
+                dongle.number || "",
+                dongle.imsi
+            ),
+            "serviceProvider": readServiceProvider(
+                dongle.serviceProvider,
+                dongle.imsi
+            )
+        };
+
+    }
+
+    function buildDongleStillLockedResponse(dongle: t.LockedDongle): Response {
+
+        return {
+            "dongleFound": true,
+            "pinState": dongle.pinState,
+            "tryLeft": dongle.tryLeft
+        };
+
+    }
+
+    async function attemptUnlock(
+        imei: string, 
+        pin: string
+    ): Promise<t.LockedDongle | t.DongleActive> {
+
+        let dongleClient= DongleExtendedClient.localhost();
+
+        await dongleClient.unlockDongle(imei, pin);
+
+        return await Promise.race([
+            dongleClient.evtNewActiveDongle.waitFor(newActiveDongle => newActiveDongle.imei === imei),
+            dongleClient.evtRequestUnlockCode.waitFor(lockedDongle => lockedDongle.imei === imei)
+        ]);
+
+    };
+
+    const matchUnlocked = (dongle: t.LockedDongle | t.DongleActive): dongle is t.DongleActive => !(dongle as t.LockedDongle).pinState;
 
     handlers[methodName] = async (params: Params): Promise<Response> => {
 
         debug(`handle ${methodName}`);
 
-        let { imei, last_four_digits_of_iccid, pin_first_try, pin_second_try }= params;
+        let { imei, last_four_digits_of_iccid, pin_first_try, pin_second_try } = params;
 
         let dongleClient = DongleExtendedClient.localhost();
 
@@ -100,94 +160,50 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
 
             if (activeDongle) {
 
-                if (!isValidPass(activeDongle.iccid, last_four_digits_of_iccid))
+                if (!checkIfIccidMatch(activeDongle.iccid, last_four_digits_of_iccid))
                     throw new Error("ICCID does not match");
 
-                return {
-                    "dongleFound": true,
-                    "pinState": "READY",
-                    "iccid": activeDongle.iccid,
-                    "number": activeDongle.number,
-                    "serviceProvider": activeDongle.serviceProvider
-                };
+                return buildSuccessResponse(activeDongle);
 
             }
 
-            let lockedDongle: t.LockedDongle | undefined= undefined;
+            let lockedDongle: t.LockedDongle | undefined = undefined;
 
-            let lockedDongles= await dongleClient.getLockedDongles();
+            let lockedDongles = await dongleClient.getLockedDongles();
 
-            for( let i=0; i<lockedDongles.length; i++){
+            for (let i = 0; i < lockedDongles.length; i++) {
 
-                    if (lockedDongles[i].imei !== imei) 
-                        continue;
+                if (lockedDongles[i].imei !== imei)
+                    continue;
 
-                    if (!isValidPass(lockedDongles[i].iccid, last_four_digits_of_iccid)) 
-                        continue;
+                if (!checkIfIccidMatch(lockedDongles[i].iccid, last_four_digits_of_iccid))
+                    continue;
 
-                    lockedDongle= lockedDongles[i];
+                lockedDongle = lockedDongles[i];
 
-                    break;
+                break;
 
             }
 
-            if( !lockedDongle ) throw new Error("Locked dongle not found");
+            if (!lockedDongle) throw new Error("Locked dongle not found");
 
             if (lockedDongle.pinState !== "SIM PIN" || lockedDongle.tryLeft !== 3 || !pin_first_try)
-                return { 
-                    "dongleFound": true, 
-                    "pinState": lockedDongle.pinState, 
-                    "tryLeft": lockedDongle.tryLeft 
-                };
+                return buildDongleStillLockedResponse(lockedDongle);
 
+            let dongleFirstTry = await attemptUnlock(imei, pin_first_try);
 
-            let attemptUnlock = async (pin: string): Promise<t.LockedDongle | t.DongleActive> => {
-
-                await dongleClient.unlockDongle(imei, pin);
-
-                return await Promise.race([
-                    dongleClient.evtNewActiveDongle.waitFor(newActiveDongle => newActiveDongle.imei === imei),
-                    dongleClient.evtRequestUnlockCode.waitFor(lockedDongle => lockedDongle.imei === imei)
-                ]);
-
-            };
-
-            let matchLocked = (dongle: t.LockedDongle | t.DongleActive): dongle is t.LockedDongle => dongle["pinState"];
-
-            let resultFirstTry = await attemptUnlock(pin_first_try);
-
-            if (!matchLocked(resultFirstTry))
-                return {
-                    "dongleFound": true,
-                    "pinState": "READY",
-                    "iccid": resultFirstTry.iccid,
-                    "number": resultFirstTry.number,
-                    "serviceProvider": resultFirstTry.serviceProvider
-                };
+            if (matchUnlocked(dongleFirstTry))
+                return buildSuccessResponse(dongleFirstTry);
 
             if (!pin_second_try)
-                return {
-                    "dongleFound": true,
-                    "pinState": resultFirstTry.pinState,
-                    "tryLeft": resultFirstTry.tryLeft
-                };
+                return buildDongleStillLockedResponse(dongleFirstTry);
 
-            let resultSecondTry = await attemptUnlock(pin_second_try);
+            let dongleSecondTry = await attemptUnlock(imei, pin_second_try);
 
-            if (!matchLocked(resultSecondTry))
-                return {
-                    "dongleFound": true,
-                    "pinState": "READY",
-                    "iccid": resultSecondTry.iccid,
-                    "number": resultSecondTry.number,
-                    "serviceProvider": resultSecondTry.serviceProvider
-                };
+            if (matchUnlocked(dongleSecondTry))
+                return buildSuccessResponse(dongleSecondTry);
 
-            return {
-                "dongleFound": true,
-                "pinState": resultSecondTry.pinState,
-                "tryLeft": resultSecondTry.tryLeft
-            };
+            return buildDongleStillLockedResponse(dongleSecondTry);
 
         } catch (error) {
 
@@ -197,6 +213,46 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
 
         }
 
+
+    };
+
+})();
+
+
+(() => {
+
+    let methodName = _.getSimPhonebook.methodName;
+    type Params = _.getSimPhonebook.Params;
+    type Response = _.getSimPhonebook.Response;
+
+    handlers[methodName] = async (params: Params): Promise<Response> => {
+
+        debug(`handle ${methodName}`);
+
+        let { iccid } = params;
+
+        let dongleClient = DongleExtendedClient.localhost();
+
+        try {
+
+            let [{ imei, imsi }] = (await dongleClient.getActiveDongles())
+                .filter(dongle => dongle.iccid === iccid)
+                .map(({ imei, imsi }) => ({ imei, imsi }));
+
+            let phonebook = await dongleClient.getSimPhonebook(imei);
+
+            for (let contact of phonebook.contacts){
+                if( !contact.name || !contact.number ) continue;
+                contact.number = phone.toNationalNumber(contact.number, imsi);
+            }
+
+            return phonebook;
+
+        } catch (error) {
+
+            return { "errorMessage": error.message };
+
+        }
 
     };
 

@@ -34,11 +34,38 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var framework = require("../tools/sipApiFramework");
 var db_1 = require("./db");
+var phone = require("../tools/phoneNumberLibrary");
 var _ = require("./sipApiClient");
 var _debug = require("debug");
 var debug = _debug("_sipApi");
@@ -110,12 +137,54 @@ var handlers = {};
 })();
 (function () {
     var methodName = _.unlockDongle.methodName;
-    function isValidPass(iccid, last_four_digits_of_iccid) {
+    function checkIfIccidMatch(iccid, last_four_digits_of_iccid) {
         return !iccid || iccid.substring(iccid.length - 4) === last_four_digits_of_iccid;
     }
+    function readServiceProvider(spFromDongle, imsi) {
+        var imsiInfos = phone.getImsiInfos(imsi);
+        if (!imsiInfos)
+            return spFromDongle;
+        return imsiInfos.network_name;
+    }
+    function buildSuccessResponse(dongle) {
+        return {
+            "dongleFound": true,
+            "pinState": "READY",
+            "iccid": dongle.iccid,
+            "number": phone.toNationalNumber(dongle.number || "", dongle.imsi),
+            "serviceProvider": readServiceProvider(dongle.serviceProvider, dongle.imsi)
+        };
+    }
+    function buildDongleStillLockedResponse(dongle) {
+        return {
+            "dongleFound": true,
+            "pinState": dongle.pinState,
+            "tryLeft": dongle.tryLeft
+        };
+    }
+    function attemptUnlock(imei, pin) {
+        return __awaiter(this, void 0, void 0, function () {
+            var dongleClient;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        dongleClient = chan_dongle_extended_client_1.DongleExtendedClient.localhost();
+                        return [4 /*yield*/, dongleClient.unlockDongle(imei, pin)];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, Promise.race([
+                                dongleClient.evtNewActiveDongle.waitFor(function (newActiveDongle) { return newActiveDongle.imei === imei; }),
+                                dongleClient.evtRequestUnlockCode.waitFor(function (lockedDongle) { return lockedDongle.imei === imei; })
+                            ])];
+                    case 2: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    }
+    ;
+    var matchUnlocked = function (dongle) { return !dongle.pinState; };
     handlers[methodName] = function (params) { return __awaiter(_this, void 0, void 0, function () {
-        var _this = this;
-        var imei, last_four_digits_of_iccid, pin_first_try, pin_second_try, dongleClient, activeDongle, lockedDongle, lockedDongles, i, attemptUnlock, matchLocked, resultFirstTry, resultSecondTry, error_1;
+        var imei, last_four_digits_of_iccid, pin_first_try, pin_second_try, dongleClient, activeDongle, lockedDongle, lockedDongles, i, dongleFirstTry, dongleSecondTry, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -129,15 +198,9 @@ var handlers = {};
                 case 2:
                     activeDongle = _a.sent();
                     if (activeDongle) {
-                        if (!isValidPass(activeDongle.iccid, last_four_digits_of_iccid))
+                        if (!checkIfIccidMatch(activeDongle.iccid, last_four_digits_of_iccid))
                             throw new Error("ICCID does not match");
-                        return [2 /*return*/, {
-                                "dongleFound": true,
-                                "pinState": "READY",
-                                "iccid": activeDongle.iccid,
-                                "number": activeDongle.number,
-                                "serviceProvider": activeDongle.serviceProvider
-                            }];
+                        return [2 /*return*/, buildSuccessResponse(activeDongle)];
                     }
                     lockedDongle = undefined;
                     return [4 /*yield*/, dongleClient.getLockedDongles()];
@@ -146,7 +209,7 @@ var handlers = {};
                     for (i = 0; i < lockedDongles.length; i++) {
                         if (lockedDongles[i].imei !== imei)
                             continue;
-                        if (!isValidPass(lockedDongles[i].iccid, last_four_digits_of_iccid))
+                        if (!checkIfIccidMatch(lockedDongles[i].iccid, last_four_digits_of_iccid))
                             continue;
                         lockedDongle = lockedDongles[i];
                         break;
@@ -154,64 +217,73 @@ var handlers = {};
                     if (!lockedDongle)
                         throw new Error("Locked dongle not found");
                     if (lockedDongle.pinState !== "SIM PIN" || lockedDongle.tryLeft !== 3 || !pin_first_try)
-                        return [2 /*return*/, {
-                                "dongleFound": true,
-                                "pinState": lockedDongle.pinState,
-                                "tryLeft": lockedDongle.tryLeft
-                            }];
-                    attemptUnlock = function (pin) { return __awaiter(_this, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0: return [4 /*yield*/, dongleClient.unlockDongle(imei, pin)];
-                                case 1:
-                                    _a.sent();
-                                    return [4 /*yield*/, Promise.race([
-                                            dongleClient.evtNewActiveDongle.waitFor(function (newActiveDongle) { return newActiveDongle.imei === imei; }),
-                                            dongleClient.evtRequestUnlockCode.waitFor(function (lockedDongle) { return lockedDongle.imei === imei; })
-                                        ])];
-                                case 2: return [2 /*return*/, _a.sent()];
-                            }
-                        });
-                    }); };
-                    matchLocked = function (dongle) { return dongle["pinState"]; };
-                    return [4 /*yield*/, attemptUnlock(pin_first_try)];
+                        return [2 /*return*/, buildDongleStillLockedResponse(lockedDongle)];
+                    return [4 /*yield*/, attemptUnlock(imei, pin_first_try)];
                 case 4:
-                    resultFirstTry = _a.sent();
-                    if (!matchLocked(resultFirstTry))
-                        return [2 /*return*/, {
-                                "dongleFound": true,
-                                "pinState": "READY",
-                                "iccid": resultFirstTry.iccid,
-                                "number": resultFirstTry.number,
-                                "serviceProvider": resultFirstTry.serviceProvider
-                            }];
+                    dongleFirstTry = _a.sent();
+                    if (matchUnlocked(dongleFirstTry))
+                        return [2 /*return*/, buildSuccessResponse(dongleFirstTry)];
                     if (!pin_second_try)
-                        return [2 /*return*/, {
-                                "dongleFound": true,
-                                "pinState": resultFirstTry.pinState,
-                                "tryLeft": resultFirstTry.tryLeft
-                            }];
-                    return [4 /*yield*/, attemptUnlock(pin_second_try)];
+                        return [2 /*return*/, buildDongleStillLockedResponse(dongleFirstTry)];
+                    return [4 /*yield*/, attemptUnlock(imei, pin_second_try)];
                 case 5:
-                    resultSecondTry = _a.sent();
-                    if (!matchLocked(resultSecondTry))
-                        return [2 /*return*/, {
-                                "dongleFound": true,
-                                "pinState": "READY",
-                                "iccid": resultSecondTry.iccid,
-                                "number": resultSecondTry.number,
-                                "serviceProvider": resultSecondTry.serviceProvider
-                            }];
-                    return [2 /*return*/, {
-                            "dongleFound": true,
-                            "pinState": resultSecondTry.pinState,
-                            "tryLeft": resultSecondTry.tryLeft
-                        }];
+                    dongleSecondTry = _a.sent();
+                    if (matchUnlocked(dongleSecondTry))
+                        return [2 /*return*/, buildSuccessResponse(dongleSecondTry)];
+                    return [2 /*return*/, buildDongleStillLockedResponse(dongleSecondTry)];
                 case 6:
                     error_1 = _a.sent();
                     debug("error: ", error_1.message);
                     return [2 /*return*/, { "dongleFound": false }];
                 case 7: return [2 /*return*/];
+            }
+        });
+    }); };
+})();
+(function () {
+    var methodName = _.getSimPhonebook.methodName;
+    handlers[methodName] = function (params) { return __awaiter(_this, void 0, void 0, function () {
+        var iccid, dongleClient, _a, _b, imei, imsi, phonebook, _c, _d, contact, error_2, e_1, _e;
+        return __generator(this, function (_f) {
+            switch (_f.label) {
+                case 0:
+                    debug("handle " + methodName);
+                    iccid = params.iccid;
+                    dongleClient = chan_dongle_extended_client_1.DongleExtendedClient.localhost();
+                    _f.label = 1;
+                case 1:
+                    _f.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, dongleClient.getActiveDongles()];
+                case 2:
+                    _a = __read.apply(void 0, [(_f.sent())
+                            .filter(function (dongle) { return dongle.iccid === iccid; })
+                            .map(function (_a) {
+                            var imei = _a.imei, imsi = _a.imsi;
+                            return ({ imei: imei, imsi: imsi });
+                        }), 1]), _b = _a[0], imei = _b.imei, imsi = _b.imsi;
+                    return [4 /*yield*/, dongleClient.getSimPhonebook(imei)];
+                case 3:
+                    phonebook = _f.sent();
+                    try {
+                        for (_c = __values(phonebook.contacts), _d = _c.next(); !_d.done; _d = _c.next()) {
+                            contact = _d.value;
+                            if (!contact.name || !contact.number)
+                                continue;
+                            contact.number = phone.toNationalNumber(contact.number, imsi);
+                        }
+                    }
+                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                    finally {
+                        try {
+                            if (_d && !_d.done && (_e = _c.return)) _e.call(_c);
+                        }
+                        finally { if (e_1) throw e_1.error; }
+                    }
+                    return [2 /*return*/, phonebook];
+                case 4:
+                    error_2 = _f.sent();
+                    return [2 /*return*/, { "errorMessage": error_2.message }];
+                case 5: return [2 /*return*/];
             }
         });
     }); };

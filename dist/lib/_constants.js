@@ -14,7 +14,7 @@ var c = /** @class */ (function () {
                         return Promise.resolve(dnsSrc_sips_tcp);
                     var ofType = dnsSrc_sips_tcp;
                     return new Promise(function (resolve, reject) {
-                        dns.resolveSrv("_sips._tcp." + c.shared.backendHostname, function (error, addresses) {
+                        dns.resolveSrv("_sips._tcp." + c.shared.domain, function (error, addresses) {
                             if (error || !addresses.length) {
                                 return reject(error);
                             }
@@ -29,9 +29,9 @@ var c = /** @class */ (function () {
             });
             return shared;
         }()),
-        _a.backendSipProxyListeningPortForGateways = 80,
+        _a.gatewayPort = 80,
         _a.flowTokenKey = "flowtoken",
-        _a.backendHostname = "semasim.com",
+        _a.domain = "semasim.com",
         _a.reg_expires = 21601,
         _a.regExpImei = /^[0-9]{15}$/,
         _a.regExpFourDigits = /^[0-9]{4}$/,
@@ -60,4 +60,3 @@ var c = /** @class */ (function () {
     var _a;
 }());
 exports.c = c;
-c.shared.dnsSrv_sips_tcp.then(function (r) { return console.log(r); });

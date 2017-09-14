@@ -55,6 +55,7 @@ var sipApiBackend = require("./sipApiClientBackend");
 var db = require("./db");
 var sipProxy = require("./sipProxy");
 var sipMessage = require("./sipMessage");
+var phone = require("../tools/phoneNumberLibrary");
 var _constants_1 = require("./_constants");
 var _debug = require("debug");
 var debug = _debug("_main");
@@ -116,18 +117,25 @@ function start(dongleCallContext) {
     scripts[dongleCallContext] = {};
     scripts[dongleCallContext][_constants_1.c.phoneNumber] = function (channel) { return __awaiter(_this, void 0, void 0, function () {
         var _this = this;
-        var _, number, imei, dialString, failure;
+        var _, number, imei, wakeUpAllContactsPromise, imsi, dialString, failure;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _ = channel.relax;
                     number = channel.request.callerid;
+                    debug("Call from " + number + " !");
                     return [4 /*yield*/, _.getVariable("DONGLEIMEI")];
                 case 1:
                     imei = (_a.sent());
-                    debug("Call from " + number + " !");
-                    return [4 /*yield*/, sipContact_1.contactIo.wakeUpAllContacts(imei, 9000)];
+                    wakeUpAllContactsPromise = sipContact_1.contactIo.wakeUpAllContacts(imei, 9000);
+                    return [4 /*yield*/, _.getVariable("DONGLEIMSI")];
                 case 2:
+                    imsi = (_a.sent());
+                    return [4 /*yield*/, _.setVariable("CALLERID(all)", "\"\" <" + phone.toNationalNumber(number, imsi) + ">")];
+                case 3:
+                    _a.sent();
+                    return [4 /*yield*/, wakeUpAllContactsPromise];
+                case 4:
                     dialString = (_a.sent())
                         .reachableContacts
                         .map(function (_a) {
@@ -157,18 +165,18 @@ function start(dongleCallContext) {
                                 }
                             });
                         }); })];
-                case 3:
+                case 5:
                     failure = _a.sent();
-                    if (!failure) return [3 /*break*/, 5];
+                    if (!failure) return [3 /*break*/, 7];
                     return [4 /*yield*/, db.semasim.addMessageTowardSip(number, _constants_1.c.strMissedCall, new Date(), { "allUaInstanceOfImei": imei })];
-                case 4:
+                case 6:
                     _a.sent();
                     notifyNewSipMessagesToSend();
-                    return [3 /*break*/, 6];
-                case 5:
+                    return [3 /*break*/, 8];
+                case 7:
                     debug("...Call ended");
-                    _a.label = 6;
-                case 6: return [2 /*return*/];
+                    _a.label = 8;
+                case 8: return [2 /*return*/];
             }
         });
     }); };
@@ -449,13 +457,13 @@ function start(dongleCallContext) {
         });
     });
     dongleClient.evtNewMessage.attach(function (_a) {
-        var imei = _a.imei, number = _a.number, text = _a.text, date = _a.date;
+        var imei = _a.imei, imsi = _a.imsi, number = _a.number, text = _a.text, date = _a.date;
         return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         debug("FROM DONGLE MESSAGE", { text: text });
-                        return [4 /*yield*/, db.semasim.addMessageTowardSip(number, text, date, { "allUaInstanceOfImei": imei })];
+                        return [4 /*yield*/, db.semasim.addMessageTowardSip(phone.toNationalNumber(number, imsi), text, date, { "allUaInstanceOfImei": imei })];
                     case 1:
                         _a.sent();
                         notifyNewSipMessagesToSend();
@@ -465,7 +473,7 @@ function start(dongleCallContext) {
         });
     });
     dongleClient.evtMessageStatusReport.attach(function (_a) {
-        var imei = _a.imei, messageId = _a.messageId, isDelivered = _a.isDelivered, dischargeTime = _a.dischargeTime, recipient = _a.recipient, status = _a.status;
+        var imei = _a.imei, imsi = _a.imsi, messageId = _a.messageId, isDelivered = _a.isDelivered, dischargeTime = _a.dischargeTime, recipient = _a.recipient, status = _a.status;
         return __awaiter(_this, void 0, void 0, function () {
             var resp, sender, text;
             return __generator(this, function (_a) {
@@ -478,7 +486,7 @@ function start(dongleCallContext) {
                         if (!resp)
                             return [2 /*return*/];
                         sender = resp.sender, text = resp.text;
-                        return [4 /*yield*/, db.semasim.addMessageTowardSip(recipient, "---STATUS REPORT FOR MESSAGE ID " + messageId + ": " + status + "---", dischargeTime, { "uaInstance": sender })];
+                        return [4 /*yield*/, db.semasim.addMessageTowardSip(phone.toNationalNumber(recipient, imsi), "---STATUS REPORT FOR MESSAGE ID " + messageId + ": " + status + "---", dischargeTime, { "uaInstance": sender })];
                     case 2:
                         _a.sent();
                         return [4 /*yield*/, db.semasim.addMessageTowardSip(recipient, "YOU:\n" + text, new Date(dischargeTime.getTime() + 1), { "allUaInstanceOfEndpointOtherThan": sender })];

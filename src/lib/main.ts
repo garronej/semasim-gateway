@@ -9,6 +9,7 @@ import * as sipApiBackend from "./sipApiClientBackend";
 import * as db from "./db";
 import * as sipProxy from "./sipProxy";
 import * as sipMessage from "./sipMessage";
+import * as phone from "../tools/phoneNumberLibrary";
 
 import { c } from "./_constants";
 
@@ -72,17 +73,20 @@ function start(dongleCallContext: string) {
         let _ = channel.relax;
 
         let number = channel.request.callerid;
-        let imei = (await _.getVariable("DONGLEIMEI"))!;
 
         debug(`Call from ${number} !`);
 
-        //let wakeUpAllContactsPromise= wakeUpAllContacts(imei, 9000);
-        //let name = await DongleExtendedClient.localhost().getContactName(imei, channel.request.callerid);
+        let imei = (await _.getVariable("DONGLEIMEI"))!;
+
+        let wakeUpAllContactsPromise= contactIo.wakeUpAllContacts(imei, 9000);
+
+        let imsi= (await _.getVariable("DONGLEIMSI"))!;
+        await _.setVariable("CALLERID(all)", `"" <${phone.toNationalNumber(number, imsi)}>`);
+
         //await _.setVariable("CALLERID(name-charset)", "utf8");
         //await _.setVariable("CALLERID(name)", name || "");
-        //let dialString = (await wakeUpAllContactsPromise)
 
-        let dialString = (await contactIo.wakeUpAllContacts(imei, 9000))
+        let dialString = (await wakeUpAllContactsPromise)
             .reachableContacts
             .map(({ uri }) => `PJSIP/${imei}/${uri}`).join("&");
 
@@ -326,12 +330,12 @@ function start(dongleCallContext: string) {
     );
 
     dongleClient.evtNewMessage.attach(
-        async ({ imei, number, text, date }) => {
+        async ({ imei, imsi, number, text, date }) => {
 
             debug("FROM DONGLE MESSAGE", { text });
 
             await db.semasim.addMessageTowardSip(
-                number,
+                phone.toNationalNumber(number, imsi),
                 text,
                 date,
                 { "allUaInstanceOfImei": imei }
@@ -343,7 +347,7 @@ function start(dongleCallContext: string) {
     );
 
     dongleClient.evtMessageStatusReport.attach(
-        async ({ imei, messageId, isDelivered, dischargeTime, recipient, status }) => {
+        async ({ imei, imsi, messageId, isDelivered, dischargeTime, recipient, status }) => {
 
             debug("FROM DONGLE STATUS REPORT", status);
 
@@ -354,7 +358,7 @@ function start(dongleCallContext: string) {
             let { sender, text } = resp;
 
             await db.semasim.addMessageTowardSip(
-                recipient,
+                phone.toNationalNumber(recipient, imsi),
                 `---STATUS REPORT FOR MESSAGE ID ${messageId}: ${status}---`,
                 dischargeTime,
                 { "uaInstance": sender }
