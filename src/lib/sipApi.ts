@@ -187,7 +187,7 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
 
             if (!lockedDongle) throw new Error("Locked dongle not found");
 
-            if (lockedDongle.pinState !== "SIM PIN" || lockedDongle.tryLeft !== 3 || !pin_first_try)
+            if (lockedDongle.pinState !== "SIM PIN" || lockedDongle.tryLeft === 1 || !pin_first_try)
                 return buildDongleStillLockedResponse(lockedDongle);
 
             let dongleFirstTry = await attemptUnlock(imei, pin_first_try);
@@ -195,7 +195,7 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
             if (matchUnlocked(dongleFirstTry))
                 return buildSuccessResponse(dongleFirstTry);
 
-            if (!pin_second_try)
+            if ( dongleFirstTry.tryLeft === 1 || !pin_second_try)
                 return buildDongleStillLockedResponse(dongleFirstTry);
 
             let dongleSecondTry = await attemptUnlock(imei, pin_second_try);

@@ -216,14 +216,14 @@ var handlers = {};
                     }
                     if (!lockedDongle)
                         throw new Error("Locked dongle not found");
-                    if (lockedDongle.pinState !== "SIM PIN" || lockedDongle.tryLeft !== 3 || !pin_first_try)
+                    if (lockedDongle.pinState !== "SIM PIN" || lockedDongle.tryLeft === 1 || !pin_first_try)
                         return [2 /*return*/, buildDongleStillLockedResponse(lockedDongle)];
                     return [4 /*yield*/, attemptUnlock(imei, pin_first_try)];
                 case 4:
                     dongleFirstTry = _a.sent();
                     if (matchUnlocked(dongleFirstTry))
                         return [2 /*return*/, buildSuccessResponse(dongleFirstTry)];
-                    if (!pin_second_try)
+                    if (dongleFirstTry.tryLeft === 1 || !pin_second_try)
                         return [2 /*return*/, buildDongleStillLockedResponse(dongleFirstTry)];
                     return [4 /*yield*/, attemptUnlock(imei, pin_second_try)];
                 case 5:
