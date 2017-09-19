@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client :  localhost
--- Généré le :  Lun 04 Septembre 2017 à 15:17
+-- Généré le :  Mar 19 Septembre 2017 à 15:54
 -- Version du serveur :  5.5.55-0+deb8u1
 -- Version de PHP :  5.6.30-0+deb8u1
 
@@ -40,12 +40,12 @@ CREATE TABLE IF NOT EXISTS `dongle` (
 CREATE TABLE IF NOT EXISTS `message_toward_gsm` (
 `id` int(11) NOT NULL,
   `sim_iccid` varchar(22) NOT NULL,
-  `creation_timestamp` bigint(20) NOT NULL,
+  `date` bigint(20) NOT NULL,
   `ua_instance_id` int(11) NOT NULL,
   `to_number` varchar(25) NOT NULL,
   `base64_text` text NOT NULL,
   `sent_message_id` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=196 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS `message_toward_gsm` (
 CREATE TABLE IF NOT EXISTS `message_toward_sip` (
 `id` int(11) NOT NULL,
   `sim_iccid` varchar(22) NOT NULL,
-  `creation_timestamp` bigint(20) NOT NULL,
+  `date` bigint(20) NOT NULL,
   `from_number` varchar(25) DEFAULT NULL,
   `base64_text` text NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=355 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `ua_instance` (
 `id` int(11) NOT NULL,
   `dongle_imei` varchar(15) NOT NULL,
   `instance_id` varchar(125) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=234 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -93,8 +93,8 @@ CREATE TABLE IF NOT EXISTS `ua_instance_message_toward_sip` (
 `id` int(11) NOT NULL,
   `ua_instance_id` int(11) NOT NULL,
   `message_toward_sip_id` int(11) NOT NULL,
-  `delivered_timestamp` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=1038 DEFAULT CHARSET=utf8;
+  `delivered_date` bigint(20) DEFAULT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=2029 DEFAULT CHARSET=utf8;
 
 --
 -- Index pour les tables exportées
@@ -110,13 +110,13 @@ ALTER TABLE `dongle`
 -- Index pour la table `message_toward_gsm`
 --
 ALTER TABLE `message_toward_gsm`
- ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `REAL_PRIMARY` (`sim_iccid`,`creation_timestamp`), ADD KEY `sim_iccid` (`sim_iccid`), ADD KEY `ua_instance_id` (`ua_instance_id`);
+ ADD PRIMARY KEY (`id`), ADD KEY `sim_iccid` (`sim_iccid`), ADD KEY `ua_instance_id` (`ua_instance_id`);
 
 --
 -- Index pour la table `message_toward_sip`
 --
 ALTER TABLE `message_toward_sip`
- ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `REAL_PRIMARY` (`sim_iccid`,`creation_timestamp`), ADD KEY `sim_iccid` (`sim_iccid`);
+ ADD PRIMARY KEY (`id`), ADD KEY `sim_iccid` (`sim_iccid`);
 
 --
 -- Index pour la table `sim`
@@ -144,22 +144,22 @@ ALTER TABLE `ua_instance_message_toward_sip`
 -- AUTO_INCREMENT pour la table `message_toward_gsm`
 --
 ALTER TABLE `message_toward_gsm`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=33;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=196;
 --
 -- AUTO_INCREMENT pour la table `message_toward_sip`
 --
 ALTER TABLE `message_toward_sip`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=72;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=355;
 --
 -- AUTO_INCREMENT pour la table `ua_instance`
 --
 ALTER TABLE `ua_instance`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=138;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=234;
 --
 -- AUTO_INCREMENT pour la table `ua_instance_message_toward_sip`
 --
 ALTER TABLE `ua_instance_message_toward_sip`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=1038;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=2029;
 --
 -- Contraintes pour les tables exportées
 --
@@ -199,3 +199,4 @@ ADD CONSTRAINT `ua_instance_message_toward_sip_ibfk_2` FOREIGN KEY (`message_tow
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+

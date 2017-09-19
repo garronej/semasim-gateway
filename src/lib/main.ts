@@ -219,7 +219,10 @@ function start(dongleCallContext: string) {
             let tasks: Promise<void>[] = [];
             for (let messages of messByNum.values()) {
                 tasks[tasks.length] = (async () => {
-                    for (let { pk, sender, to_number, text } of messages) {
+                    for (let message of messages) {
+
+                        let { id, sender, to_number, text } = message;
+
                         let sentMessageId: number;
                         try {
                             sentMessageId = await dongleClient.sendMessage(imei, to_number, text);
@@ -227,7 +230,7 @@ function start(dongleCallContext: string) {
                             if (error.message !== t.errorMessages.messageNotSent) return;
                             sentMessageId = 0;
                         }
-                        await db.semasim.setMessageToGsmSentId(pk, sentMessageId);
+                        await db.semasim.setMessageToGsmSentId(id, sentMessageId);
                         if (sentMessageId) {
                             await db.semasim.addMessageTowardSip(
                                 to_number,
@@ -276,7 +279,7 @@ function start(dongleCallContext: string) {
                         debug("Not, received, break!");
                         break;
                     }
-                    await db.semasim.setMessageTowardSipDelivered(contactPk, message.creation_timestamp);
+                    await db.semasim.setMessageTowardSipDelivered(contactPk, message.id);
                 }
             }
         );
@@ -366,7 +369,7 @@ function start(dongleCallContext: string) {
             await db.semasim.addMessageTowardSip(
                 recipient,
                 `YOU:\n${text}`,
-                new Date(dischargeTime.getTime() + 1),
+                dischargeTime,
                 { "allUaInstanceOfEndpointOtherThan": sender }
             );
 

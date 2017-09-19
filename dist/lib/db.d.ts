@@ -17,29 +17,30 @@ export declare namespace semasim {
         uaInstance?: UaInstancePk;
         allUaInstanceOfEndpointOtherThan?: UaInstancePk;
     };
-    type MessageTowardGsmPk = {
+    type MessageTowardGsm = {
+        id: number;
         sim_iccid: string;
-        creation_timestamp: number;
-    };
-    function addMessageTowardGsm(to_number: string, text: string, sender: UaInstancePk): Promise<MessageTowardGsmPk>;
-    const setMessageToGsmSentId: ({sim_iccid, creation_timestamp}: MessageTowardGsmPk, sent_message_id: number | null) => Promise<void>;
-    const getUnsentMessageOfDongleSim: (imei: string) => Promise<{
-        pk: MessageTowardGsmPk;
+        date: Date;
         sender: UaInstancePk;
         to_number: string;
         text: string;
-    }[]>;
+    };
+    type MessageTowardSip = {
+        id: number;
+        date: Date;
+        from_number: string;
+        text: string;
+    };
+    const addMessageTowardGsm: (to_number: string, text: string, sender: UaInstancePk) => Promise<number>;
+    const setMessageToGsmSentId: (message_toward_gsm_id: number, sent_message_id: number) => Promise<void>;
+    const getUnsentMessageOfDongleSim: (imei: string) => Promise<MessageTowardGsm[]>;
     const getSenderAndTextOfSentMessageToGsm: (imei: string, sent_message_id: number) => Promise<{
         sender: UaInstancePk;
         text: string;
     } | undefined>;
     const addDongleAndSim: (imei: string, iccid: string) => Promise<void>;
-    const addUaInstance: ({dongle_imei, instance_id}: UaInstancePk) => Promise<boolean>;
-    const addMessageTowardSip: (from_number: string, text: string, date: Date, target: TargetUaInstances) => Promise<void>;
-    const setMessageTowardSipDelivered: ({dongle_imei, instance_id}: UaInstancePk, message_toward_sip_creation_timestamp: number) => Promise<void>;
-    const getUndeliveredMessagesOfUaInstance: ({dongle_imei, instance_id}: UaInstancePk) => Promise<{
-        creation_timestamp: number;
-        from_number: string;
-        text: string;
-    }[]>;
+    const addUaInstance: (uaInstancePk: UaInstancePk) => Promise<boolean>;
+    const addMessageTowardSip: (from_number: string, text: string, date: Date, target: TargetUaInstances) => Promise<number>;
+    const setMessageTowardSipDelivered: (uaInstancePk: UaInstancePk, message_toward_sip_id: number) => Promise<void>;
+    const getUndeliveredMessagesOfUaInstance: (uaInstancePk: UaInstancePk) => Promise<MessageTowardSip[]>;
 }

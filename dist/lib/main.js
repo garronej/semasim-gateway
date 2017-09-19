@@ -317,56 +317,57 @@ function start(dongleCallContext) {
                                         tasks = [];
                                         _loop_1 = function (messages_2) {
                                             tasks[tasks.length] = (function () { return __awaiter(_this, void 0, void 0, function () {
-                                                var messages_3, messages_3_1, _a, pk, sender, to_number, text, sentMessageId, error_2, e_4_1, e_4, _b;
-                                                return __generator(this, function (_c) {
-                                                    switch (_c.label) {
+                                                var messages_3, messages_3_1, message, id, sender, to_number, text, sentMessageId, error_2, e_4_1, e_4, _a;
+                                                return __generator(this, function (_b) {
+                                                    switch (_b.label) {
                                                         case 0:
-                                                            _c.trys.push([0, 13, 14, 15]);
+                                                            _b.trys.push([0, 13, 14, 15]);
                                                             messages_3 = __values(messages_2), messages_3_1 = messages_3.next();
-                                                            _c.label = 1;
+                                                            _b.label = 1;
                                                         case 1:
                                                             if (!!messages_3_1.done) return [3 /*break*/, 12];
-                                                            _a = messages_3_1.value, pk = _a.pk, sender = _a.sender, to_number = _a.to_number, text = _a.text;
+                                                            message = messages_3_1.value;
+                                                            id = message.id, sender = message.sender, to_number = message.to_number, text = message.text;
                                                             sentMessageId = void 0;
-                                                            _c.label = 2;
+                                                            _b.label = 2;
                                                         case 2:
-                                                            _c.trys.push([2, 4, , 5]);
+                                                            _b.trys.push([2, 4, , 5]);
                                                             return [4 /*yield*/, dongleClient.sendMessage(imei, to_number, text)];
                                                         case 3:
-                                                            sentMessageId = _c.sent();
+                                                            sentMessageId = _b.sent();
                                                             return [3 /*break*/, 5];
                                                         case 4:
-                                                            error_2 = _c.sent();
+                                                            error_2 = _b.sent();
                                                             if (error_2.message !== chan_dongle_extended_client_1.typesDef.errorMessages.messageNotSent)
                                                                 return [2 /*return*/];
                                                             sentMessageId = 0;
                                                             return [3 /*break*/, 5];
-                                                        case 5: return [4 /*yield*/, db.semasim.setMessageToGsmSentId(pk, sentMessageId)];
+                                                        case 5: return [4 /*yield*/, db.semasim.setMessageToGsmSentId(id, sentMessageId)];
                                                         case 6:
-                                                            _c.sent();
+                                                            _b.sent();
                                                             if (!sentMessageId) return [3 /*break*/, 8];
                                                             return [4 /*yield*/, db.semasim.addMessageTowardSip(to_number, "---Message send, sentMessageId: " + sentMessageId + "---", new Date(), { "uaInstance": sender })];
                                                         case 7:
-                                                            _c.sent();
+                                                            _b.sent();
                                                             return [3 /*break*/, 10];
                                                         case 8: return [4 /*yield*/, db.semasim.addMessageTowardSip(to_number, "Error message not sent", new Date(), { "uaInstance": sender })];
                                                         case 9:
-                                                            _c.sent();
-                                                            _c.label = 10;
+                                                            _b.sent();
+                                                            _b.label = 10;
                                                         case 10:
                                                             notifyNewSipMessagesToSend();
-                                                            _c.label = 11;
+                                                            _b.label = 11;
                                                         case 11:
                                                             messages_3_1 = messages_3.next();
                                                             return [3 /*break*/, 1];
                                                         case 12: return [3 /*break*/, 15];
                                                         case 13:
-                                                            e_4_1 = _c.sent();
+                                                            e_4_1 = _b.sent();
                                                             e_4 = { error: e_4_1 };
                                                             return [3 /*break*/, 15];
                                                         case 14:
                                                             try {
-                                                                if (messages_3_1 && !messages_3_1.done && (_b = messages_3.return)) _b.call(messages_3);
+                                                                if (messages_3_1 && !messages_3_1.done && (_a = messages_3.return)) _a.call(messages_3);
                                                             }
                                                             finally { if (e_4) throw e_4.error; }
                                                             return [7 /*endfinally*/];
@@ -444,7 +445,7 @@ function start(dongleCallContext) {
                                                 debug("Not, received, break!");
                                                 return [3 /*break*/, 10];
                                             }
-                                            return [4 /*yield*/, db.semasim.setMessageTowardSipDelivered(contactPk, message.creation_timestamp)];
+                                            return [4 /*yield*/, db.semasim.setMessageTowardSipDelivered(contactPk, message.id)];
                                         case 8:
                                             _b.sent();
                                             _b.label = 9;
@@ -562,7 +563,7 @@ function start(dongleCallContext) {
                         return [4 /*yield*/, db.semasim.addMessageTowardSip(phone.toNationalNumber(recipient, imsi), "---STATUS REPORT FOR MESSAGE ID " + messageId + ": " + status + "---", dischargeTime, { "uaInstance": sender })];
                     case 2:
                         _a.sent();
-                        return [4 /*yield*/, db.semasim.addMessageTowardSip(recipient, "YOU:\n" + text, new Date(dischargeTime.getTime() + 1), { "allUaInstanceOfEndpointOtherThan": sender })];
+                        return [4 /*yield*/, db.semasim.addMessageTowardSip(recipient, "YOU:\n" + text, dischargeTime, { "allUaInstanceOfEndpointOtherThan": sender })];
                     case 3:
                         _a.sent();
                         notifyNewSipMessagesToSend();
