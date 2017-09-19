@@ -110,19 +110,40 @@ function startListening(sipSocket) {
     return evt;
 }
 exports.startListening = startListening;
-function sendRequest(sipSocket, method, params) {
+exports.errorSendRequest = {
+    "timeout": "Timeout, No response in allowed delay",
+    "writeFailed": "Can't send request, write error",
+    "sockedCloseBeforeResponse": "Socket has been closed before receiving response"
+};
+function sendRequest(sipSocket, method, params, timeout) {
     return __awaiter(this, void 0, void 0, function () {
-        var sipRequest, actionId, sipRequestResponse;
+        var sipRequest, actionId, success, sipRequestResponse, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     sipRequest = ApiMessage.Request.buildSip(method, params);
                     actionId = ApiMessage.readActionId(sipRequest);
-                    sipSocket.write(sipRequest);
-                    return [4 /*yield*/, sipSocket.evtRequest.waitForExtract(function (sipRequestResponse) { return ApiMessage.Response.matchSip(sipRequestResponse, actionId); })];
+                    success = sipSocket.write(sipRequest);
+                    if (!success)
+                        throw new Error(exports.errorSendRequest.timeout);
+                    _a.label = 1;
                 case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, Promise.race([
+                            sipSocket.evtRequest.waitForExtract(function (sipRequestResponse) { return ApiMessage.Response.matchSip(sipRequestResponse, actionId); }, timeout),
+                            new Promise(function (_, reject) { return sipSocket.evtClose.attachOnce(sipRequest, reject); })
+                        ])];
+                case 2:
                     sipRequestResponse = _a.sent();
-                    return [2 /*return*/, ApiMessage.parsePayload(sipRequestResponse)];
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    if (typeof error_1 === "boolean")
+                        throw new Error(exports.errorSendRequest.sockedCloseBeforeResponse);
+                    else
+                        throw new Error(exports.errorSendRequest.timeout);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/, ApiMessage.parsePayload(sipRequestResponse)];
             }
         });
     });

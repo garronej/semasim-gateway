@@ -5,6 +5,31 @@ import { getBackendSocket } from "./sipProxy";
 import * as _debug from "debug";
 let debug = _debug("_sipApiClientBackend");
 
+
+async function sendRequest(
+    method: string, 
+    params: Record<string, any>
+): Promise<Record<string, any>> {
+
+    let backendSocket = await getBackendSocket();
+
+    try{ 
+        
+        return await framework.sendRequest(
+            backendSocket,
+            method,
+            params
+        );
+
+    }catch(error){
+
+        return sendRequest(method, params);
+
+    }
+
+}
+
+
 export namespace claimDongle {
 
     export const methodName = "claimDongle";
@@ -21,8 +46,7 @@ export namespace claimDongle {
 
         let params: Params = { imei };
 
-        let { isGranted } = await framework.sendRequest(
-            await getBackendSocket(),
+        let { isGranted } = await sendRequest(
             methodName,
             params
         ) as Response;
@@ -55,8 +79,7 @@ export namespace wakeUpUserAgent {
 
         let payload: Params = { contactOrContactUri };
 
-        let { status } = await framework.sendRequest(
-            await getBackendSocket(), 
+        let { status } = await sendRequest(
             methodName, 
             payload
         ) as Response;

@@ -11,7 +11,7 @@ export function queryOnConnection(
 
     return new Promise<any>((resolve, reject) => {
 
-        let r = connection.query(
+        connection.query(
             sql,
             values || [],
             (err, results) => err ? reject(err) : resolve(results)
@@ -24,31 +24,32 @@ export function queryOnConnection(
 
 export function buildInsertOrUpdateQuery(
     table: string, 
-    values: Record<string, string | number | null>
+    values: Record<string, string | number | null | { "@": string; }>
 ): [string, (string | number | null)[]]{
     return __buildInsertQuery__(table, values, true);
 }
 
 export function buildInsertQuery(
     table: string, 
-    values: Record<string, string | number | null>
+    values: Record<string, string | number | null | { "@": string; }>
 ): [string, (string | number | null)[]]{
     return __buildInsertQuery__(table, values, false);
 }
 
 function __buildInsertQuery__(
     table: string,
-    values: Record<string, string | number | null>,
+    obj: Record<string, string | number | null | { "@": string; }>,
     update: boolean
 ): [string, (string | number | null)[]] {
 
-    let keys = Object.keys(values);
+    let keys = Object.keys(obj);
+    let values= keys.map(key=> obj[key]);
 
     let backtickKeys = keys.map(key => "`" + key + "`");
 
     let sqlLinesArray = [
-        `INSERT INTO ${table} ( ${backtickKeys.join(", ")} )`,
-        `VALUES ( ${keys.map(() => "?").join(", ")} )`
+        `INSERT INTO \`${table}\` ( ${backtickKeys.join(", ")} )`,
+        `VALUES ( ${keys.map(key=>(obj[key] instanceof Object )?("@`" + obj[key]!["@"] + "`"):"?").join(", ")})`
     ];
 
     if (update) 
@@ -62,7 +63,7 @@ function __buildInsertQuery__(
 
     return [
         sqlLinesArray.join("\n"),
-        keys.map(key => values[key])
+        keys.filter(key=> !(obj[key] instanceof Object)).map(key => (obj[key] as string | number | null))
     ];
 
 }

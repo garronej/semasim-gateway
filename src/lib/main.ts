@@ -10,6 +10,7 @@ import * as db from "./db";
 import * as sipProxy from "./sipProxy";
 import * as sipMessage from "./sipMessage";
 import * as phone from "../tools/phoneNumberLibrary";
+import * as AsyncLock from "async-lock";
 
 import { c } from "./_constants";
 
@@ -191,7 +192,7 @@ function start(dongleCallContext: string) {
 
         }
 
-        senPendingSipMessagesToReachableContact(contact);
+        sendPendingSipMessagesToReachableContact(contact);
 
     });
 
@@ -199,90 +200,87 @@ function start(dongleCallContext: string) {
 
         debug("Expired contact: ", contactUri);
 
-        await sipApiBackend.wakeUpUserAgent.makeCall(contactUri);
+        sipApiBackend.wakeUpUserAgent.makeCall(contactUri);
 
     });
 
     sipMessage.startAccepting();
 
-    const sendDonglePendingMessages = runExclusive.build(
-        async (imei: string) => {
-
+    const lock1 = new AsyncLock();
+    async function sendDonglePendingMessages(imei: string) {
+        await lock1.acquire(imei, async () => {
             let messages = await db.semasim.getUnsentMessageOfDongleSim(imei);
-
-            for (let { pk, sender, to_number, text } of messages) {
-
-                let sentMessageId: number;
-
-                try {
-
-                    sentMessageId = await dongleClient.sendMessage(imei, to_number, text);
-
-                    if (isNaN(sentMessageId)) throw new Error("Send message failed");
-
-                } catch (error) {
-
-                    debug(`Error sending message: ${error.message}`);
-
-                    continue;
-
-                }
-
-                await db.semasim.setMessageToGsmSentId(pk, sentMessageId);
-
-                await db.semasim.addMessageTowardSip(
-                    to_number,
-                    `---Message send, sentMessageId: ${sentMessageId}---`,
-                    new Date(),
-                    { "uaInstance": sender }
-                );
-
-                notifyNewSipMessagesToSend();
-
-            }
-
-        }
-    );
-
-    const senPendingSipMessagesToReachableContact = runExclusive.build(
-        async (contact: Contact) => {
-
-            let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(
-                Contact.buildUaInstancePk(contact)
-            );
-
+            let messByNum = new Map<string, typeof messages>();
             for (let message of messages) {
-
-                debug(`Sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
-
-                let received: boolean;
-
-                try {
-
-                    received = await sipMessage.sendMessage(
-                        contact,
-                        message.from_number,
-                        {},
-                        message.text
-                    );
-
-                } catch (error) {
-                    debug("error:", error.message);
-                    break;
-                }
-
-                if (!received) {
-                    debug("Not, received, break!");
-                    break;
-                }
-
-                await db.semasim.setMessageTowardSipDelivered(Contact.buildUaInstancePk(contact), message.creation_timestamp);
-
+                let { to_number } = message;
+                if (!messByNum.has(to_number)) messByNum.set(to_number, []);
+                messByNum.get(to_number)!.push(message);
             }
+            let tasks: Promise<void>[] = [];
+            for (let messages of messByNum.values()) {
+                tasks[tasks.length] = (async () => {
+                    for (let { pk, sender, to_number, text } of messages) {
+                        let sentMessageId: number;
+                        try {
+                            sentMessageId = await dongleClient.sendMessage(imei, to_number, text);
+                        } catch (error) {
+                            if (error.message !== t.errorMessages.messageNotSent) return;
+                            sentMessageId = 0;
+                        }
+                        await db.semasim.setMessageToGsmSentId(pk, sentMessageId);
+                        if (sentMessageId) {
+                            await db.semasim.addMessageTowardSip(
+                                to_number,
+                                `---Message send, sentMessageId: ${sentMessageId}---`,
+                                new Date(),
+                                { "uaInstance": sender }
+                            );
+                        } else {
+                            await db.semasim.addMessageTowardSip(
+                                to_number,
+                                `Error message not sent`,
+                                new Date(),
+                                { "uaInstance": sender }
+                            );
+                        }
+                        notifyNewSipMessagesToSend();
+                    }
+                })();
+            }
+            await Promise.all(tasks);
+        });
+    }
 
-        }
-    );
-
+    const lock2 = new AsyncLock();
+    async function sendPendingSipMessagesToReachableContact(contact: Contact) {
+        let contactPk = Contact.buildUaInstancePk(contact);
+        await lock2.acquire(
+            JSON.stringify(contactPk),
+            async () => {
+                let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(contactPk);
+                for (let message of messages) {
+                    debug(`Sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
+                    let received: boolean;
+                    try {
+                        received = await sipMessage.sendMessage(
+                            contact,
+                            message.from_number,
+                            {},
+                            message.text
+                        );
+                    } catch (error) {
+                        debug("error:", error.message);
+                        break;
+                    }
+                    if (!received) {
+                        debug("Not, received, break!");
+                        break;
+                    }
+                    await db.semasim.setMessageTowardSipDelivered(contactPk, message.creation_timestamp);
+                }
+            }
+        );
+    }
 
     async function notifyNewSipMessagesToSend() {
 
@@ -294,6 +292,7 @@ function start(dongleCallContext: string) {
 
             if (!messages.length) return;
 
+            //TODO remove try
             try {
 
                 let evtTracer: contactIo.WakeUpContactTracer = new SyncEvent();
@@ -304,7 +303,7 @@ function start(dongleCallContext: string) {
 
                 if (status !== "REACHABLE") return;
 
-                await senPendingSipMessagesToReachableContact(contact);
+                sendPendingSipMessagesToReachableContact(contact);
 
             } catch (error) { return; }
 

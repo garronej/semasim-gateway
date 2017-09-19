@@ -1,11 +1,11 @@
 import { Contact } from "./sipContact";
 export declare namespace asterisk {
-    const queryEndpoints: () => Promise<string[]>;
-    const truncateContacts: () => Promise<void>;
-    const queryContacts: () => Promise<Contact[]>;
-    const queryLastConnectionTimestampOfDonglesEndpoint: (endpoint: string) => Promise<number>;
-    const deleteContact: (contact: Contact) => Promise<boolean>;
-    const addOrUpdateEndpoint: (endpoint: string, password: string) => Promise<void>;
+    function queryEndpoints(): Promise<string[]>;
+    function truncateContacts(): Promise<void>;
+    function queryContacts(): Promise<Contact[]>;
+    function queryLastConnectionTimestampOfDonglesEndpoint(endpoint: string): Promise<number>;
+    function deleteContact(contact: Contact): Promise<boolean>;
+    function addOrUpdateEndpoint(endpoint: string, password: string): Promise<void>;
 }
 export declare namespace semasim {
     type UaInstancePk = {
@@ -21,7 +21,7 @@ export declare namespace semasim {
         sim_iccid: string;
         creation_timestamp: number;
     };
-    const addMessageTowardGsm: (to_number: string, text: string, sender: UaInstancePk) => Promise<MessageTowardGsmPk>;
+    function addMessageTowardGsm(to_number: string, text: string, sender: UaInstancePk): Promise<MessageTowardGsmPk>;
     const setMessageToGsmSentId: ({sim_iccid, creation_timestamp}: MessageTowardGsmPk, sent_message_id: number | null) => Promise<void>;
     const getUnsentMessageOfDongleSim: (imei: string) => Promise<{
         pk: MessageTowardGsmPk;

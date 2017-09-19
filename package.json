@@ -16,6 +16,7 @@
   "author": "Joseph Garrone",
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
+    "async-lock": "^1.0.0",
     "awesome-phonenumber": "^2.1.0",
     "body-parser": "^1.17.2",
     "chan-dongle-extended-client": "git+https://a30f7432b117d8320cc21cc03513817c3f08d4b6:x-oauth-basic@github.com/garronej/chan-dongle-extended-client.git",
@@ -39,6 +40,7 @@
     "@types/md5": "^2.1.32",
     "@types/mysql": "0.0.32",
     "@types/node": "^4.0.0",
+    "@types/async-lock": "0.0.20",
     "nodemon": "^1.11.0",
     "typescript": "^2.4.1"
   }

@@ -39,6 +39,27 @@ var framework = require("../tools/sipApiFramework");
 var sipProxy_1 = require("./sipProxy");
 var _debug = require("debug");
 var debug = _debug("_sipApiClientBackend");
+function sendRequest(method, params) {
+    return __awaiter(this, void 0, void 0, function () {
+        var backendSocket, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, sipProxy_1.getBackendSocket()];
+                case 1:
+                    backendSocket = _a.sent();
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 4, , 5]);
+                    return [4 /*yield*/, framework.sendRequest(backendSocket, method, params)];
+                case 3: return [2 /*return*/, _a.sent()];
+                case 4:
+                    error_1 = _a.sent();
+                    return [2 /*return*/, sendRequest(method, params)];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
 var claimDongle;
 (function (claimDongle) {
     claimDongle.methodName = "claimDongle";
@@ -46,19 +67,15 @@ var claimDongle;
     ;
     function makeCall(imei) {
         return __awaiter(this, void 0, void 0, function () {
-            var params, isGranted, _a, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var params, isGranted;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         debug("call " + claimDongle.methodName);
                         params = { imei: imei };
-                        _b = (_a = framework).sendRequest;
-                        return [4 /*yield*/, sipProxy_1.getBackendSocket()];
-                    case 1: return [4 /*yield*/, _b.apply(_a, [_c.sent(),
-                            claimDongle.methodName,
-                            params])];
-                    case 2:
-                        isGranted = (_c.sent()).isGranted;
+                        return [4 /*yield*/, sendRequest(claimDongle.methodName, params)];
+                    case 1:
+                        isGranted = (_a.sent()).isGranted;
                         debug("isGranted: " + isGranted);
                         return [2 /*return*/, isGranted];
                 }
@@ -72,19 +89,15 @@ var wakeUpUserAgent;
     wakeUpUserAgent.methodName = "wakeUpUserAgent";
     function makeCall(contactOrContactUri) {
         return __awaiter(this, void 0, void 0, function () {
-            var payload, status, _a, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var payload, status;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         debug("call " + wakeUpUserAgent.methodName);
                         payload = { contactOrContactUri: contactOrContactUri };
-                        _b = (_a = framework).sendRequest;
-                        return [4 /*yield*/, sipProxy_1.getBackendSocket()];
-                    case 1: return [4 /*yield*/, _b.apply(_a, [_c.sent(),
-                            wakeUpUserAgent.methodName,
-                            payload])];
-                    case 2:
-                        status = (_c.sent()).status;
+                        return [4 /*yield*/, sendRequest(wakeUpUserAgent.methodName, payload)];
+                    case 1:
+                        status = (_a.sent()).status;
                         debug("status: " + status);
                         return [2 /*return*/, status];
                 }

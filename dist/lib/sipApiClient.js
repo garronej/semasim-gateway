@@ -38,6 +38,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var framework = require("../tools/sipApiFramework");
 var _debug = require("debug");
 var debug = _debug("_sipApiClient");
+//TODO: catch on backend when error
+var sendRequest = function (sipSocket, method, params, timeout) {
+    return framework.sendRequest(sipSocket, method, params, timeout || 5000);
+};
 var isDongleConnected;
 (function (isDongleConnected) {
     isDongleConnected.methodName = "isDongleConnected";
@@ -90,7 +94,7 @@ var unlockDongle;
                 switch (_a.label) {
                     case 0:
                         debug("call " + unlockDongle.methodName);
-                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, unlockDongle.methodName, params)];
+                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, unlockDongle.methodName, params, 20000)];
                     case 1:
                         response = _a.sent();
                         debug("Response: ", { response: response });

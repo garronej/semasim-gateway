@@ -24,7 +24,7 @@ var _debug = require("debug");
 var debug = _debug("_dbInterface");
 function queryOnConnection(connection, sql, values) {
     return new Promise(function (resolve, reject) {
-        var r = connection.query(sql, values || [], function (err, results) { return err ? reject(err) : resolve(results); });
+        connection.query(sql, values || [], function (err, results) { return err ? reject(err) : resolve(results); });
     });
 }
 exports.queryOnConnection = queryOnConnection;
@@ -36,12 +36,13 @@ function buildInsertQuery(table, values) {
     return __buildInsertQuery__(table, values, false);
 }
 exports.buildInsertQuery = buildInsertQuery;
-function __buildInsertQuery__(table, values, update) {
-    var keys = Object.keys(values);
+function __buildInsertQuery__(table, obj, update) {
+    var keys = Object.keys(obj);
+    var values = keys.map(function (key) { return obj[key]; });
     var backtickKeys = keys.map(function (key) { return "`" + key + "`"; });
     var sqlLinesArray = [
-        "INSERT INTO " + table + " ( " + backtickKeys.join(", ") + " )",
-        "VALUES ( " + keys.map(function () { return "?"; }).join(", ") + " )"
+        "INSERT INTO `" + table + "` ( " + backtickKeys.join(", ") + " )",
+        "VALUES ( " + keys.map(function (key) { return (obj[key] instanceof Object) ? ("@`" + obj[key]["@"] + "`") : "?"; }).join(", ") + ")"
     ];
     if (update)
         sqlLinesArray = __spread(sqlLinesArray, [
@@ -51,6 +52,6 @@ function __buildInsertQuery__(table, values, update) {
     sqlLinesArray[sqlLinesArray.length] = ";\n";
     return [
         sqlLinesArray.join("\n"),
-        keys.map(function (key) { return values[key]; })
+        keys.filter(function (key) { return !(obj[key] instanceof Object); }).map(function (key) { return obj[key]; })
     ];
 }

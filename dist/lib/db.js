@@ -88,9 +88,10 @@ var f = require("../tools/mySqlFunctions");
 var _constants_1 = require("./_constants");
 var _debug = require("debug");
 var debug = _debug("_dbInterface");
+//TODO: manage transactions with async-lock rather than with runExclusive
+//do it here but more importantly on backend
 var asterisk;
 (function (asterisk) {
-    var _this = this;
     var groupRef = runExclusive.createGroupRef();
     var connection = undefined;
     function query(sql, values) {
@@ -99,148 +100,166 @@ var asterisk;
         }
         return f.queryOnConnection(connection, sql, values);
     }
-    asterisk.queryEndpoints = runExclusive.build(groupRef, function () { return __awaiter(_this, void 0, void 0, function () {
-        var endpoints;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, query("SELECT `id`,`set_var` FROM `ps_endpoints`")];
-                case 1:
-                    endpoints = (_a.sent()).map(function (_a) {
-                        var id = _a.id;
-                        return id;
-                    });
-                    return [2 /*return*/, endpoints];
-            }
+    function queryEndpoints() {
+        return __awaiter(this, void 0, void 0, function () {
+            var endpoints;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, query("SELECT `id`,`set_var` FROM `ps_endpoints`")];
+                    case 1:
+                        endpoints = (_a.sent()).map(function (_a) {
+                            var id = _a.id;
+                            return id;
+                        });
+                        return [2 /*return*/, endpoints];
+                }
+            });
         });
-    }); });
-    asterisk.truncateContacts = runExclusive.build(groupRef, function () { return __awaiter(_this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, query("TRUNCATE ps_contacts")];
-                case 1:
-                    _a.sent();
-                    return [2 /*return*/];
-            }
+    }
+    asterisk.queryEndpoints = queryEndpoints;
+    function truncateContacts() {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, query("TRUNCATE ps_contacts")];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-    }); });
-    asterisk.queryContacts = runExclusive.build(groupRef, function () { return __awaiter(_this, void 0, void 0, function () {
-        var contacts, contacts_1, contacts_1_1, contact, e_1, _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0: return [4 /*yield*/, query("SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts")];
-                case 1:
-                    contacts = _b.sent();
-                    try {
-                        for (contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
-                            contact = contacts_1_1.value;
-                            contact.uri = contact.uri.replace(/\^3B/g, ";");
-                            contact.path = contact.path.replace(/\^3B/g, ";");
-                        }
-                    }
-                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                    finally {
+    }
+    asterisk.truncateContacts = truncateContacts;
+    function queryContacts() {
+        return __awaiter(this, void 0, void 0, function () {
+            var contacts, contacts_1, contacts_1_1, contact, e_1, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, query("SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts")];
+                    case 1:
+                        contacts = _b.sent();
                         try {
-                            if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
+                            for (contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
+                                contact = contacts_1_1.value;
+                                contact.uri = contact.uri.replace(/\^3B/g, ";");
+                                contact.path = contact.path.replace(/\^3B/g, ";");
+                            }
                         }
-                        finally { if (e_1) throw e_1.error; }
-                    }
-                    return [2 /*return*/, contacts];
-            }
+                        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                        finally {
+                            try {
+                                if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
+                            }
+                            finally { if (e_1) throw e_1.error; }
+                        }
+                        return [2 /*return*/, contacts];
+                }
+            });
         });
-    }); });
+    }
+    asterisk.queryContacts = queryContacts;
     //TODO: to test
-    asterisk.queryLastConnectionTimestampOfDonglesEndpoint = runExclusive.build(function (endpoint) { return __awaiter(_this, void 0, void 0, function () {
-        var timestamp, _a, set_var, error_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    _b.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, query("SELECT `set_var` FROM ps_endpoints WHERE `id`=?", [endpoint])];
-                case 1:
-                    _a = __read.apply(void 0, [_b.sent(), 1]), set_var = _a[0].set_var;
-                    timestamp = parseInt(set_var.split("=")[1]);
-                    return [3 /*break*/, 3];
-                case 2:
-                    error_1 = _b.sent();
-                    timestamp = 0;
-                    return [3 /*break*/, 3];
-                case 3: return [2 /*return*/, timestamp];
-            }
+    function queryLastConnectionTimestampOfDonglesEndpoint(endpoint) {
+        return __awaiter(this, void 0, void 0, function () {
+            var timestamp, _a, set_var, error_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, query("SELECT `set_var` FROM ps_endpoints WHERE `id`=?", [endpoint])];
+                    case 1:
+                        _a = __read.apply(void 0, [_b.sent(), 1]), set_var = _a[0].set_var;
+                        timestamp = parseInt(set_var.split("=")[1]);
+                        return [3 /*break*/, 3];
+                    case 2:
+                        error_1 = _b.sent();
+                        timestamp = 0;
+                        return [3 /*break*/, 3];
+                    case 3: return [2 /*return*/, timestamp];
+                }
+            });
         });
-    }); });
-    asterisk.deleteContact = runExclusive.build(groupRef, function (contact) { return __awaiter(_this, void 0, void 0, function () {
-        var affectedRows, isDeleted;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, query("DELETE FROM `ps_contacts` WHERE `id`=?", [contact.id])];
-                case 1:
-                    affectedRows = (_a.sent()).affectedRows;
-                    isDeleted = affectedRows ? true : false;
-                    return [2 /*return*/, isDeleted];
-            }
+    }
+    asterisk.queryLastConnectionTimestampOfDonglesEndpoint = queryLastConnectionTimestampOfDonglesEndpoint;
+    function deleteContact(contact) {
+        return __awaiter(this, void 0, void 0, function () {
+            var affectedRows, isDeleted;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, query("DELETE FROM `ps_contacts` WHERE `id`=?", [contact.id])];
+                    case 1:
+                        affectedRows = (_a.sent()).affectedRows;
+                        isDeleted = affectedRows ? true : false;
+                        return [2 /*return*/, isDeleted];
+                }
+            });
         });
-    }); });
-    asterisk.addOrUpdateEndpoint = runExclusive.build(groupRef, function (endpoint, password) { return __awaiter(_this, void 0, void 0, function () {
-        var sql, values;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    debug("Add or update endpoint " + endpoint + " in real time configuration");
-                    sql = "";
-                    values = [];
-                    (function () {
-                        var _a = __read(f.buildInsertOrUpdateQuery("ps_aors", {
-                            "id": endpoint,
-                            "max_contacts": 12,
-                            "qualify_frequency": 0,
-                            "support_path": "yes"
-                        }), 2), _sql = _a[0], _values = _a[1];
-                        sql += _sql;
-                        values = __spread(values, _values);
-                    })();
-                    (function () {
-                        var _a = __read(f.buildInsertOrUpdateQuery("ps_endpoints", {
-                            "id": endpoint,
-                            "disallow": "all",
-                            "allow": "alaw,ulaw",
-                            "context": _constants_1.c.sipCallContext,
-                            "message_context": _constants_1.c.sipMessageContext,
-                            "subscribe_context": null,
-                            "aors": endpoint,
-                            "auth": endpoint,
-                            "force_rport": null,
-                            "from_domain": _constants_1.c.shared.domain,
-                            "ice_support": "yes",
-                            "direct_media": null,
-                            "asymmetric_rtp_codec": null,
-                            "rtcp_mux": null,
-                            "direct_media_method": null,
-                            "connected_line_method": null,
-                            "transport": "transport-tcp",
-                            "callerid_tag": null,
-                            "set_var": "LAST_CONNECTION_TIMESTAMP=" + Date.now()
-                        }), 2), _sql = _a[0], _values = _a[1];
-                        sql += _sql;
-                        values = __spread(values, _values);
-                    })();
-                    (function () {
-                        var _a = __read(f.buildInsertOrUpdateQuery("ps_auths", {
-                            "id": endpoint,
-                            "auth_type": "userpass",
-                            "username": endpoint,
-                            "password": password,
-                            "realm": "semasim"
-                        }), 2), _sql = _a[0], _values = _a[1];
-                        sql += _sql;
-                        values = __spread(values, _values);
-                    })();
-                    return [4 /*yield*/, query(sql, values)];
-                case 1:
-                    _a.sent();
-                    return [2 /*return*/];
-            }
+    }
+    asterisk.deleteContact = deleteContact;
+    function addOrUpdateEndpoint(endpoint, password) {
+        return __awaiter(this, void 0, void 0, function () {
+            var sql, values;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        debug("Add or update endpoint " + endpoint + " in real time configuration");
+                        sql = "";
+                        values = [];
+                        (function () {
+                            var _a = __read(f.buildInsertOrUpdateQuery("ps_aors", {
+                                "id": endpoint,
+                                "max_contacts": 12,
+                                "qualify_frequency": 0,
+                                "support_path": "yes"
+                            }), 2), _sql = _a[0], _values = _a[1];
+                            sql += _sql;
+                            values = __spread(values, _values);
+                        })();
+                        (function () {
+                            var _a = __read(f.buildInsertOrUpdateQuery("ps_endpoints", {
+                                "id": endpoint,
+                                "disallow": "all",
+                                "allow": "alaw,ulaw",
+                                "context": _constants_1.c.sipCallContext,
+                                "message_context": _constants_1.c.sipMessageContext,
+                                "subscribe_context": null,
+                                "aors": endpoint,
+                                "auth": endpoint,
+                                "force_rport": null,
+                                "from_domain": _constants_1.c.shared.domain,
+                                "ice_support": "yes",
+                                "direct_media": null,
+                                "asymmetric_rtp_codec": null,
+                                "rtcp_mux": null,
+                                "direct_media_method": null,
+                                "connected_line_method": null,
+                                "transport": "transport-tcp",
+                                "callerid_tag": null,
+                                "set_var": "LAST_CONNECTION_TIMESTAMP=" + Date.now()
+                            }), 2), _sql = _a[0], _values = _a[1];
+                            sql += _sql;
+                            values = __spread(values, _values);
+                        })();
+                        (function () {
+                            var _a = __read(f.buildInsertOrUpdateQuery("ps_auths", {
+                                "id": endpoint,
+                                "auth_type": "userpass",
+                                "username": endpoint,
+                                "password": password,
+                                "realm": "semasim"
+                            }), 2), _sql = _a[0], _values = _a[1];
+                            sql += _sql;
+                            values = __spread(values, _values);
+                        })();
+                        return [4 /*yield*/, query(sql, values)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-    }); });
+    }
+    asterisk.addOrUpdateEndpoint = addOrUpdateEndpoint;
 })(asterisk = exports.asterisk || (exports.asterisk = {}));
 var semasim;
 (function (semasim) {
@@ -253,37 +272,54 @@ var semasim;
         }
         return f.queryOnConnection(connection, sql, values);
     }
-    semasim.addMessageTowardGsm = runExclusive.build(groupRef, function (to_number, text, sender) { return __awaiter(_this, void 0, void 0, function () {
-        var _a, sim_iccid, _b, ua_instance_id, creation_timestamp, _c, sql, values;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0: return [4 /*yield*/, query([
-                        "SELECT dongle.`sim_iccid`",
-                        "FROM dongle",
-                        "INNER JOIN sim ON sim.`iccid`= dongle.`sim_iccid`",
-                        "WHERE dongle.`imei`=?"
-                    ].join("\n"), [sender.dongle_imei])];
-                case 1:
-                    _a = __read.apply(void 0, [_d.sent(), 1]), sim_iccid = _a[0].sim_iccid;
-                    return [4 /*yield*/, query("SELECT `id` AS `ua_instance_id` FROM ua_instance WHERE `dongle_imei`=? AND `instance_id`=?", [sender.dongle_imei, sender.instance_id])];
-                case 2:
-                    _b = __read.apply(void 0, [_d.sent(), 1]), ua_instance_id = _b[0].ua_instance_id;
-                    creation_timestamp = Date.now();
-                    _c = __read(f.buildInsertOrUpdateQuery("message_toward_gsm", {
-                        sim_iccid: sim_iccid,
-                        creation_timestamp: creation_timestamp,
-                        ua_instance_id: ua_instance_id,
-                        to_number: to_number,
-                        "base64_text": (new Buffer(text, "utf8")).toString("base64"),
-                        "sent_message_id": null
-                    }), 2), sql = _c[0], values = _c[1];
-                    return [4 /*yield*/, query(sql, values)];
-                case 3:
-                    _d.sent();
-                    return [2 /*return*/, { sim_iccid: sim_iccid, creation_timestamp: creation_timestamp }];
-            }
+    function addMessageTowardGsm(to_number, text, sender) {
+        return __awaiter(this, void 0, void 0, function () {
+            var sql, values, sim_iccid_ref, ua_instance_id_ref, creation_timestamp, _a, _b, first_query, sim_iccid;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        sql = "";
+                        values = [];
+                        sim_iccid_ref = "A";
+                        sql += [
+                            "SELECT @" + sim_iccid_ref + ":=dongle.sim_iccid",
+                            "FROM dongle",
+                            "INNER JOIN sim ON sim.iccid= dongle.sim_iccid",
+                            "WHERE dongle.imei= ? ",
+                            ";"
+                        ].join("\n");
+                        values = __spread(values, [sender.dongle_imei]);
+                        ua_instance_id_ref = "B";
+                        sql += "\n" + [
+                            "SELECT @" + ua_instance_id_ref + ":=id",
+                            "FROM ua_instance",
+                            "WHERE dongle_imei=? AND instance_id=?",
+                            ";"
+                        ].join("\n");
+                        values = __spread(values, [sender.dongle_imei, sender.instance_id]);
+                        creation_timestamp = Date.now();
+                        (function () {
+                            var _a = __read(f.buildInsertOrUpdateQuery("message_toward_gsm", {
+                                "sim_iccid": { "@": sim_iccid_ref },
+                                creation_timestamp: creation_timestamp,
+                                "ua_instance_id": { "@": ua_instance_id_ref },
+                                to_number: to_number,
+                                "base64_text": (new Buffer(text, "utf8")).toString("base64"),
+                                "sent_message_id": null
+                            }), 2), _sql = _a[0], _values = _a[1];
+                            sql += "\n" + _sql;
+                            values = __spread(values, _values);
+                        })();
+                        return [4 /*yield*/, query(sql, values)];
+                    case 1:
+                        _a = __read.apply(void 0, [_c.sent(), 1]), _b = __read(_a[0], 1), first_query = _b[0];
+                        sim_iccid = first_query[Object.keys(first_query)[0]];
+                        return [2 /*return*/, { sim_iccid: sim_iccid, creation_timestamp: creation_timestamp }];
+                }
+            });
         });
-    }); });
+    }
+    semasim.addMessageTowardGsm = addMessageTowardGsm;
     semasim.setMessageToGsmSentId = runExclusive.build(groupRef, function (_a, sent_message_id) {
         var sim_iccid = _a.sim_iccid, creation_timestamp = _a.creation_timestamp;
         return __awaiter(_this, void 0, void 0, function () {

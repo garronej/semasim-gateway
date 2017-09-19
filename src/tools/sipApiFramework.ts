@@ -138,21 +138,47 @@ export function startListening(sipSocket: sip.Socket): SyncEvent<ApiRequest> {
 
 }
 
+export const errorSendRequest = {
+    "timeout": "Timeout, No response in allowed delay",
+    "writeFailed": "Can't send request, write error",
+    "sockedCloseBeforeResponse": "Socket has been closed before receiving response"
+}
+
 export async function sendRequest(
-    sipSocket: sip.Socket, 
-    method: string, 
-    params: Record<string, any>
-): Promise<Record<string, any>>{
+    sipSocket: sip.Socket,
+    method: string,
+    params: Record<string, any>,
+    timeout?: number
+): Promise<Record<string, any>> {
 
-    let sipRequest= ApiMessage.Request.buildSip(method, params);
+    let sipRequest = ApiMessage.Request.buildSip(method, params);
 
-    let actionId= ApiMessage.readActionId(sipRequest);
+    let actionId = ApiMessage.readActionId(sipRequest);
 
-    sipSocket.write(sipRequest);
+    let success = sipSocket.write(sipRequest);
 
-    let sipRequestResponse= await sipSocket.evtRequest.waitForExtract( 
-        sipRequestResponse => ApiMessage.Response.matchSip(sipRequestResponse, actionId),
-    );
+    if (!success) throw new Error(errorSendRequest.timeout);
+
+    let sipRequestResponse: sip.Request;
+
+    try {
+
+        sipRequestResponse = await Promise.race([
+            sipSocket.evtRequest.waitForExtract(
+                sipRequestResponse => ApiMessage.Response.matchSip(sipRequestResponse, actionId),
+                timeout
+            ),
+            new Promise<never>((_, reject) => sipSocket.evtClose.attachOnce(sipRequest, reject))
+        ]);
+
+    } catch (error) {
+
+        if (typeof error === "boolean")
+            throw new Error(errorSendRequest.sockedCloseBeforeResponse);
+        else
+            throw new Error(errorSendRequest.timeout);
+
+    }
 
     return ApiMessage.parsePayload(sipRequestResponse);
 

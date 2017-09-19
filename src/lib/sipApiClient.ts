@@ -7,6 +7,15 @@ import Phonebook= typesDef.Phonebook;
 import * as _debug from "debug";
 let debug = _debug("_sipApiClient");
 
+
+//TODO: catch on backend when error
+const sendRequest: typeof framework.sendRequest= 
+(sipSocket, method, params, timeout)=>{
+
+    return framework.sendRequest(sipSocket, method, params, timeout || 5000);
+
+}
+
 export namespace isDongleConnected {
 
     export const methodName = "isDongleConnected";
@@ -113,7 +122,8 @@ export namespace unlockDongle {
         let response = await framework.sendRequest(
             gatewaySocket,
             methodName,
-            params
+            params,
+            20000
         ) as Response;
 
         debug("Response: ", { response });
