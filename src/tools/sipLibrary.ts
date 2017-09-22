@@ -218,6 +218,11 @@ export class Socket {
         if (matchRequest(sipPacket) && parseInt(sipPacket.headers["max-forwards"]) < 0)
             return false;
 
+        if( !sipPacket.headers.via.length ) {
+            debug("=========> we abort, no via header");
+            return false;
+        }
+
         return this.connection.write(
             new Buffer(stringify(sipPacket), "binary")
         );

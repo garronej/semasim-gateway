@@ -47,6 +47,8 @@ var ApiMessage;
             sipMethod + " _ SIP/2.0",
             "\r\n"
         ].join("\r\n"));
+        //TODO: should be set to [] already :(
+        sipRequest.headers.via = [];
         sipRequest.headers[actionIdKey] = "" + actionId++;
         sipRequest.content = JSON.stringify(payload);
         return sipRequest;
@@ -104,7 +106,12 @@ function startListening(sipSocket) {
         var actionId = ApiMessage.readActionId(sipRequest);
         var method = ApiMessage.Request.readMethod(sipRequest);
         var params = ApiMessage.parsePayload(sipRequest);
-        var sendResponse = function (response) { return sipSocket.write(ApiMessage.Response.buildSip(actionId, response)); };
+        var sendResponse = function (response) {
+            var sipRequest = ApiMessage.Response.buildSip(actionId, response);
+            //TODO: test!
+            sipSocket.addViaHeader(sipRequest);
+            sipSocket.write(sipRequest);
+        };
         evt.post({ method: method, params: params, sendResponse: sendResponse });
     });
     return evt;
@@ -123,6 +130,8 @@ function sendRequest(sipSocket, method, params, timeout) {
                 case 0:
                     sipRequest = ApiMessage.Request.buildSip(method, params);
                     actionId = ApiMessage.readActionId(sipRequest);
+                    //TODO: test!
+                    sipSocket.addViaHeader(sipRequest);
                     success = sipSocket.write(sipRequest);
                     if (!success)
                         throw new Error(exports.errorSendRequest.timeout);

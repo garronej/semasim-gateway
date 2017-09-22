@@ -17,6 +17,9 @@ namespace ApiMessage {
             "\r\n"
         ].join("\r\n")) as sip.Request;
 
+        //TODO: should be set to [] already :(
+        sipRequest.headers.via= [];
+
         sipRequest.headers[actionIdKey] = `${actionId++}`;
 
         sipRequest.content = JSON.stringify(payload);
@@ -125,9 +128,16 @@ export function startListening(sipSocket: sip.Socket): SyncEvent<ApiRequest> {
 
             let params= ApiMessage.parsePayload(sipRequest);
 
-            let sendResponse= response => sipSocket.write(
-                ApiMessage.Response.buildSip(actionId, response)
-            );
+            let sendResponse= response => {
+
+                let sipRequest= ApiMessage.Response.buildSip(actionId, response);
+
+                //TODO: test!
+                sipSocket.addViaHeader(sipRequest);
+
+                sipSocket.write(sipRequest);
+
+            };
 
             evt.post({ method, params, sendResponse });
 
@@ -154,6 +164,9 @@ export async function sendRequest(
     let sipRequest = ApiMessage.Request.buildSip(method, params);
 
     let actionId = ApiMessage.readActionId(sipRequest);
+
+    //TODO: test!
+    sipSocket.addViaHeader(sipRequest);
 
     let success = sipSocket.write(sipRequest);
 
