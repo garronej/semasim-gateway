@@ -214,7 +214,14 @@ function start() {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
+                                    try {
+                                        flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
+                                    }
+                                    catch (error) {
+                                        debug(error.message);
+                                        console.log(JSON.stringify(sipRequest, null, 2));
+                                        return [2 /*return*/, process.exit(1)];
+                                    }
                                     asteriskSocket = asteriskSockets.get(flowToken);
                                     if (!asteriskSocket)
                                         asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
@@ -268,9 +275,9 @@ function start() {
                             flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
                         }
                         catch (error) {
-                            console.log(error.message);
+                            debug(error.message);
                             console.log(JSON.stringify(sipResponse, null, 2));
-                            return;
+                            return process.exit(1);
                         }
                         var asteriskSocket = asteriskSockets.get(flowToken);
                         if (!asteriskSocket)

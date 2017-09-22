@@ -94,7 +94,7 @@ var unlockDongle;
                 switch (_a.label) {
                     case 0:
                         debug("call " + unlockDongle.methodName);
-                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, unlockDongle.methodName, params, 20000)];
+                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, unlockDongle.methodName, params, 120000)];
                     case 1:
                         response = _a.sent();
                         debug("Response: ", { response: response });

@@ -113,7 +113,21 @@ export async function start() {
 
     backendSocket.evtRequest.attach(async sipRequest => {
 
-        let flowToken = sipRequest.headers.via[0].params[c.shared.flowTokenKey]!;
+        let flowToken: string;
+
+        try{
+
+            flowToken = sipRequest.headers.via[0].params[c.shared.flowTokenKey]!;
+
+        }catch(error){
+
+            debug(error.message);
+
+            console.log(JSON.stringify(sipRequest,null, 2));
+
+            return process.exit(1);
+
+        }
 
         let asteriskSocket = asteriskSockets.get(flowToken);
 
@@ -182,11 +196,11 @@ export async function start() {
 
         } catch (error) {
 
-            console.log(error.message);
+            debug(error.message);
 
             console.log(JSON.stringify(sipResponse, null, 2));
 
-            return;
+            return process.exit(1);
 
         }
 

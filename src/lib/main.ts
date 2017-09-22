@@ -152,8 +152,6 @@ function start(dongleCallContext: string) {
 
     }
 
-
-
     (async function findActiveDongleAndStartSipProxy() {
 
         for (let activeDongle of await dongleClient.getActiveDongles())
@@ -163,13 +161,18 @@ function start(dongleCallContext: string) {
 
     })();
 
-    dongleClient.evtNewActiveDongle.attach(async dongle => {
+    dongleClient.evtDongleConnect.attach(async imei=> {
 
-        await onNewActiveDongle(dongle);
+        debug("dongle connect!");
 
-        sipApiBackend.claimDongle.makeCall(dongle.imei);
+        let activeDongle= await dongleClient.getActiveDongle(imei);
+
+        if( activeDongle ) await onNewActiveDongle(activeDongle);
+
+        sipApiBackend.claimDongle.makeCall(imei);
 
     });
+
 
     dongleClient.evtActiveDongleDisconnect.attach(async dongle => {
 

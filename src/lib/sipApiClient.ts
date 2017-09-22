@@ -123,7 +123,7 @@ export namespace unlockDongle {
             gatewaySocket,
             methodName,
             params,
-            20000
+            120000
         ) as Response;
 
         debug("Response: ", { response });

@@ -133,6 +133,8 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
         pin: string
     ): Promise<t.LockedDongle | t.DongleActive> {
 
+        debug(`Attempt unlock ${imei}, pin: ${pin}`);
+
         let dongleClient= DongleExtendedClient.localhost();
 
         await dongleClient.unlockDongle(imei, pin);

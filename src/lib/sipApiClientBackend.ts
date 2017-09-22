@@ -23,6 +23,8 @@ async function sendRequest(
 
     }catch(error){
 
+        debug("Connection lost with backend retrying...");
+
         return sendRequest(method, params);
 
     }

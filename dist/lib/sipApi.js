@@ -168,6 +168,7 @@ var handlers = {};
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        debug("Attempt unlock " + imei + ", pin: " + pin);
                         dongleClient = chan_dongle_extended_client_1.DongleExtendedClient.localhost();
                         return [4 /*yield*/, dongleClient.unlockDongle(imei, pin)];
                     case 1:

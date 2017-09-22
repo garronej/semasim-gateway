@@ -54,6 +54,7 @@ function sendRequest(method, params) {
                 case 3: return [2 /*return*/, _a.sent()];
                 case 4:
                     error_1 = _a.sent();
+                    debug("Connection lost with backend retrying...");
                     return [2 /*return*/, sendRequest(method, params)];
                 case 5: return [2 /*return*/];
             }

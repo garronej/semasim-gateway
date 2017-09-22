@@ -240,13 +240,22 @@ function start(dongleCallContext) {
             });
         });
     })();
-    dongleClient.evtNewActiveDongle.attach(function (dongle) { return __awaiter(_this, void 0, void 0, function () {
+    dongleClient.evtDongleConnect.attach(function (imei) { return __awaiter(_this, void 0, void 0, function () {
+        var activeDongle;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, onNewActiveDongle(dongle)];
+                case 0:
+                    debug("dongle connect!");
+                    return [4 /*yield*/, dongleClient.getActiveDongle(imei)];
                 case 1:
+                    activeDongle = _a.sent();
+                    if (!activeDongle) return [3 /*break*/, 3];
+                    return [4 /*yield*/, onNewActiveDongle(activeDongle)];
+                case 2:
                     _a.sent();
-                    sipApiBackend.claimDongle.makeCall(dongle.imei);
+                    _a.label = 3;
+                case 3:
+                    sipApiBackend.claimDongle.makeCall(imei);
                     return [2 /*return*/];
             }
         });
