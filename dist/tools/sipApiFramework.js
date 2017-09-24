@@ -134,7 +134,7 @@ function sendRequest(sipSocket, method, params, timeout) {
                     sipSocket.addViaHeader(sipRequest);
                     success = sipSocket.write(sipRequest);
                     if (!success)
-                        throw new Error(exports.errorSendRequest.timeout);
+                        throw new Error(exports.errorSendRequest.writeFailed);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);

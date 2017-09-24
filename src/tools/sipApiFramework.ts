@@ -170,7 +170,7 @@ export async function sendRequest(
 
     let success = sipSocket.write(sipRequest);
 
-    if (!success) throw new Error(errorSendRequest.timeout);
+    if (!success) throw new Error(errorSendRequest.writeFailed);
 
     let sipRequestResponse: sip.Request;
 
