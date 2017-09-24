@@ -89,27 +89,72 @@ function startAccepting() {
 }
 exports.startAccepting = startAccepting;
 function sendMessage(contact, from_number, headers, text, from_number_sim_name) {
-    return new Promise(function (resolve, reject) {
-        //debug("sendMessage", { contact, from_number, headers, text, from_number_sim_name });
-        var actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
-        var uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
-        chan_dongle_extended_client_1.DongleExtendedClient.localhost().ami.messageSend("pjsip:" + contact.endpoint + "/" + uri, from_number, actionId).catch(function (error) { return reject(error); });
-        sipProxy_1.evtOutgoingMessage.attachOnce(function (_a) {
-            var sipRequest = _a.sipRequest;
-            return sipRequest.content === actionId;
-        }, function (_a) {
-            var sipRequest = _a.sipRequest, evtReceived = _a.evtReceived;
-            //TODO: inform that the name come from the SD card
-            if (from_number_sim_name)
-                sipRequest.headers.from.name = "\"" + from_number_sim_name + " (sim)\"";
-            sipRequest.uri = contact.uri;
-            sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
-            delete sipRequest.headers.contact;
-            sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
-            //TODO: to remove
-            sipRequest.headers = __assign({}, sipRequest.headers, headers);
-            evtReceived.waitFor(3500).then(function () { return resolve(true); }).catch(function () { return resolve(false); });
+    var _this = this;
+    return new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
+        var actionId, uri, sipRequest, evtReceived, outgoingMessage, error_1, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
+                    uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
+                    chan_dongle_extended_client_1.DongleExtendedClient.localhost().ami.messageSend("pjsip:" + contact.endpoint + "/" + uri, from_number, actionId).catch(function (amiError) {
+                        var error = sendMessage.errors.notSent;
+                        error.name = amiError.name;
+                        error.message = amiError.message;
+                        Object.defineProperty(error, "stack", { "value": amiError.stack });
+                        reject(error);
+                    });
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, sipProxy_1.evtOutgoingMessage.waitFor(function (_a) {
+                            var sipRequest = _a.sipRequest;
+                            return sipRequest.content === actionId;
+                        }, sendMessage.timeouts.intercept)];
+                case 2:
+                    outgoingMessage = _a.sent();
+                    sipRequest = outgoingMessage.sipRequest;
+                    evtReceived = outgoingMessage.evtReceived;
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    reject(sendMessage.errors.notIntercepted);
+                    return [2 /*return*/];
+                case 4:
+                    if (from_number_sim_name)
+                        sipRequest.headers.from.name = "\"" + from_number_sim_name + " (sim)\"";
+                    sipRequest.uri = contact.uri;
+                    sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
+                    delete sipRequest.headers.contact;
+                    sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
+                    sipRequest.headers = __assign({}, sipRequest.headers, headers);
+                    _a.label = 5;
+                case 5:
+                    _a.trys.push([5, 7, , 8]);
+                    return [4 /*yield*/, evtReceived.waitFor(sendMessage.timeouts.accepted)];
+                case 6:
+                    _a.sent();
+                    return [3 /*break*/, 8];
+                case 7:
+                    error_2 = _a.sent();
+                    reject(sendMessage.errors.notConfirmed);
+                    return [2 /*return*/];
+                case 8:
+                    resolve();
+                    return [2 /*return*/];
+            }
         });
-    });
+    }); });
 }
 exports.sendMessage = sendMessage;
+(function (sendMessage) {
+    sendMessage.timeouts = {
+        "intercept": 2000,
+        "accepted": 5000
+    };
+    sendMessage.errors = {
+        "notSent": new Error(),
+        "notIntercepted": new Error("Message could not be intercepted in sip proxy, timeout value: " + sendMessage.timeouts.intercept),
+        "notConfirmed": new Error("UA did not confirm reception of message, timeout value: " + sendMessage.timeouts.accepted)
+    };
+})(sendMessage = exports.sendMessage || (exports.sendMessage = {}));

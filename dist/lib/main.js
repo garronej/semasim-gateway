@@ -272,7 +272,7 @@ function start(dongleCallContext) {
             switch (_a.label) {
                 case 0:
                     //debug("New contact", Contact.pretty(contact));
-                    debug("New contact", sipContact_1.Contact.readInstanceId(contact));
+                    debug("New contact", sipContact_1.Contact.buildUaInstancePk(contact));
                     return [4 /*yield*/, db.semasim.addUaInstance(sipContact_1.Contact.buildUaInstancePk(contact))];
                 case 1:
                     isNew = _a.sent();
@@ -422,7 +422,7 @@ function start(dongleCallContext) {
                     case 0:
                         contactPk = sipContact_1.Contact.buildUaInstancePk(contact);
                         return [4 /*yield*/, lock2.acquire(JSON.stringify(contactPk), function () { return __awaiter(_this, void 0, void 0, function () {
-                                var messages, messages_4, messages_4_1, message, received, error_3, e_5_1, e_5, _a;
+                                var messages, messages_4, messages_4_1, message, error_3, e_5_1, e_5, _a;
                                 return __generator(this, function (_b) {
                                     switch (_b.label) {
                                         case 0: return [4 /*yield*/, db.semasim.getUndeliveredMessagesOfUaInstance(contactPk)];
@@ -436,25 +436,19 @@ function start(dongleCallContext) {
                                         case 3:
                                             if (!!messages_4_1.done) return [3 /*break*/, 10];
                                             message = messages_4_1.value;
-                                            debug("Sending: " + JSON.stringify(message.text) + " from " + message.from_number);
-                                            received = void 0;
+                                            debug("sip sending: " + JSON.stringify(message.text) + " from " + message.from_number);
                                             _b.label = 4;
                                         case 4:
                                             _b.trys.push([4, 6, , 7]);
                                             return [4 /*yield*/, sipMessage.sendMessage(contact, message.from_number, {}, message.text)];
                                         case 5:
-                                            received = _b.sent();
+                                            _b.sent();
                                             return [3 /*break*/, 7];
                                         case 6:
                                             error_3 = _b.sent();
-                                            debug("error:", error_3.message);
+                                            debug("sip Send Message error:", error_3.message);
                                             return [3 /*break*/, 10];
-                                        case 7:
-                                            if (!received) {
-                                                debug("Not, received, break!");
-                                                return [3 /*break*/, 10];
-                                            }
-                                            return [4 /*yield*/, db.semasim.setMessageTowardSipDelivered(contactPk, message.id)];
+                                        case 7: return [4 /*yield*/, db.semasim.setMessageTowardSipDelivered(contactPk, message.id)];
                                         case 8:
                                             _b.sent();
                                             _b.label = 9;
@@ -491,7 +485,7 @@ function start(dongleCallContext) {
                     case 0: return [4 /*yield*/, db.asterisk.queryContacts()];
                     case 1:
                         (_a.sent()).forEach(function (contact) { return __awaiter(_this, void 0, void 0, function () {
-                            var messages, evtTracer, status, error_4;
+                            var messages, evtTracer, status;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0: return [4 /*yield*/, db.semasim.getUndeliveredMessagesOfUaInstance(sipContact_1.Contact.buildUaInstancePk(contact))];
@@ -499,22 +493,14 @@ function start(dongleCallContext) {
                                         messages = _a.sent();
                                         if (!messages.length)
                                             return [2 /*return*/];
-                                        _a.label = 2;
-                                    case 2:
-                                        _a.trys.push([2, 4, , 5]);
                                         evtTracer = new ts_events_extended_1.SyncEvent();
                                         sipContact_1.contactIo.wakeUpContact(contact, 0, evtTracer);
                                         return [4 /*yield*/, evtTracer.waitFor()];
-                                    case 3:
+                                    case 2:
                                         status = _a.sent();
-                                        if (status !== "REACHABLE")
-                                            return [2 /*return*/];
-                                        sendPendingSipMessagesToReachableContact(contact);
-                                        return [3 /*break*/, 5];
-                                    case 4:
-                                        error_4 = _a.sent();
+                                        if (status === "REACHABLE")
+                                            sendPendingSipMessagesToReachableContact(contact);
                                         return [2 /*return*/];
-                                    case 5: return [2 /*return*/];
                                 }
                             });
                         }); });

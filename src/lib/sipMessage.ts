@@ -1,4 +1,4 @@
-import { SyncEvent } from "ts-events-extended";
+import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import { DongleExtendedClient, Ami } from "chan-dongle-extended-client";
 import { Contact } from "./sipContact";
 import { evtOutgoingMessage, evtIncomingMessage } from "./sipProxy";
@@ -65,50 +65,96 @@ export async function startAccepting() {
 
 }
 
+
 export function sendMessage(
     contact: Contact,
     from_number: string,
     headers: Record<string, string>,
     text: string,
     from_number_sim_name?: string
-): Promise<boolean> {
+): Promise<void> {
 
-    return new Promise<boolean>((resolve, reject) => {
+    return new Promise<void>(
+        async (resolve, reject) => {
 
-        //debug("sendMessage", { contact, from_number, headers, text, from_number_sim_name });
+            //debug("sendMessage", { contact, from_number, headers, text, from_number_sim_name });
 
-        let actionId = Ami.generateUniqueActionId();
+            let actionId = Ami.generateUniqueActionId();
 
-        let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
+            let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
-        DongleExtendedClient.localhost().ami.messageSend(
-            `pjsip:${contact.endpoint}/${uri}`, from_number, actionId
-        ).catch(error => reject(error));
+            DongleExtendedClient.localhost().ami.messageSend(
+                `pjsip:${contact.endpoint}/${uri}`, from_number, actionId
+            ).catch(amiError => {
 
-        evtOutgoingMessage.attachOnce(
-            ({ sipRequest }) => sipRequest.content === actionId,
-            ({ sipRequest, evtReceived }) => {
+                let error= sendMessage.errors.notSent;
 
-                //TODO: inform that the name come from the SD card
-                if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
+                error.name= amiError.name;
+                error.message= amiError.message;
+                Object.defineProperty(error, "stack", { "value": amiError.stack });
 
-                sipRequest.uri = contact.uri;
-                sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
+                reject(error);
 
-                delete sipRequest.headers.contact;
+            });
 
-                sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
+            let sipRequest: sipLibrary.Request;
+            let evtReceived: VoidSyncEvent;
 
-                //TODO: to remove
+            try {
 
-                sipRequest.headers = { ...sipRequest.headers, ...headers };
+                let outgoingMessage = await evtOutgoingMessage.waitFor(
+                    ({ sipRequest }) => sipRequest.content === actionId,
+                    sendMessage.timeouts.intercept
+                );
 
-                evtReceived.waitFor(3500).then(() => resolve(true)).catch(() => resolve(false));
+                sipRequest = outgoingMessage.sipRequest;
+                evtReceived = outgoingMessage.evtReceived;
+
+            } catch (error) {
+                reject(sendMessage.errors.notIntercepted);
+                return;
+            }
+
+            if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
+
+            sipRequest.uri = contact.uri;
+            sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
+
+            delete sipRequest.headers.contact;
+
+            sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
+
+            sipRequest.headers = { ...sipRequest.headers, ...headers };
+
+            try{
+
+                await evtReceived.waitFor(sendMessage.timeouts.accepted);
+
+            }catch(error){
+
+                reject(sendMessage.errors.notConfirmed);
+                return;
 
             }
-        );
+
+            resolve();
 
 
-    });
+        }
+    );
 
+}
+
+export namespace sendMessage {
+
+    export const timeouts ={
+        "intercept": 2000,
+        "accepted": 5000
+    };
+
+    export const errors= {
+        "notSent": new Error(),
+        "notIntercepted": new Error(`Message could not be intercepted in sip proxy, timeout value: ${timeouts.intercept}`),
+        "notConfirmed": new Error(`UA did not confirm reception of message, timeout value: ${timeouts.accepted}`)
+    }
 }

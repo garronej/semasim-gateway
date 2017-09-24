@@ -185,7 +185,7 @@ function start(dongleCallContext: string) {
     contactIo.getEvtNewContact().attach(async contact => {
 
         //debug("New contact", Contact.pretty(contact));
-        debug("New contact", Contact.readInstanceId(contact));
+        debug("New contact", Contact.buildUaInstancePk(contact));
 
         let isNew = await db.semasim.addUaInstance(Contact.buildUaInstancePk(contact))
 
@@ -263,27 +263,25 @@ function start(dongleCallContext: string) {
         await lock2.acquire(
             JSON.stringify(contactPk),
             async () => {
+
                 let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(contactPk);
+
                 for (let message of messages) {
-                    debug(`Sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
-                    let received: boolean;
+                    debug(`sip sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
                     try {
-                        received = await sipMessage.sendMessage(
+                        await sipMessage.sendMessage(
                             contact,
                             message.from_number,
                             {},
                             message.text
                         );
                     } catch (error) {
-                        debug("error:", error.message);
-                        break;
-                    }
-                    if (!received) {
-                        debug("Not, received, break!");
+                        debug("sip Send Message error:", error.message);
                         break;
                     }
                     await db.semasim.setMessageTowardSipDelivered(contactPk, message.id);
                 }
+
             }
         );
     }
@@ -298,20 +296,14 @@ function start(dongleCallContext: string) {
 
             if (!messages.length) return;
 
-            //TODO remove try
-            try {
+            let evtTracer: contactIo.WakeUpContactTracer = new SyncEvent();
 
-                let evtTracer: contactIo.WakeUpContactTracer = new SyncEvent();
+            contactIo.wakeUpContact(contact, 0, evtTracer);
 
-                contactIo.wakeUpContact(contact, 0, evtTracer);
+            let status = await evtTracer.waitFor();
 
-                let status = await evtTracer.waitFor();
-
-                if (status !== "REACHABLE") return;
-
+            if (status === "REACHABLE")
                 sendPendingSipMessagesToReachableContact(contact);
-
-            } catch (error) { return; }
 
         });
 
