@@ -10,7 +10,7 @@ export declare function sendMessage(contact: Contact, from_number: string, heade
 export declare namespace sendMessage {
     const timeouts: {
         "intercept": number;
-        "accepted": number;
+        "confirmed": number;
     };
     const errors: {
         "notSent": Error;

@@ -75,7 +75,7 @@ export function sendMessage(
 ): Promise<void> {
 
     return new Promise<void>(
-        async (resolve, reject) => {
+        (resolve, reject) => {
 
             //debug("sendMessage", { contact, from_number, headers, text, from_number_sim_name });
 
@@ -87,58 +87,45 @@ export function sendMessage(
                 `pjsip:${contact.endpoint}/${uri}`, from_number, actionId
             ).catch(amiError => {
 
-                let error= sendMessage.errors.notSent;
+                let error = sendMessage.errors.notSent;
 
-                error.name= amiError.name;
-                error.message= amiError.message;
+                error.name = amiError.name;
+                error.message = amiError.message;
                 Object.defineProperty(error, "stack", { "value": amiError.stack });
 
                 reject(error);
 
             });
 
-            let sipRequest: sipLibrary.Request;
-            let evtReceived: VoidSyncEvent;
+            let timeoutInterceptId = setTimeout(
+                () => reject(sendMessage.errors.notIntercepted),
+                sendMessage.timeouts.intercept
+            );
 
-            try {
+            evtOutgoingMessage.attachOnce(
+                ({ sipRequest }) => sipRequest.content === actionId,
+                ({ sipRequest, evtReceived }) => {
 
-                let outgoingMessage = await evtOutgoingMessage.waitFor(
-                    ({ sipRequest }) => sipRequest.content === actionId,
-                    sendMessage.timeouts.intercept
-                );
+                    clearTimeout(timeoutInterceptId);
 
-                sipRequest = outgoingMessage.sipRequest;
-                evtReceived = outgoingMessage.evtReceived;
+                    if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
 
-            } catch (error) {
-                reject(sendMessage.errors.notIntercepted);
-                return;
-            }
+                    sipRequest.uri = contact.uri;
+                    sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
 
-            if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
+                    delete sipRequest.headers.contact;
 
-            sipRequest.uri = contact.uri;
-            sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
+                    sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
 
-            delete sipRequest.headers.contact;
+                    sipRequest.headers = { ...sipRequest.headers, ...headers };
 
-            sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
+                    evtReceived
+                        .waitFor(sendMessage.timeouts.confirmed)
+                        .catch(() => reject(sendMessage.errors.notConfirmed))
+                        .then(() => resolve());
 
-            sipRequest.headers = { ...sipRequest.headers, ...headers };
-
-            try{
-
-                await evtReceived.waitFor(sendMessage.timeouts.accepted);
-
-            }catch(error){
-
-                reject(sendMessage.errors.notConfirmed);
-                return;
-
-            }
-
-            resolve();
-
+                }
+            );
 
         }
     );
@@ -147,14 +134,14 @@ export function sendMessage(
 
 export namespace sendMessage {
 
-    export const timeouts ={
+    export const timeouts = {
         "intercept": 2000,
-        "accepted": 5000
+        "confirmed": 5000
     };
 
-    export const errors= {
+    export const errors = {
         "notSent": new Error(),
         "notIntercepted": new Error(`Message could not be intercepted in sip proxy, timeout value: ${timeouts.intercept}`),
-        "notConfirmed": new Error(`UA did not confirm reception of message, timeout value: ${timeouts.accepted}`)
+        "notConfirmed": new Error(`UA did not confirm reception of message, timeout value: ${timeouts.confirmed}`)
     }
 }
