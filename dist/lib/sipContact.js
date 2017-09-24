@@ -304,6 +304,7 @@ var contactIo;
                         socket = _b.value;
                         if (localPortsToKeep.indexOf(socket.localPort) < 0) {
                             destroyCount++;
+                            debug("==========> call destroy Useless Asterisk socket");
                             socket.destroy();
                         }
                         _d.label = 5;
@@ -353,16 +354,13 @@ var contactIo;
                                     Contact.readInstanceId(contact) === Contact.readInstanceId(newContact) &&
                                     contact.endpoint === newContact.endpoint);
                             }).pop();
-                            if (!(oldContact !== undefined)) return [3 /*break*/, 4];
+                            if (!(oldContact !== undefined)) return [3 /*break*/, 3];
                             debug("we had a contact for this UA, we delete it");
                             return [4 /*yield*/, db.asterisk.deleteContact(oldContact)];
                         case 2:
                             _a.sent();
-                            return [4 /*yield*/, destroyUselessAsteriskSockets()];
+                            _a.label = 3;
                         case 3:
-                            _a.sent();
-                            _a.label = 4;
-                        case 4:
                             evtNewContact.post(newContact);
                             return [2 /*return*/];
                     }
@@ -383,10 +381,9 @@ var contactIo;
             managerEvt.uri); }, function (_a) {
             var endpointname = _a.endpointname, uri = _a.uri;
             return __awaiter(_this, void 0, void 0, function () {
-                var destroyCount;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(function () { return resolve(); }, 1000); })];
+                        case 0: return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1000); })];
                         case 1:
                             _a.sent();
                             return [4 /*yield*/, db.asterisk.queryContacts()];
@@ -395,12 +392,12 @@ var contactIo;
                                 .filter(function (contact) { return contact.endpoint === endpointname && contact.uri === uri; })
                                 .length)
                                 return [2 /*return*/];
-                            return [4 /*yield*/, destroyUselessAsteriskSockets()];
-                        case 3:
-                            destroyCount = _a.sent();
-                            if (destroyCount === 0)
-                                return [2 /*return*/];
-                            evtExpiredContact.post(uri);
+                            //TODO: implement new garbage collector
+                            /*
+                            let destroyCount = await destroyUselessAsteriskSockets();
+                            if (destroyCount === 0) return;
+                            */
+                            debug("====================> we should send expired contact");
                             return [2 /*return*/];
                     }
                 });

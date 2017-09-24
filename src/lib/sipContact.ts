@@ -291,6 +291,7 @@ export namespace contactIo {
         for (let socket of (await getAsteriskSockets()).getAll())
             if (localPortsToKeep.indexOf(socket.localPort) < 0) {
                 destroyCount++;
+                debug("==========> call destroy Useless Asterisk socket");
                 socket.destroy();
             }
 
@@ -342,7 +343,8 @@ export namespace contactIo {
 
                         await db.asterisk.deleteContact(oldContact);
 
-                        await destroyUselessAsteriskSockets();
+                        //TODO: implement new garbage collector
+                        //await destroyUselessAsteriskSockets();
 
                     }
 
@@ -374,7 +376,7 @@ export namespace contactIo {
             ),
             async ({ endpointname, uri }) => {
 
-                await new Promise<void>(resolve => setTimeout(() => resolve(), 1000));
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 if (
                     (await db.asterisk.queryContacts())
@@ -384,11 +386,15 @@ export namespace contactIo {
                         .length
                 ) return;
 
+                //TODO: implement new garbage collector
+                /*
                 let destroyCount = await destroyUselessAsteriskSockets();
-
                 if (destroyCount === 0) return;
+                */
 
-                evtExpiredContact!.post(uri);
+                debug("====================> we should send expired contact");
+
+                //evtExpiredContact!.post(uri);
 
             }
         );
