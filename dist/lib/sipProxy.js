@@ -125,10 +125,10 @@ function start() {
                     sipApi_1.startListening(backendSocket);
                     /*
                     backendSocket.evtPacket.attach(sipPacket =>
-                        console.log("From backend:\n", sip.stringify(sipPacket).yellow, "\n\n")
+                        console.log("From backend:\n", sipLibrary.stringify(sipPacket).yellow, "\n\n")
                     );
                     backendSocket.evtData.attach(chunk =>
-                        console.log("From backend:\n", chunk.yellow, "\n\n")
+                        console.log("From backend raw:\n", chunk.yellow, "\n\n")
                     );
                     */
                     backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
@@ -320,10 +320,10 @@ function createAsteriskSocket(flowToken, backendSocket) {
     asteriskSockets.add(flowToken, asteriskSocket);
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
-        console.log("From Asterisk:\n", sip.stringify(sipPacket).grey, "\n\n")
+        console.log("From Asterisk:\n", sipLibrary.stringify(sipPacket).grey, "\n\n")
     );
     asteriskSocket.evtData.attach(chunk =>
-        console.log("From Asterisk:\n", chunk.grey, "\n\n")
+        console.log("From Asterisk raw:\n", chunk.grey, "\n\n")
     );
     */
     asteriskSocket.evtPacket.attachPrepend(function (_a) {

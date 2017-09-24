@@ -85,10 +85,10 @@ export async function start() {
 
     /*
     backendSocket.evtPacket.attach(sipPacket =>
-        console.log("From backend:\n", sip.stringify(sipPacket).yellow, "\n\n")
+        console.log("From backend:\n", sipLibrary.stringify(sipPacket).yellow, "\n\n")
     );
     backendSocket.evtData.attach(chunk =>
-        console.log("From backend:\n", chunk.yellow, "\n\n")
+        console.log("From backend raw:\n", chunk.yellow, "\n\n")
     );
     */
 
@@ -252,10 +252,10 @@ function createAsteriskSocket(
 
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
-        console.log("From Asterisk:\n", sip.stringify(sipPacket).grey, "\n\n")
+        console.log("From Asterisk:\n", sipLibrary.stringify(sipPacket).grey, "\n\n")
     );
     asteriskSocket.evtData.attach(chunk =>
-        console.log("From Asterisk:\n", chunk.grey, "\n\n")
+        console.log("From Asterisk raw:\n", chunk.grey, "\n\n")
     );
     */
 
