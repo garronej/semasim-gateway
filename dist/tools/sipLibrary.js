@@ -152,7 +152,10 @@ var Socket = /** @class */ (function () {
                 _this.evtRequest.post(sipPacket);
             else
                 _this.evtResponse.post(sipPacket);
-        }, function () { return _this.destroy(); }, Socket.maxBytesHeaders, Socket.maxContentLength);
+        }, function () {
+            debug("Flood detected");
+            _this.destroy();
+        }, Socket.maxBytesHeaders, Socket.maxContentLength);
         connection.on("data", function (data) {
             if (timeoutDelay) {
                 clearTimeout(_this.timer);
@@ -192,7 +195,7 @@ var Socket = /** @class */ (function () {
         if (matchRequest(sipPacket) && parseInt(sipPacket.headers["max-forwards"]) < 0)
             return false;
         if (!sipPacket.headers.via.length) {
-            debug("=========> we abort, no via header");
+            debug("Prevent sending packet without via header");
             return false;
         }
         return this.connection.write(new Buffer(exports.stringify(sipPacket), "binary"));
@@ -326,6 +329,7 @@ var Socket = /** @class */ (function () {
     return Socket;
 }());
 exports.Socket = Socket;
+//TODO: use Map instead of Record
 var Store = /** @class */ (function () {
     function Store() {
         this.record = {};
@@ -347,6 +351,7 @@ var Store = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    //TODO: correct getAll so we each elem is uniq
     Store.prototype.getAll = function () {
         var out = [];
         try {
@@ -365,6 +370,7 @@ var Store = /** @class */ (function () {
         return out;
         var e_3, _c;
     };
+    //TODO: we might destroy twice some socket
     Store.prototype.destroyAll = function () {
         try {
             for (var _a = __values(Object.keys(this.record)), _b = _a.next(); !_b.done; _b = _a.next()) {

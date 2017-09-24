@@ -151,7 +151,10 @@ export class Socket {
                     this.evtResponse.post(sipPacket);
 
             },
-            () => this.destroy(),
+            () => {
+                debug("Flood detected");
+                this.destroy();
+            },
             Socket.maxBytesHeaders,
             Socket.maxContentLength
         );
@@ -219,7 +222,7 @@ export class Socket {
             return false;
 
         if( !sipPacket.headers.via.length ) {
-            debug("=========> we abort, no via header");
+            debug("Prevent sending packet without via header");
             return false;
         }
 
@@ -403,6 +406,7 @@ export class Socket {
 
 }
 
+//TODO: use Map instead of Record
 export class Store {
 
     private readonly record: Record<string, Socket> = {};
@@ -429,6 +433,7 @@ export class Store {
 
     }
 
+    //TODO: correct getAll so we each elem is uniq
     public getAll(): Socket[] {
 
         let out: Socket[] = [];
@@ -440,6 +445,7 @@ export class Store {
 
     }
 
+    //TODO: we might destroy twice some socket
     public destroyAll() {
 
         for (let key of Object.keys(this.record))
