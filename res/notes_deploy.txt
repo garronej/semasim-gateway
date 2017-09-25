@@ -3,3 +3,15 @@
 echo fs.inotify.max_user_watches=582222 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
 ps_contact table must be modified uri VARCHAR(255) => VARCHAR(1024)
+
+
+//For MySqlEvents: 
+
+Put in /etc/mysql/my.cnf
+
+server-id               = 1
+binlog_format    = ROW
+log_bin                 = /var/log/mysql/mysql-bin.log
+binlog_do_db     = asterisk
+expire_logs_days        = 10
+max_binlog_size         = 100M
