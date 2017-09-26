@@ -66,7 +66,7 @@ export namespace wakeUpUserAgent {
     export const methodName = "wakeUpUserAgent";
 
     export interface Params {
-        contactOrContactUri: Contact | string;
+        contact: Contact;
     }
 
     export interface Response {
@@ -74,12 +74,12 @@ export namespace wakeUpUserAgent {
     }
 
     export async function makeCall(
-        contactOrContactUri: Contact | string
+        contact: Contact
     ): Promise<Response["status"]> {
 
         debug(`call ${methodName}`);
 
-        let payload: Params = { contactOrContactUri };
+        let payload: Params = { contact };
 
         let { status } = await sendRequest(
             methodName, 

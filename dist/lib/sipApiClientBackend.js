@@ -88,14 +88,14 @@ var claimDongle;
 var wakeUpUserAgent;
 (function (wakeUpUserAgent) {
     wakeUpUserAgent.methodName = "wakeUpUserAgent";
-    function makeCall(contactOrContactUri) {
+    function makeCall(contact) {
         return __awaiter(this, void 0, void 0, function () {
             var payload, status;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         debug("call " + wakeUpUserAgent.methodName);
-                        payload = { contactOrContactUri: contactOrContactUri };
+                        payload = { contact: contact };
                         return [4 /*yield*/, sendRequest(wakeUpUserAgent.methodName, payload)];
                     case 1:
                         status = (_a.sent()).status;

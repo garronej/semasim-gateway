@@ -1,4 +1,4 @@
-import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
+import { SyncEvent } from "ts-events-extended";
 import { DongleExtendedClient, Ami } from "chan-dongle-extended-client";
 import { Contact } from "./sipContact";
 import { evtOutgoingMessage, evtIncomingMessage } from "./sipProxy";
@@ -8,62 +8,49 @@ import { c } from "./_constants";
 import * as _debug from "debug";
 let debug = _debug("_sipMessage");
 
-export const evtMessage = new SyncEvent<{
+let evtMessage: SyncEvent<{
     fromContact: Contact;
     toNumber: string;
     text: string;
-}>();
+}> | undefined = undefined;
 
-function utf8EncodedDataAsBinaryStringToString(
-    utf8EncodedDataAsBinaryString: string
-): {
-    validInput: boolean;
-    text: string;
-} {
+export function getEvtMessage() {
 
-    let uft8EncodedData = new Buffer(utf8EncodedDataAsBinaryString, "binary");
+    if (evtMessage) return evtMessage;
 
-    let text = uft8EncodedData.toString("utf8");
+    evtMessage = new SyncEvent();
 
-    let validInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
+    (async () => {
 
-    return { validInput, text };
+        let ami = DongleExtendedClient.localhost().ami;
 
-}
+        let matchAllExt = "_.";
 
-function stringToUtf8EncodedDataAsBinaryString(text: string): string {
+        await ami.dialplanExtensionRemove(matchAllExt, c.sipMessageContext);
 
-   return (new Buffer(text, "utf8")).toString("binary");
+        await ami.dialplanExtensionAdd(c.sipMessageContext, matchAllExt, 1, "Hangup");
 
-}
+        evtIncomingMessage.attach(
+            ({ fromContact, sipRequest }) => {
 
+                let { validInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
 
-export async function startAccepting() {
+                if (!validInput)
+                    debug("Sip message content was not a valid UTF-8 string");
 
-    let ami = DongleExtendedClient.localhost().ami;
+                let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
 
-    let matchAllExt = "_.";
+                evtMessage!.post({ fromContact, toNumber, text });
 
-    await ami.dialplanExtensionRemove(matchAllExt, c.sipMessageContext);
+            }
+        );
 
-    await ami.dialplanExtensionAdd(c.sipMessageContext, matchAllExt, 1, "Hangup");
+    })();
 
-    evtIncomingMessage.attach(
-        ({ fromContact, sipRequest }) => {
-
-            let { validInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
-
-            if (!validInput)
-                debug("Sip message content was not a valid UTF-8 string");
-
-            let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
-
-            evtMessage.post({ fromContact, toNumber, text });
-
-        }
-    );
+    return evtMessage;
 
 }
+
 
 
 export function sendMessage(
@@ -72,63 +59,58 @@ export function sendMessage(
     headers: Record<string, string>,
     text: string,
     from_number_sim_name?: string
-): Promise<void> {
+) {
+    return new Promise<void>((resolve, reject) => {
 
-    return new Promise<void>(
-        (resolve, reject) => {
+        let actionId = Ami.generateUniqueActionId();
 
-            //debug("sendMessage", { contact, from_number, headers, text, from_number_sim_name });
+        let uri = contact.ps.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
-            let actionId = Ami.generateUniqueActionId();
+        DongleExtendedClient.localhost().ami.messageSend(
+            `pjsip:${contact.ps.endpoint}/${uri}`, from_number, actionId
+        ).catch(amiError => {
 
-            let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
+            let error = sendMessage.errors.notSent;
 
-            DongleExtendedClient.localhost().ami.messageSend(
-                `pjsip:${contact.endpoint}/${uri}`, from_number, actionId
-            ).catch(amiError => {
+            error.name = amiError.name;
+            error.message = amiError.message;
+            Object.defineProperty(error, "stack", { "value": amiError.stack });
 
-                let error = sendMessage.errors.notSent;
+            reject(error);
 
-                error.name = amiError.name;
-                error.message = amiError.message;
-                Object.defineProperty(error, "stack", { "value": amiError.stack });
+        });
 
-                reject(error);
+        let timeoutInterceptId = setTimeout(
+            () => reject(sendMessage.errors.notIntercepted),
+            sendMessage.timeouts.intercept
+        );
 
-            });
+        evtOutgoingMessage.attachOnce(
+            ({ sipRequest }) => sipRequest.content === actionId,
+            ({ sipRequest, evtReceived }) => {
 
-            let timeoutInterceptId = setTimeout(
-                () => reject(sendMessage.errors.notIntercepted),
-                sendMessage.timeouts.intercept
-            );
+                clearTimeout(timeoutInterceptId);
 
-            evtOutgoingMessage.attachOnce(
-                ({ sipRequest }) => sipRequest.content === actionId,
-                ({ sipRequest, evtReceived }) => {
+                if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
 
-                    clearTimeout(timeoutInterceptId);
+                sipRequest.uri = contact.ps.uri;
+                sipRequest.headers.to = { "name": undefined, "uri": contact.ps.uri, "params": {} };
 
-                    if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
+                delete sipRequest.headers.contact;
 
-                    sipRequest.uri = contact.uri;
-                    sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
+                sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
 
-                    delete sipRequest.headers.contact;
+                sipRequest.headers = { ...sipRequest.headers, ...headers };
 
-                    sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
+                evtReceived
+                    .waitFor(sendMessage.timeouts.confirmed)
+                    .catch(() => reject(sendMessage.errors.notConfirmed))
+                    .then(() => resolve());
 
-                    sipRequest.headers = { ...sipRequest.headers, ...headers };
+            }
+        );
 
-                    evtReceived
-                        .waitFor(sendMessage.timeouts.confirmed)
-                        .catch(() => reject(sendMessage.errors.notConfirmed))
-                        .then(() => resolve());
-
-                }
-            );
-
-        }
-    );
+    });
 
 }
 
@@ -144,4 +126,28 @@ export namespace sendMessage {
         "notIntercepted": new Error(`Message could not be intercepted in sip proxy, timeout value: ${timeouts.intercept}`),
         "notConfirmed": new Error(`UA did not confirm reception of message, timeout value: ${timeouts.confirmed}`)
     }
+}
+
+
+function utf8EncodedDataAsBinaryStringToString(
+    utf8EncodedDataAsBinaryString: string
+): {
+        validInput: boolean;
+        text: string;
+    } {
+
+    let uft8EncodedData = new Buffer(utf8EncodedDataAsBinaryString, "binary");
+
+    let text = uft8EncodedData.toString("utf8");
+
+    let validInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
+
+    return { validInput, text };
+
+}
+
+function stringToUtf8EncodedDataAsBinaryString(text: string): string {
+
+    return (new Buffer(text, "utf8")).toString("binary");
+
 }

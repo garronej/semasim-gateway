@@ -32,7 +32,8 @@
     "save": "^2.3.1",
     "sip": "github:garronej/sip.js",
     "ts-async-agi": "garronej/ts-async-agi",
-    "ts-events-extended": "garronej/ts-events-extended"
+    "ts-events-extended": "garronej/ts-events-extended",
+    "zongji": "^0.4.4"
   },
   "devDependencies": {
     "@types/colors": "^1.1.3",

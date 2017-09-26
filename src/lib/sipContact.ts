@@ -11,7 +11,7 @@ import { c } from "./_constants";
 import * as _debug from "debug";
 let debug = _debug("_sipContact");
 
-export interface Contact {
+export interface PsContact {
     id: string;
     uri: string;
     path: string;
@@ -19,16 +19,33 @@ export interface Contact {
     user_agent: string;
 }
 
-export namespace Contact {
+export namespace PsContact {
 
-    export function readPushInfos( contactOrContactUri: Contact | string ): { 
+    export function buildUserAgentFieldValue(
+        instanceId: string,
+        userAgent: string
+    ): string {
+        let wrap = { instanceId, userAgent };
+        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
+    }
+
+    function decodeUserAgentFieldValue(psContact: PsContact): { 
+        instanceId: string,
+        userAgent: string
+    }{
+        return JSON.parse((new Buffer(psContact.user_agent, "base64")).toString("utf8"));
+    }
+
+    function readFlowToken(psContact: PsContact): string {
+        return sipLibrary.parsePath(psContact.path).pop()!.uri.params[c.shared.flowTokenKey]!;
+    }
+
+    function extractPushInfos( psContact: PsContact): { 
         pushType: string | undefined; 
         pushToken: string | undefined; 
     }{
 
-        let contactUri= (typeof contactOrContactUri === "string")?contactOrContactUri:contactOrContactUri.uri;
-
-        let { params } = sipLibrary.parseUri(contactUri);
+        let { params } = sipLibrary.parseUri(psContact.uri);
 
         let pushType= params["pn-type"] || undefined;
         let pushToken = params["pn-tok"] || undefined;
@@ -37,321 +54,203 @@ export namespace Contact {
 
     }
 
-    export function buildUaInstancePk( contact: Contact ): db.semasim.UaInstancePk {
-        return {
-            "dongle_imei": contact.endpoint,
-            "instance_id": readInstanceId(contact)
-        }
-    }
+    export function buildContact(psContact: PsContact): Contact {
 
-    export function buildValueOfUserAgentField(
-        endpoint: string,
-        instanceId: string,
-        realUserAgent: string
-    ): string {
+        psContact.uri = psContact.uri.replace(/\^3B/g, ";");
+        psContact.path = psContact.path.replace(/\^3B/g, ";");
 
-        let wrap = { endpoint, instanceId, realUserAgent };
+        let { instanceId, userAgent }= decodeUserAgentFieldValue(psContact);
 
-        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64")
+        let flowToken= readFlowToken(psContact);
 
-    }
+        let pushInfos= extractPushInfos(psContact);
 
-    function decodeUserAgentFieldValue(contact: Contact): { 
-        endpoint: string,
-        instanceId: string,
-        realUserAgent: string
-    }{
-        return JSON.parse((new Buffer(contact.user_agent, "base64")).toString("utf8"));
-    }
-
-    export function readInstanceId(contact: Contact): string {
-        return decodeUserAgentFieldValue(contact).instanceId;
-    }
-
-    export function readUserAgent(contact: Contact): string {
-        return decodeUserAgentFieldValue(contact).realUserAgent;
-    }
-
-
-    export function readFlowToken(contact: Contact): string {
-
-        return sipLibrary.parsePath(contact.path).pop()!.uri.params[c.shared.flowTokenKey]!;
-
-    }
-
-    export function readAstSocketSrcPort(contact: Contact): number {
-
-        if (!contact.path) return NaN;
-
-        return sipLibrary.parsePath(contact.path)[0].uri.port;
-
-    }
-
-    export function pretty(contact: Contact): Record<string, string>{
-
-        let parsedUri= sipLibrary.parseUri(contact.uri);
-
-        let pnTok= parsedUri.params["pn-tok"];
-
-        if( pnTok )
-            parsedUri.params["pn-tok"] = pnTok.substring(0,3) + "..." + pnTok.substring(pnTok.length - 3 );
+        let pretty=[
+            `imei: ${psContact.endpoint}`,
+            `+sip.instance: ${instanceId}`,
+            `flowToken: ${flowToken}`
+        ].join(",");
 
         return {
-            "uri": sipLibrary.stringifyUri(parsedUri),
-            "path": contact.path,
-            "instanceId": readInstanceId(contact),
-            "userAgent": readUserAgent(contact)
+            "ps": psContact,
+            pushInfos,
+            "uaInstance": {
+                "dongle_imei": psContact.endpoint,
+                "instance_id": instanceId
+            },
+            userAgent,
+            flowToken,
+            pretty
         };
-
     }
+}
 
-
+export interface Contact {
+    readonly ps: PsContact;
+    readonly pushInfos: {
+        readonly pushType: string | undefined;
+        readonly pushToken: string | undefined;
+    };
+    readonly uaInstance: {
+        readonly dongle_imei: string;
+        readonly instance_id: string;
+    };
+    readonly userAgent: string;
+    readonly flowToken: string;
+    readonly pretty: string;
 }
 
 
-export namespace contactIo {
+export namespace Contact {
 
-    export function getContactFromAstSocketSrcPort(
-        astSocketSrcPort: number
-    ): Promise<Contact | undefined> {
+    export function buildDialString(contacts: Iterable<Contact>){
 
-        let returned = false;
+        let dialStringSplit: string[]=[];
 
-        return new Promise<Contact | undefined>(async resolve => {
-
-            getEvtNewContact().waitFor(
-                contact => Contact.readAstSocketSrcPort(contact) === astSocketSrcPort,
-                1200
-            ).then(contact => {
-                if (returned) return;
-                returned = true;
-
-                resolve(contact);
-
-            }).catch(() => {
-                if (returned) return;
-                returned = true;
-
-                resolve(undefined);
-            });
-
-            let contacts = await db.asterisk.queryContacts();
-
-            if (returned) return;
-
-            for (let contact of contacts) {
-
-                if (Contact.readAstSocketSrcPort(contact) !== astSocketSrcPort)
-                    continue;
-
-                returned = true;
-
-                resolve(contact);
-
-            }
-
-        });
-
+        for( let {ps} of contacts)
+            dialStringSplit.push(`PJSIP/${ps.endpoint}/${ps.uri}`);
+        
+        return dialStringSplit.join("&");
 
     }
 
-    export type WakeUpAllContactsTracer = SyncEvent<{
-        type: "reachableContact";
-        contact: Contact;
-    } | {
-            type: "completed";
-        }>;
+    export function getContactOfFlow(
+        flowToken: string
+    ) {
+        return new Promise<Contact | undefined>(
+            async resolve => {
 
+                let returned = false;
+
+                getEvtNewContact().waitFor(
+                    contact => contact.flowToken === flowToken,
+                    1200
+                ).then(contact => {
+                    if (returned) return;
+                    returned = true;
+                    resolve(contact);
+                }).catch(() => {
+                    if (returned) return;
+                    returned = true;
+                    resolve(undefined);
+                });
+
+                let contacts = await db.asterisk.queryContacts();
+
+                if (returned) return;
+
+                let contact = contacts.find(
+                    contact => contact.flowToken === flowToken
+                );
+
+                if (!contact) return;
+
+                returned = true;
+                resolve(contact);
+
+            }
+        );
+    }
 
     export function wakeUpAllContacts(
         endpoint: string,
-        timeout?: number,
-        evtTracer?: WakeUpAllContactsTracer
+        getResultTimeout?: number,
     ) {
-
         return new Promise<{
-            reachableContacts: Contact[];
-            unreachableContacts: Contact[];
+            reachableContacts: Set<Contact>;
+            unreachableContacts: Set<Contact>;
         }>(async resolve => {
 
-            let contactsOfEndpoint = (await db.asterisk.queryContacts())
-                .filter(contact => contact.endpoint === endpoint);
+            let reachableContacts = new Set<Contact>();
+            let unreachableContacts = new Set<Contact>(
+                (await db.asterisk.queryContacts()).filter(
+                    contact => contact.ps.endpoint === endpoint
+                )
+            );
 
-            let reachableContactMap: Map<Contact, Contact> = new Map();
-
-            let resolver = () => {
-
-                let reachableContacts: Contact[] = [];
-                let unreachableContacts: Contact[] = [];
-
-                for (let keyContact of reachableContactMap.keys()) {
-
-                    let reachableContact = reachableContactMap.get(keyContact)
-
-                    if (reachableContact) reachableContacts.push(reachableContact);
-                    else unreachableContacts.push(keyContact);
-
-                }
-
+            let resolver= ()=> {
                 resolve({ reachableContacts, unreachableContacts });
-
+                reachableContacts= new Set();
+                unreachableContacts= new Set();
             };
 
-            let timer: NodeJS.Timer | undefined = undefined;
-
-            if (timeout) {
-                timer = setTimeout(() => {
-
-                    if (!reachableContactMap.size) return;
-
+            let timeoutId = setTimeout(
+                ()=>{
+                    if( !reachableContacts.size ) return;
                     resolver();
+                },
+                getResultTimeout || 9000
+            );
 
-                }, timeout);
+            let tasks: Promise<void>[] = [];
+
+            for (let contact of unreachableContacts) {
+                tasks[tasks.length] = (async () => {
+
+                    switch (await sipApiBackend.wakeUpUserAgent.makeCall(contact)) {
+                        case "REACHABLE":
+                            unreachableContacts.delete(contact);
+                            reachableContacts.add(contact);
+                            return;
+                        case "PUSH_NOTIFICATION_SENT":
+                            try {
+                                let reachableContact = await getEvtNewContact().waitFor(
+                                    reRegisteredContact => 
+                                        JSON.stringify(reRegisteredContact.uaInstance) === JSON.stringify(contact.uaInstance),
+                                    15000
+                                );
+                                unreachableContacts.delete(contact);
+                                reachableContacts.add(reachableContact);
+                            } catch (error) { }
+                    }
+
+                })();
             }
 
+            await Promise.all(tasks);
 
-            let taskArray: Promise<void>[] = [];
-
-            for (let contact of contactsOfEndpoint)
-                taskArray.push(new Promise<void>(resolve =>
-                    wakeUpContact(contact).then(reachableContact => {
-
-                        if (reachableContact) {
-
-                            reachableContactMap.set(contact, reachableContact);
-                            if (evtTracer) evtTracer.post({ "type": "reachableContact", "contact": reachableContact });
-
-                        }
-
-                        resolve();
-
-                    })
-                ));
-
-
-            await Promise.all(taskArray);
-
-            if (timer) clearTimeout(timer);
+            clearTimeout(timeoutId);
 
             resolver();
 
-            if (evtTracer) evtTracer.post({ "type": "completed" })
-
         });
 
-
-    }
-
-    export type WakeUpContactTracer = SyncEvent<sipApiBackend.wakeUpUserAgent.Response["status"]>;
-
-    export async function wakeUpContact(
-        contact: Contact,
-        timeout?: number,
-        evtTracer?: WakeUpContactTracer
-    ): Promise<Contact | null> {
-
-        if (timeout === undefined) timeout = 30000;
-
-        let statusMessage = await sipApiBackend.wakeUpUserAgent.makeCall(contact);
-
-        if (evtTracer) evtTracer.post(statusMessage);
-
-        switch (statusMessage) {
-            case "REACHABLE":
-                return contact;
-            case "UNREACHABLE":
-                return null;
-            case "PUSH_NOTIFICATION_SENT":
-
-                try {
-
-                    let newlyRegisteredContact = await getEvtNewContact().waitFor(
-                        ({ user_agent }) => user_agent === contact.user_agent,
-                        timeout
-                    );
-
-                    return newlyRegisteredContact;
-
-                } catch (error) {
-                    return null;
-                }
-        }
-
-
-    }
-
-
-    async function destroyUselessAsteriskSockets(): Promise<number> {
-
-        let localPortsToKeep = (await db.asterisk.queryContacts())
-            .map(contact => Contact.readAstSocketSrcPort(contact));
-
-        let destroyCount = 0;
-
-        for (let socket of (await getAsteriskSockets()).getAll())
-            if (localPortsToKeep.indexOf(socket.localPort) < 0) {
-                destroyCount++;
-                debug("==========> call destroy Useless Asterisk socket");
-                socket.destroy();
-            }
-
-        return destroyCount;
 
     }
 
 
     let evtNewContact: SyncEvent<Contact> | undefined = undefined;
-
-    export function getEvtNewContact(): SyncEvent<Contact> {
+    export function getEvtNewContact() {
 
         if (evtNewContact) return evtNewContact;
 
         evtNewContact = new SyncEvent<Contact>();
 
-        DongleExtendedClient.localhost().ami.evt.attach(
-            managerEvt => (
-                managerEvt.event === "ContactStatus" &&
-                managerEvt.contactstatus === "Created" &&
-                managerEvt.uri
-            ),
-            runExclusive.build(
-                async ({ endpointname, uri }) => {
+        db.asterisk.getEvtNewContact().attach(
+            async newContact => {
 
-                    let contacts = await db.asterisk.queryContacts();
+                let oldContact = (await db.asterisk.queryContacts()).find(
+                    oldContact => (
+                        oldContact.ps.id !== newContact.ps.id &&
+                        JSON.stringify(oldContact.uaInstance) === JSON.stringify(newContact.uaInstance)
+                    )
+                );
 
-                    let newContact = contacts.filter(
-                        contact => contact.endpoint === endpointname && contact.uri === uri
-                    ).pop();
+                if (oldContact) {
 
-                    if (!newContact) {
-                        debug("No new contact as described");
-                        return;
-                    }
+                    debug(`We overwrite contact ${oldContact.pretty}`);
 
-                    let oldContact = contacts.filter(
-                        contact =>
-                            (
-                                contact !== newContact &&
-                                Contact.readInstanceId(contact) === Contact.readInstanceId(newContact!) &&
-                                contact.endpoint === newContact!.endpoint
-                            )
-                    ).pop();
+                    await db.asterisk.deleteContact(oldContact);
 
-                    if (oldContact !== undefined) {
+                    let oldAsteriskSocket = (await getAsteriskSockets()).get(oldContact.flowToken);
 
-                        debug("we had a contact for this UA, we delete it");
-
-                        await db.asterisk.deleteContact(oldContact);
-
-                        //TODO: implement new garbage collector
-                        //await destroyUselessAsteriskSockets();
-
-                    }
-
-                    evtNewContact!.post(newContact);
+                    if (oldAsteriskSocket) oldAsteriskSocket.destroy();
 
                 }
-            )
+
+                evtNewContact!.post(newContact);
+
+            }
         );
 
         return evtNewContact;
@@ -359,42 +258,21 @@ export namespace contactIo {
     }
 
 
-
-    let evtExpiredContact: SyncEvent<string> | undefined = undefined;
-
-    export function getEvtExpiredContact(): SyncEvent<string> {
+    let evtExpiredContact: SyncEvent<Contact> | undefined = undefined;
+    export function getEvtExpiredContact() {
 
         if (evtExpiredContact) return evtExpiredContact;
 
-        evtExpiredContact = new SyncEvent<string>();
+        evtExpiredContact = new SyncEvent<Contact>();
 
-        DongleExtendedClient.localhost().ami.evt.attach(
-            managerEvt => (
-                managerEvt.event === "ContactStatus" &&
-                managerEvt.contactstatus === "Unknown" &&
-                managerEvt.uri
-            ),
-            async ({ endpointname, uri }) => {
+        db.asterisk.getEvtExpiredContact().attach(
+            async expiredContact=> {
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                    let asteriskSocket = (await getAsteriskSockets()).get(expiredContact.flowToken);
 
-                if (
-                    (await db.asterisk.queryContacts())
-                        .filter(
-                        contact => contact.endpoint === endpointname && contact.uri === uri
-                        )
-                        .length
-                ) return;
+                    if (asteriskSocket) asteriskSocket.destroy();
 
-                //TODO: implement new garbage collector
-                /*
-                let destroyCount = await destroyUselessAsteriskSockets();
-                if (destroyCount === 0) return;
-                */
-
-                debug("====================> we should send expired contact");
-
-                //evtExpiredContact!.post(uri);
+                    evtExpiredContact!.post(expiredContact);
 
             }
         );
@@ -404,5 +282,3 @@ export namespace contactIo {
     }
 
 }
-
-

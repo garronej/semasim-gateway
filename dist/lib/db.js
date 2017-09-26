@@ -42,16 +42,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -72,25 +62,68 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var runExclusive = require("run-exclusive");
+var ts_events_extended_1 = require("ts-events-extended");
 var mysql = require("mysql");
+var sipContact_1 = require("./sipContact");
 var f = require("../tools/mySqlFunctions");
+var MySqlEvents_1 = require("../tools/MySqlEvents");
 var _constants_1 = require("./_constants");
 var _debug = require("debug");
-var debug = _debug("_dbInterface");
-//TODO: manage transactions with async-lock rather than with runExclusive
-//do it here but more importantly on backend
+var debug = _debug("_db");
 var asterisk;
 (function (asterisk) {
-    var groupRef = runExclusive.createGroupRef();
+    var connectionConfig = __assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk", "multipleStatements": true });
+    MySqlEvents_1.MySqlEvents.connectionConfig = connectionConfig;
     var connection = undefined;
     function query(sql, values) {
-        if (!connection) {
-            connection = mysql.createConnection(__assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk", "multipleStatements": true }));
-        }
+        if (!connection)
+            connection = mysql.createConnection(connectionConfig);
         return f.queryOnConnection(connection, sql, values);
     }
+    var evtNewContact = undefined;
+    function getEvtNewContact() {
+        if (evtNewContact)
+            return evtNewContact;
+        evtNewContact = new ts_events_extended_1.SyncEvent();
+        MySqlEvents_1.MySqlEvents.getInstance().evtNewRow.attach(function (_a) {
+            var database = _a.database, table = _a.table;
+            return (database === connectionConfig.database &&
+                table === "ps_contacts");
+        }, function (_a) {
+            var row = _a.row;
+            return evtNewContact.post(sipContact_1.PsContact.buildContact(row));
+        });
+        return evtNewContact;
+    }
+    asterisk.getEvtNewContact = getEvtNewContact;
+    var evtExpiredContact = undefined;
+    function getEvtExpiredContact() {
+        if (evtExpiredContact)
+            return evtExpiredContact;
+        evtExpiredContact = new ts_events_extended_1.SyncEvent();
+        MySqlEvents_1.MySqlEvents.getInstance().evtDeleteRow.attach(function (_a) {
+            var database = _a.database, table = _a.table;
+            return (database === connectionConfig.database &&
+                table === "ps_contacts");
+        }, function (_a) {
+            var row = _a.row;
+            return evtExpiredContact.post(sipContact_1.PsContact.buildContact(row));
+        });
+        return evtExpiredContact;
+    }
+    asterisk.getEvtExpiredContact = getEvtExpiredContact;
     function queryEndpoints() {
         return __awaiter(this, void 0, void 0, function () {
             var endpoints;
@@ -108,42 +141,15 @@ var asterisk;
         });
     }
     asterisk.queryEndpoints = queryEndpoints;
-    function truncateContacts() {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, query("TRUNCATE ps_contacts")];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    }
-    asterisk.truncateContacts = truncateContacts;
     function queryContacts() {
         return __awaiter(this, void 0, void 0, function () {
-            var contacts, contacts_1, contacts_1_1, contact, e_1, _a;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var psContacts;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0: return [4 /*yield*/, query("SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts")];
                     case 1:
-                        contacts = _b.sent();
-                        try {
-                            for (contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
-                                contact = contacts_1_1.value;
-                                contact.uri = contact.uri.replace(/\^3B/g, ";");
-                                contact.path = contact.path.replace(/\^3B/g, ";");
-                            }
-                        }
-                        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                        finally {
-                            try {
-                                if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
-                            }
-                            finally { if (e_1) throw e_1.error; }
-                        }
-                        return [2 /*return*/, contacts];
+                        psContacts = _a.sent();
+                        return [2 /*return*/, psContacts.map(function (psContact) { return sipContact_1.PsContact.buildContact(psContact); })];
                 }
             });
         });
@@ -173,17 +179,17 @@ var asterisk;
     }
     asterisk.queryLastConnectionTimestampOfDonglesEndpoint = queryLastConnectionTimestampOfDonglesEndpoint;
     function deleteContact(contact) {
-        return __awaiter(this, void 0, void 0, function () {
-            var affectedRows, isDeleted;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, query("DELETE FROM `ps_contacts` WHERE `id`=?", [contact.id])];
-                    case 1:
-                        affectedRows = (_a.sent()).affectedRows;
-                        isDeleted = affectedRows ? true : false;
-                        return [2 /*return*/, isDeleted];
-                }
+        return new Promise(function (resolve) {
+            query("DELETE FROM `ps_contacts` WHERE `id`=?", [contact.ps.id]).then(function (_a) {
+                var affectedRows = _a.affectedRows;
+                var isDeleted = affectedRows ? true : false;
+                resolve(isDeleted);
             });
+            getEvtExpiredContact().waitForExtract(function (_a) {
+                var ps = _a.ps;
+                return ps.id === contact.ps.id;
+            }, 2000).catch(function () { })
+                .then(function () { return debug("We prevent throwing evtExpired contact"); });
         });
     }
     asterisk.deleteContact = deleteContact;
@@ -324,7 +330,7 @@ var semasim;
         });
     }); });
     semasim.getUnsentMessageOfDongleSim = runExclusive.build(groupRef, function (imei) { return __awaiter(_this, void 0, void 0, function () {
-        var queryResult, messages, queryResult_1, queryResult_1_1, line, message, e_2, _a;
+        var queryResult, messages, queryResult_1, queryResult_1_1, line, message, e_1, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, query([
@@ -362,12 +368,12 @@ var semasim;
                             messages.push(message);
                         }
                     }
-                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
                     finally {
                         try {
                             if (queryResult_1_1 && !queryResult_1_1.done && (_a = queryResult_1.return)) _a.call(queryResult_1);
                         }
-                        finally { if (e_2) throw e_2.error; }
+                        finally { if (e_1) throw e_1.error; }
                     }
                     return [2 /*return*/, messages];
             }
@@ -425,12 +431,12 @@ var semasim;
             }
         });
     }); });
-    semasim.addUaInstance = runExclusive.build(groupRef, function (uaInstancePk) { return __awaiter(_this, void 0, void 0, function () {
+    semasim.addUaInstance = runExclusive.build(groupRef, function (uaInstance) { return __awaiter(_this, void 0, void 0, function () {
         var dongle_imei, instance_id, _a, sql, values, resp, isNew;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    dongle_imei = uaInstancePk.dongle_imei, instance_id = uaInstancePk.instance_id;
+                    dongle_imei = uaInstance.dongle_imei, instance_id = uaInstance.instance_id;
                     _a = __read(f.buildInsertOrUpdateQuery("ua_instance", { dongle_imei: dongle_imei, instance_id: instance_id }), 2), sql = _a[0], values = _a[1];
                     return [4 /*yield*/, query(sql, values)];
                 case 1:
@@ -441,7 +447,7 @@ var semasim;
         });
     }); });
     semasim.addMessageTowardSip = runExclusive.build(groupRef, function (from_number, text, date, target) { return __awaiter(_this, void 0, void 0, function () {
-        var ua_instance_ids, imei, _a, dongle_imei, instance_id, _b, dongle_imei, instance_id, _c, id, _d, sim_iccid, message_toward_sip_id, _e, _sql, _values, insertId, sql, values, ua_instance_ids_1, ua_instance_ids_1_1, ua_instance_id, _f, _sql_1, _values_1, e_3, _g;
+        var ua_instance_ids, imei, _a, dongle_imei, instance_id, _b, dongle_imei, instance_id, _c, id, _d, sim_iccid, message_toward_sip_id, _e, _sql, _values, insertId, sql, values, ua_instance_ids_1, ua_instance_ids_1_1, ua_instance_id, _f, _sql_1, _values_1, e_2, _g;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0:
@@ -504,12 +510,12 @@ var semasim;
                             values = __spread(values, _values_1);
                         }
                     }
-                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
                     finally {
                         try {
                             if (ua_instance_ids_1_1 && !ua_instance_ids_1_1.done && (_g = ua_instance_ids_1.return)) _g.call(ua_instance_ids_1);
                         }
-                        finally { if (e_3) throw e_3.error; }
+                        finally { if (e_2) throw e_2.error; }
                     }
                     return [4 /*yield*/, query(sql, values)];
                 case 10:
@@ -518,12 +524,12 @@ var semasim;
             }
         });
     }); });
-    semasim.setMessageTowardSipDelivered = runExclusive.build(groupRef, function (uaInstancePk, message_toward_sip_id) { return __awaiter(_this, void 0, void 0, function () {
+    semasim.setMessageTowardSipDelivered = runExclusive.build(groupRef, function (uaInstance, message_toward_sip_id) { return __awaiter(_this, void 0, void 0, function () {
         var dongle_imei, instance_id, sql, values, ua_instance_id_ref;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    dongle_imei = uaInstancePk.dongle_imei, instance_id = uaInstancePk.instance_id;
+                    dongle_imei = uaInstance.dongle_imei, instance_id = uaInstance.instance_id;
                     sql = "";
                     values = [];
                     ua_instance_id_ref = "A";
@@ -545,12 +551,12 @@ var semasim;
             }
         });
     }); });
-    semasim.getUndeliveredMessagesOfUaInstance = runExclusive.build(groupRef, function (uaInstancePk) { return __awaiter(_this, void 0, void 0, function () {
-        var dongle_imei, instance_id, queryResult, messages, queryResult_2, queryResult_2_1, line, message, e_4, _a;
+    semasim.getUndeliveredMessagesOfUaInstance = runExclusive.build(groupRef, function (uaInstance) { return __awaiter(_this, void 0, void 0, function () {
+        var dongle_imei, instance_id, queryResult, messages, queryResult_2, queryResult_2_1, line, message, e_3, _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    dongle_imei = uaInstancePk.dongle_imei, instance_id = uaInstancePk.instance_id;
+                    dongle_imei = uaInstance.dongle_imei, instance_id = uaInstance.instance_id;
                     return [4 /*yield*/, query([
                             "SELECT message_toward_sip.id,",
                             "message_toward_sip.date,",
@@ -584,12 +590,12 @@ var semasim;
                             messages.push(message);
                         }
                     }
-                    catch (e_4_1) { e_4 = { error: e_4_1 }; }
+                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
                     finally {
                         try {
                             if (queryResult_2_1 && !queryResult_2_1.done && (_a = queryResult_2.return)) _a.call(queryResult_2);
                         }
-                        finally { if (e_4) throw e_4.error; }
+                        finally { if (e_3) throw e_3.error; }
                     }
                     return [2 /*return*/, messages];
             }

@@ -136,7 +136,7 @@ function start() {
                         return __generator(this, function (_h) {
                             switch (_h.label) {
                                 case 0:
-                                    debug("connection established with backend");
+                                    debug("Connection established with backend");
                                     evtNewBackendSocketConnect.post();
                                     set = new Set();
                                     _h.label = 1;
@@ -214,17 +214,9 @@ function start() {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    try {
-                                        flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                                    }
-                                    catch (error) {
-                                        debug(error.message);
-                                        console.log(JSON.stringify(sipRequest, null, 2));
-                                        return [2 /*return*/, process.exit(1)];
-                                    }
-                                    asteriskSocket = asteriskSockets.get(flowToken);
-                                    if (!asteriskSocket)
-                                        asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
+                                    debug(sipRequest.method);
+                                    flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
+                                    asteriskSocket = asteriskSockets.get(flowToken) || createAsteriskSocket(flowToken, backendSocket);
                                     if (!!asteriskSocket.evtConnect.postCount) return [3 /*break*/, 2];
                                     return [4 /*yield*/, asteriskSocket.evtConnect.waitFor()];
                                 case 1:
@@ -232,11 +224,12 @@ function start() {
                                     _a.label = 2;
                                 case 2:
                                     if (sipRequest.method === "REGISTER") {
-                                        sipRequest.headers["user-agent"] = sipContact_1.Contact.buildValueOfUserAgentField(sipLibrary.parseUri(sipRequest.headers.from.uri).user, sipRequest.headers.contact[0].params["+sip.instance"], sipRequest.headers["user-agent"]);
+                                        sipRequest.headers["user-agent"] = sipContact_1.PsContact.buildUserAgentFieldValue(sipRequest.headers.contact[0].params["+sip.instance"], sipRequest.headers["user-agent"]);
                                         asteriskSocket.addPathHeader(sipRequest);
                                     }
-                                    else
+                                    else {
                                         asteriskSocket.shiftRouteAndAddRecordRoute(sipRequest);
+                                    }
                                     branch = asteriskSocket.addViaHeader(sipRequest);
                                     //TODO match with authentication
                                     if (sipLibrary.isPlainMessageRequest(sipRequest)) {
@@ -250,7 +243,7 @@ function start() {
                                                     case 0:
                                                         if (sipResponse.status !== 202)
                                                             return [2 /*return*/];
-                                                        return [4 /*yield*/, sipContact_1.contactIo.getContactFromAstSocketSrcPort(asteriskSocket.localPort)];
+                                                        return [4 /*yield*/, sipContact_1.Contact.getContactOfFlow(flowToken)];
                                                     case 1:
                                                         fromContact = _a.sent();
                                                         if (!fromContact) {
@@ -270,15 +263,7 @@ function start() {
                         });
                     }); });
                     backendSocket.evtResponse.attach(function (sipResponse) {
-                        var flowToken;
-                        try {
-                            flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                        }
-                        catch (error) {
-                            debug(error.message);
-                            console.log(JSON.stringify(sipResponse, null, 2));
-                            return process.exit(1);
-                        }
+                        var flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
                         var asteriskSocket = asteriskSockets.get(flowToken);
                         if (!asteriskSocket)
                             return;
@@ -314,9 +299,10 @@ function start() {
 }
 exports.start = start;
 function createAsteriskSocket(flowToken, backendSocket) {
-    debug(flowToken + " Creating asterisk socket");
-    //let asteriskSocket = new sip.Socket(net.createConnection(5060, "127.0.0.1"));
     var asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
+    debug("New asterisk socket flowToken " + flowToken);
+    //TODO remove after debug
+    asteriskSocket.evtClose.attachOnce(function () { return debug("Asterisk socket closed " + flowToken); });
     asteriskSockets.add(flowToken, asteriskSocket);
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
@@ -337,11 +323,9 @@ function createAsteriskSocket(flowToken, backendSocket) {
     asteriskSocket.evtRequest.attach(function (sipRequest) {
         if (backendSocket.evtClose.postCount)
             return;
-        var branch = backendSocket.addViaHeader(sipRequest, (function () {
-            var extraParams = {};
-            extraParams[_constants_1.c.shared.flowTokenKey] = flowToken;
-            return extraParams;
-        })());
+        var extraParamsFlowToken = {};
+        extraParamsFlowToken[_constants_1.c.shared.flowTokenKey] = flowToken;
+        var branch = backendSocket.addViaHeader(sipRequest, extraParamsFlowToken);
         backendSocket.shiftRouteAndAddRecordRoute(sipRequest, informativeHostname);
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
             var evtReceived_1 = new ts_events_extended_1.VoidSyncEvent();

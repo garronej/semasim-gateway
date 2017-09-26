@@ -4,7 +4,7 @@ import { SyncEvent } from "ts-events-extended";
 import * as runExclusive from "run-exclusive";
 import { DongleExtendedClient, typesDef as t } from "chan-dongle-extended-client";
 import * as agi from "../tools/agiClient";
-import { Contact, contactIo } from "./sipContact";
+import { Contact } from "./sipContact";
 import * as sipApiBackend from "./sipApiClientBackend";
 import * as db from "./db";
 import * as sipProxy from "./sipProxy";
@@ -79,7 +79,7 @@ function start(dongleCallContext: string) {
 
         let imei = (await _.getVariable("DONGLEIMEI"))!;
 
-        let wakeUpAllContactsPromise= contactIo.wakeUpAllContacts(imei, 9000);
+        let wakeUpAllContactsPromise= Contact.wakeUpAllContacts(imei, 9000);
 
         let imsi= (await _.getVariable("DONGLEIMSI"))!;
         await _.setVariable("CALLERID(all)", `"" <${phone.toNationalNumber(number, imsi)}>`);
@@ -87,9 +87,9 @@ function start(dongleCallContext: string) {
         //await _.setVariable("CALLERID(name-charset)", "utf8");
         //await _.setVariable("CALLERID(name)", name || "");
 
-        let dialString = (await wakeUpAllContactsPromise)
-            .reachableContacts
-            .map(({ uri }) => `PJSIP/${imei}/${uri}`).join("&");
+        let dialString = Contact.buildDialString(
+            (await wakeUpAllContactsPromise).reachableContacts
+        );
 
         if (!dialString) {
 
@@ -152,6 +152,7 @@ function start(dongleCallContext: string) {
 
     }
 
+
     (async function findActiveDongleAndStartSipProxy() {
 
         for (let activeDongle of await dongleClient.getActiveDongles())
@@ -160,6 +161,7 @@ function start(dongleCallContext: string) {
         sipProxy.start();
 
     })();
+
 
     dongleClient.evtDongleConnect.attach(async imei=> {
 
@@ -181,33 +183,28 @@ function start(dongleCallContext: string) {
     });
 
 
+    Contact.getEvtNewContact().attach(
+        async contact=> {
 
-    contactIo.getEvtNewContact().attach(async contact => {
+            debug(`New contact: ${contact.pretty}`);
 
-        //debug("New contact", Contact.pretty(contact));
-        debug("New contact", Contact.buildUaInstancePk(contact));
+            let isNew = await db.semasim.addUaInstance(contact.uaInstance);
 
-        let isNew = await db.semasim.addUaInstance(Contact.buildUaInstancePk(contact))
+            if (isNew) debug("TODO: it's a new UA, send initialization messages");
 
-        if (isNew) {
-
-            debug("TODO: it's a new UA, send initialization messages");
+            sendPendingSipMessagesToReachableContact(contact);
 
         }
+    );
 
-        sendPendingSipMessagesToReachableContact(contact);
 
-    });
+    Contact.getEvtExpiredContact().attach(async contact => {
 
-    contactIo.getEvtExpiredContact().attach(async contactUri => {
+        debug(`Expired contact: ${contact.pretty}`);
 
-        debug("Expired contact: ", contactUri);
-
-        sipApiBackend.wakeUpUserAgent.makeCall(contactUri);
+        sipApiBackend.wakeUpUserAgent.makeCall(contact);
 
     });
-
-    sipMessage.startAccepting();
 
     const lock1 = new AsyncLock();
     async function sendDonglePendingMessages(imei: string) {
@@ -259,12 +256,14 @@ function start(dongleCallContext: string) {
 
     const lock2 = new AsyncLock();
     async function sendPendingSipMessagesToReachableContact(contact: Contact) {
-        let contactPk = Contact.buildUaInstancePk(contact);
+
+        let { uaInstance } = contact;
+
         await lock2.acquire(
-            JSON.stringify(contactPk),
+            JSON.stringify(uaInstance),
             async () => {
 
-                let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(contactPk);
+                let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(uaInstance);
 
                 for (let message of messages) {
                     debug(`sip sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
@@ -279,38 +278,37 @@ function start(dongleCallContext: string) {
                         debug("sip Send Message error:", error.message);
                         break;
                     }
-                    await db.semasim.setMessageTowardSipDelivered(contactPk, message.id);
+                    await db.semasim.setMessageTowardSipDelivered(uaInstance, message.id);
                 }
 
             }
         );
     }
 
-    async function notifyNewSipMessagesToSend() {
+    function notifyNewSipMessagesToSend() {
 
-        (await db.asterisk.queryContacts()).forEach(async contact => {
+        db.asterisk.queryContacts().then(
+            contacts => contacts.forEach(
+                async contact => {
 
-            let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(
-                Contact.buildUaInstancePk(contact)
-            );
+                    let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(contact.uaInstance);
 
-            if (!messages.length) return;
+                    if (!messages.length) return;
 
-            let evtTracer: contactIo.WakeUpContactTracer = new SyncEvent();
+                    let status= await sipApiBackend.wakeUpUserAgent.makeCall(contact);
 
-            contactIo.wakeUpContact(contact, 0, evtTracer);
+                    if( status !== "REACHABLE" ) return;
 
-            let status = await evtTracer.waitFor();
+                    sendPendingSipMessagesToReachableContact(contact);
 
-            if (status === "REACHABLE")
-                sendPendingSipMessagesToReachableContact(contact);
-
-        });
+                }
+            )
+        );
 
     }
 
 
-    sipMessage.evtMessage.attach(
+    sipMessage.getEvtMessage().attach(
         async ({ fromContact, toNumber, text }) => {
 
             debug("FROM SIP MESSAGE", { toNumber, text });
@@ -318,10 +316,10 @@ function start(dongleCallContext: string) {
             await db.semasim.addMessageTowardGsm(
                 toNumber,
                 text,
-                Contact.buildUaInstancePk(fromContact)
+                fromContact.uaInstance
             );
 
-            sendDonglePendingMessages(fromContact.endpoint);
+            sendDonglePendingMessages(fromContact.uaInstance.dongle_imei);
 
         }
     );
@@ -342,6 +340,7 @@ function start(dongleCallContext: string) {
 
         }
     );
+
 
     dongleClient.evtMessageStatusReport.attach(
         async ({ imei, imsi, messageId, isDelivered, dischargeTime, recipient, status }) => {

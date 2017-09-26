@@ -2,39 +2,73 @@ import * as runExclusive from "run-exclusive";
 import { SyncEvent } from "ts-events-extended";
 import * as mysql from "mysql";
 import * as md5 from "md5";
+import { PsContact, Contact } from "./sipContact";
 
 import * as f from "../tools/mySqlFunctions";
-import { Contact } from "./sipContact";
+import { MySqlEvents } from "../tools/MySqlEvents";
 import { c } from "./_constants"
 
 import * as _debug from "debug";
-let debug = _debug("_dbInterface");
-
-//TODO: manage transactions with async-lock rather than with runExclusive
-//do it here but more importantly on backend
+let debug = _debug("_db");
 
 export namespace asterisk {
 
-    const groupRef = runExclusive.createGroupRef();
+    const connectionConfig: mysql.IConnectionConfig = {
+        ...c.dbParamsGateway,
+        "database": "asterisk",
+        "multipleStatements": true
+    };
+
+    MySqlEvents.connectionConfig= connectionConfig;
 
     let connection: mysql.IConnection | undefined = undefined;
-
     function query(
         sql: string,
         values?: (string | number | null)[]
     ): Promise<any> {
 
-        if (!connection) {
-
-            connection = mysql.createConnection({
-                ...c.dbParamsGateway,
-                "database": "asterisk",
-                "multipleStatements": true
-            });
-
-        }
+        if (!connection)
+            connection = mysql.createConnection(connectionConfig);
 
         return f.queryOnConnection(connection, sql, values);
+
+    }
+
+    let evtNewContact: SyncEvent<Contact> | undefined= undefined;
+    export function getEvtNewContact() {
+
+        if( evtNewContact ) return evtNewContact;
+
+        evtNewContact= new SyncEvent<Contact>();
+
+        MySqlEvents.getInstance().evtNewRow.attach(
+            ({ database, table })=> (
+                database === connectionConfig.database &&
+                table === "ps_contacts"
+            ),
+            ({ row })=> evtNewContact!.post(PsContact.buildContact(row as any as PsContact))
+        );
+
+        return evtNewContact;
+
+    }
+
+    let evtExpiredContact: SyncEvent<Contact> | undefined= undefined;
+    export function getEvtExpiredContact() {
+
+        if( evtExpiredContact ) return evtExpiredContact;
+
+        evtExpiredContact= new SyncEvent<Contact>();
+
+        MySqlEvents.getInstance().evtDeleteRow.attach(
+            ({ database, table })=> (
+                database === connectionConfig.database &&
+                table === "ps_contacts"
+            ),
+            ({ row })=> evtExpiredContact!.post(PsContact.buildContact(row as any as PsContact))
+        );
+
+        return evtExpiredContact;
 
     }
 
@@ -45,24 +79,13 @@ export namespace asterisk {
         return endpoints;
     }
 
-    export async function truncateContacts() {
-
-            await query("TRUNCATE ps_contacts");
-
-    }
-
     export async function queryContacts(): Promise<Contact[]> {
 
-            let contacts: Contact[] = await query(
-                "SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts"
+        let psContacts: PsContact[] = await query(
+            "SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts"
         );
 
-        for (let contact of contacts) {
-            contact.uri = contact.uri.replace(/\^3B/g, ";");
-            contact.path = contact.path.replace(/\^3B/g, ";");
-        }
-
-        return contacts;
+        return psContacts.map(psContact => PsContact.buildContact(psContact));
 
     }
 
@@ -91,18 +114,30 @@ export namespace asterisk {
 
     }
 
+    export function deleteContact(contact: Contact) {
+        return new Promise<boolean>(
+            resolve => {
 
-    export async function deleteContact(contact: Contact): Promise<boolean> {
+                query(
+                    "DELETE FROM `ps_contacts` WHERE `id`=?", [contact.ps.id]
+                ).then(({ affectedRows }) => {
 
-        let { affectedRows } = await query(
-            "DELETE FROM `ps_contacts` WHERE `id`=?", [contact.id]
+                    let isDeleted = affectedRows ? true : false;
+
+                    resolve(isDeleted);
+
+                });
+
+                getEvtExpiredContact().waitForExtract(
+                    ({ ps }) => ps.id === contact.ps.id,
+                    2000
+                ).catch(() => { })
+                .then(()=> debug("We prevent throwing evtExpired contact"));
+
+            }
         );
-
-        let isDeleted = affectedRows ? true : false;
-
-        return isDeleted;
-
     }
+
 
     export async function addOrUpdateEndpoint(
         endpoint: string,
@@ -205,28 +240,23 @@ export namespace semasim {
 
     }
 
-    export type UaInstancePk = {
-        dongle_imei: string;
-        instance_id: string;
-    }
 
-
-    export type TargetUaInstances ={
-        allUaInstanceOfImei?: string; 
-        uaInstance?: UaInstancePk; 
-        allUaInstanceOfEndpointOtherThan?: UaInstancePk; 
+    export type TargetUaInstances = {
+        allUaInstanceOfImei?: string;
+        uaInstance?: Contact['uaInstance'];
+        allUaInstanceOfEndpointOtherThan?: Contact['uaInstance'];
     };
 
     export type MessageTowardGsm = {
         id: number;
         sim_iccid: string;
         date: Date;
-        sender: UaInstancePk;
+        sender: Contact['uaInstance'];
         to_number: string;
         text: string;
     }
 
-    export type MessageTowardSip= {
+    export type MessageTowardSip = {
         id: number;
         date: Date;
         from_number: string;
@@ -234,7 +264,7 @@ export namespace semasim {
     }
 
     export const addMessageTowardGsm = runExclusive.build(groupRef,
-        async (to_number: string, text: string, sender: UaInstancePk): Promise<number> => {
+        async (to_number: string, text: string, sender: Contact['uaInstance']): Promise<number> => {
 
             let sql = "";
             let values: (string | number | null)[] = [];
@@ -350,7 +380,7 @@ export namespace semasim {
     );
 
     export const getSenderAndTextOfSentMessageToGsm = runExclusive.build(groupRef,
-        async (imei: string, sent_message_id: number): Promise<{ sender: UaInstancePk; text: string } | undefined> => {
+        async (imei: string, sent_message_id: number): Promise<{ sender: Contact['uaInstance']; text: string } | undefined> => {
 
             let query_result = await query(
                 [
@@ -366,9 +396,9 @@ export namespace semasim {
                 [imei, sent_message_id]
             );
 
-            if( !query_result.length ) return undefined;
+            if (!query_result.length) return undefined;
 
-            let [{ instance_id, base64_text }]= query_result;
+            let [{ instance_id, base64_text }] = query_result;
 
             return {
                 "sender": { "dongle_imei": imei, instance_id },
@@ -413,9 +443,9 @@ export namespace semasim {
     );
 
     export const addUaInstance = runExclusive.build(groupRef,
-        async (uaInstancePk: UaInstancePk): Promise<boolean> => {
+        async (uaInstance: Contact['uaInstance']): Promise<boolean> => {
 
-            let { dongle_imei, instance_id } = uaInstancePk;
+            let { dongle_imei, instance_id } = uaInstance;
 
             let [sql, values] = f.buildInsertOrUpdateQuery("ua_instance", { dongle_imei, instance_id });
 
@@ -510,9 +540,9 @@ export namespace semasim {
     );
 
     export const setMessageTowardSipDelivered = runExclusive.build(groupRef,
-        async ( uaInstancePk: UaInstancePk, message_toward_sip_id: number) => {
+        async (uaInstance: Contact['uaInstance'], message_toward_sip_id: number) => {
 
-            let { dongle_imei, instance_id } = uaInstancePk;
+            let { dongle_imei, instance_id } = uaInstance;
 
             let sql = "";
             let values: (string | number | null)[] = [];
@@ -543,11 +573,11 @@ export namespace semasim {
     );
 
     export const getUndeliveredMessagesOfUaInstance = runExclusive.build(groupRef,
-        async (uaInstancePk: UaInstancePk): Promise<MessageTowardSip[]> => {
+        async (uaInstance: Contact['uaInstance']): Promise<MessageTowardSip[]> => {
 
-            let { dongle_imei, instance_id }= uaInstancePk;
+            let { dongle_imei, instance_id } = uaInstance;
 
-            let queryResult= await query(
+            let queryResult = await query(
                 [
                     "SELECT message_toward_sip.id,",
                     "message_toward_sip.date,",
@@ -569,11 +599,11 @@ export namespace semasim {
                 [dongle_imei, instance_id]
             );
 
-            let messages: MessageTowardSip[]= [];
+            let messages: MessageTowardSip[] = [];
 
-            for( let line of queryResult ){
+            for (let line of queryResult) {
 
-                let message: MessageTowardSip ={
+                let message: MessageTowardSip = {
                     "id": line.id,
                     "date": new Date(line.date),
                     "from_number": line.from_number,
@@ -593,12 +623,12 @@ export namespace semasim {
 
         require("rejection-tracker").main(__dirname, "..", "..");
 
-        let imei= "1111111111";
-        let iccid= "222222222";
+        let imei = "1111111111";
+        let iccid = "222222222";
 
         await addDongleAndSim(imei, iccid);
 
-        let uaInstancePk: UaInstancePk= {
+        let uaInstancePk: Contact['uaInstance'] = {
             "dongle_imei": imei,
             "instance_id": '"<urn:uuid:17b90ae9-1898-400c-8536-2f34435fd8c7>"'
         };
@@ -608,56 +638,56 @@ export namespace semasim {
         //Incoming message from Dongle
 
         let number = "0636786385";
-        let text= "foo bar";
+        let text = "foo bar";
         let date = new Date();
 
-        let text2= "bar baz";
+        let text2 = "bar baz";
 
         await addMessageTowardSip(number, text2, new Date(date.getTime() + 1), { "uaInstance": uaInstancePk });
 
-        let messageTowardSipId= await addMessageTowardSip(number, text, date, { "allUaInstanceOfImei": imei });
+        let messageTowardSipId = await addMessageTowardSip(number, text, date, { "allUaInstanceOfImei": imei });
 
         await addMessageTowardSip(number, "never", date, { "allUaInstanceOfEndpointOtherThan": uaInstancePk });
 
-        let messages= await getUndeliveredMessagesOfUaInstance(uaInstancePk);
+        let messages = await getUndeliveredMessagesOfUaInstance(uaInstancePk);
 
-        console.assert( messages.length === 2);
-        console.assert( messages[0].date.getTime() === date.getTime());
-        console.assert( messages[0].id === messageTowardSipId);
-        console.assert( messages[0].from_number === number );
-        console.assert( messages[0].text === text );
+        console.assert(messages.length === 2);
+        console.assert(messages[0].date.getTime() === date.getTime());
+        console.assert(messages[0].id === messageTowardSipId);
+        console.assert(messages[0].from_number === number);
+        console.assert(messages[0].text === text);
 
-        console.assert( messages[1].text === text2);
+        console.assert(messages[1].text === text2);
 
         await setMessageTowardSipDelivered(uaInstancePk, messages[0].id);
         await setMessageTowardSipDelivered(uaInstancePk, messages[1].id);
 
-        console.assert( (await getUndeliveredMessagesOfUaInstance(uaInstancePk)).length === 0);
+        console.assert((await getUndeliveredMessagesOfUaInstance(uaInstancePk)).length === 0);
 
         //Incoming message from sip
 
-        let messageTowardGsmId= await addMessageTowardGsm(number, text, uaInstancePk);
+        let messageTowardGsmId = await addMessageTowardGsm(number, text, uaInstancePk);
 
         await addMessageTowardGsm(number, text2, uaInstancePk);
 
-        let messages_= await getUnsentMessageOfDongleSim(imei);
+        let messages_ = await getUnsentMessageOfDongleSim(imei);
 
-        console.assert( messages_.length === 2);
-        console.assert( messages_[0].id === messageTowardGsmId );
-        console.assert( messages_[0].sender.instance_id === uaInstancePk.instance_id);
-        console.assert( messages_[0].text === text);
-        console.assert( messages_[0].to_number === number );
+        console.assert(messages_.length === 2);
+        console.assert(messages_[0].id === messageTowardGsmId);
+        console.assert(messages_[0].sender.instance_id === uaInstancePk.instance_id);
+        console.assert(messages_[0].text === text);
+        console.assert(messages_[0].to_number === number);
 
-        let sent_message_id= 111222;
+        let sent_message_id = 111222;
 
-        await setMessageToGsmSentId( messageTowardGsmId, sent_message_id);
+        await setMessageToGsmSentId(messageTowardGsmId, sent_message_id);
 
-        let sender_and_text= await getSenderAndTextOfSentMessageToGsm(imei, sent_message_id);
+        let sender_and_text = await getSenderAndTextOfSentMessageToGsm(imei, sent_message_id);
 
-        console.assert( sender_and_text!.text === text );
-        console.assert( sender_and_text!.sender.instance_id === uaInstancePk.instance_id);
+        console.assert(sender_and_text!.text === text);
+        console.assert(sender_and_text!.sender.instance_id === uaInstancePk.instance_id);
 
-        console.assert( (await getUnsentMessageOfDongleSim(imei))[0].text === text2);
+        console.assert((await getUnsentMessageOfDongleSim(imei))[0].text === text2);
 
         console.log("PASS!");
 

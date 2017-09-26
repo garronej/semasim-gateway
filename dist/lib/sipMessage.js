@@ -50,18 +50,13 @@ var sipLibrary = require("../tools/sipLibrary");
 var _constants_1 = require("./_constants");
 var _debug = require("debug");
 var debug = _debug("_sipMessage");
-exports.evtMessage = new ts_events_extended_1.SyncEvent();
-function utf8EncodedDataAsBinaryStringToString(utf8EncodedDataAsBinaryString) {
-    var uft8EncodedData = new Buffer(utf8EncodedDataAsBinaryString, "binary");
-    var text = uft8EncodedData.toString("utf8");
-    var validInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
-    return { validInput: validInput, text: text };
-}
-function stringToUtf8EncodedDataAsBinaryString(text) {
-    return (new Buffer(text, "utf8")).toString("binary");
-}
-function startAccepting() {
-    return __awaiter(this, void 0, void 0, function () {
+var evtMessage = undefined;
+function getEvtMessage() {
+    var _this = this;
+    if (evtMessage)
+        return evtMessage;
+    evtMessage = new ts_events_extended_1.SyncEvent();
+    (function () { return __awaiter(_this, void 0, void 0, function () {
         var ami, matchAllExt;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -80,20 +75,20 @@ function startAccepting() {
                         if (!validInput)
                             debug("Sip message content was not a valid UTF-8 string");
                         var toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user;
-                        exports.evtMessage.post({ fromContact: fromContact, toNumber: toNumber, text: text });
+                        evtMessage.post({ fromContact: fromContact, toNumber: toNumber, text: text });
                     });
                     return [2 /*return*/];
             }
         });
-    });
+    }); })();
+    return evtMessage;
 }
-exports.startAccepting = startAccepting;
+exports.getEvtMessage = getEvtMessage;
 function sendMessage(contact, from_number, headers, text, from_number_sim_name) {
     return new Promise(function (resolve, reject) {
-        //debug("sendMessage", { contact, from_number, headers, text, from_number_sim_name });
         var actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
-        var uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
-        chan_dongle_extended_client_1.DongleExtendedClient.localhost().ami.messageSend("pjsip:" + contact.endpoint + "/" + uri, from_number, actionId).catch(function (amiError) {
+        var uri = contact.ps.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
+        chan_dongle_extended_client_1.DongleExtendedClient.localhost().ami.messageSend("pjsip:" + contact.ps.endpoint + "/" + uri, from_number, actionId).catch(function (amiError) {
             var error = sendMessage.errors.notSent;
             error.name = amiError.name;
             error.message = amiError.message;
@@ -109,8 +104,8 @@ function sendMessage(contact, from_number, headers, text, from_number_sim_name) 
             clearTimeout(timeoutInterceptId);
             if (from_number_sim_name)
                 sipRequest.headers.from.name = "\"" + from_number_sim_name + " (sim)\"";
-            sipRequest.uri = contact.uri;
-            sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
+            sipRequest.uri = contact.ps.uri;
+            sipRequest.headers.to = { "name": undefined, "uri": contact.ps.uri, "params": {} };
             delete sipRequest.headers.contact;
             sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
             sipRequest.headers = __assign({}, sipRequest.headers, headers);
@@ -133,3 +128,12 @@ exports.sendMessage = sendMessage;
         "notConfirmed": new Error("UA did not confirm reception of message, timeout value: " + sendMessage.timeouts.confirmed)
     };
 })(sendMessage = exports.sendMessage || (exports.sendMessage = {}));
+function utf8EncodedDataAsBinaryStringToString(utf8EncodedDataAsBinaryString) {
+    var uft8EncodedData = new Buffer(utf8EncodedDataAsBinaryString, "binary");
+    var text = uft8EncodedData.toString("utf8");
+    var validInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
+    return { validInput: validInput, text: text };
+}
+function stringToUtf8EncodedDataAsBinaryString(text) {
+    return (new Buffer(text, "utf8")).toString("binary");
+}

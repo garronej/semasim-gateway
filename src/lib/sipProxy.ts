@@ -7,7 +7,7 @@ import * as sipLibrary from "../tools/sipLibrary";
 import * as os from "os";
 import * as sipApiBackend from "./sipApiClientBackend";
 import { startListening as apiStartListening } from "./sipApi";
-import { Contact, contactIo } from "./sipContact";
+import { Contact, PsContact } from "./sipContact";
 import * as db from "./db";
 
 import { c } from "./_constants";
@@ -94,7 +94,7 @@ export async function start() {
 
     backendSocket.evtConnect.attachOnce(async () => {
 
-        debug("connection established with backend");
+        debug("Connection established with backend");
 
         evtNewBackendSocketConnect.post();
 
@@ -113,43 +113,28 @@ export async function start() {
 
     backendSocket.evtRequest.attach(async sipRequest => {
 
-        let flowToken: string;
+        debug(sipRequest.method);
 
-        try{
+        let flowToken = sipRequest.headers.via[0].params[c.shared.flowTokenKey]!;
 
-            flowToken = sipRequest.headers.via[0].params[c.shared.flowTokenKey]!;
+        let asteriskSocket = asteriskSockets.get(flowToken) || createAsteriskSocket(flowToken, backendSocket);
 
-        }catch(error){
-
-            debug(error.message);
-
-            console.log(JSON.stringify(sipRequest,null, 2));
-
-            return process.exit(1);
-
-        }
-
-        let asteriskSocket = asteriskSockets.get(flowToken);
-
-        if (!asteriskSocket)
-            asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
-
-        if (!asteriskSocket.evtConnect.postCount)
-            await asteriskSocket.evtConnect.waitFor();
-
+        if (!asteriskSocket.evtConnect.postCount) await asteriskSocket.evtConnect.waitFor();
 
         if (sipRequest.method === "REGISTER") {
 
-            sipRequest.headers["user-agent"] = Contact.buildValueOfUserAgentField(
-                sipLibrary.parseUri(sipRequest.headers.from.uri).user!,
+            sipRequest.headers["user-agent"] = PsContact.buildUserAgentFieldValue(
                 sipRequest.headers.contact![0].params["+sip.instance"]!,
                 sipRequest.headers["user-agent"]!
             );
 
             asteriskSocket.addPathHeader(sipRequest);
 
-        } else
+        } else {
+
             asteriskSocket.shiftRouteAndAddRecordRoute(sipRequest);
+
+        }
 
 
         let branch = asteriskSocket.addViaHeader(sipRequest);
@@ -163,15 +148,12 @@ export async function start() {
 
                     if (sipResponse.status !== 202) return;
 
-                    let fromContact = await contactIo.getContactFromAstSocketSrcPort(asteriskSocket!.localPort);
+                    let fromContact = await Contact.getContactOfFlow(flowToken);
 
                     if (!fromContact) {
-
                         //TODO? Change result code, is it possible ?
                         debug(`Contact not found for incoming message!!!`);
-
                         return;
-
                     }
 
                     evtIncomingMessage.post({ fromContact, sipRequest });
@@ -188,21 +170,7 @@ export async function start() {
 
     backendSocket.evtResponse.attach(sipResponse => {
 
-        let flowToken: string;
-
-        try {
-
-            flowToken = sipResponse.headers.via[0].params[c.shared.flowTokenKey]!;
-
-        } catch (error) {
-
-            debug(error.message);
-
-            console.log(JSON.stringify(sipResponse, null, 2));
-
-            return process.exit(1);
-
-        }
+        let flowToken = sipResponse.headers.via[0].params[c.shared.flowTokenKey]!;
 
         let asteriskSocket = asteriskSockets.get(flowToken);
 
@@ -229,7 +197,7 @@ export async function start() {
 
         debug(`Delay before restarting: ${delay}ms`);
 
-        await new Promise<void>(resolve => setTimeout(resolve, delay));
+        await new Promise(resolve => setTimeout(resolve, delay));
 
         start();
 
@@ -243,10 +211,14 @@ function createAsteriskSocket(
     backendSocket: sipLibrary.Socket
 ): sipLibrary.Socket {
 
-    debug(`${flowToken} Creating asterisk socket`);
-
-    //let asteriskSocket = new sip.Socket(net.createConnection(5060, "127.0.0.1"));
     let asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
+
+    debug(`New asterisk socket flowToken ${flowToken}`)
+
+    //TODO remove after debug
+    asteriskSocket.evtClose.attachOnce(
+        ()=> debug(`Asterisk socket closed ${flowToken}`)
+    );
 
     asteriskSockets.add(flowToken, asteriskSocket);
 
@@ -277,14 +249,10 @@ function createAsteriskSocket(
 
         if (backendSocket.evtClose.postCount) return;
 
+        let extraParamsFlowToken: Record<string, string>= {};
+        extraParamsFlowToken[c.shared.flowTokenKey]= flowToken;
 
-        let branch = backendSocket.addViaHeader(sipRequest, (() => {
-
-            let extraParams: Record<string, string> = {};
-            extraParams[c.shared.flowTokenKey] = flowToken;
-            return extraParams;
-
-        })());
+        let branch = backendSocket.addViaHeader(sipRequest, extraParamsFlowToken);
 
         backendSocket.shiftRouteAndAddRecordRoute(sipRequest, informativeHostname);
 

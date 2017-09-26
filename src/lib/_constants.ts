@@ -12,8 +12,6 @@ export class c {
 
         public static readonly domain = "semasim.com";
 
-        public static readonly reg_expires = 21601;
-
         public static readonly regExpImei = /^[0-9]{15}$/;
 
         public static readonly regExpFourDigits = /^[0-9]{4}$/;

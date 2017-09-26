@@ -32,7 +32,6 @@ var c = /** @class */ (function () {
         _a.gatewayPort = 80,
         _a.flowTokenKey = "flowtoken",
         _a.domain = "semasim.com",
-        _a.reg_expires = 21601,
         _a.regExpImei = /^[0-9]{15}$/,
         _a.regExpFourDigits = /^[0-9]{4}$/,
         _a);

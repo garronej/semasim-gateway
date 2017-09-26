@@ -12,10 +12,10 @@ export declare namespace claimDongle {
 export declare namespace wakeUpUserAgent {
     const methodName = "wakeUpUserAgent";
     interface Params {
-        contactOrContactUri: Contact | string;
+        contact: Contact;
     }
     interface Response {
         status: "REACHABLE" | "PUSH_NOTIFICATION_SENT" | "UNREACHABLE";
     }
-    function makeCall(contactOrContactUri: Contact | string): Promise<Response["status"]>;
+    function makeCall(contact: Contact): Promise<Response["status"]>;
 }
