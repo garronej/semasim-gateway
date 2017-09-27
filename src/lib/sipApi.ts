@@ -11,7 +11,17 @@ let debug = _debug("_sipApi");
 export function startListening(backendSocket: sipLibrary.Socket) {
 
     framework.startListening(backendSocket).attach(
-        async ({ method, params, sendResponse }) => sendResponse(await handlers[method](params))
+        async ({ method, params, sendResponse }) => {
+
+            debug(`${method}: params: ${JSON.stringify(params)}...`);
+            
+            let response= await handlers[method](params);
+
+            debug(`...${method}: response: ${JSON.stringify(response)}`);
+
+            sendResponse(response);
+
+        }
     );
 
 }
@@ -27,8 +37,6 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
     type Response = _.isDongleConnected.Response;
 
     handlers[methodName] = async (params: Params): Promise<Response> => {
-
-        debug(`handle ${methodName}`);
 
         let { imei } = params;
 
@@ -49,8 +57,6 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
     type Response = _.doesDongleHasSim.Response;
 
     handlers[methodName] = async (params: Params): Promise<Response> => {
-
-        debug(`handle ${methodName}`, params);
 
         let { imei, last_four_digits_of_iccid } = params;
 
@@ -150,8 +156,6 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
 
     handlers[methodName] = async (params: Params): Promise<Response> => {
 
-        debug(`handle ${methodName}`);
-
         let { imei, last_four_digits_of_iccid, pin_first_try, pin_second_try } = params;
 
         let dongleClient = DongleExtendedClient.localhost();
@@ -228,8 +232,6 @@ const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
     type Response = _.getSimPhonebook.Response;
 
     handlers[methodName] = async (params: Params): Promise<Response> => {
-
-        debug(`handle ${methodName}`);
 
         let { iccid } = params;
 

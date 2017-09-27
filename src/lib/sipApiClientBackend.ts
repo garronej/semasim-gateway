@@ -7,21 +7,27 @@ let debug = _debug("_sipApiClientBackend");
 
 
 async function sendRequest(
-    method: string, 
+    method: string,
     params: Record<string, any>
 ): Promise<Record<string, any>> {
 
     let backendSocket = await getBackendSocket();
 
-    try{ 
-        
-        return await framework.sendRequest(
+    try {
+
+        debug(`${method}: params: ${JSON.stringify(params)}...`);
+
+        let response = await framework.sendRequest(
             backendSocket,
             method,
             params
         );
 
-    }catch(error){
+        debug(`...${method}: response: ${JSON.stringify(response)}`);
+
+        return response;
+
+    } catch (error) {
 
         debug("Connection lost with backend retrying...");
 
@@ -44,16 +50,12 @@ export namespace claimDongle {
         imei: string,
     ): Promise<boolean> {
 
-        debug(`call ${methodName}`);
-
         let params: Params = { imei };
 
         let { isGranted } = await sendRequest(
             methodName,
             params
         ) as Response;
-
-        debug(`isGranted: ${isGranted}`);
 
         return isGranted;
 
@@ -77,18 +79,46 @@ export namespace wakeUpUserAgent {
         contact: Contact
     ): Promise<Response["status"]> {
 
-        debug(`call ${methodName}`);
-
         let payload: Params = { contact };
 
         let { status } = await sendRequest(
-            methodName, 
+            methodName,
             payload
         ) as Response;
 
-        debug(`status: ${status}`);
-
         return status;
+
+    }
+
+}
+
+//Here we can send only push infos.
+export namespace forceReRegister {
+
+    export const methodName= "forceReRegister";
+
+    export interface Params {
+        contact: Contact;
+    }
+
+    export interface Response {
+        isPushNotificationSent: boolean;
+    }
+
+    export async function makeCall(
+        contact: Contact
+    ): Promise<Response["isPushNotificationSent"]> {
+
+        debug(`call ${methodName} contact:${contact.pretty}`);
+
+        let payload: Params = { contact };
+
+        let { isPushNotificationSent } = await sendRequest(
+            methodName,
+            payload
+        ) as Response;
+
+        return isPushNotificationSent;
 
     }
 

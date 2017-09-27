@@ -1,4 +1,14 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -22,6 +32,7 @@ var ts_events_extended_1 = require("ts-events-extended");
 var md5 = require("md5");
 var sip = require("sip");
 var _sdp_ = require("sip/sdp");
+var trackable_map_1 = require("trackable-map");
 var _debug = require("debug");
 var debug = _debug("_tools/sipLibrary");
 exports.regIdKey = "reg-id";
@@ -208,6 +219,8 @@ var Socket = /** @class */ (function () {
         this.evtRequest.detach();
         */
         this.connection.destroy();
+        //TODO: test, on destroy syncronously post close.
+        this.connection.emit("close", false);
     };
     Object.defineProperty(Socket.prototype, "localPort", {
         get: function () {
@@ -329,35 +342,22 @@ var Socket = /** @class */ (function () {
     return Socket;
 }());
 exports.Socket = Socket;
-//TODO: use Map instead of Record
-var Store = /** @class */ (function () {
+var Store = /** @class */ (function (_super) {
+    __extends(Store, _super);
     function Store() {
-        this.record = {};
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    Store.prototype.add = function (key, socket) {
+    Store.prototype.set = function (key, socket) {
         var _this = this;
-        this.record[key] = socket;
-        socket.evtClose.attachOnce(function () {
-            delete _this.record[key];
-        });
+        socket.evtClose.attachOnce(function () { return _super.prototype.delete.call(_this, key); });
+        _super.prototype.set.call(this, key, socket);
+        return this;
     };
-    Store.prototype.get = function (key) {
-        return this.record[key];
-    };
-    Object.defineProperty(Store.prototype, "keys", {
-        get: function () {
-            return Object.keys(this.record);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    //TODO: correct getAll so we each elem is uniq
-    Store.prototype.getAll = function () {
-        var out = [];
+    Store.prototype.destroyAll = function () {
         try {
-            for (var _a = __values(Object.keys(this.record)), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var key = _b.value;
-                out.push(this.record[key]);
+            for (var _a = __values(this.valuesAsArrayNoDuplicate()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var socket = _b.value;
+                socket.destroy();
             }
         }
         catch (e_3_1) { e_3 = { error: e_3_1 }; }
@@ -367,28 +367,10 @@ var Store = /** @class */ (function () {
             }
             finally { if (e_3) throw e_3.error; }
         }
-        return out;
         var e_3, _c;
     };
-    //TODO: we might destroy twice some socket
-    Store.prototype.destroyAll = function () {
-        try {
-            for (var _a = __values(Object.keys(this.record)), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var key = _b.value;
-                this.record[key].destroy();
-            }
-        }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-            }
-            finally { if (e_4) throw e_4.error; }
-        }
-        var e_4, _c;
-    };
     return Store;
-}());
+}(trackable_map_1.TrackableMap));
 exports.Store = Store;
 exports.stringify = sip.stringify;
 exports.parseUri = sip.parseUri;

@@ -38,9 +38,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var framework = require("../tools/sipApiFramework");
 var _debug = require("debug");
 var debug = _debug("_sipApiClient");
-//TODO: catch on backend when error
 var sendRequest = function (sipSocket, method, params, timeout) {
-    return framework.sendRequest(sipSocket, method, params, timeout || 5000);
+    debug(method + ": params: " + JSON.stringify(params) + "...");
+    var response = framework.sendRequest(sipSocket, method, params, timeout || 5000);
+    debug("..." + method + ": response: " + JSON.stringify(response));
+    return response;
 };
 var isDongleConnected;
 (function (isDongleConnected) {
@@ -51,9 +53,8 @@ var isDongleConnected;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        debug("call " + isDongleConnected.methodName);
                         params = { imei: imei };
-                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, isDongleConnected.methodName, params)];
+                        return [4 /*yield*/, sendRequest(gatewaySocket, isDongleConnected.methodName, params)];
                     case 1:
                         response = _a.sent();
                         return [2 /*return*/, response];
@@ -72,9 +73,8 @@ var doesDongleHasSim;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        debug("call " + doesDongleHasSim.methodName);
                         params = { imei: imei, last_four_digits_of_iccid: last_four_digits_of_iccid };
-                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, doesDongleHasSim.methodName, params)];
+                        return [4 /*yield*/, sendRequest(gatewaySocket, doesDongleHasSim.methodName, params)];
                     case 1:
                         value = (_a.sent()).value;
                         return [2 /*return*/, value];
@@ -92,12 +92,9 @@ var unlockDongle;
             var response;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        debug("call " + unlockDongle.methodName);
-                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, unlockDongle.methodName, params, 120000)];
+                    case 0: return [4 /*yield*/, sendRequest(gatewaySocket, unlockDongle.methodName, params, 120000)];
                     case 1:
                         response = _a.sent();
-                        debug("Response: ", { response: response });
                         return [2 /*return*/, response];
                 }
             });
@@ -114,12 +111,10 @@ var getSimPhonebook;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        debug("call " + getSimPhonebook.methodName);
                         params = { iccid: iccid };
-                        return [4 /*yield*/, framework.sendRequest(gatewaySocket, getSimPhonebook.methodName, params)];
+                        return [4 /*yield*/, sendRequest(gatewaySocket, getSimPhonebook.methodName, params)];
                     case 1:
                         response = _a.sent();
-                        debug("Response: ", { response: response });
                         if ((function (response) { return !!response.infos; })(response))
                             return [2 /*return*/, response];
                         else

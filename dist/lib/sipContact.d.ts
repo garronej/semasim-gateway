@@ -1,4 +1,3 @@
-import { SyncEvent } from "ts-events-extended";
 export interface PsContact {
     id: string;
     uri: string;
@@ -24,13 +23,8 @@ export interface Contact {
     readonly flowToken: string;
     readonly pretty: string;
 }
-export declare namespace Contact {
-    function buildDialString(contacts: Iterable<Contact>): string;
-    function getContactOfFlow(flowToken: string): Promise<Contact | undefined>;
-    function wakeUpAllContacts(endpoint: string, getResultTimeout?: number): Promise<{
-        reachableContacts: Set<Contact>;
-        unreachableContacts: Set<Contact>;
-    }>;
-    function getEvtNewContact(): SyncEvent<Contact>;
-    function getEvtExpiredContact(): SyncEvent<Contact>;
-}
+export declare function buildDialString(contacts: Iterable<Contact>): string;
+export declare function wakeUpAllContactsOfEndpoint(endpoint: string, getResultTimeout?: number): Promise<{
+    reachableContacts: Set<Contact>;
+    unreachableContacts: Set<Contact>;
+}>;

@@ -19,3 +19,13 @@ export declare namespace wakeUpUserAgent {
     }
     function makeCall(contact: Contact): Promise<Response["status"]>;
 }
+export declare namespace forceReRegister {
+    const methodName = "forceReRegister";
+    interface Params {
+        contact: Contact;
+    }
+    interface Response {
+        isPushNotificationSent: boolean;
+    }
+    function makeCall(contact: Contact): Promise<Response["isPushNotificationSent"]>;
+}

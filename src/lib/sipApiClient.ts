@@ -8,11 +8,16 @@ import * as _debug from "debug";
 let debug = _debug("_sipApiClient");
 
 
-//TODO: catch on backend when error
 const sendRequest: typeof framework.sendRequest= 
 (sipSocket, method, params, timeout)=>{
 
-    return framework.sendRequest(sipSocket, method, params, timeout || 5000);
+    debug(`${method}: params: ${JSON.stringify(params)}...`);
+
+    let response= framework.sendRequest(sipSocket, method, params, timeout || 5000);
+
+    debug(`...${method}: response: ${JSON.stringify(response)}`);
+
+    return response;
 
 }
 
@@ -34,11 +39,9 @@ export namespace isDongleConnected {
         imei: string
     ): Promise<Response> {
 
-        debug(`call ${methodName}`);
-
         let params: Params = { imei };
 
-        let response = await framework.sendRequest(
+        let response = await sendRequest(
             gatewaySocket,
             methodName,
             params
@@ -70,11 +73,9 @@ export namespace doesDongleHasSim {
         last_four_digits_of_iccid: string
     ): Promise<Response["value"]> {
 
-        debug(`call ${methodName}`);
-
         let params: Params = { imei, last_four_digits_of_iccid };
 
-        let { value } = await framework.sendRequest(
+        let { value } = await sendRequest(
             gatewaySocket,
             methodName,
             params
@@ -117,16 +118,12 @@ export namespace unlockDongle {
         params: Params
     ): Promise<Response> {
 
-        debug(`call ${methodName}`);
-
-        let response = await framework.sendRequest(
+        let response = await sendRequest(
             gatewaySocket,
             methodName,
             params,
             120000
         ) as Response;
-
-        debug("Response: ", { response });
 
         return response;
 
@@ -149,17 +146,13 @@ export namespace getSimPhonebook {
         iccid: string
     ): Promise<Phonebook | undefined> {
 
-        debug(`call ${methodName}`);
-
         let params: Params= { iccid };
 
-        let response = await framework.sendRequest(
+        let response = await sendRequest(
             gatewaySocket,
             methodName,
             params
         ) as Response;
-
-        debug("Response: ", { response });
 
         if( ( (response: Response): response is Phonebook => !!(response as Phonebook).infos )(response) )
             return response;

@@ -74,7 +74,7 @@ export namespace asterisk {
 
     export async function queryEndpoints(): Promise<string[]> {
 
-        let endpoints = (await query("SELECT `id`,`set_var` FROM `ps_endpoints`")).map(({ id }) => id);
+        let endpoints = (await query("SELECT id, set_var FROM ps_endpoints")).map(({ id }) => id);
 
         return endpoints;
     }
@@ -82,7 +82,7 @@ export namespace asterisk {
     export async function queryContacts(): Promise<Contact[]> {
 
         let psContacts: PsContact[] = await query(
-            "SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts"
+            "SELECT id, uri, path, endpoint, user_agent FROM ps_contacts"
         );
 
         return psContacts.map(psContact => PsContact.buildContact(psContact));
@@ -99,7 +99,7 @@ export namespace asterisk {
         try {
 
             let [{ set_var }] = await query(
-                "SELECT `set_var` FROM ps_endpoints WHERE `id`=?", [endpoint]
+                "SELECT set_var FROM ps_endpoints WHERE id=?", [endpoint]
             );
 
             timestamp = parseInt(set_var.split("=")[1]);
@@ -115,27 +115,39 @@ export namespace asterisk {
     }
 
     export function deleteContact(contact: Contact) {
-        return new Promise<boolean>(
-            resolve => {
+        return new Promise<boolean>((resolve, reject) => {
 
-                query(
-                    "DELETE FROM `ps_contacts` WHERE `id`=?", [contact.ps.id]
-                ).then(({ affectedRows }) => {
+            let timerId = setTimeout(
+                () => reject(new Error(`Delete contact ${contact.pretty} timeout error`)), 
+                3000
+            );
 
-                    let isDeleted = affectedRows ? true : false;
+            let queryPromise = (async () => {
 
-                    resolve(isDeleted);
+                let { affectedRows } = await query(
+                    "DELETE FROM ps_contacts WHERE id=?", [contact.ps.id]
+                );
 
-                });
+                let isDeleted = affectedRows ? true : false;
 
-                getEvtExpiredContact().waitForExtract(
-                    ({ ps }) => ps.id === contact.ps.id,
-                    2000
-                ).catch(() => { })
-                .then(()=> debug("We prevent throwing evtExpired contact"));
+                if (!isDeleted) {
+                    getEvtExpiredContact().detach({ "boundTo": contact });
+                    clearTimeout(timerId);
+                    resolve(false);
+                }
 
-            }
-        );
+            })();
+
+            getEvtExpiredContact().attachOnceExtract(
+                ({ ps }) => ps.id === contact.ps.id,
+                contact,
+                deletedContact => queryPromise.then(() => {
+                    clearTimeout(timerId);
+                    resolve(true);
+                })
+            );
+
+        });
     }
 
 

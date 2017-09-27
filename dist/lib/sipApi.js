@@ -73,14 +73,21 @@ function startListening(backendSocket) {
     var _this = this;
     framework.startListening(backendSocket).attach(function (_a) {
         var method = _a.method, params = _a.params, sendResponse = _a.sendResponse;
-        return __awaiter(_this, void 0, void 0, function () { var _a; return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    _a = sendResponse;
-                    return [4 /*yield*/, handlers[method](params)];
-                case 1: return [2 /*return*/, _a.apply(void 0, [_b.sent()])];
-            }
-        }); });
+        return __awaiter(_this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        debug(method + ": params: " + JSON.stringify(params) + "...");
+                        return [4 /*yield*/, handlers[method](params)];
+                    case 1:
+                        response = _a.sent();
+                        debug("..." + method + ": response: " + JSON.stringify(response));
+                        sendResponse(response);
+                        return [2 /*return*/];
+                }
+            });
+        });
     });
 }
 exports.startListening = startListening;
@@ -92,7 +99,6 @@ var handlers = {};
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    debug("handle " + methodName);
                     imei = params.imei;
                     return [4 /*yield*/, chan_dongle_extended_client_1.DongleExtendedClient.localhost().getConnectedDongles()];
                 case 1:
@@ -112,7 +118,6 @@ var handlers = {};
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    debug("handle " + methodName, params);
                     imei = params.imei, last_four_digits_of_iccid = params.last_four_digits_of_iccid;
                     dongleClient = chan_dongle_extended_client_1.DongleExtendedClient.localhost();
                     return [4 /*yield*/, dongleClient.getActiveDongle(imei)];
@@ -189,7 +194,6 @@ var handlers = {};
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    debug("handle " + methodName);
                     imei = params.imei, last_four_digits_of_iccid = params.last_four_digits_of_iccid, pin_first_try = params.pin_first_try, pin_second_try = params.pin_second_try;
                     dongleClient = chan_dongle_extended_client_1.DongleExtendedClient.localhost();
                     _a.label = 1;
@@ -248,7 +252,6 @@ var handlers = {};
         return __generator(this, function (_f) {
             switch (_f.label) {
                 case 0:
-                    debug("handle " + methodName);
                     iccid = params.iccid;
                     dongleClient = chan_dongle_extended_client_1.DongleExtendedClient.localhost();
                     _f.label = 1;

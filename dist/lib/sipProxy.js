@@ -44,6 +44,22 @@ var __values = (this && this.__values) || function (o) {
         }
     };
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var tls = require("tls");
 var net = require("net");
@@ -55,6 +71,7 @@ var sipApiBackend = require("./sipApiClientBackend");
 var sipApi_1 = require("./sipApi");
 var sipContact_1 = require("./sipContact");
 var db = require("./db");
+var trackable_map_1 = require("trackable-map");
 var _constants_1 = require("./_constants");
 require("colors");
 var _debug = require("debug");
@@ -97,6 +114,35 @@ function getAsteriskSockets() {
     });
 }
 exports.getAsteriskSockets = getAsteriskSockets;
+var expiredFlows = new Set();
+var mapAstSockContact = new trackable_map_1.TrackableMap();
+mapAstSockContact.set = function set(socket, contact) {
+    debug("associate contact to asteriskSocket: " + contact.flowToken);
+    var self = this;
+    socket.evtClose.attachOnce(function () {
+        debug("closed asteriskSocket: " + contact.flowToken);
+        self.delete(socket);
+        db.asterisk.deleteContact(contact);
+    });
+    db.asterisk.getEvtExpiredContact().attachOnce(function (expiredContact) { return expiredContact.ps.id === contact.ps.id; }, function () {
+        debug("expired contact " + contact.flowToken);
+        expiredFlows.add(contact.flowToken);
+        socket.destroy();
+        sipApiBackend.forceReRegister.makeCall(contact);
+        //TODO: replace by conn counter by date now and remove that
+        db.asterisk.getEvtNewContact().attachOnce(function (_a) {
+            var uaInstance = _a.uaInstance;
+            return JSON.stringify(uaInstance) === JSON.stringify(contact.uaInstance);
+        }, function () { return expiredFlows.delete(contact.flowToken); });
+    });
+    var oldContact = self.find(function (oldContact) { return (JSON.stringify(oldContact.uaInstance) === JSON.stringify(contact.uaInstance)); });
+    if (oldContact) {
+        debug("uaInstance re-registered, with new contact, overwritten contact: " + oldContact.pretty);
+        var oldSocket = self.keyOf(oldContact);
+        oldSocket.destroy();
+    }
+    return trackable_map_1.TrackableMap.prototype.set.call(self, socket, contact);
+};
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
@@ -214,9 +260,14 @@ function start() {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    debug(sipRequest.method);
                                     flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                                    asteriskSocket = asteriskSockets.get(flowToken) || createAsteriskSocket(flowToken, backendSocket);
+                                    asteriskSocket = asteriskSockets.get(flowToken);
+                                    if (!asteriskSocket) {
+                                        if (expiredFlows.has(flowToken))
+                                            return [2 /*return*/];
+                                        asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
+                                    }
+                                    debug(("(backend) " + sipRequest.method + " " + flowToken.split("-")[1]).yellow);
                                     if (!!asteriskSocket.evtConnect.postCount) return [3 /*break*/, 2];
                                     return [4 /*yield*/, asteriskSocket.evtConnect.waitFor()];
                                 case 1:
@@ -243,14 +294,17 @@ function start() {
                                                     case 0:
                                                         if (sipResponse.status !== 202)
                                                             return [2 /*return*/];
-                                                        return [4 /*yield*/, sipContact_1.Contact.getContactOfFlow(flowToken)];
+                                                        fromContact = mapAstSockContact.get(asteriskSocket);
+                                                        if (!!fromContact) return [3 /*break*/, 2];
+                                                        return [4 /*yield*/, mapAstSockContact.evtSet.waitFor(function (_a) {
+                                                                var _b = __read(_a, 2), _ = _b[0], socket = _b[1];
+                                                                return socket === asteriskSocket;
+                                                            })];
                                                     case 1:
-                                                        fromContact = _a.sent();
-                                                        if (!fromContact) {
-                                                            //TODO? Change result code, is it possible ?
-                                                            debug("Contact not found for incoming message!!!");
-                                                            return [2 /*return*/];
-                                                        }
+                                                        //TODO: test, should not cause memory leak
+                                                        fromContact = (_a.sent())[0];
+                                                        _a.label = 2;
+                                                    case 2:
                                                         exports.evtIncomingMessage.post({ fromContact: fromContact, sipRequest: sipRequest });
                                                         return [2 /*return*/];
                                                 }
@@ -264,6 +318,7 @@ function start() {
                     }); });
                     backendSocket.evtResponse.attach(function (sipResponse) {
                         var flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
+                        debug(("(backend): " + sipResponse.status + " " + sipResponse.reason).yellow);
                         var asteriskSocket = asteriskSockets.get(flowToken);
                         if (!asteriskSocket)
                             return;
@@ -301,9 +356,15 @@ exports.start = start;
 function createAsteriskSocket(flowToken, backendSocket) {
     var asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
     debug("New asterisk socket flowToken " + flowToken);
-    //TODO remove after debug
-    asteriskSocket.evtClose.attachOnce(function () { return debug("Asterisk socket closed " + flowToken); });
-    asteriskSockets.add(flowToken, asteriskSocket);
+    asteriskSockets.set(flowToken, asteriskSocket);
+    var timeoutRegisteredContactId = setTimeout(function () {
+        debug("destroy asterisk socket because no contact registered in time".red);
+        asteriskSocket.destroy();
+    }, 6000);
+    db.asterisk.getEvtNewContact().attachOncePrepend(function (contact) { return contact.flowToken === flowToken; }, function (contact) {
+        clearTimeout(timeoutRegisteredContactId);
+        mapAstSockContact.set(asteriskSocket, contact);
+    });
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
         console.log("From Asterisk:\n", sipLibrary.stringify(sipPacket).grey, "\n\n")
@@ -323,6 +384,7 @@ function createAsteriskSocket(flowToken, backendSocket) {
     asteriskSocket.evtRequest.attach(function (sipRequest) {
         if (backendSocket.evtClose.postCount)
             return;
+        debug(("(asterisk " + flowToken + ") " + sipRequest.method).cyan);
         var extraParamsFlowToken = {};
         extraParamsFlowToken[_constants_1.c.shared.flowTokenKey] = flowToken;
         var branch = backendSocket.addViaHeader(sipRequest, extraParamsFlowToken);
@@ -340,6 +402,7 @@ function createAsteriskSocket(flowToken, backendSocket) {
     asteriskSocket.evtResponse.attach(function (sipResponse) {
         if (backendSocket.evtClose.postCount)
             return;
+        debug(("(asterisk " + flowToken + "): " + sipResponse.status + " " + sipResponse.reason).cyan);
         backendSocket.rewriteRecordRoute(sipResponse, informativeHostname);
         sipResponse.headers.via.shift();
         backendSocket.write(sipResponse);

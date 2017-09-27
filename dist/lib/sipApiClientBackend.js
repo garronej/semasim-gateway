@@ -41,7 +41,7 @@ var _debug = require("debug");
 var debug = _debug("_sipApiClientBackend");
 function sendRequest(method, params) {
     return __awaiter(this, void 0, void 0, function () {
-        var backendSocket, error_1;
+        var backendSocket, response, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, sipProxy_1.getBackendSocket()];
@@ -50,8 +50,12 @@ function sendRequest(method, params) {
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, 4, , 5]);
+                    debug(method + ": params: " + JSON.stringify(params) + "...");
                     return [4 /*yield*/, framework.sendRequest(backendSocket, method, params)];
-                case 3: return [2 /*return*/, _a.sent()];
+                case 3:
+                    response = _a.sent();
+                    debug("..." + method + ": response: " + JSON.stringify(response));
+                    return [2 /*return*/, response];
                 case 4:
                     error_1 = _a.sent();
                     debug("Connection lost with backend retrying...");
@@ -72,12 +76,10 @@ var claimDongle;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        debug("call " + claimDongle.methodName);
                         params = { imei: imei };
                         return [4 /*yield*/, sendRequest(claimDongle.methodName, params)];
                     case 1:
                         isGranted = (_a.sent()).isGranted;
-                        debug("isGranted: " + isGranted);
                         return [2 /*return*/, isGranted];
                 }
             });
@@ -94,12 +96,10 @@ var wakeUpUserAgent;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        debug("call " + wakeUpUserAgent.methodName);
                         payload = { contact: contact };
                         return [4 /*yield*/, sendRequest(wakeUpUserAgent.methodName, payload)];
                     case 1:
                         status = (_a.sent()).status;
-                        debug("status: " + status);
                         return [2 /*return*/, status];
                 }
             });
@@ -107,3 +107,25 @@ var wakeUpUserAgent;
     }
     wakeUpUserAgent.makeCall = makeCall;
 })(wakeUpUserAgent = exports.wakeUpUserAgent || (exports.wakeUpUserAgent = {}));
+//Here we can send only push infos.
+var forceReRegister;
+(function (forceReRegister) {
+    forceReRegister.methodName = "forceReRegister";
+    function makeCall(contact) {
+        return __awaiter(this, void 0, void 0, function () {
+            var payload, isPushNotificationSent;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        debug("call " + forceReRegister.methodName + " contact:" + contact.pretty);
+                        payload = { contact: contact };
+                        return [4 /*yield*/, sendRequest(forceReRegister.methodName, payload)];
+                    case 1:
+                        isPushNotificationSent = (_a.sent()).isPushNotificationSent;
+                        return [2 /*return*/, isPushNotificationSent];
+                }
+            });
+        });
+    }
+    forceReRegister.makeCall = makeCall;
+})(forceReRegister = exports.forceReRegister || (exports.forceReRegister = {}));

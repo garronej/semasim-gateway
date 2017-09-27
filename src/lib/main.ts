@@ -4,13 +4,13 @@ import { SyncEvent } from "ts-events-extended";
 import * as runExclusive from "run-exclusive";
 import { DongleExtendedClient, typesDef as t } from "chan-dongle-extended-client";
 import * as agi from "../tools/agiClient";
-import { Contact } from "./sipContact";
+import { Contact, wakeUpAllContactsOfEndpoint, buildDialString } from "./sipContact";
 import * as sipApiBackend from "./sipApiClientBackend";
 import * as db from "./db";
 import * as sipProxy from "./sipProxy";
 import * as sipMessage from "./sipMessage";
 import * as phone from "../tools/phoneNumberLibrary";
-import * as AsyncLock from "async-lock";
+import * as messageQueue from "./messageQueue";
 
 import { c } from "./_constants";
 
@@ -20,6 +20,7 @@ let debug = _debug("_main");
 const dongleClient = DongleExtendedClient.localhost();
 
 debug("Starting semasim gateway !");
+//TODO: force re register on startup
 
 (async function callee() {
 
@@ -79,7 +80,7 @@ function start(dongleCallContext: string) {
 
         let imei = (await _.getVariable("DONGLEIMEI"))!;
 
-        let wakeUpAllContactsPromise= Contact.wakeUpAllContacts(imei, 9000);
+        let wakeUpAllContactsPromise= wakeUpAllContactsOfEndpoint(imei, 9000);
 
         let imsi= (await _.getVariable("DONGLEIMSI"))!;
         await _.setVariable("CALLERID(all)", `"" <${phone.toNationalNumber(number, imsi)}>`);
@@ -87,7 +88,7 @@ function start(dongleCallContext: string) {
         //await _.setVariable("CALLERID(name-charset)", "utf8");
         //await _.setVariable("CALLERID(name)", name || "");
 
-        let dialString = Contact.buildDialString(
+        let dialString = buildDialString(
             (await wakeUpAllContactsPromise).reachableContacts
         );
 
@@ -129,7 +130,7 @@ function start(dongleCallContext: string) {
                 { "allUaInstanceOfImei": imei }
             );
 
-            notifyNewSipMessagesToSend();
+            messageQueue.notifyNewSipMessagesToSend();
 
         } else debug("...Call ended");
 
@@ -148,7 +149,7 @@ function start(dongleCallContext: string) {
 
         await db.asterisk.addOrUpdateEndpoint(dongle.imei, password);
 
-        sendDonglePendingMessages(dongle.imei);
+        messageQueue.sendDonglePendingMessages(dongle.imei);
 
     }
 
@@ -183,7 +184,7 @@ function start(dongleCallContext: string) {
     });
 
 
-    Contact.getEvtNewContact().attach(
+    db.asterisk.getEvtNewContact().attach(
         async contact=> {
 
             debug(`New contact: ${contact.pretty}`);
@@ -192,120 +193,12 @@ function start(dongleCallContext: string) {
 
             if (isNew) debug("TODO: it's a new UA, send initialization messages");
 
-            sendPendingSipMessagesToReachableContact(contact);
+            messageQueue.sendPendingSipMessagesToReachableContact(contact);
 
         }
     );
 
 
-    Contact.getEvtExpiredContact().attach(async contact => {
-
-        debug(`Expired contact: ${contact.pretty}`);
-
-        sipApiBackend.wakeUpUserAgent.makeCall(contact);
-
-    });
-
-    const lock1 = new AsyncLock();
-    async function sendDonglePendingMessages(imei: string) {
-        await lock1.acquire(imei, async () => {
-            let messages = await db.semasim.getUnsentMessageOfDongleSim(imei);
-            let messByNum = new Map<string, typeof messages>();
-            for (let message of messages) {
-                let { to_number } = message;
-                if (!messByNum.has(to_number)) messByNum.set(to_number, []);
-                messByNum.get(to_number)!.push(message);
-            }
-            let tasks: Promise<void>[] = [];
-            for (let messages of messByNum.values()) {
-                tasks[tasks.length] = (async () => {
-                    for (let message of messages) {
-
-                        let { id, sender, to_number, text } = message;
-
-                        let sentMessageId: number;
-                        try {
-                            sentMessageId = await dongleClient.sendMessage(imei, to_number, text);
-                        } catch (error) {
-                            if (error.message !== t.errorMessages.messageNotSent) return;
-                            sentMessageId = 0;
-                        }
-                        await db.semasim.setMessageToGsmSentId(id, sentMessageId);
-                        if (sentMessageId) {
-                            await db.semasim.addMessageTowardSip(
-                                to_number,
-                                `---Message send, sentMessageId: ${sentMessageId}---`,
-                                new Date(),
-                                { "uaInstance": sender }
-                            );
-                        } else {
-                            await db.semasim.addMessageTowardSip(
-                                to_number,
-                                `Error message not sent`,
-                                new Date(),
-                                { "uaInstance": sender }
-                            );
-                        }
-                        notifyNewSipMessagesToSend();
-                    }
-                })();
-            }
-            await Promise.all(tasks);
-        });
-    }
-
-    const lock2 = new AsyncLock();
-    async function sendPendingSipMessagesToReachableContact(contact: Contact) {
-
-        let { uaInstance } = contact;
-
-        await lock2.acquire(
-            JSON.stringify(uaInstance),
-            async () => {
-
-                let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(uaInstance);
-
-                for (let message of messages) {
-                    debug(`sip sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
-                    try {
-                        await sipMessage.sendMessage(
-                            contact,
-                            message.from_number,
-                            {},
-                            message.text
-                        );
-                    } catch (error) {
-                        debug("sip Send Message error:", error.message);
-                        break;
-                    }
-                    await db.semasim.setMessageTowardSipDelivered(uaInstance, message.id);
-                }
-
-            }
-        );
-    }
-
-    function notifyNewSipMessagesToSend() {
-
-        db.asterisk.queryContacts().then(
-            contacts => contacts.forEach(
-                async contact => {
-
-                    let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(contact.uaInstance);
-
-                    if (!messages.length) return;
-
-                    let status= await sipApiBackend.wakeUpUserAgent.makeCall(contact);
-
-                    if( status !== "REACHABLE" ) return;
-
-                    sendPendingSipMessagesToReachableContact(contact);
-
-                }
-            )
-        );
-
-    }
 
 
     sipMessage.getEvtMessage().attach(
@@ -319,7 +212,7 @@ function start(dongleCallContext: string) {
                 fromContact.uaInstance
             );
 
-            sendDonglePendingMessages(fromContact.uaInstance.dongle_imei);
+            messageQueue.sendDonglePendingMessages(fromContact.uaInstance.dongle_imei);
 
         }
     );
@@ -336,7 +229,7 @@ function start(dongleCallContext: string) {
                 { "allUaInstanceOfImei": imei }
             );
 
-            notifyNewSipMessagesToSend();
+            messageQueue.notifyNewSipMessagesToSend();
 
         }
     );
@@ -367,7 +260,7 @@ function start(dongleCallContext: string) {
                 { "allUaInstanceOfEndpointOtherThan": sender }
             );
 
-            notifyNewSipMessagesToSend();
+            messageQueue.notifyNewSipMessagesToSend();
 
         }
     );

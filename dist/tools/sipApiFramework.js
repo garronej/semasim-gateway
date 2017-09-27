@@ -130,7 +130,6 @@ function sendRequest(sipSocket, method, params, timeout) {
                 case 0:
                     sipRequest = ApiMessage.Request.buildSip(method, params);
                     actionId = ApiMessage.readActionId(sipRequest);
-                    //TODO: test!
                     sipSocket.addViaHeader(sipRequest);
                     success = sipSocket.write(sipRequest);
                     if (!success)

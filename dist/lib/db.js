@@ -129,7 +129,7 @@ var asterisk;
             var endpoints;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, query("SELECT `id`,`set_var` FROM `ps_endpoints`")];
+                    case 0: return [4 /*yield*/, query("SELECT id, set_var FROM ps_endpoints")];
                     case 1:
                         endpoints = (_a.sent()).map(function (_a) {
                             var id = _a.id;
@@ -146,7 +146,7 @@ var asterisk;
             var psContacts;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, query("SELECT `id`,`uri`,`path`,`endpoint`,`user_agent` FROM ps_contacts")];
+                    case 0: return [4 /*yield*/, query("SELECT id, uri, path, endpoint, user_agent FROM ps_contacts")];
                     case 1:
                         psContacts = _a.sent();
                         return [2 /*return*/, psContacts.map(function (psContact) { return sipContact_1.PsContact.buildContact(psContact); })];
@@ -163,7 +163,7 @@ var asterisk;
                 switch (_b.label) {
                     case 0:
                         _b.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, query("SELECT `set_var` FROM ps_endpoints WHERE `id`=?", [endpoint])];
+                        return [4 /*yield*/, query("SELECT set_var FROM ps_endpoints WHERE id=?", [endpoint])];
                     case 1:
                         _a = __read.apply(void 0, [_b.sent(), 1]), set_var = _a[0].set_var;
                         timestamp = parseInt(set_var.split("=")[1]);
@@ -179,17 +179,33 @@ var asterisk;
     }
     asterisk.queryLastConnectionTimestampOfDonglesEndpoint = queryLastConnectionTimestampOfDonglesEndpoint;
     function deleteContact(contact) {
-        return new Promise(function (resolve) {
-            query("DELETE FROM `ps_contacts` WHERE `id`=?", [contact.ps.id]).then(function (_a) {
-                var affectedRows = _a.affectedRows;
-                var isDeleted = affectedRows ? true : false;
-                resolve(isDeleted);
-            });
-            getEvtExpiredContact().waitForExtract(function (_a) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var timerId = setTimeout(function () { return reject(new Error("Delete contact " + contact.pretty + " timeout error")); }, 3000);
+            var queryPromise = (function () { return __awaiter(_this, void 0, void 0, function () {
+                var affectedRows, isDeleted;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, query("DELETE FROM ps_contacts WHERE id=?", [contact.ps.id])];
+                        case 1:
+                            affectedRows = (_a.sent()).affectedRows;
+                            isDeleted = affectedRows ? true : false;
+                            if (!isDeleted) {
+                                getEvtExpiredContact().detach({ "boundTo": contact });
+                                clearTimeout(timerId);
+                                resolve(false);
+                            }
+                            return [2 /*return*/];
+                    }
+                });
+            }); })();
+            getEvtExpiredContact().attachOnceExtract(function (_a) {
                 var ps = _a.ps;
                 return ps.id === contact.ps.id;
-            }, 2000).catch(function () { })
-                .then(function () { return debug("We prevent throwing evtExpired contact"); });
+            }, contact, function (deletedContact) { return queryPromise.then(function () {
+                clearTimeout(timerId);
+                resolve(true);
+            }); });
         });
     }
     asterisk.deleteContact = deleteContact;

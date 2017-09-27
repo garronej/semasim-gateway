@@ -165,7 +165,6 @@ export async function sendRequest(
 
     let actionId = ApiMessage.readActionId(sipRequest);
 
-    //TODO: test!
     sipSocket.addViaHeader(sipRequest);
 
     let success = sipSocket.write(sipRequest);

@@ -45,10 +45,8 @@ var __values = (this && this.__values) || function (o) {
     };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var ts_events_extended_1 = require("ts-events-extended");
 var sipLibrary = require("../tools/sipLibrary");
 var db = require("./db");
-var sipProxy_1 = require("./sipProxy");
 var sipApiBackend = require("./sipApiClientBackend");
 var _constants_1 = require("./_constants");
 var _debug = require("debug");
@@ -78,11 +76,14 @@ var PsContact;
         var _a = decodeUserAgentFieldValue(psContact), instanceId = _a.instanceId, userAgent = _a.userAgent;
         var flowToken = readFlowToken(psContact);
         var pushInfos = extractPushInfos(psContact);
-        var pretty = [
-            "imei: " + psContact.endpoint,
-            "+sip.instance: " + instanceId,
-            "flowToken: " + flowToken
+        /*
+        let pretty = [
+            `imei: ${psContact.endpoint}`,
+            `+sip.instance: ${instanceId}`,
+            `flowToken: ${flowToken}`
         ].join(",");
+        */
+        var pretty = "flowToken: " + flowToken;
         return {
             "ps": psContact,
             pushInfos: pushInfos,
@@ -97,200 +98,106 @@ var PsContact;
     }
     PsContact.buildContact = buildContact;
 })(PsContact = exports.PsContact || (exports.PsContact = {}));
-var Contact;
-(function (Contact) {
-    function buildDialString(contacts) {
-        var dialStringSplit = [];
+function buildDialString(contacts) {
+    var dialStringSplit = [];
+    try {
+        for (var contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
+            var ps = contacts_1_1.value.ps;
+            dialStringSplit.push("PJSIP/" + ps.endpoint + "/" + ps.uri);
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
         try {
-            for (var contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
-                var ps = contacts_1_1.value.ps;
-                dialStringSplit.push("PJSIP/" + ps.endpoint + "/" + ps.uri);
-            }
+            if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-        return dialStringSplit.join("&");
-        var e_1, _a;
+        finally { if (e_1) throw e_1.error; }
     }
-    Contact.buildDialString = buildDialString;
-    function getContactOfFlow(flowToken) {
+    return dialStringSplit.join("&");
+    var e_1, _a;
+}
+exports.buildDialString = buildDialString;
+function wakeUpAllContactsOfEndpoint(endpoint, getResultTimeout) {
+    var _this = this;
+    if (getResultTimeout === void 0) { getResultTimeout = 9000; }
+    return new Promise(function (resolve) { return __awaiter(_this, void 0, void 0, function () {
         var _this = this;
-        return new Promise(function (resolve) { return __awaiter(_this, void 0, void 0, function () {
-            var returned, contacts, contact;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        returned = false;
-                        getEvtNewContact().waitFor(function (contact) { return contact.flowToken === flowToken; }, 1200).then(function (contact) {
-                            if (returned)
-                                return;
-                            returned = true;
-                            resolve(contact);
-                        }).catch(function () {
-                            if (returned)
-                                return;
-                            returned = true;
-                            resolve(undefined);
-                        });
-                        return [4 /*yield*/, db.asterisk.queryContacts()];
-                    case 1:
-                        contacts = _a.sent();
-                        if (returned)
-                            return [2 /*return*/];
-                        contact = contacts.find(function (contact) { return contact.flowToken === flowToken; });
-                        if (!contact)
-                            return [2 /*return*/];
-                        returned = true;
-                        resolve(contact);
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-    }
-    Contact.getContactOfFlow = getContactOfFlow;
-    function wakeUpAllContacts(endpoint, getResultTimeout) {
-        var _this = this;
-        return new Promise(function (resolve) { return __awaiter(_this, void 0, void 0, function () {
-            var _this = this;
-            var reachableContacts, unreachableContacts, _a, resolver, timeoutId, tasks, _loop_1, unreachableContacts_1, unreachableContacts_1_1, contact, e_2, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
-                    case 0:
+        var reachableContacts, unreachableContacts, _a, resolver, timeoutId, tasks, _loop_1, unreachableContacts_1, unreachableContacts_1_1, contact, e_2, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    reachableContacts = new Set();
+                    _a = Set.bind;
+                    return [4 /*yield*/, db.asterisk.queryContacts()];
+                case 1:
+                    unreachableContacts = new (_a.apply(Set, [void 0, (_c.sent()).filter(function (contact) { return contact.ps.endpoint === endpoint; })]))();
+                    resolver = function () {
+                        resolve({ reachableContacts: reachableContacts, unreachableContacts: unreachableContacts });
                         reachableContacts = new Set();
-                        _a = Set.bind;
-                        return [4 /*yield*/, db.asterisk.queryContacts()];
-                    case 1:
-                        unreachableContacts = new (_a.apply(Set, [void 0, (_c.sent()).filter(function (contact) { return contact.ps.endpoint === endpoint; })]))();
-                        resolver = function () {
-                            resolve({ reachableContacts: reachableContacts, unreachableContacts: unreachableContacts });
-                            reachableContacts = new Set();
-                            unreachableContacts = new Set();
-                        };
-                        timeoutId = setTimeout(function () {
-                            if (!reachableContacts.size)
-                                return;
-                            resolver();
-                        }, getResultTimeout || 9000);
-                        tasks = [];
-                        _loop_1 = function (contact) {
-                            tasks[tasks.length] = (function () { return __awaiter(_this, void 0, void 0, function () {
-                                var _a, reachableContact, error_1;
-                                return __generator(this, function (_b) {
-                                    switch (_b.label) {
-                                        case 0: return [4 /*yield*/, sipApiBackend.wakeUpUserAgent.makeCall(contact)];
-                                        case 1:
-                                            _a = _b.sent();
-                                            switch (_a) {
-                                                case "REACHABLE": return [3 /*break*/, 2];
-                                                case "PUSH_NOTIFICATION_SENT": return [3 /*break*/, 3];
-                                            }
-                                            return [3 /*break*/, 6];
-                                        case 2:
-                                            unreachableContacts.delete(contact);
-                                            reachableContacts.add(contact);
-                                            return [2 /*return*/];
-                                        case 3:
-                                            _b.trys.push([3, 5, , 6]);
-                                            return [4 /*yield*/, getEvtNewContact().waitFor(function (reRegisteredContact) {
-                                                    return JSON.stringify(reRegisteredContact.uaInstance) === JSON.stringify(contact.uaInstance);
-                                                }, 15000)];
-                                        case 4:
-                                            reachableContact = _b.sent();
-                                            unreachableContacts.delete(contact);
-                                            reachableContacts.add(reachableContact);
-                                            return [3 /*break*/, 6];
-                                        case 5:
-                                            error_1 = _b.sent();
-                                            return [3 /*break*/, 6];
-                                        case 6: return [2 /*return*/];
-                                    }
-                                });
-                            }); })();
-                        };
-                        try {
-                            for (unreachableContacts_1 = __values(unreachableContacts), unreachableContacts_1_1 = unreachableContacts_1.next(); !unreachableContacts_1_1.done; unreachableContacts_1_1 = unreachableContacts_1.next()) {
-                                contact = unreachableContacts_1_1.value;
-                                _loop_1(contact);
-                            }
-                        }
-                        catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                        finally {
-                            try {
-                                if (unreachableContacts_1_1 && !unreachableContacts_1_1.done && (_b = unreachableContacts_1.return)) _b.call(unreachableContacts_1);
-                            }
-                            finally { if (e_2) throw e_2.error; }
-                        }
-                        return [4 /*yield*/, Promise.all(tasks)];
-                    case 2:
-                        _c.sent();
-                        clearTimeout(timeoutId);
+                        unreachableContacts = new Set();
+                    };
+                    timeoutId = setTimeout(function () {
+                        if (!reachableContacts.size)
+                            return;
                         resolver();
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-    }
-    Contact.wakeUpAllContacts = wakeUpAllContacts;
-    var evtNewContact = undefined;
-    function getEvtNewContact() {
-        var _this = this;
-        if (evtNewContact)
-            return evtNewContact;
-        evtNewContact = new ts_events_extended_1.SyncEvent();
-        db.asterisk.getEvtNewContact().attach(function (newContact) { return __awaiter(_this, void 0, void 0, function () {
-            var oldContact, oldAsteriskSocket;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, db.asterisk.queryContacts()];
-                    case 1:
-                        oldContact = (_a.sent()).find(function (oldContact) { return (oldContact.ps.id !== newContact.ps.id &&
-                            JSON.stringify(oldContact.uaInstance) === JSON.stringify(newContact.uaInstance)); });
-                        if (!oldContact) return [3 /*break*/, 4];
-                        debug("We overwrite contact " + oldContact.pretty);
-                        return [4 /*yield*/, db.asterisk.deleteContact(oldContact)];
-                    case 2:
-                        _a.sent();
-                        return [4 /*yield*/, sipProxy_1.getAsteriskSockets()];
-                    case 3:
-                        oldAsteriskSocket = (_a.sent()).get(oldContact.flowToken);
-                        if (oldAsteriskSocket)
-                            oldAsteriskSocket.destroy();
-                        _a.label = 4;
-                    case 4:
-                        evtNewContact.post(newContact);
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-        return evtNewContact;
-    }
-    Contact.getEvtNewContact = getEvtNewContact;
-    var evtExpiredContact = undefined;
-    function getEvtExpiredContact() {
-        var _this = this;
-        if (evtExpiredContact)
-            return evtExpiredContact;
-        evtExpiredContact = new ts_events_extended_1.SyncEvent();
-        db.asterisk.getEvtExpiredContact().attach(function (expiredContact) { return __awaiter(_this, void 0, void 0, function () {
-            var asteriskSocket;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, sipProxy_1.getAsteriskSockets()];
-                    case 1:
-                        asteriskSocket = (_a.sent()).get(expiredContact.flowToken);
-                        if (asteriskSocket)
-                            asteriskSocket.destroy();
-                        evtExpiredContact.post(expiredContact);
-                        return [2 /*return*/];
-                }
-            });
-        }); });
-        return evtExpiredContact;
-    }
-    Contact.getEvtExpiredContact = getEvtExpiredContact;
-})(Contact = exports.Contact || (exports.Contact = {}));
+                    }, getResultTimeout);
+                    tasks = [];
+                    _loop_1 = function (contact) {
+                        tasks[tasks.length] = (function () { return __awaiter(_this, void 0, void 0, function () {
+                            var _a, reachableContact, error_1;
+                            return __generator(this, function (_b) {
+                                switch (_b.label) {
+                                    case 0: return [4 /*yield*/, sipApiBackend.wakeUpUserAgent.makeCall(contact)];
+                                    case 1:
+                                        _a = _b.sent();
+                                        switch (_a) {
+                                            case "REACHABLE": return [3 /*break*/, 2];
+                                            case "PUSH_NOTIFICATION_SENT": return [3 /*break*/, 3];
+                                        }
+                                        return [3 /*break*/, 6];
+                                    case 2:
+                                        unreachableContacts.delete(contact);
+                                        reachableContacts.add(contact);
+                                        return [2 /*return*/];
+                                    case 3:
+                                        _b.trys.push([3, 5, , 6]);
+                                        return [4 /*yield*/, db.asterisk.getEvtNewContact().waitFor(function (reRegisteredContact) {
+                                                return JSON.stringify(reRegisteredContact.uaInstance) === JSON.stringify(contact.uaInstance);
+                                            }, 15000)];
+                                    case 4:
+                                        reachableContact = _b.sent();
+                                        unreachableContacts.delete(contact);
+                                        reachableContacts.add(reachableContact);
+                                        return [3 /*break*/, 6];
+                                    case 5:
+                                        error_1 = _b.sent();
+                                        return [3 /*break*/, 6];
+                                    case 6: return [2 /*return*/];
+                                }
+                            });
+                        }); })();
+                    };
+                    try {
+                        for (unreachableContacts_1 = __values(unreachableContacts), unreachableContacts_1_1 = unreachableContacts_1.next(); !unreachableContacts_1_1.done; unreachableContacts_1_1 = unreachableContacts_1.next()) {
+                            contact = unreachableContacts_1_1.value;
+                            _loop_1(contact);
+                        }
+                    }
+                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                    finally {
+                        try {
+                            if (unreachableContacts_1_1 && !unreachableContacts_1_1.done && (_b = unreachableContacts_1.return)) _b.call(unreachableContacts_1);
+                        }
+                        finally { if (e_2) throw e_2.error; }
+                    }
+                    return [4 /*yield*/, Promise.all(tasks)];
+                case 2:
+                    _c.sent();
+                    clearTimeout(timeoutId);
+                    resolver();
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+}
+exports.wakeUpAllContactsOfEndpoint = wakeUpAllContactsOfEndpoint;

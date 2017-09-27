@@ -3,6 +3,7 @@ import * as net from "net";
 import * as md5 from "md5";
 import * as sip from "sip";
 import * as _sdp_ from "sip/sdp";
+import { TrackableMap } from "trackable-map";
 
 import * as _debug from "debug";
 let debug = _debug("_tools/sipLibrary");
@@ -244,6 +245,9 @@ export class Socket {
 
         this.connection.destroy();
 
+        //TODO: test, on destroy syncronously post close.
+        this.connection.emit("close", false);
+
     }
 
     public get localPort(): number {
@@ -406,54 +410,30 @@ export class Socket {
 
 }
 
-//TODO: use Map instead of Record
-export class Store {
+export class Store extends TrackableMap<string, Socket> {
 
-    private readonly record: Record<string, Socket> = {};
+    public set(key: string, socket: Socket): this {
 
-    constructor() { }
+        socket.evtClose.attachOnce(() => super.delete(key));
 
-    public add(key: string, socket: Socket) {
+        super.set(key, socket);
 
-        this.record[key] = socket;
-
-        socket.evtClose.attachOnce(() => {
-            delete this.record[key];
-        });
+        return this;
 
     }
 
-    public get(key: string): Socket | undefined {
-        return this.record[key];
-    }
-
-    public get keys(): string[] {
-
-        return Object.keys(this.record);
-
-    }
-
-    //TODO: correct getAll so we each elem is uniq
-    public getAll(): Socket[] {
-
-        let out: Socket[] = [];
-
-        for (let key of Object.keys(this.record))
-            out.push(this.record[key]);
-
-        return out;
-
-    }
-
-    //TODO: we might destroy twice some socket
     public destroyAll() {
 
-        for (let key of Object.keys(this.record))
-            this.record[key].destroy();
+        for( let socket of this.valuesAsArrayNoDuplicate() )
+            socket.destroy();
 
     }
 
+
 }
+
+
+
 
 
 export const stringify: (sipPacket: Packet) => string = sip.stringify;

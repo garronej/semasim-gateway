@@ -10,6 +10,8 @@ import { startListening as apiStartListening } from "./sipApi";
 import { Contact, PsContact } from "./sipContact";
 import * as db from "./db";
 
+import { TrackableMap } from "trackable-map";
+
 import { c } from "./_constants";
 
 import "colors";
@@ -56,6 +58,52 @@ export async function getAsteriskSockets(): Promise<sipLibrary.Store> {
     return asteriskSockets;
 
 }
+
+const expiredFlows= new Set<string>();
+
+const mapAstSockContact= new TrackableMap<sipLibrary.Socket, Contact>();
+
+mapAstSockContact.set= function set(socket, contact){
+
+    debug(`associate contact to asteriskSocket: ${contact.flowToken}`);
+
+    let self: typeof mapAstSockContact= this;
+
+    socket.evtClose.attachOnce(()=>{
+        debug(`closed asteriskSocket: ${contact.flowToken}`);
+        self.delete(socket);
+        db.asterisk.deleteContact(contact);
+    });
+
+    db.asterisk.getEvtExpiredContact().attachOnce(
+        expiredContact => expiredContact.ps.id === contact.ps.id,
+        ()=> {
+            debug(`expired contact ${contact.flowToken}`);
+            expiredFlows.add(contact.flowToken);
+            socket.destroy();
+            sipApiBackend.forceReRegister.makeCall(contact);
+
+            //TODO: replace by conn counter by date now and remove that
+            db.asterisk.getEvtNewContact().attachOnce(
+                ({ uaInstance })=> JSON.stringify(uaInstance) === JSON.stringify(contact.uaInstance),
+                ()=> expiredFlows.delete(contact.flowToken)
+            );
+        }
+    );
+
+    let oldContact= self.find( oldContact=> (
+        JSON.stringify(oldContact.uaInstance) === JSON.stringify(contact.uaInstance)
+    ));
+
+    if( oldContact ){
+        debug(`uaInstance re-registered, with new contact, overwritten contact: ${oldContact.pretty}`);
+        let oldSocket = self.keyOf( oldContact )!;
+        oldSocket.destroy();
+    }
+
+    return TrackableMap.prototype.set.call(self, socket, contact);
+
+};
 
 
 export async function start() {
@@ -113,11 +161,19 @@ export async function start() {
 
     backendSocket.evtRequest.attach(async sipRequest => {
 
-        debug(sipRequest.method);
-
         let flowToken = sipRequest.headers.via[0].params[c.shared.flowTokenKey]!;
 
-        let asteriskSocket = asteriskSockets.get(flowToken) || createAsteriskSocket(flowToken, backendSocket);
+        let asteriskSocket = asteriskSockets.get(flowToken);
+
+        if( !asteriskSocket ){
+
+            if( expiredFlows.has(flowToken) ) return;
+
+            asteriskSocket= createAsteriskSocket(flowToken, backendSocket);
+
+        }
+
+        debug(`(backend) ${sipRequest.method} ${flowToken.split("-")[1]}`.yellow);
 
         if (!asteriskSocket.evtConnect.postCount) await asteriskSocket.evtConnect.waitFor();
 
@@ -148,12 +204,15 @@ export async function start() {
 
                     if (sipResponse.status !== 202) return;
 
-                    let fromContact = await Contact.getContactOfFlow(flowToken);
+                    let fromContact= mapAstSockContact.get(asteriskSocket!);
 
-                    if (!fromContact) {
-                        //TODO? Change result code, is it possible ?
-                        debug(`Contact not found for incoming message!!!`);
-                        return;
+                    if( !fromContact ){
+
+                        //TODO: test, should not cause memory leak
+                        fromContact = (await mapAstSockContact.evtSet.waitFor(
+                            ([_, socket])=> socket === asteriskSocket
+                        ))[0];
+
                     }
 
                     evtIncomingMessage.post({ fromContact, sipRequest });
@@ -171,6 +230,8 @@ export async function start() {
     backendSocket.evtResponse.attach(sipResponse => {
 
         let flowToken = sipResponse.headers.via[0].params[c.shared.flowTokenKey]!;
+
+        debug(`(backend): ${sipResponse.status} ${sipResponse.reason}`.yellow);
 
         let asteriskSocket = asteriskSockets.get(flowToken);
 
@@ -206,6 +267,10 @@ export async function start() {
 }
 
 
+
+
+
+
 function createAsteriskSocket(
     flowToken: string,
     backendSocket: sipLibrary.Socket
@@ -215,12 +280,21 @@ function createAsteriskSocket(
 
     debug(`New asterisk socket flowToken ${flowToken}`)
 
-    //TODO remove after debug
-    asteriskSocket.evtClose.attachOnce(
-        ()=> debug(`Asterisk socket closed ${flowToken}`)
+    asteriskSockets.set(flowToken, asteriskSocket);
+
+    let timeoutRegisteredContactId= setTimeout(()=> {
+        debug(`destroy asterisk socket because no contact registered in time`.red);
+        asteriskSocket.destroy()
+    }, 6000);
+
+    db.asterisk.getEvtNewContact().attachOncePrepend(
+        contact => contact.flowToken === flowToken,
+        contact => {
+            clearTimeout(timeoutRegisteredContactId);
+            mapAstSockContact.set(asteriskSocket, contact);
+        }
     );
 
-    asteriskSockets.add(flowToken, asteriskSocket);
 
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
@@ -249,8 +323,10 @@ function createAsteriskSocket(
 
         if (backendSocket.evtClose.postCount) return;
 
-        let extraParamsFlowToken: Record<string, string>= {};
-        extraParamsFlowToken[c.shared.flowTokenKey]= flowToken;
+        debug(`(asterisk ${flowToken}) ${sipRequest.method}`.cyan);
+
+        let extraParamsFlowToken: Record<string, string> = {};
+        extraParamsFlowToken[c.shared.flowTokenKey] = flowToken;
 
         let branch = backendSocket.addViaHeader(sipRequest, extraParamsFlowToken);
 
@@ -272,6 +348,8 @@ function createAsteriskSocket(
     asteriskSocket.evtResponse.attach(sipResponse => {
 
         if (backendSocket.evtClose.postCount) return;
+
+        debug(`(asterisk ${flowToken}): ${sipResponse.status} ${sipResponse.reason}`.cyan);
 
         backendSocket.rewriteRecordRoute(sipResponse, informativeHostname);
 
