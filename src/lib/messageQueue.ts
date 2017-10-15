@@ -1,4 +1,4 @@
-import { DongleExtendedClient, typesDef as t } from "chan-dongle-extended-client";
+import { DongleController as Dc } from "chan-dongle-extended-client";
 import * as db from "./db";
 import * as AsyncLock from "async-lock";
 import * as sipApiBackend from "./sipApiClientBackend";
@@ -6,135 +6,183 @@ import { Contact } from "./sipContact";
 import * as sipMessage from "./sipMessage";
 
 import * as _debug from "debug";
-let debug = _debug("_messagesDispatcher");
+let debug = _debug("_messageQueue");
 
-const lock1 = new AsyncLock();
-export function sendDonglePendingMessages(imei: string) {
+const checkMark = (new Buffer("e29c94", "hex")).toString("utf8");
+const crossMark = (new Buffer("e29d8c", "hex")).toString("utf8");
 
-    lock1.acquire(imei, async () => {
+const lockDongle = new AsyncLock();
 
-        let messages = await db.semasim.getUnsentMessageOfDongleSim(imei);
+export function sendMessagesOfDongle(
+    endpoint: Contact.UaEndpoint.EndpointRef
+) {
+    lockDongle.acquire(endpoint.dongle.imei, async () => {
 
-        let messByNum = new Map<string, typeof messages>();
+        let dc = Dc.getInstance();
 
-        for (let message of messages) {
+        for (
+            let [message, { setSent, setStatusReport }]
+            of await db.semasim.MessageTowardGsm.getUnsent(endpoint)
+        ) {
 
-            let { to_number } = message;
+            let sendMessageResult: Dc.SendMessageResult;
 
-            if (!messByNum.has(to_number)) messByNum.set(to_number, []);
+            try {
 
-            messByNum.get(to_number)!.push(message);
+                sendMessageResult = await dc.sendMessage(
+                    endpoint.dongle.imei,
+                    message.to_number,
+                    message.text
+                );
 
-        }
+            } catch {
+                return;
+            }
 
-        let tasks: Promise<void>[] = [];
+            if (!sendMessageResult.success) {
 
-        for (let messages of messByNum.values()) {
+                if (sendMessageResult.reason !== "DISCONNECT") {
+                    await setSent(null);
+                    continue;
+                }else{
+                    return;
+                }
 
-            tasks[tasks.length] = (async () => {
+            }
 
-                for (let message of messages) {
+            let { sendDate } = sendMessageResult;
 
-                    let { id, sender, to_number, text } = message;
+            let prSetSent = setSent(sendDate);
 
-                    let sentMessageId: number;
+            db.semasim.MessageTowardSip.add(
+                message.to_number,
+                checkMark,
+                sendDate,
+                true,
+                {
+                    "is": "UA_ENDPOINT",
+                    "uaEndpoint": message.uaEndpoint
+                }
+            ).then(() => notifyNewSipMessagesToSend(message.uaEndpoint.endpoint));
 
-                    try {
-                        sentMessageId = await DongleExtendedClient.localhost().sendMessage(
-                            imei,
-                            to_number,
-                            text
+            dc.evtStatusReport.attachOnce(
+                ({ statusReport }) => statusReport.sendDate.getTime() === sendDate.getTime(),
+                async ({ statusReport }) => {
+
+                    await prSetSent;
+
+                    setStatusReport(statusReport);
+
+                    if (statusReport.isDelivered) {
+
+                        //TODO: may be useless...depend of operator I assume
+                        if( isNaN(statusReport.dischargeDate.getTime())){
+                            statusReport.dischargeDate= new Date();
+                        };
+
+                        await db.semasim.MessageTowardSip.add(
+                            message.to_number,
+                            `${checkMark}${checkMark}`,
+                            statusReport.dischargeDate,
+                            true,
+                            {
+                                "is": "UA_ENDPOINT",
+                                "uaEndpoint": message.uaEndpoint
+                            }
                         );
-                    } catch (error) {
 
-                        if (error.message !== t.errorMessages.messageNotSent) return;
-
-                        sentMessageId = 0;
-
-                    }
-
-                    await db.semasim.setMessageToGsmSentId(id, sentMessageId);
-
-                    if (sentMessageId) {
-
-                        await db.semasim.addMessageTowardSip(
-                            to_number,
-                            `---Message send, sentMessageId: ${sentMessageId}---`,
-                            new Date(),
-                            { "uaInstance": sender }
+                        await db.semasim.MessageTowardSip.add(
+                            message.to_number,
+                            `you sent from ${message.uaEndpoint.ua.software}:\n${message.text}`,
+                            sendDate,
+                            true,
+                            {
+                                "is": "ALL UA_ENDPOINT OF ENDPOINT EXCEPT UA",
+                                "endpoint": message.uaEndpoint.endpoint,
+                                "excludeUa": message.uaEndpoint.ua
+                            }
                         );
 
                     } else {
 
-                        await db.semasim.addMessageTowardSip(
-                            to_number,
-                            `Error message not sent`,
-                            new Date(),
-                            { "uaInstance": sender }
+                        await db.semasim.MessageTowardSip.add(
+                            message.to_number,
+                            crossMark,
+                            statusReport.dischargeDate,
+                            true,
+                            {
+                                "is": "UA_ENDPOINT",
+                                "uaEndpoint": message.uaEndpoint
+                            }
                         );
 
                     }
 
-                    notifyNewSipMessagesToSend();
+                    notifyNewSipMessagesToSend(message.uaEndpoint.endpoint);
+
                 }
-
-            })();
+            );
 
         }
 
-        await Promise.all(tasks);
-
     });
-
 }
 
-const lock2 = new AsyncLock();
-export function sendPendingSipMessagesToReachableContact(contact: Contact) {
+export function notifyNewSipMessagesToSend(
+    fromEndpoint: Contact.UaEndpoint.EndpointRef
+) {
 
-    let { uaInstance } = contact;
-
-    lock2.acquire(JSON.stringify(uaInstance), async () => {
-
-        let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(uaInstance);
-
-        for (let message of messages) {
-            debug(`sip sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
-            try {
-                await sipMessage.sendMessage(
-                    contact,
-                    message.from_number,
-                    {},
-                    message.text
-                );
-            } catch (error) {
-                debug("sip Send Message error:", error.message);
-                //TODO: force contact to re register
-                break;
-            }
-            await db.semasim.setMessageTowardSipDelivered(uaInstance, message.id);
-        }
-
-    });
-
-}
-
-export function notifyNewSipMessagesToSend() {
-
-    db.asterisk.queryContacts().then(
+    db.asterisk.getContacts(fromEndpoint).then(
         contacts => contacts.forEach(
             async contact => {
 
-                let messages = await db.semasim.getUndeliveredMessagesOfUaInstance(contact.uaInstance);
+                let unsentCount = await db.semasim.MessageTowardSip.unsentCount(contact.uaEndpoint);
 
-                if (!messages.length) return;
+                if (!unsentCount) return;
 
-                let status = await sipApiBackend.wakeUpUserAgent.makeCall(contact);
+                let status = await sipApiBackend.wakeUpContact.makeCall(contact);
 
                 if (status !== "REACHABLE") return;
 
-                sendPendingSipMessagesToReachableContact(contact);
+                sendMessagesOfContact(contact);
 
             }
         )
     );
+}
+
+const lockUaEndpoint = new AsyncLock();
+export function sendMessagesOfContact(contact: Contact) {
+
+    let { uaEndpoint } = contact;
+
+    lockUaEndpoint.acquire(
+        Contact.UaEndpoint.id(uaEndpoint),
+        async () => {
+
+            for (
+                let [message, setReceived]
+                of
+                await db.semasim.MessageTowardSip.getUnsent(uaEndpoint)
+            ) {
+
+                debug(`sip sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
+                try {
+                    await sipMessage.sendMessage(
+                        contact,
+                        message.from_number,
+                        {},
+                        message.text
+                    );
+                } catch (error) {
+                    debug("sip Send Message error:", error.message);
+                    return;
+                }
+                setReceived();
+
+            }
+
+        }
+    );
+
 }

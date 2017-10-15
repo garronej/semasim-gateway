@@ -1,4 +1,3 @@
-import * as runExclusive from "run-exclusive";
 import { SyncEvent } from "ts-events-extended";
 import * as mysql from "mysql";
 import * as md5 from "md5";
@@ -7,6 +6,7 @@ import { PsContact, Contact } from "./sipContact";
 import * as f from "../tools/mySqlFunctions";
 import { MySqlEvents } from "../tools/MySqlEvents";
 import { c } from "./_constants"
+import { DongleController as Dc } from "chan-dongle-extended-client";
 
 import * as _debug from "debug";
 let debug = _debug("_db");
@@ -19,106 +19,168 @@ export namespace asterisk {
         "multipleStatements": true
     };
 
-    MySqlEvents.connectionConfig= connectionConfig;
+    export async function initializeEvt(): Promise<void> {
+
+        await MySqlEvents.initialize(connectionConfig);
+
+    }
 
     let connection: mysql.IConnection | undefined = undefined;
-    function query(
+
+    export function query(
         sql: string,
         values?: (string | number | null)[]
     ): Promise<any> {
 
-        if (!connection)
+        if (!connection){
+
             connection = mysql.createConnection(connectionConfig);
+
+        }
 
         return f.queryOnConnection(connection, sql, values);
 
     }
 
-    let evtNewContact: SyncEvent<Contact> | undefined= undefined;
+    let evtNewContact: SyncEvent<Contact> | undefined = undefined;
     export function getEvtNewContact() {
 
-        if( evtNewContact ) return evtNewContact;
+        if (evtNewContact) return evtNewContact;
 
-        evtNewContact= new SyncEvent<Contact>();
+        evtNewContact = new SyncEvent<Contact>();
 
-        MySqlEvents.getInstance().evtNewRow.attach(
-            ({ database, table })=> (
+        MySqlEvents.instance.evtNewRow.attach(
+            ({ database, table }) => (
                 database === connectionConfig.database &&
                 table === "ps_contacts"
             ),
-            ({ row })=> evtNewContact!.post(PsContact.buildContact(row as any as PsContact))
+            async ({ row }) => { 
+
+                let { id, endpoint, path, uri, user_agent } = row;
+
+                let psContact: PsContact= { id, endpoint, path, uri, user_agent };
+
+                let contact= await PsContact.buildContact(psContact);
+
+                evtNewContact!.post(contact);
+
+            }
         );
 
         return evtNewContact;
 
     }
 
-    let evtExpiredContact: SyncEvent<Contact> | undefined= undefined;
+    let evtExpiredContact: SyncEvent<Contact> | undefined = undefined;
     export function getEvtExpiredContact() {
 
-        if( evtExpiredContact ) return evtExpiredContact;
+        if (evtExpiredContact) return evtExpiredContact;
 
-        evtExpiredContact= new SyncEvent<Contact>();
+        evtExpiredContact = new SyncEvent<Contact>();
 
-        MySqlEvents.getInstance().evtDeleteRow.attach(
-            ({ database, table })=> (
+        MySqlEvents.instance.evtDeleteRow.attach(
+            ({ database, table }) => (
                 database === connectionConfig.database &&
                 table === "ps_contacts"
             ),
-            ({ row })=> evtExpiredContact!.post(PsContact.buildContact(row as any as PsContact))
+            async ({ row }) => { 
+
+                let { id, endpoint, path, uri, user_agent } = row;
+
+                let psContact: PsContact= { id, endpoint, path, uri, user_agent };
+
+                let contact= await PsContact.buildContact(psContact);
+
+                evtExpiredContact!.post(contact);
+
+            }
         );
 
         return evtExpiredContact;
 
     }
 
-    export async function queryEndpoints(): Promise<string[]> {
+    export async function getContacts(
+        endpoint: Contact.UaEndpoint.EndpointRef
+    ): Promise<Contact[]> {
 
-        let endpoints = (await query("SELECT id, set_var FROM ps_endpoints")).map(({ id }) => id);
+        let sql= [
+            "SELECT", 
+            "ps_contacts.id,",
+            "ps_contacts.uri,",
+            "ps_contacts.path,",
+            "ps_contacts.endpoint,",
+            "ps_contacts.user_agent",
+            "FROM ps_contacts",
+            "INNER JOIN ps_endpoints ON ps_endpoints.id= ps_contacts.endpoint",
+            `WHERE ps_endpoints.id= ? AND ps_endpoints.set_var='ICCID=${endpoint.sim.iccid}'`
+        ].join("\n");
 
-        return endpoints;
-    }
+        let values= [ endpoint.dongle.imei ];
 
-    export async function queryContacts(): Promise<Contact[]> {
+        let psContacts: PsContact[] = await query(sql, values);
 
-        let psContacts: PsContact[] = await query(
-            "SELECT id, uri, path, endpoint, user_agent FROM ps_contacts"
-        );
+        let contacts: Contact[] = [];
 
-        return psContacts.map(psContact => PsContact.buildContact(psContact));
+        let tasks: Promise<number>[] = [];
 
-    }
+        for (let psContact of psContacts){
 
-    //TODO: to test
-    export async function queryLastConnectionTimestampOfDonglesEndpoint(
-        endpoint: string
-    ): Promise<number> {
-
-        let timestamp: number;
-
-        try {
-
-            let [{ set_var }] = await query(
-                "SELECT set_var FROM ps_endpoints WHERE id=?", [endpoint]
-            );
-
-            timestamp = parseInt(set_var.split("=")[1]);
-
-        } catch (error) {
-
-            timestamp = 0;
+            tasks[tasks.length] = (async () =>
+                contacts.push(await PsContact.buildContact(psContact))
+            )();
 
         }
 
-        return timestamp;
+        await Promise.all(tasks);
+
+        return contacts;
 
     }
+
+    /** for test purpose only */
+    export async function flush() {
+
+        let sql = [
+            "DELETE FROM ps_aors;",
+            "DELETE FROM ps_auths;",
+            "DELETE FROM ps_contacts;",
+            "DELETE FROM ps_endpoints;",
+        ].join("\n");
+
+        await query(sql);
+
+    }
+
+    export async function flushContacts(): Promise<void> {
+
+        let endpoints= await semasim.getEndpoints();
+
+        let contacts: Contact[]=[];
+
+        for( let endpoint of endpoints ){
+
+            contacts= [...contacts, ...(await getContacts(endpoint))];
+            
+        }
+
+        let tasks: Promise<boolean>[]= [];
+
+        for( let contact of contacts ){
+            tasks.push(deleteContact(contact));
+        }
+
+        await Promise.all(tasks);
+
+    }
+
+
 
     export function deleteContact(contact: Contact) {
         return new Promise<boolean>((resolve, reject) => {
 
             let timerId = setTimeout(
-                () => reject(new Error(`Delete contact ${contact.pretty} timeout error`)), 
+                () => reject(new Error(`Delete contact ${contact.pretty} timeout error`)),
                 3000
             );
 
@@ -131,7 +193,7 @@ export namespace asterisk {
                 let isDeleted = affectedRows ? true : false;
 
                 if (!isDeleted) {
-                    getEvtExpiredContact().detach({ "boundTo": contact });
+                    getEvtExpiredContact().detach(timerId);
                     clearTimeout(timerId);
                     resolve(false);
                 }
@@ -140,7 +202,7 @@ export namespace asterisk {
 
             getEvtExpiredContact().attachOnceExtract(
                 ({ ps }) => ps.id === contact.ps.id,
-                contact,
+                timerId,
                 deletedContact => queryPromise.then(() => {
                     clearTimeout(timerId);
                     resolve(true);
@@ -151,12 +213,11 @@ export namespace asterisk {
     }
 
 
-    export async function addOrUpdateEndpoint(
-        endpoint: string,
-        password: string
-    ) {
 
-        debug(`Add or update endpoint ${endpoint} in real time configuration`);
+    export async function addEndpoint(
+        imei: string,
+        iccid: string
+    ) {
 
         let sql = "";
         let values: (string | number | null)[] = [];
@@ -164,7 +225,7 @@ export namespace asterisk {
         (() => {
 
             let [_sql, _values] = f.buildInsertOrUpdateQuery("ps_aors", {
-                "id": endpoint,
+                "id": imei,
                 "max_contacts": 12,
                 "qualify_frequency": 0, //15000
                 "support_path": "yes"
@@ -178,26 +239,14 @@ export namespace asterisk {
 
         (() => {
 
-            let [_sql, _values] = f.buildInsertOrUpdateQuery("ps_endpoints", {
-                "id": endpoint,
-                "disallow": "all",
-                "allow": "alaw,ulaw",
-                "context": c.sipCallContext,
-                "message_context": c.sipMessageContext,
-                "subscribe_context": null,
-                "aors": endpoint,
-                "auth": endpoint,
-                "force_rport": null,
-                "from_domain": c.shared.domain,
-                "ice_support": "yes",
-                "direct_media": null,
-                "asymmetric_rtp_codec": null,
-                "rtcp_mux": null,
-                "direct_media_method": null,
-                "connected_line_method": null,
-                "transport": "transport-tcp",
-                "callerid_tag": null,
-                "set_var": `LAST_CONNECTION_TIMESTAMP=${Date.now()}`
+            let last_four_digits_of_iccid = iccid.substring(iccid.length - 4);
+
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("ps_auths", {
+                "id": imei,
+                "auth_type": "userpass",
+                "username": imei,
+                "password": last_four_digits_of_iccid,
+                "realm": "semasim"
             });
 
             sql += _sql;
@@ -208,12 +257,26 @@ export namespace asterisk {
 
         (() => {
 
-            let [_sql, _values] = f.buildInsertOrUpdateQuery("ps_auths", {
-                "id": endpoint,
-                "auth_type": "userpass",
-                "username": endpoint,
-                "password": password,
-                "realm": "semasim"
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("ps_endpoints", {
+                "id": imei,
+                "disallow": "all",
+                "allow": "alaw,ulaw",
+                "context": c.sipCallContext,
+                "message_context": c.sipMessageContext,
+                "subscribe_context": null,
+                "aors": imei,
+                "auth": imei,
+                "force_rport": null,
+                "from_domain": c.shared.domain,
+                "ice_support": "yes",
+                "direct_media": null,
+                "asymmetric_rtp_codec": null,
+                "rtcp_mux": null,
+                "direct_media_method": null,
+                "connected_line_method": null,
+                "transport": "transport-tcp",
+                "callerid_tag": null,
+                "set_var": `ICCID=${iccid}`
             });
 
             sql += _sql;
@@ -226,15 +289,26 @@ export namespace asterisk {
 
     }
 
+    export async function getIccidOfEndpoint(imei: string): Promise<string> {
+
+        let [{ set_var }] = await query(
+            "SELECT set_var FROM ps_endpoints WHERE id=?",
+            [imei]
+        );
+
+        let iccid = set_var.match(/ICCID=([0-9]+)/)[1];
+
+        return iccid;
+
+    }
+
 }
 
 export namespace semasim {
 
-    const groupRef = runExclusive.createGroupRef();
-
     let connection: mysql.IConnection | undefined = undefined;
 
-    function query(
+    export function query(
         sql: string,
         values?: (string | number | null)[]
     ): Promise<any> {
@@ -252,459 +326,729 @@ export namespace semasim {
 
     }
 
+    /** Only for test purpose */
+    export async function flush() {
 
-    export type TargetUaInstances = {
-        allUaInstanceOfImei?: string;
-        uaInstance?: Contact['uaInstance'];
-        allUaInstanceOfEndpointOtherThan?: Contact['uaInstance'];
-    };
+        let sql = [
+            "DELETE FROM dongle;",
+            "DELETE FROM sim;",
+            "DELETE FROM ua;",
+            "DELETE FROM message_toward_sip;",
+        ].join("\n");
 
-    export type MessageTowardGsm = {
-        id: number;
-        sim_iccid: string;
-        date: Date;
-        sender: Contact['uaInstance'];
-        to_number: string;
-        text: string;
+        await query(sql);
+
     }
 
-    export type MessageTowardSip = {
-        id: number;
+    //We do not update is voice enabled
+    export async function addDongle(
+        dongle: Dc.LockedDongle
+    ) {
+
+        let sql = [
+            "INSERT INTO dongle ( imei, last_connection_date, is_voice_enabled )",
+            "VALUES ( ?, ?, ?)",
+            "ON DUPLICATE KEY UPDATE last_connection_date = VALUES(last_connection_date)"
+        ].join("\n");
+
+        let values = [dongle.imei, Date.now(), null];
+
+        await query(sql, values);
+
+
+    }
+
+    /** return set of imei => last_connection_date */
+    export async function getDonglesLastConnection() {
+
+        let sql = "SELECT imei, last_connection_date FROM dongle";
+
+        let rows = await query(sql);
+
+        let out= new Map<string, Date>();
+
+        for (let row of rows) {
+
+            out.set(
+                row["imei"],
+                new Date(row["last_connection_date"])
+            );
+
+        }
+
+        return out;
+
+    }
+
+    //For claiming the newer the better
+    //Add or update is_voice_enabled dongle
+    //Add or update sim
+    //Add or update endpoint
+    export async function addEndpoint(
+        dongle: Dc.ActiveDongle
+    ) {
+
+        let sql = "";
+        let values: (string | number | null)[] = [];
+
+        let now = Date.now();
+
+        (() => {
+
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("dongle", {
+                "imei": dongle.imei,
+                "last_connection_date": now,
+                "is_voice_enabled": f.booleanOrUndefinedToSmallIntOrNull(dongle.isVoiceEnabled)
+            });
+
+            sql += _sql;
+
+            values = [...values, ..._values];
+
+
+        })();
+
+        (() => {
+
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("sim", {
+                "iccid": dongle.sim.iccid,
+                "imsi": dongle.sim.imsi
+            });
+
+            sql += _sql;
+
+            values = [...values, ..._values];
+
+        })();
+
+        (() => {
+
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("endpoint", {
+                "dongle_imei": dongle.imei,
+                "sim_iccid": dongle.sim.iccid
+            });
+
+            sql += _sql;
+
+            values = [...values, ..._values];
+
+        })();
+
+        await query(sql, values);
+
+    }
+
+    export async function getUas(
+        imei: string
+    ): Promise<Contact.UaEndpoint.Ua[]> {
+
+        let sql= [
+            "SELECT",
+            "ua.instance,",
+            "ua.push_token,",
+            "ua.software",
+            "FROM ua",
+            "INNER JOIN ua_endpoint ON ua_endpoint.ua_instance= ua.instance",
+            "INNER JOIN endpoint ON endpoint.id_= ua_endpoint.endpoint",
+            "WHERE endpoint.dongle_imei= ?"
+        ].join("\n");
+
+        let values= [ imei ];
+
+        let rows= await query(sql, values);
+
+        let out: Contact.UaEndpoint.Ua[]= [];
+
+        for( let row of rows ){
+
+            out[out.length]= {
+                "instance": row["instance"],
+                "pushToken": Contact.UaEndpoint.Ua.PushToken.parse(row["push_token"]),
+                "software": row["software"]
+            };
+
+        }
+
+        return out;
+
+    }
+
+    /** Used to join asterisk.ps_endpoint and semasim.endpoint, used when building contact */
+    export async function getEndpoint(
+        endpointRef: Contact.UaEndpoint.EndpointRef
+    ): Promise<Contact.UaEndpoint.Endpoint> {
+
+        let [ endpoint ] = await _getEndpoint(endpointRef);
+
+        return endpoint;
+
+    }
+
+    export function getEndpoints() {
+        return _getEndpoint();
+    }
+
+    async function _getEndpoint(
+        endpointRef?: Contact.UaEndpoint.EndpointRef
+    ): Promise<Contact.UaEndpoint.Endpoint[]> {
+
+        let sql = [
+            "SELECT",
+            "dongle.imei,",
+            "dongle.last_connection_date,",
+            "dongle.is_voice_enabled,",
+            "sim.iccid,",
+            "sim.imsi",
+            "FROM endpoint",
+            "INNER JOIN dongle ON dongle.imei = endpoint.dongle_imei",
+            "INNER JOIN sim ON sim.iccid = endpoint.sim_iccid"
+        ].join("\n");
+
+        let values: (string | number | null)[];
+
+        if (endpointRef) {
+
+            sql += "\n" + "WHERE dongle.imei = ? AND sim.iccid = ?";
+            values = [endpointRef.dongle.imei, endpointRef.sim.iccid];
+
+        } else {
+
+            values = [];
+
+        }
+
+        let rows = await query(sql, values);
+
+        let out: Contact.UaEndpoint.Endpoint[] = [];
+
+        for (let row of rows) {
+
+            out[out.length] = {
+                "dongle": {
+                    "imei": row["imei"],
+                    "lastConnectionDate": new Date(row["last_connection_date"]),
+                    "isVoiceEnabled": f.smallIntOrNullToBooleanOrUndefined(row.is_voice_enabled)
+                },
+                "sim": {
+                    "iccid": row["iccid"],
+                    "imsi": row["imsi"]
+                }
+            };
+
+        }
+
+        return out;
+
+    }
+
+
+    export type AddUaEndpointResult =
+        {
+            isNewUa: false;
+            isFirstUaEndpointOfEndpoint: false;
+        } | {
+            isNewUa: true;
+            isFirstUaEndpointOfEndpoint: boolean;
+        };
+
+    //Add or update ua
+    //Add or update ua_endpoint
+    /** Return true if ua_endpoint entry created */
+    export async function addUaEndpoint(
+        uaEndpoint: Contact.UaEndpoint
+    ): Promise<AddUaEndpointResult> {
+
+        let sql = "";
+        let values: (string | number | null)[] = [];
+
+        (() => {
+
+            let ua = uaEndpoint.ua;
+
+            let { instance, software } = ua;
+
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("ua", {
+                instance,
+                software,
+                "push_token": Contact.UaEndpoint.Ua.PushToken.stringify(ua.pushToken)
+            });
+
+            sql += _sql;
+
+            values = [...values, ..._values];
+
+        })();
+
+
+        let endpoint_ref = "A";
+
+        sql += [
+            `SELECT @${endpoint_ref}:=id_`,
+            "FROM endpoint",
+            `WHERE dongle_imei=? AND sim_iccid=?`,
+            ";",
+            ""
+        ].join("\n");
+
+        values = [
+            ...values,
+            uaEndpoint.endpoint.dongle.imei,
+            uaEndpoint.endpoint.sim.iccid
+        ];
+
+        sql += [
+            `SELECT COUNT(*) as total`,
+            "FROM ua_endpoint",
+            "INNER JOIN endpoint ON endpoint.id_= ua_endpoint.endpoint",
+            "WHERE endpoint.dongle_imei= ? AND endpoint.sim_iccid= ?",
+            ";",
+            ""
+        ].join("\n");
+
+        values = [
+            ...values,
+            uaEndpoint.endpoint.dongle.imei,
+            uaEndpoint.endpoint.sim.iccid
+        ];
+
+
+        (() => {
+
+            let [_sql, _values] = f.buildInsertOrUpdateQuery("ua_endpoint", {
+                "ua_instance": uaEndpoint.ua.instance,
+                "endpoint": { "@": endpoint_ref }
+            });
+
+            sql += _sql;
+
+            values = [...values, ..._values];
+
+        })();
+
+        let rows = await query(sql, values);
+
+        let { insertId } = rows.pop();
+
+        let isNewUa = insertId !== 0;
+
+        if (!isNewUa) {
+            return {
+                isNewUa,
+                "isFirstUaEndpointOfEndpoint": false
+            };
+        }
+
+        let [{total}] = rows.pop();
+
+        return {
+            isNewUa,
+            "isFirstUaEndpointOfEndpoint": total === 0
+        };
+
+    }
+
+
+
+    export interface MessageTowardGsm {
+        date: Date;
+        uaEndpoint: Contact.UaEndpoint;
+        to_number: string;
+        text: string;
+    };
+
+    export namespace MessageTowardGsm {
+
+        export async function add(
+            to_number: string,
+            text: string,
+            uaEndpoint: Contact.UaEndpointRef
+        ): Promise<void> {
+
+            let sql = "";
+            let values: (string | number | null)[] = [];
+
+            let ua_endpoint_ref = "A";
+
+            sql += [
+                `SELECT @${ua_endpoint_ref}:= ua_endpoint.id_`,
+                `FROM ua_endpoint`,
+                `INNER JOIN endpoint ON endpoint.id_= ua_endpoint.endpoint`,
+                `WHERE ua_endpoint.ua_instance=? AND endpoint.dongle_imei=? AND endpoint.sim_iccid=?`,
+                `;`,
+                ``
+            ].join("\n");
+
+            values = [
+                ...values,
+                uaEndpoint.ua.instance,
+                uaEndpoint.endpoint.dongle.imei,
+                uaEndpoint.endpoint.sim.iccid
+            ];
+
+            (() => {
+
+                let [_sql, _values] = f.buildInsertOrUpdateQuery("message_toward_gsm", {
+                    "date": Date.now(),
+                    "ua_endpoint": { "@": ua_endpoint_ref },
+                    "to_number": to_number,
+                    "base64_text": (new Buffer(text, "utf8")).toString("base64"),
+                    "send_date": null
+                });
+
+                sql += _sql;
+
+                values = [...values, ..._values];
+
+            })();
+
+            await query(sql, values);
+
+        }
+
+
+        export type Confirm = {
+            setSent(sentDate: Date | null): Promise<void>;
+            setStatusReport(statusReport: Dc.StatusReport): Promise<void>
+        };
+
+        export async function getUnsent(
+            endpoint: Contact.UaEndpoint.EndpointRef
+        ) {
+
+            let sql = [
+                `SELECT`,
+                `message_toward_gsm.id_,`,
+                `message_toward_gsm.date,`,
+                `message_toward_gsm.to_number,`,
+                `message_toward_gsm.base64_text,`,
+                `ua.instance,`,
+                `ua.push_token,`,
+                `ua.software,`,
+                `dongle.imei,`,
+                `dongle.last_connection_date,`,
+                `dongle.is_voice_enabled,`,
+                `sim.iccid,`,
+                `sim.imsi`,
+                `FROM message_toward_gsm`,
+                `INNER JOIN ua_endpoint ON ua_endpoint.id_ = message_toward_gsm.ua_endpoint`,
+                `INNER JOIN ua ON ua.instance = ua_endpoint.ua_instance`,
+                `INNER JOIN endpoint ON endpoint.id_ = ua_endpoint.endpoint`,
+                `INNER JOIN dongle ON dongle.imei = endpoint.dongle_imei`,
+                `INNER JOIN sim ON sim.iccid = endpoint.sim_iccid`,
+                `WHERE dongle.imei=? AND sim.iccid=? AND message_toward_gsm.send_date IS NULL`,
+                `ORDER BY message_toward_gsm.date`,
+                `;`
+            ].join("\n");
+
+            let values = [
+                endpoint.dongle.imei,
+                endpoint.sim.iccid
+            ];
+
+            let rows = await query(sql, values);
+
+            let out: [MessageTowardGsm, Confirm][] = [];
+
+            for (let row of rows) {
+
+                let message: MessageTowardGsm = {
+                    "date": new Date(row["date"]),
+                    "uaEndpoint": {
+                        "endpoint": {
+                            "dongle": {
+                                "imei": row["imei"],
+                                "lastConnectionDate": new Date(row["last_connection_date"]),
+                                "isVoiceEnabled": f.smallIntOrNullToBooleanOrUndefined(row["is_voice_enabled"])
+                            },
+                            "sim": {
+                                "iccid": row["iccid"],
+                                "imsi": row["imsi"]
+                            }
+                        },
+                        "ua": {
+                            "instance": row["instance"],
+                            "pushToken": Contact.UaEndpoint.Ua.PushToken.parse(row["push_token"]),
+                            "software": row["software"]
+                        }
+                    },
+                    "to_number": row["to_number"],
+                    "text": (new Buffer(row["base64_text"], "base64")).toString("utf8")
+                };
+
+                let message_toward_gsm_id_ = row["id_"];
+
+                let confirm: Confirm = {
+                    "setSent": async sentDate => {
+
+                        let [sql, values] = f.buildInsertOrUpdateQuery("message_toward_gsm", {
+                            "id_": message_toward_gsm_id_,
+                            "send_date": sentDate ? sentDate.getTime() : -1
+                        });
+
+                        await query(sql, values);
+
+                    },
+                    "setStatusReport": async statusReport => {
+
+                        let [sql, values] = f.buildInsertOrUpdateQuery(
+                            "message_toward_gsm_status_report",
+                            {
+                                "message_toward_gsm": message_toward_gsm_id_,
+                                "is_delivered": statusReport.isDelivered ? 1 : 0,
+                                "discharge_date": isNaN(statusReport.dischargeDate.getTime()) ? null : statusReport.dischargeDate.getTime(),
+                                "status": statusReport.status
+                            }
+                        );
+
+                        await query(sql, values);
+
+                    }
+                };
+
+                out.push([message, confirm]);
+
+            }
+
+            return out;
+
+        }
+
+    }
+
+    export async function lastGsmMessageReceived(
+        endpoint: Contact.UaEndpoint.EndpointRef
+    ): Promise<Date | undefined> {
+
+        let sql = [
+            "SELECT COUNT(*) AS count",
+            "FROM ua_endpoint",
+            "INNER JOIN endpoint ON endpoint.id_ = ua_endpoint.endpoint",
+            "WHERE endpoint.dongle_imei=? AND endpoint.sim_iccid=?",
+            ";",
+            "SELECT MAX(message_toward_sip.date) as time",
+            "FROM message_toward_sip",
+            "INNER JOIN ua_endpoint_message_toward_sip ON ua_endpoint_message_toward_sip.message_toward_sip=message_toward_sip.id_",
+            "INNER JOIN ua_endpoint ON ua_endpoint.id_ = ua_endpoint_message_toward_sip.ua_endpoint",
+            "INNER JOIN endpoint ON endpoint.id_ = ua_endpoint.endpoint",
+            "WHERE message_toward_sip.is_report=0 AND endpoint.dongle_imei =? AND endpoint.sim_iccid= ?"
+        ].join("\n");
+
+        let values = [
+            endpoint.dongle.imei,
+            endpoint.sim.iccid
+        ];
+
+        values = [ ...values, ...values ];
+
+        let [[{ count }], r2] = await query(sql, values);
+
+        if (!count) {
+
+            return undefined;
+
+        } else {
+
+            let [{ time }] = r2;
+
+            if (time === null) {
+                return new Date(0);
+            } else {
+                return new Date(time);
+            }
+
+        }
+
+    }
+
+
+    export interface MessageTowardSip {
+        isReport: boolean;
         date: Date;
         from_number: string;
         text: string;
     }
 
-    export const addMessageTowardGsm = runExclusive.build(groupRef,
-        async (to_number: string, text: string, sender: Contact['uaInstance']): Promise<number> => {
+    export namespace MessageTowardSip {
 
-            let sql = "";
-            let values: (string | number | null)[] = [];
+        export type TargetUaEndpoint =
+            {
+                is: "ALL UA_ENDPOINT OF ENDPOINT";
+                endpoint: Contact.UaEndpoint.EndpointRef;
+            } | {
+                is: "UA_ENDPOINT";
+                uaEndpoint: Contact.UaEndpointRef;
+            } | {
+                is: "ALL UA_ENDPOINT OF ENDPOINT EXCEPT UA"
+                endpoint: Contact.UaEndpoint.EndpointRef;
+                excludeUa: Contact.UaEndpoint.UaRef;
+            }
 
-            let sim_iccid_ref = "A";
+        export async function add(
+            from_number: string,
+            text: string,
+            date: Date,
+            is_report: boolean,
+            target: TargetUaEndpoint
+        ): Promise<void> {
+
+            let sql_ = [
+                "FROM ua_endpoint",
+                "INNER JOIN endpoint ON endpoint.id_ = ua_endpoint.endpoint",
+                "WHERE endpoint.dongle_imei= ? AND endpoint.sim_iccid= ?"
+            ].join("\n");
+
+            let values_: (string | number | null)[] = [];
+
+            switch (target.is) {
+                case "ALL UA_ENDPOINT OF ENDPOINT":
+                    values_ = [
+                        target.endpoint.dongle.imei,
+                        target.endpoint.sim.iccid
+                    ];
+                    break;
+                case "UA_ENDPOINT":
+                    sql_ += "\n" + "AND ua_endpoint.ua_instance = ?";
+                    values_ = [
+                        target.uaEndpoint.endpoint.dongle.imei,
+                        target.uaEndpoint.endpoint.sim.iccid,
+                        target.uaEndpoint.ua.instance
+                    ];
+                    break;
+                case "ALL UA_ENDPOINT OF ENDPOINT EXCEPT UA":
+                    sql_ += "\n" + "AND ua_endpoint.ua_instance <> ?";
+                    values_ = [
+                        target.endpoint.dongle.imei,
+                        target.endpoint.sim.iccid,
+                        target.excludeUa.instance
+                    ];
+                    break;
+            }
+
+            let sql = [
+                "INSERT INTO message_toward_sip ( is_report, date, from_number, base64_text )",
+                "SELECT ?, ?, ?, ?",
+                sql_,
+                "HAVING COUNT(*) <> 0",
+                ";",
+                ""
+            ].join("\n");
+
+            let values: (string | number | null)[] = [
+                f.booleanOrUndefinedToSmallIntOrNull(is_report),
+                date.getTime(),
+                from_number,
+                (new Buffer(text, "utf8")).toString("base64"),
+                ...values_
+            ];
 
             sql += [
-                `SELECT @${sim_iccid_ref}:=dongle.sim_iccid`,
-                "FROM dongle",
-                "INNER JOIN sim ON sim.iccid= dongle.sim_iccid",
-                `WHERE dongle.imei= ? `,
-                ";"
+                `INSERT INTO ua_endpoint_message_toward_sip`,
+                `( ua_endpoint, message_toward_sip, delivered_date )`,
+                `SELECT ua_endpoint.id_, LAST_INSERT_ID(), NULL`,
+                sql_
             ].join("\n");
 
+            values = [...values, ...values_];
 
-            values = [...values, sender.dongle_imei];
+            await query(sql, values);
 
-            let ua_instance_id_ref = "B";
+        }
 
-            sql += "\n" + [
-                `SELECT @${ua_instance_id_ref}:=id`,
-                "FROM ua_instance",
-                `WHERE dongle_imei=? AND instance_id=?`,
-                ";"
+
+        export async function unsentCount(
+            uaEndpoint: Contact.UaEndpointRef
+        ): Promise<number> {
+
+            let sql = [
+                `SELECT COUNT(*) AS count`,
+                `FROM message_toward_sip`,
+                `INNER JOIN ua_endpoint_message_toward_sip ON ua_endpoint_message_toward_sip.message_toward_sip= message_toward_sip.id_`,
+                `INNER JOIN ua_endpoint ON ua_endpoint.id_= ua_endpoint_message_toward_sip.ua_endpoint`,
+                `INNER JOIN endpoint ON endpoint.id_= ua_endpoint.endpoint`,
+                `WHERE ua_endpoint_message_toward_sip.delivered_date IS NULL`,
+                `AND ua_endpoint.ua_instance=?`,
+                `AND endpoint.dongle_imei=?`,
+                `AND endpoint.sim_iccid=?`
             ].join("\n");
 
-            values = [...values, sender.dongle_imei, sender.instance_id];
+            let values = [
+                uaEndpoint.ua.instance,
+                uaEndpoint.endpoint.dongle.imei,
+                uaEndpoint.endpoint.sim.iccid
+            ];
 
-            (() => {
-
-                let [_sql, _values] = f.buildInsertOrUpdateQuery("message_toward_gsm", {
-                    "sim_iccid": { "@": sim_iccid_ref },
-                    "date": Date.now(),
-                    "ua_instance_id": { "@": ua_instance_id_ref },
-                    to_number,
-                    "base64_text": (new Buffer(text, "utf8")).toString("base64"),
-                    "sent_message_id": null
-                });
-
-                sql += "\n" + _sql;
-
-                values = [...values, ..._values];
-
-            })();
-
-            let { insertId } = (await query(sql, values)).pop();
-
-            let message_toward_gsm_id: number = insertId;
-
-            return message_toward_gsm_id;
+            return (await query(sql, values))[0]["count"];
 
         }
-    );
 
-    export const setMessageToGsmSentId = runExclusive.build(groupRef,
-        async (message_toward_gsm_id: number, sent_message_id: number) => {
 
-            let [sql, values] = f.buildInsertOrUpdateQuery("message_toward_gsm", {
-                "id": message_toward_gsm_id,
-                sent_message_id
-            });
 
-            await query(sql, values);
-        }
-    );
-
-    export const getUnsentMessageOfDongleSim = runExclusive.build(groupRef,
-        async (imei: string): Promise<MessageTowardGsm[]> => {
-
-            let queryResult = await query(
-                [
-                    "SELECT",
-                    "message_toward_gsm.id,",
-                    "message_toward_gsm.sim_iccid,",
-                    "message_toward_gsm.date,",
-                    "message_toward_gsm.to_number,",
-                    "message_toward_gsm.base64_text,",
-                    "ua_instance.instance_id",
-                    "FROM message_toward_gsm",
-                    "INNER JOIN sim ON sim.iccid= message_toward_gsm.sim_iccid",
-                    "INNER JOIN dongle ON dongle.sim_iccid= sim.iccid",
-                    "INNER JOIN ua_instance ON ua_instance.id = message_toward_gsm.ua_instance_id",
-                    "WHERE dongle.imei= ? AND message_toward_gsm.sent_message_id IS NULL",
-                    "ORDER BY message_toward_gsm.date"
-                ].join("\n"),
-                [imei]
-            );
-
-            let messages: MessageTowardGsm[] = [];
-
-            for (let line of queryResult) {
-
-                let message: MessageTowardGsm = {
-                    "id": line.id,
-                    "sim_iccid": line.sim_iccid,
-                    "date": new Date(line.date),
-                    "sender": {
-                        "dongle_imei": imei,
-                        "instance_id": line.instance_id
-                    },
-                    "to_number": line.to_number,
-                    "text": (new Buffer(line.base64_text, "base64")).toString("utf8")
-                };
-
-                messages.push(message);
-
-            }
-
-            return messages;
-
-
-        }
-    );
-
-    export const getSenderAndTextOfSentMessageToGsm = runExclusive.build(groupRef,
-        async (imei: string, sent_message_id: number): Promise<{ sender: Contact['uaInstance']; text: string } | undefined> => {
-
-            let query_result = await query(
-                [
-                    "SELECT",
-                    "ua_instance.instance_id,",
-                    "message_toward_gsm.base64_text",
-                    "FROM message_toward_gsm",
-                    "INNER JOIN sim ON sim.iccid= message_toward_gsm.sim_iccid",
-                    "INNER JOIN dongle ON dongle.sim_iccid= sim.iccid",
-                    "INNER JOIN ua_instance ON ua_instance.id = message_toward_gsm.ua_instance_id",
-                    "WHERE dongle.imei= ? AND message_toward_gsm.sent_message_id= ?",
-                ].join("\n"),
-                [imei, sent_message_id]
-            );
-
-            if (!query_result.length) return undefined;
-
-            let [{ instance_id, base64_text }] = query_result;
-
-            return {
-                "sender": { "dongle_imei": imei, instance_id },
-                "text": (new Buffer(base64_text, "base64")).toString("utf8")
-            };
-
-        }
-    );
-
-    export const addDongleAndSim = runExclusive.build(groupRef,
-        async (imei: string, iccid: string) => {
-
-            let sql = "";
-            let values: (string | number | null)[] = [];
-
-            (() => {
-
-                let [_sql, _values] = f.buildInsertOrUpdateQuery("sim", { iccid });
-
-                sql += _sql;
-
-                values = [...values, ..._values];
-
-            })();
-
-            (() => {
-
-                let [_sql, _values] = f.buildInsertOrUpdateQuery("dongle", {
-                    imei, "sim_iccid": iccid
-                });
-
-                sql += _sql;
-
-                values = [...values, ..._values];
-
-            })();
-
-
-            await query(sql, values);
-
-        }
-    );
-
-    export const addUaInstance = runExclusive.build(groupRef,
-        async (uaInstance: Contact['uaInstance']): Promise<boolean> => {
-
-            let { dongle_imei, instance_id } = uaInstance;
-
-            let [sql, values] = f.buildInsertOrUpdateQuery("ua_instance", { dongle_imei, instance_id });
-
-            let resp = await query(sql, values);
-
-            let isNew = resp.insertId !== 0;
-
-            return isNew;
-
-
-        }
-    );
-
-    export const addMessageTowardSip = runExclusive.build(groupRef,
-        async (from_number: string, text: string, date: Date, target: TargetUaInstances): Promise<number> => {
-
-            let ua_instance_ids: number[];
-            let imei: string;
-
-            if (target.allUaInstanceOfImei) {
-
-                imei = target.allUaInstanceOfImei;
-
-                ua_instance_ids = (await query(
-                    "SELECT id FROM ua_instance WHERE dongle_imei=?",
-                    [imei]
-                )).map(({ id }) => id);
-
-            } else if (target.allUaInstanceOfEndpointOtherThan) {
-
-                let { dongle_imei, instance_id } = target.allUaInstanceOfEndpointOtherThan;
-                imei = dongle_imei;
-
-                ua_instance_ids = (await query(
-                    "SELECT id FROM ua_instance WHERE dongle_imei=? AND instance_id <> ?",
-                    [imei, instance_id]
-                )).map(({ id }) => id);
-
-                if (!ua_instance_ids.length) return NaN;
-
-            } else if (target.uaInstance) {
-
-                let { dongle_imei, instance_id } = target.uaInstance;
-                imei = dongle_imei;
-
-                let [{ id }] = (await query(
-                    "SELECT id FROM ua_instance WHERE dongle_imei=? AND instance_id= ?",
-                    [imei, instance_id]
-                ));
-
-                ua_instance_ids = [id];
-
-            } else throw new Error("No target");
-
-            let [{ sim_iccid }] = await query("SELECT sim_iccid FROM dongle WHERE imei=?", [imei]);
-
-            let message_toward_sip_id: number;
-
-
-            let [_sql, _values] = f.buildInsertOrUpdateQuery("message_toward_sip", {
-                sim_iccid,
-                "date": date.getTime(),
-                from_number,
-                "base64_text": (new Buffer(text, "utf8")).toString("base64")
-            });
-
-            let { insertId } = await query(_sql, _values);
-
-            message_toward_sip_id = insertId;
-
-            let sql = "";
-            let values: (string | number | null)[] = [];
-
-            for (let ua_instance_id of ua_instance_ids) {
-
-                let [_sql, _values] = f.buildInsertOrUpdateQuery("ua_instance_message_toward_sip", {
-                    ua_instance_id,
-                    message_toward_sip_id,
-                    "delivered_date": null
-                });
-
-                sql += _sql;
-                values = [...values, ..._values];
-
-            }
-
-            await query(sql, values);
-
-            return message_toward_sip_id;
-
-        }
-    );
-
-    export const setMessageTowardSipDelivered = runExclusive.build(groupRef,
-        async (uaInstance: Contact['uaInstance'], message_toward_sip_id: number) => {
-
-            let { dongle_imei, instance_id } = uaInstance;
-
-            let sql = "";
-            let values: (string | number | null)[] = [];
-
-            let ua_instance_id_ref = "A";
-
-            sql += `SELECT @${ua_instance_id_ref}:=id FROM ua_instance WHERE dongle_imei = ? AND instance_id = ?;`;
-
-            values = [...values, dongle_imei, instance_id];
-
-            (() => {
-
-                let [_sql, _values] = f.buildInsertOrUpdateQuery("ua_instance_message_toward_sip", {
-                    "ua_instance_id": { "@": ua_instance_id_ref },
-                    message_toward_sip_id,
-                    "delivered_date": Date.now()
-                });
-
-                sql += "\n" + _sql;
-
-                values = [...values, ..._values];
-
-            })();
-
-            await query(sql, values);
-
-        }
-    );
-
-    export const getUndeliveredMessagesOfUaInstance = runExclusive.build(groupRef,
-        async (uaInstance: Contact['uaInstance']): Promise<MessageTowardSip[]> => {
-
-            let { dongle_imei, instance_id } = uaInstance;
-
-            let queryResult = await query(
-                [
-                    "SELECT message_toward_sip.id,",
-                    "message_toward_sip.date,",
-                    "message_toward_sip.from_number,",
-                    "message_toward_sip.base64_text",
-                    "FROM message_toward_sip",
-                    "INNER JOIN sim",
-                    "ON sim.iccid = message_toward_sip.sim_iccid",
-                    "INNER JOIN dongle",
-                    "ON dongle.sim_iccid = sim.iccid",
-                    "INNER JOIN ua_instance",
-                    "ON ua_instance.dongle_imei = dongle.imei",
-                    "INNER JOIN ua_instance_message_toward_sip",
-                    "ON  ua_instance_message_toward_sip.ua_instance_id = ua_instance.id",
-                    "AND ua_instance_message_toward_sip.message_toward_sip_id = message_toward_sip.id",
-                    "WHERE dongle.imei = ? AND ua_instance.instance_id = ? AND ua_instance_message_toward_sip.delivered_date IS NULL",
-                    "ORDER BY message_toward_sip.date"
-                ].join("\n"),
-                [dongle_imei, instance_id]
-            );
-
-            let messages: MessageTowardSip[] = [];
-
-            for (let line of queryResult) {
+        export async function getUnsent(
+            uaEndpoint: Contact.UaEndpointRef
+        ) {
+
+            let sql = [
+                `SELECT`,
+                `message_toward_sip.is_report,`,
+                `message_toward_sip.date,`,
+                `message_toward_sip.from_number,`,
+                `message_toward_sip.base64_text,`,
+                `ua_endpoint_message_toward_sip.id_`,
+                `FROM message_toward_sip`,
+                `INNER JOIN ua_endpoint_message_toward_sip ON ua_endpoint_message_toward_sip.message_toward_sip= message_toward_sip.id_`,
+                `INNER JOIN ua_endpoint ON ua_endpoint.id_= ua_endpoint_message_toward_sip.ua_endpoint`,
+                `INNER JOIN endpoint ON endpoint.id_= ua_endpoint.endpoint`,
+                `WHERE ua_endpoint_message_toward_sip.delivered_date IS NULL`,
+                `AND ua_endpoint.ua_instance=?`,
+                `AND endpoint.dongle_imei=?`,
+                `AND endpoint.sim_iccid=?`,
+                `ORDER BY message_toward_sip.date`
+            ].join("\n");
+
+            let values = [
+                uaEndpoint.ua.instance,
+                uaEndpoint.endpoint.dongle.imei,
+                uaEndpoint.endpoint.sim.iccid
+            ];
+
+            let rows = await query(sql, values);
+
+            let out = new Array<[MessageTowardSip, () => Promise<void>]>();
+
+            for (let row of rows) {
 
                 let message: MessageTowardSip = {
-                    "id": line.id,
-                    "date": new Date(line.date),
-                    "from_number": line.from_number,
-                    "text": (new Buffer(line.base64_text, "base64")).toString("utf8")
+                    "date": new Date(row["date"]),
+                    "from_number": row["from_number"],
+                    "isReport": row["is_report"] === 1,
+                    "text": (new Buffer(row["base64_text"], "base64")).toString("utf8"),
                 };
 
-                messages.push(message);
+                let setReceived = async () => {
+
+                    let [sql, values] = f.buildInsertOrUpdateQuery(
+                        "ua_endpoint_message_toward_sip",
+                        {
+                            "id_": row["id_"],
+                            "delivered_date": Date.now()
+                        }
+                    );
+
+                    await query(sql, values);
+
+                };
+
+                out.push([message, setReceived]);
 
             }
 
-            return messages;
+            return out;
 
         }
-    );
 
-    (async () => {
 
-        require("rejection-tracker").main(__dirname, "..", "..");
+    }
 
-        let imei = "1111111111";
-        let iccid = "222222222";
-
-        await addDongleAndSim(imei, iccid);
-
-        let uaInstancePk: Contact['uaInstance'] = {
-            "dongle_imei": imei,
-            "instance_id": '"<urn:uuid:17b90ae9-1898-400c-8536-2f34435fd8c7>"'
-        };
-
-        await addUaInstance(uaInstancePk);
-
-        //Incoming message from Dongle
-
-        let number = "0636786385";
-        let text = "foo bar";
-        let date = new Date();
-
-        let text2 = "bar baz";
-
-        await addMessageTowardSip(number, text2, new Date(date.getTime() + 1), { "uaInstance": uaInstancePk });
-
-        let messageTowardSipId = await addMessageTowardSip(number, text, date, { "allUaInstanceOfImei": imei });
-
-        await addMessageTowardSip(number, "never", date, { "allUaInstanceOfEndpointOtherThan": uaInstancePk });
-
-        let messages = await getUndeliveredMessagesOfUaInstance(uaInstancePk);
-
-        console.assert(messages.length === 2);
-        console.assert(messages[0].date.getTime() === date.getTime());
-        console.assert(messages[0].id === messageTowardSipId);
-        console.assert(messages[0].from_number === number);
-        console.assert(messages[0].text === text);
-
-        console.assert(messages[1].text === text2);
-
-        await setMessageTowardSipDelivered(uaInstancePk, messages[0].id);
-        await setMessageTowardSipDelivered(uaInstancePk, messages[1].id);
-
-        console.assert((await getUndeliveredMessagesOfUaInstance(uaInstancePk)).length === 0);
-
-        //Incoming message from sip
-
-        let messageTowardGsmId = await addMessageTowardGsm(number, text, uaInstancePk);
-
-        await addMessageTowardGsm(number, text2, uaInstancePk);
-
-        let messages_ = await getUnsentMessageOfDongleSim(imei);
-
-        console.assert(messages_.length === 2);
-        console.assert(messages_[0].id === messageTowardGsmId);
-        console.assert(messages_[0].sender.instance_id === uaInstancePk.instance_id);
-        console.assert(messages_[0].text === text);
-        console.assert(messages_[0].to_number === number);
-
-        let sent_message_id = 111222;
-
-        await setMessageToGsmSentId(messageTowardGsmId, sent_message_id);
-
-        let sender_and_text = await getSenderAndTextOfSentMessageToGsm(imei, sent_message_id);
-
-        console.assert(sender_and_text!.text === text);
-        console.assert(sender_and_text!.sender.instance_id === uaInstancePk.instance_id);
-
-        console.assert((await getUnsentMessageOfDongleSim(imei))[0].text === text2);
-
-        console.log("PASS!");
-
-    });
 
 }
-
 

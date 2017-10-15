@@ -466,7 +466,6 @@ export function parsePath(path: string): AoRWithParsedUri[] {
 
 }
 
-
 export function parseOptionTags(headerFieldValue: string | undefined): string[] {
 
     if (!headerFieldValue) return [];

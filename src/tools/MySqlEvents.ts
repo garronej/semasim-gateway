@@ -12,19 +12,28 @@ export interface Row {
 
 export class MySqlEvents {
 
-    public static connectionConfig: mysql.IConnectionConfig | undefined;
+    private static _instance: MySqlEvents | undefined= undefined;
 
-    private static instance: MySqlEvents | undefined= undefined;
+    public static initialize(
+        connectionConfig: mysql.IConnectionConfig
+    ){
 
-    public static getInstance(): MySqlEvents {
+        return new Promise<MySqlEvents>(resolve=> {
 
-        if( this.instance ) return this.instance;
+            this._instance= new this(
+                connectionConfig, 
+                ()=> resolve(this._instance)
+            );
 
-        if( !this.connectionConfig ) throw new Error("connectionConfig not set");
+        });
 
-        this.instance= new this(this.connectionConfig);
+    }
 
-        return this.getInstance();
+    public static get instance(): MySqlEvents {
+
+        if( !this._instance ) throw new Error("MySqlEvent not initialized");
+
+        return this._instance;
 
     }
 
@@ -33,15 +42,29 @@ export class MySqlEvents {
     public readonly evtNewRow = new SyncEvent<Row>();
     public readonly evtDeleteRow = new SyncEvent<Row>();
 
-    constructor(connectionConfig: mysql.IConnectionConfig) {
+    private constructor(
+        connectionConfig: mysql.IConnectionConfig,
+        cbReady: ()=> void
+    ) {
 
         this.zongji = new ZongJi(connectionConfig);
 
-        this.zongji.on("binlog", evt => this.onBinlog(evt));
+        this.zongji.once("binlog", evt=> {
+
+            this.zongji.set({ 
+                "includeEvents": ['tablemap', 'writerows', 'updaterows', 'deleterows']
+            });
+
+            this.zongji.on("binlog", evt => this.onBinlog(evt));
+
+            cbReady();
+
+        });
+
 
         this.zongji.start({
             "startAtEnd": true,
-            "includeEvents": ['tablemap', 'writerows', 'updaterows', 'deleterows']
+            "includeEvents": [ "rotate" ]
         });
 
     }
@@ -71,33 +94,4 @@ export class MySqlEvents {
 
     }
 
-
 }
-
-/*
-let config: mysql.IConnectionConfig = {
-    ...c.dbParamsGateway,
-    "database": "asterisk",
-    "multipleStatements": true
-};
-
-let mySqlEvents = new MySqlEvents(config);
-
-mySqlEvents.evtNewRow.attach(row => console.log(row));
-mySqlEvents.evtDeleteRow.attach(row => console.log(row));
-
-function tracePrototypeChainOf(object) {
-
-    var proto = object.constructor.prototype,
-        result = JSON.stringify(Object.getOwnPropertyNames(object)) + '\n';
-
-    while (proto) {
-        result += ' -> ' + proto.constructor.name + '\n';
-        result += JSON.stringify(Object.getOwnPropertyNames(proto));
-        proto = Object.getPrototypeOf(proto)
-    }
-
-    return result;
-}
-*/
-

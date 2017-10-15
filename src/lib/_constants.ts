@@ -73,6 +73,7 @@ export class c {
 
     public static readonly sipMessageContext = "from-sip-message";
 
-    public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
+    //public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
+    public static readonly strMissedCall = "Missed call";
 
 }

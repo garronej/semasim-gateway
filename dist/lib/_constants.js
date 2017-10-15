@@ -54,7 +54,8 @@ var c = /** @class */ (function () {
     c.phoneNumber = "_[+0-9].";
     c.sipCallContext = "from-sip-call";
     c.sipMessageContext = "from-sip-message";
-    c.strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
+    //public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
+    c.strMissedCall = "Missed call";
     return c;
     var _a;
 }());

@@ -6,14 +6,3 @@ export declare function getEvtMessage(): SyncEvent<{
     text: string;
 }>;
 export declare function sendMessage(contact: Contact, from_number: string, headers: Record<string, string>, text: string, from_number_sim_name?: string): Promise<void>;
-export declare namespace sendMessage {
-    const timeouts: {
-        "intercept": number;
-        "confirmed": number;
-    };
-    const errors: {
-        "notSent": Error;
-        "notIntercepted": Error;
-        "notConfirmed": Error;
-    };
-}

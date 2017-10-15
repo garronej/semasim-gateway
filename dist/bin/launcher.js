@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,50 +36,36 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var framework = require("../tools/sipApiFramework");
+require("rejection-tracker").main(__dirname, "..", "..");
+var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
+var db = require("../lib/db");
 var _debug = require("debug");
-var debug = _debug("_sipApiClient");
-var sendRequest = function (sipSocket, method, params, timeout) {
-    debug(method + ": params: " + JSON.stringify(params) + "...");
-    var response = framework.sendRequest(sipSocket, method, params, timeout || 5000);
-    debug("..." + method + ": response: " + JSON.stringify(response));
-    return response;
-};
-var isDongleConnected;
-(function (isDongleConnected) {
-    isDongleConnected.methodName = "isDongleConnected";
-    function makeCall(gatewaySocket, imei) {
-        return __awaiter(this, void 0, void 0, function () {
-            var params, response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        params = { imei: imei };
-                        return [4 /*yield*/, sendRequest(gatewaySocket, isDongleConnected.methodName, params)];
-                    case 1:
-                        response = _a.sent();
-                        return [2 /*return*/, response];
-                }
-            });
+var debug = _debug("_launcher");
+(function callee() {
+    return __awaiter(this, void 0, void 0, function () {
+        var error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, , 5]);
+                    return [4 /*yield*/, chan_dongle_extended_client_1.DongleController.getInstance().initialization];
+                case 1:
+                    _a.sent();
+                    return [4 /*yield*/, db.asterisk.initializeEvt()];
+                case 2:
+                    _a.sent();
+                    Promise.resolve().then(function () { return require("../lib/main"); });
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_1 = _a.sent();
+                    debug("dongle-extended not initialized yet, scheduling retry...");
+                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 5000); })];
+                case 4:
+                    _a.sent();
+                    callee();
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
         });
-    }
-    isDongleConnected.makeCall = makeCall;
-})(isDongleConnected = exports.isDongleConnected || (exports.isDongleConnected = {}));
-var unlockDongle;
-(function (unlockDongle) {
-    unlockDongle.methodName = "unlockDongle";
-    function makeCall(gatewaySocket, params) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, sendRequest(gatewaySocket, unlockDongle.methodName, params, 120000)];
-                    case 1:
-                        response = _a.sent();
-                        return [2 /*return*/, response];
-                }
-            });
-        });
-    }
-    unlockDongle.makeCall = makeCall;
-})(unlockDongle = exports.unlockDongle || (exports.unlockDongle = {}));
+    });
+})();

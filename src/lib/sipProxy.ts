@@ -2,9 +2,7 @@ import * as tls from "tls";
 import * as net from "net";
 import * as network from "network";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
-import { DongleExtendedClient } from "chan-dongle-extended-client";
 import * as sipLibrary from "../tools/sipLibrary";
-import * as os from "os";
 import * as sipApiBackend from "./sipApiClientBackend";
 import { startListening as apiStartListening } from "./sipApi";
 import { Contact, PsContact } from "./sipContact";
@@ -19,9 +17,8 @@ import "colors";
 import * as _debug from "debug";
 let debug = _debug("_sipProxy");
 
-let localIp= "";
 
-const informativeHostname= "semasim-gateway.invalid";
+const informativeHostname = "semasim-gateway.invalid";
 
 export const evtIncomingMessage = new SyncEvent<{
     fromContact: Contact;
@@ -30,12 +27,10 @@ export const evtIncomingMessage = new SyncEvent<{
 
 export const evtOutgoingMessage = new SyncEvent<{
     sipRequest: sipLibrary.Request;
-    evtReceived: VoidSyncEvent;
+    prSipResponse: Promise<sipLibrary.Response>;
 }>();
 
-
 let backendSocket: sipLibrary.Socket;
-let asteriskSockets: sipLibrary.Store;
 
 const evtNewBackendSocketConnect = new VoidSyncEvent();
 
@@ -51,53 +46,64 @@ export async function getBackendSocket(): Promise<sipLibrary.Socket> {
 
 }
 
-export async function getAsteriskSockets(): Promise<sipLibrary.Store> {
+const asteriskSockets = new Map<string, sipLibrary.Socket | null>();
 
-    await getBackendSocket();
+asteriskSockets.set = function set(flowToken, socket: sipLibrary.Socket) {
 
-    return asteriskSockets;
+    let self: typeof asteriskSockets = this;
+
+    socket.evtClose.attachOnce(() =>
+        Map.prototype.set.call(self, flowToken, null)
+    );
+
+    return Map.prototype.set.call(self, flowToken, socket);
 
 }
 
-const expiredFlows= new Set<string>();
+const mapAstSockContact = new TrackableMap<sipLibrary.Socket, Contact>();
 
-const mapAstSockContact= new TrackableMap<sipLibrary.Socket, Contact>();
+//Parfois on a old contact et contact en même temps dans la db
+//si on wakeUp un contact qui a ete overwrite ou est entrain de l'être
+//alors le backend vas faire un qualify qui vas fail et enchainer avec une push
+//ce qui vas forcer le ré enregistrement.
+//Normalement quand on fait getContacts on a jamais un doublon pk delete contact est appeler avant
+//syncronement avent que des trigers soit declancher pour le nvx contact.
 
-mapAstSockContact.set= function set(socket, contact){
+mapAstSockContact.set = function set(socket, contact) {
 
     debug(`associate contact to asteriskSocket: ${contact.flowToken}`);
 
-    let self: typeof mapAstSockContact= this;
+    let self: typeof mapAstSockContact = this;
 
-    socket.evtClose.attachOnce(()=>{
+    let boundTo= [];
+
+    socket.evtClose.attachOnce(() => {
         debug(`closed asteriskSocket: ${contact.flowToken}`);
+        db.asterisk.getEvtExpiredContact().detach(boundTo),
         self.delete(socket);
         db.asterisk.deleteContact(contact);
     });
 
     db.asterisk.getEvtExpiredContact().attachOnce(
         expiredContact => expiredContact.ps.id === contact.ps.id,
-        ()=> {
+        boundTo,
+        () => {
             debug(`expired contact ${contact.flowToken}`);
-            expiredFlows.add(contact.flowToken);
             socket.destroy();
-            sipApiBackend.forceReRegister.makeCall(contact);
-
-            //TODO: replace by conn counter by date now and remove that
-            db.asterisk.getEvtNewContact().attachOnce(
-                ({ uaInstance })=> JSON.stringify(uaInstance) === JSON.stringify(contact.uaInstance),
-                ()=> expiredFlows.delete(contact.flowToken)
-            );
+            sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
         }
     );
 
-    let oldContact= self.find( oldContact=> (
-        JSON.stringify(oldContact.uaInstance) === JSON.stringify(contact.uaInstance)
-    ));
+    let oldContact = self.find(
+        oldContact => Contact.UaEndpoint.areSame(
+            oldContact.uaEndpoint,
+            contact.uaEndpoint
+        )
+    );
 
-    if( oldContact ){
+    if (oldContact) {
         debug(`uaInstance re-registered, with new contact, overwritten contact: ${oldContact.pretty}`);
-        let oldSocket = self.keyOf( oldContact )!;
+        let oldSocket = self.keyOf(oldContact)!;
         oldSocket.destroy();
     }
 
@@ -105,6 +111,7 @@ mapAstSockContact.set= function set(socket, contact){
 
 };
 
+let localIp = "";
 
 export async function start() {
 
@@ -118,8 +125,6 @@ export async function start() {
         );
     }
 
-    asteriskSockets = new sipLibrary.Store();
-
     backendSocket = new sipLibrary.Socket(
         tls.connect({
             "host": (await c.shared.dnsSrv_sips_tcp).name,
@@ -127,6 +132,7 @@ export async function start() {
         }) as any
     );
 
+    //TODO: see if it really does it's job
     backendSocket.setKeepAlive(true);
 
     apiStartListening(backendSocket);
@@ -146,16 +152,31 @@ export async function start() {
 
         evtNewBackendSocketConnect.post();
 
-        let set = new Set<string>();
+        let handledUa = new Set<string>();
 
-        for (let imei of await db.asterisk.queryEndpoints())
-            set.add(imei);
+        for (let [imei] of await db.semasim.getDonglesLastConnection()) {
 
-        for (let imei of await DongleExtendedClient.localhost().getConnectedDongles())
-            set.add(imei);
+            sipApiBackend.claimDongle.makeCall(imei).then(
+                async isGranted => {
 
-        for (let imei of set)
-            sipApiBackend.claimDongle.makeCall(imei);
+                    if (!isGranted) return;
+
+                    let uas= await db.semasim.getUas(imei);
+
+                    for( let ua of uas ){
+
+                        if( handledUa.has(ua.instance) ) continue;
+
+                        sipApiBackend.sendPushNotification.makeCall(ua);
+
+                        handledUa.add(ua.instance);
+
+                    }
+
+                }
+            );
+
+        }
 
     });
 
@@ -165,11 +186,13 @@ export async function start() {
 
         let asteriskSocket = asteriskSockets.get(flowToken);
 
-        if( !asteriskSocket ){
+        if (asteriskSocket === undefined) {
 
-            if( expiredFlows.has(flowToken) ) return;
+            asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
 
-            asteriskSocket= createAsteriskSocket(flowToken, backendSocket);
+        } else if (asteriskSocket === null) {
+
+            return;
 
         }
 
@@ -204,13 +227,13 @@ export async function start() {
 
                     if (sipResponse.status !== 202) return;
 
-                    let fromContact= mapAstSockContact.get(asteriskSocket!);
+                    let fromContact = mapAstSockContact.get(asteriskSocket!);
 
-                    if( !fromContact ){
+                    if (!fromContact) {
 
                         //TODO: test, should not cause memory leak
                         fromContact = (await mapAstSockContact.evtSet.waitFor(
-                            ([_, socket])=> socket === asteriskSocket
+                            ([_, socket]) => socket === asteriskSocket
                         ))[0];
 
                     }
@@ -250,11 +273,14 @@ export async function start() {
 
         debug("Backend socket closed, waiting and restarting");
 
-        await asteriskSockets.destroyAll();
+        for (let asteriskSocket of asteriskSockets.values()) {
+            if (!asteriskSocket) continue;
+            asteriskSocket.destroy();
+        }
 
         let delay = (function getRandomArbitrary(min, max) {
             return Math.floor(Math.random() * (max - min) + min);
-        })(2000, 10000);
+        })(15000, 120000);
 
         debug(`Delay before restarting: ${delay}ms`);
 
@@ -282,19 +308,11 @@ function createAsteriskSocket(
 
     asteriskSockets.set(flowToken, asteriskSocket);
 
-    let timeoutRegisteredContactId= setTimeout(()=> {
-        debug(`destroy asterisk socket because no contact registered in time`.red);
-        asteriskSocket.destroy()
-    }, 6000);
-
     db.asterisk.getEvtNewContact().attachOncePrepend(
         contact => contact.flowToken === flowToken,
-        contact => {
-            clearTimeout(timeoutRegisteredContactId);
-            mapAstSockContact.set(asteriskSocket, contact);
-        }
-    );
-
+        6000,
+        contact => mapAstSockContact.set(asteriskSocket, contact)
+    ).catch(() => asteriskSocket.destroy());
 
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
@@ -333,12 +351,15 @@ function createAsteriskSocket(
         backendSocket.shiftRouteAndAddRecordRoute(sipRequest, informativeHostname);
 
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
-            let evtReceived = new VoidSyncEvent();
-            evtOutgoingMessage.post({ sipRequest, evtReceived });
-            backendSocket.evtResponse.attachOncePrepend(
+
+            let prSipResponse= backendSocket.evtResponse.attachOncePrepend(
                 ({ headers }) => headers.via[0].params["branch"] === branch,
-                () => evtReceived.post()
-            )
+                5000, 
+                ()=>{}
+            );
+
+            evtOutgoingMessage.post({ sipRequest, prSipResponse });
+
         }
 
         backendSocket.write(sipRequest);

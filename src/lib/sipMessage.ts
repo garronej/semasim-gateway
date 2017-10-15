@@ -1,9 +1,10 @@
 import { SyncEvent } from "ts-events-extended";
-import { DongleExtendedClient, Ami } from "chan-dongle-extended-client";
+import { DongleController as Dc, Ami } from "chan-dongle-extended-client";
 import { Contact } from "./sipContact";
 import { evtOutgoingMessage, evtIncomingMessage } from "./sipProxy";
 import * as sipLibrary from "../tools/sipLibrary";
 import { c } from "./_constants";
+import * as phone from "../tools/phoneNumberLibrary";
 
 import * as _debug from "debug";
 let debug = _debug("_sipMessage");
@@ -22,7 +23,7 @@ export function getEvtMessage() {
 
     (async () => {
 
-        let ami = DongleExtendedClient.localhost().ami;
+        let ami = Dc.getInstance().ami;
 
         let matchAllExt = "_.";
 
@@ -33,9 +34,9 @@ export function getEvtMessage() {
         evtIncomingMessage.attach(
             ({ fromContact, sipRequest }) => {
 
-                let { validInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
+                let { isValidInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
 
-                if (!validInput)
+                if (!isValidInput)
                     debug("Sip message content was not a valid UTF-8 string");
 
                 let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
@@ -66,30 +67,16 @@ export function sendMessage(
 
         let uri = contact.ps.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
-        DongleExtendedClient.localhost().ami.messageSend(
+        from_number = phone.toNationalNumber(from_number, contact.uaEndpoint.endpoint.sim.imsi);
+
+        Dc.getInstance().ami.messageSend(
             `pjsip:${contact.ps.endpoint}/${uri}`, from_number, actionId
-        ).catch(amiError => {
-
-            let error = sendMessage.errors.notSent;
-
-            error.name = amiError.name;
-            error.message = amiError.message;
-            Object.defineProperty(error, "stack", { "value": amiError.stack });
-
-            reject(error);
-
-        });
-
-        let timeoutInterceptId = setTimeout(
-            () => reject(sendMessage.errors.notIntercepted),
-            sendMessage.timeouts.intercept
-        );
+        ).catch(amiError => reject(amiError));
 
         evtOutgoingMessage.attachOnce(
             ({ sipRequest }) => sipRequest.content === actionId,
-            ({ sipRequest, evtReceived }) => {
-
-                clearTimeout(timeoutInterceptId);
+            2000,
+            ({ sipRequest, prSipResponse }) => {
 
                 if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
 
@@ -102,47 +89,31 @@ export function sendMessage(
 
                 sipRequest.headers = { ...sipRequest.headers, ...headers };
 
-                evtReceived
-                    .waitFor(sendMessage.timeouts.confirmed)
-                    .catch(() => reject(sendMessage.errors.notConfirmed))
-                    .then(() => resolve());
+                prSipResponse
+                    .then(() => resolve())
+                    .catch(() => reject(new Error("Not received")));
+
 
             }
-        );
+        ).catch(() => reject(new Error("Not intercepted")));
 
     });
 
 }
 
-export namespace sendMessage {
-
-    export const timeouts = {
-        "intercept": 2000,
-        "confirmed": 5000
-    };
-
-    export const errors = {
-        "notSent": new Error(),
-        "notIntercepted": new Error(`Message could not be intercepted in sip proxy, timeout value: ${timeouts.intercept}`),
-        "notConfirmed": new Error(`UA did not confirm reception of message, timeout value: ${timeouts.confirmed}`)
-    }
-}
 
 
 function utf8EncodedDataAsBinaryStringToString(
     utf8EncodedDataAsBinaryString: string
-): {
-        validInput: boolean;
-        text: string;
-    } {
+): { isValidInput: boolean; text: string; } {
 
     let uft8EncodedData = new Buffer(utf8EncodedDataAsBinaryString, "binary");
 
     let text = uft8EncodedData.toString("utf8");
 
-    let validInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
+    let isValidInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
 
-    return { validInput, text };
+    return { isValidInput, text };
 
 }
 

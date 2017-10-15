@@ -50,12 +50,13 @@ var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var _debug = require("debug");
 var debug = _debug("_agiClient");
 var outboundHandlers = {};
-function startServer(scripts) {
+function startServer(scripts, ami) {
+    if (ami === void 0) { ami = chan_dongle_extended_client_1.Ami.getInstance(); }
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, initDialplan(scripts)];
+                case 0: return [4 /*yield*/, initDialplan(scripts, ami)];
                 case 1:
                     _a.sent();
                     new ts_async_agi_1.AsyncAGIServer(function (channel) { return __awaiter(_this, void 0, void 0, function () {
@@ -83,7 +84,7 @@ function startServer(scripts) {
                                     return [2 /*return*/];
                             }
                         });
-                    }); }, chan_dongle_extended_client_1.DongleExtendedClient.localhost().ami.connection);
+                    }); }, ami.connection);
                     return [2 /*return*/];
             }
         });
@@ -92,38 +93,32 @@ function startServer(scripts) {
 exports.startServer = startServer;
 function dialAndGetOutboundChannel(channel, dialString, outboundHandler) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, context, threadid, context_threadid, failure, error_1;
+        var _a, context, threadid, context_threadid, failure;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
+                    if (!dialString || channel.isHangup)
+                        return [2 /*return*/, true];
                     _a = channel.request, context = _a.context, threadid = _a.threadid;
                     context_threadid = context + "_" + threadid;
                     outboundHandlers[context_threadid] = outboundHandler;
                     setTimeout(function () { return delete outboundHandlers[context_threadid]; }, 2000);
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, channel.exec("Dial", [dialString, "", "b(" + context + "^outbound^1)"])];
-                case 2:
+                case 1:
                     failure = (_b.sent()).failure;
                     return [2 /*return*/, failure];
-                case 3:
-                    error_1 = _b.sent();
-                    return [2 /*return*/, true];
-                case 4: return [2 /*return*/];
             }
         });
     });
 }
 exports.dialAndGetOutboundChannel = dialAndGetOutboundChannel;
-function initDialplan(scripts) {
+function initDialplan(scripts, ami) {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
-        var ami, _loop_1, _a, _b, context, e_1_1, e_1, _c;
+        var _loop_1, _a, _b, context, e_1_1, e_1, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
-                    ami = chan_dongle_extended_client_1.DongleExtendedClient.localhost().ami;
                     _loop_1 = function (context) {
                         var _loop_2, _a, _b, extensionPattern, e_2_1, priority, pushExt, e_2, _c;
                         return __generator(this, function (_d) {

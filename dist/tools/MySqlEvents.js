@@ -13,25 +13,38 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ZongJi = require("zongji");
 var ts_events_extended_1 = require("ts-events-extended");
 var MySqlEvents = /** @class */ (function () {
-    function MySqlEvents(connectionConfig) {
+    function MySqlEvents(connectionConfig, cbReady) {
         var _this = this;
         this.evtNewRow = new ts_events_extended_1.SyncEvent();
         this.evtDeleteRow = new ts_events_extended_1.SyncEvent();
         this.zongji = new ZongJi(connectionConfig);
-        this.zongji.on("binlog", function (evt) { return _this.onBinlog(evt); });
+        this.zongji.once("binlog", function (evt) {
+            _this.zongji.set({
+                "includeEvents": ['tablemap', 'writerows', 'updaterows', 'deleterows']
+            });
+            _this.zongji.on("binlog", function (evt) { return _this.onBinlog(evt); });
+            cbReady();
+        });
         this.zongji.start({
             "startAtEnd": true,
-            "includeEvents": ['tablemap', 'writerows', 'updaterows', 'deleterows']
+            "includeEvents": ["rotate"]
         });
     }
-    MySqlEvents.getInstance = function () {
-        if (this.instance)
-            return this.instance;
-        if (!this.connectionConfig)
-            throw new Error("connectionConfig not set");
-        this.instance = new this(this.connectionConfig);
-        return this.getInstance();
+    MySqlEvents.initialize = function (connectionConfig) {
+        var _this = this;
+        return new Promise(function (resolve) {
+            _this._instance = new _this(connectionConfig, function () { return resolve(_this._instance); });
+        });
     };
+    Object.defineProperty(MySqlEvents, "instance", {
+        get: function () {
+            if (!this._instance)
+                throw new Error("MySqlEvent not initialized");
+            return this._instance;
+        },
+        enumerable: true,
+        configurable: true
+    });
     MySqlEvents.prototype.onBinlog = function (evt) {
         var evtRow;
         switch (evt.getEventName()) {
@@ -63,33 +76,7 @@ var MySqlEvents = /** @class */ (function () {
         }
         var e_1, _d;
     };
-    MySqlEvents.instance = undefined;
+    MySqlEvents._instance = undefined;
     return MySqlEvents;
 }());
 exports.MySqlEvents = MySqlEvents;
-/*
-let config: mysql.IConnectionConfig = {
-    ...c.dbParamsGateway,
-    "database": "asterisk",
-    "multipleStatements": true
-};
-
-let mySqlEvents = new MySqlEvents(config);
-
-mySqlEvents.evtNewRow.attach(row => console.log(row));
-mySqlEvents.evtDeleteRow.attach(row => console.log(row));
-
-function tracePrototypeChainOf(object) {
-
-    var proto = object.constructor.prototype,
-        result = JSON.stringify(Object.getOwnPropertyNames(object)) + '\n';
-
-    while (proto) {
-        result += ' -> ' + proto.constructor.name + '\n';
-        result += JSON.stringify(Object.getOwnPropertyNames(proto));
-        proto = Object.getPrototypeOf(proto)
-    }
-
-    return result;
-}
-*/

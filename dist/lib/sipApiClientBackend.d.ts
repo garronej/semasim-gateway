@@ -9,8 +9,8 @@ export declare namespace claimDongle {
     }
     function makeCall(imei: string): Promise<boolean>;
 }
-export declare namespace wakeUpUserAgent {
-    const methodName = "wakeUpUserAgent";
+export declare namespace wakeUpContact {
+    const methodName = "wakeUpContact";
     interface Params {
         contact: Contact;
     }
@@ -19,13 +19,13 @@ export declare namespace wakeUpUserAgent {
     }
     function makeCall(contact: Contact): Promise<Response["status"]>;
 }
-export declare namespace forceReRegister {
-    const methodName = "forceReRegister";
+export declare namespace sendPushNotification {
+    const methodName = "sendPushNotification";
     interface Params {
-        contact: Contact;
+        ua: Contact.UaEndpoint.Ua;
     }
     interface Response {
         isPushNotificationSent: boolean;
     }
-    function makeCall(contact: Contact): Promise<Response["isPushNotificationSent"]>;
+    function makeCall(ua: Contact.UaEndpoint.Ua): Promise<boolean>;
 }

@@ -87,9 +87,9 @@ var claimDongle;
     }
     claimDongle.makeCall = makeCall;
 })(claimDongle = exports.claimDongle || (exports.claimDongle = {}));
-var wakeUpUserAgent;
-(function (wakeUpUserAgent) {
-    wakeUpUserAgent.methodName = "wakeUpUserAgent";
+var wakeUpContact;
+(function (wakeUpContact) {
+    wakeUpContact.methodName = "wakeUpContact";
     function makeCall(contact) {
         return __awaiter(this, void 0, void 0, function () {
             var payload, status;
@@ -97,7 +97,7 @@ var wakeUpUserAgent;
                 switch (_a.label) {
                     case 0:
                         payload = { contact: contact };
-                        return [4 /*yield*/, sendRequest(wakeUpUserAgent.methodName, payload)];
+                        return [4 /*yield*/, sendRequest(wakeUpContact.methodName, payload)];
                     case 1:
                         status = (_a.sent()).status;
                         return [2 /*return*/, status];
@@ -105,21 +105,20 @@ var wakeUpUserAgent;
             });
         });
     }
-    wakeUpUserAgent.makeCall = makeCall;
-})(wakeUpUserAgent = exports.wakeUpUserAgent || (exports.wakeUpUserAgent = {}));
+    wakeUpContact.makeCall = makeCall;
+})(wakeUpContact = exports.wakeUpContact || (exports.wakeUpContact = {}));
 //Here we can send only push infos.
-var forceReRegister;
-(function (forceReRegister) {
-    forceReRegister.methodName = "forceReRegister";
-    function makeCall(contact) {
+var sendPushNotification;
+(function (sendPushNotification) {
+    sendPushNotification.methodName = "sendPushNotification";
+    function makeCall(ua) {
         return __awaiter(this, void 0, void 0, function () {
             var payload, isPushNotificationSent;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        debug("call " + forceReRegister.methodName + " contact:" + contact.pretty);
-                        payload = { contact: contact };
-                        return [4 /*yield*/, sendRequest(forceReRegister.methodName, payload)];
+                        payload = { ua: ua };
+                        return [4 /*yield*/, sendRequest(sendPushNotification.methodName, payload)];
                     case 1:
                         isPushNotificationSent = (_a.sent()).isPushNotificationSent;
                         return [2 /*return*/, isPushNotificationSent];
@@ -127,5 +126,5 @@ var forceReRegister;
             });
         });
     }
-    forceReRegister.makeCall = makeCall;
-})(forceReRegister = exports.forceReRegister || (exports.forceReRegister = {}));
+    sendPushNotification.makeCall = makeCall;
+})(sendPushNotification = exports.sendPushNotification || (exports.sendPushNotification = {}));

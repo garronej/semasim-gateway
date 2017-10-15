@@ -34,170 +34,129 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var sipLibrary = require("../tools/sipLibrary");
 var db = require("./db");
-var sipApiBackend = require("./sipApiClientBackend");
 var _constants_1 = require("./_constants");
 var _debug = require("debug");
 var debug = _debug("_sipContact");
 var PsContact;
 (function (PsContact) {
-    function buildUserAgentFieldValue(instanceId, userAgent) {
-        var wrap = { instanceId: instanceId, userAgent: userAgent };
-        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
+    function buildUserAgentFieldValue(ua_instance, ua_software) {
+        var wrap = { ua_instance: ua_instance, ua_software: ua_software };
+        return chan_dongle_extended_client_1.Ami.b64.enc(JSON.stringify(wrap));
     }
     PsContact.buildUserAgentFieldValue = buildUserAgentFieldValue;
     function decodeUserAgentFieldValue(psContact) {
-        return JSON.parse((new Buffer(psContact.user_agent, "base64")).toString("utf8"));
+        return JSON.parse(chan_dongle_extended_client_1.Ami.b64.dec(psContact.user_agent));
     }
     function readFlowToken(psContact) {
         return sipLibrary.parsePath(psContact.path).pop().uri.params[_constants_1.c.shared.flowTokenKey];
     }
-    function extractPushInfos(psContact) {
+    function readPushNotification(psContact) {
         var params = sipLibrary.parseUri(psContact.uri).params;
-        var pushType = params["pn-type"] || undefined;
-        var pushToken = params["pn-tok"] || undefined;
-        return { pushType: pushType, pushToken: pushToken };
+        var type = params["pn-type"];
+        var token = params["pn-tok"];
+        if (type === null || token === null)
+            return undefined;
+        return { type: type, token: token };
     }
     function buildContact(psContact) {
-        psContact.uri = psContact.uri.replace(/\^3B/g, ";");
-        psContact.path = psContact.path.replace(/\^3B/g, ";");
-        var _a = decodeUserAgentFieldValue(psContact), instanceId = _a.instanceId, userAgent = _a.userAgent;
-        var flowToken = readFlowToken(psContact);
-        var pushInfos = extractPushInfos(psContact);
-        /*
-        let pretty = [
-            `imei: ${psContact.endpoint}`,
-            `+sip.instance: ${instanceId}`,
-            `flowToken: ${flowToken}`
-        ].join(",");
-        */
-        var pretty = "flowToken: " + flowToken;
-        return {
-            "ps": psContact,
-            pushInfos: pushInfos,
-            "uaInstance": {
-                "dongle_imei": psContact.endpoint,
-                "instance_id": instanceId
-            },
-            userAgent: userAgent,
-            flowToken: flowToken,
-            pretty: pretty
-        };
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, ua_instance, ua_software, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+            return __generator(this, function (_m) {
+                switch (_m.label) {
+                    case 0:
+                        psContact.uri = psContact.uri.replace(/\^3B/g, ";");
+                        psContact.path = psContact.path.replace(/\^3B/g, ";");
+                        _a = decodeUserAgentFieldValue(psContact), ua_instance = _a.ua_instance, ua_software = _a.ua_software;
+                        _b = {
+                            "ps": psContact
+                        };
+                        _c = "uaEndpoint";
+                        _d = {
+                            "ua": {
+                                "instance": ua_instance,
+                                "software": ua_software,
+                                "pushToken": readPushNotification(psContact)
+                            }
+                        };
+                        _e = "endpoint";
+                        _g = (_f = db.semasim).getEndpoint;
+                        _h = {
+                            "dongle": {
+                                "imei": psContact.endpoint
+                            }
+                        };
+                        _j = "sim";
+                        _k = {};
+                        _l = "iccid";
+                        return [4 /*yield*/, db.asterisk.getIccidOfEndpoint(psContact.endpoint)];
+                    case 1: return [4 /*yield*/, _g.apply(_f, [(_h[_j] = (_k[_l] = _m.sent(),
+                                _k),
+                                _h)])];
+                    case 2: return [2 /*return*/, (_b[_c] = (_d[_e] = _m.sent(),
+                            _d),
+                            _b["flowToken"] = readFlowToken(psContact),
+                            _b["pretty"] = "flowToken: " + readFlowToken(psContact),
+                            _b)];
+                }
+            });
+        });
     }
     PsContact.buildContact = buildContact;
 })(PsContact = exports.PsContact || (exports.PsContact = {}));
-function buildDialString(contacts) {
-    var dialStringSplit = [];
-    try {
-        for (var contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
-            var ps = contacts_1_1.value.ps;
-            dialStringSplit.push("PJSIP/" + ps.endpoint + "/" + ps.uri);
+var Contact;
+(function (Contact) {
+    var UaEndpoint;
+    (function (UaEndpoint) {
+        function areSame(o1, o2) {
+            return id(o1) === id(o2);
         }
-    }
-    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-    finally {
-        try {
-            if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
+        UaEndpoint.areSame = areSame;
+        function id(o) {
+            return JSON.stringify([
+                Endpoint.id(o.endpoint),
+                o.ua.instance,
+            ]);
         }
-        finally { if (e_1) throw e_1.error; }
-    }
-    return dialStringSplit.join("&");
-    var e_1, _a;
-}
-exports.buildDialString = buildDialString;
-function wakeUpAllContactsOfEndpoint(endpoint, getResultTimeout) {
-    var _this = this;
-    if (getResultTimeout === void 0) { getResultTimeout = 9000; }
-    return new Promise(function (resolve) { return __awaiter(_this, void 0, void 0, function () {
-        var _this = this;
-        var reachableContacts, unreachableContacts, _a, resolver, timeoutId, tasks, _loop_1, unreachableContacts_1, unreachableContacts_1_1, contact, e_2, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    reachableContacts = new Set();
-                    _a = Set.bind;
-                    return [4 /*yield*/, db.asterisk.queryContacts()];
-                case 1:
-                    unreachableContacts = new (_a.apply(Set, [void 0, (_c.sent()).filter(function (contact) { return contact.ps.endpoint === endpoint; })]))();
-                    resolver = function () {
-                        resolve({ reachableContacts: reachableContacts, unreachableContacts: unreachableContacts });
-                        reachableContacts = new Set();
-                        unreachableContacts = new Set();
-                    };
-                    timeoutId = setTimeout(function () {
-                        if (!reachableContacts.size)
-                            return;
-                        resolver();
-                    }, getResultTimeout);
-                    tasks = [];
-                    _loop_1 = function (contact) {
-                        tasks[tasks.length] = (function () { return __awaiter(_this, void 0, void 0, function () {
-                            var _a, reachableContact, error_1;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
-                                    case 0: return [4 /*yield*/, sipApiBackend.wakeUpUserAgent.makeCall(contact)];
-                                    case 1:
-                                        _a = _b.sent();
-                                        switch (_a) {
-                                            case "REACHABLE": return [3 /*break*/, 2];
-                                            case "PUSH_NOTIFICATION_SENT": return [3 /*break*/, 3];
-                                        }
-                                        return [3 /*break*/, 6];
-                                    case 2:
-                                        unreachableContacts.delete(contact);
-                                        reachableContacts.add(contact);
-                                        return [2 /*return*/];
-                                    case 3:
-                                        _b.trys.push([3, 5, , 6]);
-                                        return [4 /*yield*/, db.asterisk.getEvtNewContact().waitFor(function (reRegisteredContact) {
-                                                return JSON.stringify(reRegisteredContact.uaInstance) === JSON.stringify(contact.uaInstance);
-                                            }, 15000)];
-                                    case 4:
-                                        reachableContact = _b.sent();
-                                        unreachableContacts.delete(contact);
-                                        reachableContacts.add(reachableContact);
-                                        return [3 /*break*/, 6];
-                                    case 5:
-                                        error_1 = _b.sent();
-                                        return [3 /*break*/, 6];
-                                    case 6: return [2 /*return*/];
-                                }
-                            });
-                        }); })();
-                    };
-                    try {
-                        for (unreachableContacts_1 = __values(unreachableContacts), unreachableContacts_1_1 = unreachableContacts_1.next(); !unreachableContacts_1_1.done; unreachableContacts_1_1 = unreachableContacts_1.next()) {
-                            contact = unreachableContacts_1_1.value;
-                            _loop_1(contact);
-                        }
+        UaEndpoint.id = id;
+        var Ua;
+        (function (Ua) {
+            var PushToken;
+            (function (PushToken) {
+                function stringify(pushToken) {
+                    if (pushToken === undefined) {
+                        return null;
                     }
-                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                    finally {
-                        try {
-                            if (unreachableContacts_1_1 && !unreachableContacts_1_1.done && (_b = unreachableContacts_1.return)) _b.call(unreachableContacts_1);
-                        }
-                        finally { if (e_2) throw e_2.error; }
+                    else {
+                        return JSON.stringify(pushToken);
                     }
-                    return [4 /*yield*/, Promise.all(tasks)];
-                case 2:
-                    _c.sent();
-                    clearTimeout(timeoutId);
-                    resolver();
-                    return [2 /*return*/];
+                }
+                PushToken.stringify = stringify;
+                ;
+                function parse(str) {
+                    if (str === null) {
+                        return undefined;
+                    }
+                    else {
+                        return JSON.parse(str);
+                    }
+                }
+                PushToken.parse = parse;
+            })(PushToken = Ua.PushToken || (Ua.PushToken = {}));
+        })(Ua = UaEndpoint.Ua || (UaEndpoint.Ua = {}));
+        var Endpoint;
+        (function (Endpoint) {
+            function id(o) {
+                return JSON.stringify([o.dongle.imei, o.sim.iccid]);
             }
-        });
-    }); });
-}
-exports.wakeUpAllContactsOfEndpoint = wakeUpAllContactsOfEndpoint;
+            Endpoint.id = id;
+            function areSame(o1, o2) {
+                return id(o1) === id(o2);
+            }
+            Endpoint.areSame = areSame;
+        })(Endpoint = UaEndpoint.Endpoint || (UaEndpoint.Endpoint = {}));
+    })(UaEndpoint = Contact.UaEndpoint || (Contact.UaEndpoint = {}));
+})(Contact = exports.Contact || (exports.Contact = {}));

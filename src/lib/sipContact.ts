@@ -1,10 +1,8 @@
-import { DongleExtendedClient } from "chan-dongle-extended-client";
+import { Ami } from "chan-dongle-extended-client";
 import { SyncEvent } from "ts-events-extended";
 import * as runExclusive from "run-exclusive";
 import * as sipLibrary from "../tools/sipLibrary";
 import * as db from "./db";
-import { getAsteriskSockets } from "./sipProxy";
-import * as sipApiBackend from "./sipApiClientBackend";
 
 import { c } from "./_constants";
 
@@ -23,161 +21,201 @@ export interface PsContact {
 export namespace PsContact {
 
     export function buildUserAgentFieldValue(
-        instanceId: string,
-        userAgent: string
+        ua_instance: string,
+        ua_software: string
     ): string {
-        let wrap = { instanceId, userAgent };
-        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
+        let wrap = { ua_instance, ua_software };
+        return Ami.b64.enc(JSON.stringify(wrap));
     }
 
     function decodeUserAgentFieldValue(psContact: PsContact): {
-        instanceId: string,
-        userAgent: string
+        ua_instance: string,
+        ua_software: string
     } {
-        return JSON.parse((new Buffer(psContact.user_agent, "base64")).toString("utf8"));
+        return JSON.parse(Ami.b64.dec(psContact.user_agent));
     }
 
     function readFlowToken(psContact: PsContact): string {
         return sipLibrary.parsePath(psContact.path).pop()!.uri.params[c.shared.flowTokenKey]!;
     }
 
-    function extractPushInfos(psContact: PsContact): {
-        pushType: string | undefined;
-        pushToken: string | undefined;
-    } {
+
+    function readPushNotification(
+        psContact: PsContact
+    ): Contact.UaEndpoint.Ua.PushToken | undefined {
 
         let { params } = sipLibrary.parseUri(psContact.uri);
 
-        let pushType = params["pn-type"] || undefined;
-        let pushToken = params["pn-tok"] || undefined;
+        let type = params["pn-type"];
+        let token = params["pn-tok"];
 
-        return { pushType, pushToken };
+        if (type === null || token === null) return undefined;
+
+        return { type, token };
 
     }
 
-    export function buildContact(psContact: PsContact): Contact {
+
+    export async function buildContact(psContact: PsContact): Promise<Contact> {
 
         psContact.uri = psContact.uri.replace(/\^3B/g, ";");
         psContact.path = psContact.path.replace(/\^3B/g, ";");
 
-        let { instanceId, userAgent } = decodeUserAgentFieldValue(psContact);
-
-        let flowToken = readFlowToken(psContact);
-
-        let pushInfos = extractPushInfos(psContact);
-
-        /*
-        let pretty = [
-            `imei: ${psContact.endpoint}`,
-            `+sip.instance: ${instanceId}`,
-            `flowToken: ${flowToken}`
-        ].join(",");
-        */
-
-        let pretty = `flowToken: ${flowToken}`;
+        let { ua_instance, ua_software } = decodeUserAgentFieldValue(psContact);
 
         return {
             "ps": psContact,
-            pushInfos,
-            "uaInstance": {
-                "dongle_imei": psContact.endpoint,
-                "instance_id": instanceId
+            "uaEndpoint": {
+                "ua": {
+                    "instance": ua_instance,
+                    "software": ua_software,
+                    "pushToken": readPushNotification(psContact)
+                },
+                "endpoint": await db.semasim.getEndpoint({ 
+                    "dongle": { 
+                        "imei": psContact.endpoint 
+                    }, 
+                    "sim": { 
+                        "iccid": await db.asterisk.getIccidOfEndpoint(psContact.endpoint)
+                    }
+                })
             },
-            userAgent,
-            flowToken,
-            pretty
+            "flowToken": readFlowToken(psContact),
+            "pretty": `flowToken: ${readFlowToken(psContact)}`
         };
+
     }
+
 }
+
+
 
 export interface Contact {
     readonly ps: PsContact;
-    readonly pushInfos: {
-        readonly pushType: string | undefined;
-        readonly pushToken: string | undefined;
-    };
-    readonly uaInstance: {
-        readonly dongle_imei: string;
-        readonly instance_id: string;
-    };
-    readonly userAgent: string;
+    readonly uaEndpoint: Contact.UaEndpoint;
     readonly flowToken: string;
     readonly pretty: string;
 }
 
-export function buildDialString(contacts: Iterable<Contact>) {
+export namespace Contact {
 
-    let dialStringSplit: string[] = [];
+    export interface UaEndpointRef {
+        readonly ua: UaEndpoint.UaRef;
+        readonly endpoint: UaEndpoint.EndpointRef
+    }
 
-    for (let { ps } of contacts)
-        dialStringSplit.push(`PJSIP/${ps.endpoint}/${ps.uri}`);
+    export interface UaEndpoint extends UaEndpointRef{
+        readonly ua: UaEndpoint.Ua;
+        readonly endpoint: UaEndpoint.Endpoint;
+    }
 
-    return dialStringSplit.join("&");
+    export namespace UaEndpoint {
 
-}
-
-export function wakeUpAllContactsOfEndpoint(
-    endpoint: string,
-    getResultTimeout: number = 9000,
-) {
-    return new Promise<{
-        reachableContacts: Set<Contact>;
-        unreachableContacts: Set<Contact>;
-    }>(async resolve => {
-
-        let reachableContacts = new Set<Contact>();
-        let unreachableContacts = new Set<Contact>(
-            (await db.asterisk.queryContacts()).filter(
-                contact => contact.ps.endpoint === endpoint
-            )
-        );
-
-        let resolver = () => {
-            resolve({ reachableContacts, unreachableContacts });
-            reachableContacts = new Set();
-            unreachableContacts = new Set();
-        };
-
-        let timeoutId = setTimeout(
-            () => {
-                if (!reachableContacts.size) return;
-                resolver();
-            },
-            getResultTimeout
-        );
-
-        let tasks: Promise<void>[] = [];
-
-        for (let contact of unreachableContacts) {
-            tasks[tasks.length] = (async () => {
-
-                switch (await sipApiBackend.wakeUpUserAgent.makeCall(contact)) {
-                    case "REACHABLE":
-                        unreachableContacts.delete(contact);
-                        reachableContacts.add(contact);
-                        return;
-                    case "PUSH_NOTIFICATION_SENT":
-                        try {
-                            let reachableContact = await db.asterisk.getEvtNewContact().waitFor(
-                                reRegisteredContact =>
-                                    JSON.stringify(reRegisteredContact.uaInstance) === JSON.stringify(contact.uaInstance),
-                                15000
-                            );
-                            unreachableContacts.delete(contact);
-                            reachableContacts.add(reachableContact);
-                        } catch (error) { }
-                }
-
-            })();
+        export function areSame(
+            o1: UaEndpointRef,
+            o2: UaEndpointRef
+        ): boolean {
+            return id(o1) === id(o2);
         }
 
-        await Promise.all(tasks);
+        export function id(
+            o: UaEndpointRef
+        ): string {
+            return JSON.stringify([
+                Endpoint.id(o.endpoint),
+                o.ua.instance,
+            ]);
+        }
 
-        clearTimeout(timeoutId);
+        export interface UaRef {
+            readonly instance: string;
+        }
 
-        resolver();
+        export interface Ua extends UaRef {
+            readonly software: string;
+            readonly pushToken?: Ua.PushToken;
+        }
 
-    });
+        export namespace Ua {
+
+            export interface PushToken {
+                readonly type: string;
+                readonly token: string;
+            }
+
+            export namespace PushToken {
+
+                export function stringify(pushToken: PushToken | undefined): string | null {
+
+                    if (pushToken === undefined) {
+                        return null;
+                    } else {
+                        return JSON.stringify(pushToken);
+                    }
+
+                };
+
+                export function parse(str: string | null): PushToken | undefined {
+
+                    if (str === null) {
+                        return undefined;
+                    } else {
+                        return JSON.parse(str);
+                    }
+
+                }
+
+            }
+
+        }
+
+        export interface EndpointRef {
+            readonly dongle: Endpoint.DongleRef;
+            readonly sim: Endpoint.SimRef;
+        }
+
+        export interface Endpoint extends EndpointRef {
+            readonly dongle: Endpoint.Dongle;
+            readonly sim: Endpoint.Sim;
+        }
+
+        export namespace Endpoint {
+
+            export function id(
+                o: EndpointRef
+            ): string {
+                return JSON.stringify([ o.dongle.imei, o.sim.iccid ]);
+            }
+
+            export function areSame(
+                o1: EndpointRef, 
+                o2: EndpointRef
+            ): boolean {
+                return id(o1) === id(o2);
+            }
+
+            export interface DongleRef {
+                readonly imei: string;
+            }
+
+            export interface Dongle extends DongleRef {
+                readonly lastConnectionDate: Date;
+                readonly isVoiceEnabled?: boolean;
+            }
+
+            export interface SimRef {
+                readonly iccid: string;
+            }
+
+            export interface Sim extends SimRef{
+                readonly imsi: string;
+            }
+
+
+        }
+
+
+    }
 
 
 }

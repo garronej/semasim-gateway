@@ -55,3 +55,11 @@ function __buildInsertQuery__(table, obj, update) {
         keys.filter(function (key) { return !(obj[key] instanceof Object); }).map(function (key) { return obj[key]; })
     ];
 }
+function smallIntOrNullToBooleanOrUndefined(v) {
+    return (typeof v === "number") ? (v === 1) : undefined;
+}
+exports.smallIntOrNullToBooleanOrUndefined = smallIntOrNullToBooleanOrUndefined;
+function booleanOrUndefinedToSmallIntOrNull(v) {
+    return (typeof v === "boolean") ? (v ? 1 : 0) : null;
+}
+exports.booleanOrUndefinedToSmallIntOrNull = booleanOrUndefinedToSmallIntOrNull;

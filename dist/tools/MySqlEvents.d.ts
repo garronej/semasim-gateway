@@ -6,12 +6,12 @@ export interface Row {
     row: Record<string, string>;
 }
 export declare class MySqlEvents {
-    static connectionConfig: mysql.IConnectionConfig | undefined;
-    private static instance;
-    static getInstance(): MySqlEvents;
+    private static _instance;
+    static initialize(connectionConfig: mysql.IConnectionConfig): Promise<MySqlEvents>;
+    static readonly instance: MySqlEvents;
     private readonly zongji;
     readonly evtNewRow: SyncEvent<Row>;
     readonly evtDeleteRow: SyncEvent<Row>;
-    constructor(connectionConfig: mysql.IConnectionConfig);
+    private constructor();
     private onBinlog(evt);
 }

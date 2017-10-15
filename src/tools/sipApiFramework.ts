@@ -1,5 +1,35 @@
 import { SyncEvent } from "ts-events-extended";
 import * as sip from "./sipLibrary";
+import * as superJson from "super-json";
+
+namespace JSON {
+    const myJson = superJson.create({
+        "magic": '#!',
+        "serializers": [
+            superJson.dateSerializer,
+        ]
+    });
+
+    export function stringify(obj: any): string {
+
+        if (obj === undefined) {
+            return "undefined";
+        }
+
+        return myJson.stringify([obj]);
+
+    }
+
+    export function parse(str: string): any {
+
+        if (str === "undefined") {
+            return undefined;
+        }
+
+        return myJson.parse(str).pop();
+    }
+
+}
 
 namespace ApiMessage {
 
@@ -158,7 +188,7 @@ export async function sendRequest(
     sipSocket: sip.Socket,
     method: string,
     params: Record<string, any>,
-    timeout?: number
+    timeout: number= 5*60*1000
 ): Promise<Record<string, any>> {
 
     let sipRequest = ApiMessage.Request.buildSip(method, params);
@@ -176,19 +206,21 @@ export async function sendRequest(
     try {
 
         sipRequestResponse = await Promise.race([
-            sipSocket.evtRequest.waitForExtract(
+            sipSocket.evtRequest.attachOnceExtract(
                 sipRequestResponse => ApiMessage.Response.matchSip(sipRequestResponse, actionId),
-                timeout
+                timeout,
+                ()=>{}
             ),
             new Promise<never>((_, reject) => sipSocket.evtClose.attachOnce(sipRequest, reject))
         ]);
 
     } catch (error) {
 
-        if (typeof error === "boolean")
+        if (typeof error === "boolean"){
             throw new Error(errorSendRequest.sockedCloseBeforeResponse);
-        else
+        }else{
             throw new Error(errorSendRequest.timeout);
+        }
 
     }
 

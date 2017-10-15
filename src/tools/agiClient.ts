@@ -4,7 +4,7 @@ import {
     ChannelStatus,
 } from "ts-async-agi";
 
-import { DongleExtendedClient } from "chan-dongle-extended-client";
+import { Ami } from "chan-dongle-extended-client";
 
 import * as _debug from "debug";
 let debug = _debug("_agiClient");
@@ -21,9 +21,12 @@ let outboundHandlers: {
     [context_threadid: string]: (channel: AGIChannel) => Promise<void> 
 } = {};
 
-export async function startServer( scripts: Scripts ) {
+export async function startServer( 
+    scripts: Scripts, 
+    ami: Ami= Ami.getInstance() 
+) {
 
-    await initDialplan(scripts);
+    await initDialplan(scripts, ami);
 
     new AsyncAGIServer(async (channel) => {
 
@@ -34,7 +37,6 @@ export async function startServer( scripts: Scripts ) {
         if( !extensionPattern ){
 
             //We send to outbound
-
             await outboundHandlers[`${context}_${threadid}`](channel);
 
             return;
@@ -44,7 +46,7 @@ export async function startServer( scripts: Scripts ) {
         //We call specific script
         await scripts[context][extensionPattern](channel);
 
-    }, DongleExtendedClient.localhost().ami.connection);
+    }, ami.connection);
 
 }
 
@@ -54,36 +56,29 @@ export async function dialAndGetOutboundChannel(
     outboundHandler: (channel: AGIChannel) => Promise<void>
 ) {
 
+    if (!dialString || channel.isHangup) return true;
+
     let { context, threadid } = channel.request;
 
-    let context_threadid= `${context}_${threadid}`;
+    let context_threadid = `${context}_${threadid}`;
 
     outboundHandlers[context_threadid] = outboundHandler;
 
-    setTimeout(()=> delete outboundHandlers[context_threadid], 2000);
+    setTimeout(() => delete outboundHandlers[context_threadid], 2000);
 
-    try{
+    let { failure } = await channel.exec("Dial", [dialString, "", `b(${context}^outbound^1)`]);
 
-        let { failure } = await channel.exec("Dial", [dialString, "", `b(${context}^outbound^1)`]);
+    return failure;
 
-        return failure;
-
-    }catch(error){
-
-        return true;
-
-    }
 
 }
 
 
-async function initDialplan(scripts: Scripts) {
+async function initDialplan(scripts: Scripts, ami: Ami) {
 
-    let ami = DongleExtendedClient.localhost().ami;
+    for (let context of Object.keys(scripts)) {
 
-    for( let context of Object.keys(scripts) ){
-
-        for( let extensionPattern of Object.keys(scripts[context]) ){
+        for (let extensionPattern of Object.keys(scripts[context])) {
 
             await ami.dialplanExtensionRemove(extensionPattern, context);
 
@@ -106,7 +101,5 @@ async function initDialplan(scripts: Scripts) {
         await pushExt("Return");
 
     }
-
-
 
 }

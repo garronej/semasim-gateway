@@ -86,9 +86,7 @@ function installService() {
             switch (_a.label) {
                 case 0:
                     node_execpath = process.argv[0];
-                    console.log([
-                        "Now you will be ask to choose the user that will run the service\n",
-                    ].join("").yellow);
+                    console.log("Now you will be ask to choose the user that will run the service\n".yellow);
                     return [4 /*yield*/, _.ask("User? (press enter for root)")];
                 case 1:
                     user = (_a.sent()) || "root";
@@ -101,7 +99,7 @@ function installService() {
                         "After=network.target",
                         "",
                         "[Service]",
-                        "ExecStart=" + node_execpath + " " + modulePath + "/dist/lib/main",
+                        "ExecStart=" + node_execpath + " " + modulePath + "/dist/bin/launcher",
                         "PermissionsStartOnly=true",
                         "WorkingDirectory=" + modulePath,
                         "Restart=always",

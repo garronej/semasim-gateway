@@ -63,9 +63,9 @@ export namespace claimDongle {
 
 }
 
-export namespace wakeUpUserAgent {
+export namespace wakeUpContact {
 
-    export const methodName = "wakeUpUserAgent";
+    export const methodName = "wakeUpContact";
 
     export interface Params {
         contact: Contact;
@@ -93,12 +93,12 @@ export namespace wakeUpUserAgent {
 }
 
 //Here we can send only push infos.
-export namespace forceReRegister {
+export namespace sendPushNotification {
 
-    export const methodName= "forceReRegister";
+    export const methodName= "sendPushNotification";
 
     export interface Params {
-        contact: Contact;
+        ua: Contact.UaEndpoint.Ua;
     }
 
     export interface Response {
@@ -106,12 +106,10 @@ export namespace forceReRegister {
     }
 
     export async function makeCall(
-        contact: Contact
-    ): Promise<Response["isPushNotificationSent"]> {
+        ua: Contact.UaEndpoint.Ua
+    ): Promise<boolean> {
 
-        debug(`call ${methodName} contact:${contact.pretty}`);
-
-        let payload: Params = { contact };
+        let payload: Params = { ua };
 
         let { isPushNotificationSent } = await sendRequest(
             methodName,

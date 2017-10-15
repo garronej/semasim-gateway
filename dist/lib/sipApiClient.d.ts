@@ -1,28 +1,17 @@
 import * as sipLibrary from "../tools/sipLibrary";
-import { typesDef } from "chan-dongle-extended-client";
-import LockedDongle = typesDef.LockedDongle;
-import Phonebook = typesDef.Phonebook;
+import { DongleController as Dc } from "chan-dongle-extended-client";
 export declare namespace isDongleConnected {
     const methodName = "isDongleConnected";
     interface Params {
         imei: string;
     }
-    interface Response {
-        isConnected: boolean;
-        lastConnectionTimestamp: number;
-    }
+    type Response = {
+        isConnected: true;
+    } | {
+        isConnected: false;
+        lastConnection: Date;
+    };
     function makeCall(gatewaySocket: sipLibrary.Socket, imei: string): Promise<Response>;
-}
-export declare namespace doesDongleHasSim {
-    const methodName = "doesDongleHasSim";
-    interface Params {
-        imei: string;
-        last_four_digits_of_iccid: string;
-    }
-    interface Response {
-        value: boolean | "MAYBE";
-    }
-    function makeCall(gatewaySocket: sipLibrary.Socket, imei: string, last_four_digits_of_iccid: string): Promise<Response["value"]>;
 }
 export declare namespace unlockDongle {
     const methodName = "unlockDongle";
@@ -33,27 +22,15 @@ export declare namespace unlockDongle {
         pin_second_try?: string;
     }
     type Response = {
-        dongleFound: true;
-        pinState: LockedDongle["pinState"];
+        status: "STILL LOCKED";
+        pinState: Dc.LockedDongle["sim"]["pinState"];
         tryLeft: number;
     } | {
-        dongleFound: false;
+        status: "ERROR";
+        message: string;
     } | {
-        dongleFound: true;
-        pinState: "READY";
-        iccid: string;
-        number: string | undefined;
-        serviceProvider: string | undefined;
+        status: "SUCCESS";
+        dongle: Dc.ActiveDongle;
     };
     function makeCall(gatewaySocket: sipLibrary.Socket, params: Params): Promise<Response>;
-}
-export declare namespace getSimPhonebook {
-    const methodName = "getSimPhonebook";
-    interface Params {
-        iccid: string;
-    }
-    type Response = Phonebook | {
-        errorMessage: string;
-    };
-    function makeCall(gatewaySocket: sipLibrary.Socket, iccid: string): Promise<Phonebook | undefined>;
 }

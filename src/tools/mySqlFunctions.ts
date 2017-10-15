@@ -67,3 +67,11 @@ function __buildInsertQuery__(
     ];
 
 }
+
+export function smallIntOrNullToBooleanOrUndefined(v: 0 | 1 | null ): boolean | undefined {
+    return (typeof v === "number")?(v === 1):undefined;
+}
+
+export function booleanOrUndefinedToSmallIntOrNull(v: boolean | undefined): 0 | 1 | null {
+    return (typeof v === "boolean")?(v?1:0):null;
+}

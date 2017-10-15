@@ -45,9 +45,7 @@ async function installService() {
 
     const node_execpath = process.argv[0];
 
-    console.log([
-        "Now you will be ask to choose the user that will run the service\n",
-    ].join("").yellow);
+    console.log("Now you will be ask to choose the user that will run the service\n".yellow);
 
     const user = (await _.ask("User? (press enter for root)")) || "root";
 
@@ -59,7 +57,7 @@ async function installService() {
         `After=network.target`,
         ``,
         `[Service]`,
-        `ExecStart=${node_execpath} ${modulePath}/dist/lib/main`,
+        `ExecStart=${node_execpath} ${modulePath}/dist/bin/launcher`,
         `PermissionsStartOnly=true`,
         `WorkingDirectory=${modulePath}`,
         `Restart=always`,

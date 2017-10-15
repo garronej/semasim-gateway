@@ -37,6 +37,30 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var ts_events_extended_1 = require("ts-events-extended");
 var sip = require("./sipLibrary");
+var superJson = require("super-json");
+var JSON;
+(function (JSON) {
+    var myJson = superJson.create({
+        "magic": '#!',
+        "serializers": [
+            superJson.dateSerializer,
+        ]
+    });
+    function stringify(obj) {
+        if (obj === undefined) {
+            return "undefined";
+        }
+        return myJson.stringify([obj]);
+    }
+    JSON.stringify = stringify;
+    function parse(str) {
+        if (str === "undefined") {
+            return undefined;
+        }
+        return myJson.parse(str).pop();
+    }
+    JSON.parse = parse;
+})(JSON || (JSON = {}));
 var ApiMessage;
 (function (ApiMessage) {
     var sipMethod = "INTERNAL";
@@ -123,6 +147,7 @@ exports.errorSendRequest = {
     "sockedCloseBeforeResponse": "Socket has been closed before receiving response"
 };
 function sendRequest(sipSocket, method, params, timeout) {
+    if (timeout === void 0) { timeout = 5 * 60 * 1000; }
     return __awaiter(this, void 0, void 0, function () {
         var sipRequest, actionId, success, sipRequestResponse, error_1;
         return __generator(this, function (_a) {
@@ -138,7 +163,7 @@ function sendRequest(sipSocket, method, params, timeout) {
                 case 1:
                     _a.trys.push([1, 3, , 4]);
                     return [4 /*yield*/, Promise.race([
-                            sipSocket.evtRequest.waitForExtract(function (sipRequestResponse) { return ApiMessage.Response.matchSip(sipRequestResponse, actionId); }, timeout),
+                            sipSocket.evtRequest.attachOnceExtract(function (sipRequestResponse) { return ApiMessage.Response.matchSip(sipRequestResponse, actionId); }, timeout, function () { }),
                             new Promise(function (_, reject) { return sipSocket.evtClose.attachOnce(sipRequest, reject); })
                         ])];
                 case 2:
@@ -146,10 +171,12 @@ function sendRequest(sipSocket, method, params, timeout) {
                     return [3 /*break*/, 4];
                 case 3:
                     error_1 = _a.sent();
-                    if (typeof error_1 === "boolean")
+                    if (typeof error_1 === "boolean") {
                         throw new Error(exports.errorSendRequest.sockedCloseBeforeResponse);
-                    else
+                    }
+                    else {
                         throw new Error(exports.errorSendRequest.timeout);
+                    }
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/, ApiMessage.parsePayload(sipRequestResponse)];
             }

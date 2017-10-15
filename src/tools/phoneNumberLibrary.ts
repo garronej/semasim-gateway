@@ -42,8 +42,7 @@ export function toNationalNumber(number: string, imsi: string): string{
 
         let imsiInfos = getImsiInfos(imsi)!;
 
-        if( !imsiInfos ) 
-            throw new Error();
+        if( !imsiInfos ) throw new Error();
 
         let pn= new PhoneNumber(number, imsiInfos.country_iso);
 
