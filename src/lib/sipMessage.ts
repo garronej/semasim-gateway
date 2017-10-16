@@ -65,12 +65,12 @@ export function sendMessage(
 
         let actionId = Ami.generateUniqueActionId();
 
-        let uri = contact.ps.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
+        let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
         from_number = phone.toNationalNumber(from_number, contact.uaEndpoint.endpoint.sim.imsi);
 
         Dc.getInstance().ami.messageSend(
-            `pjsip:${contact.ps.endpoint}/${uri}`, from_number, actionId
+            `pjsip:${contact.uaEndpoint.endpoint.dongle.imei}/${uri}`, from_number, actionId
         ).catch(amiError => reject(amiError));
 
         evtOutgoingMessage.attachOnce(
@@ -80,8 +80,8 @@ export function sendMessage(
 
                 if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
 
-                sipRequest.uri = contact.ps.uri;
-                sipRequest.headers.to = { "name": undefined, "uri": contact.ps.uri, "params": {} };
+                sipRequest.uri = contact.uri;
+                sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
 
                 delete sipRequest.headers.contact;
 

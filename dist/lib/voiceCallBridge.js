@@ -177,8 +177,8 @@ function getDialString(endpoint) {
                             var dialStringSplit = [];
                             try {
                                 for (var contacts_2 = __values(contacts), contacts_2_1 = contacts_2.next(); !contacts_2_1.done; contacts_2_1 = contacts_2.next()) {
-                                    var ps = contacts_2_1.value.ps;
-                                    dialStringSplit.push("PJSIP/" + ps.endpoint + "/" + ps.uri);
+                                    var contact = contacts_2_1.value;
+                                    dialStringSplit.push("PJSIP/" + contact.uaEndpoint.endpoint.dongle.imei + "/" + contact.uri);
                                 }
                             }
                             catch (e_2_1) { e_2 = { error: e_2_1 }; }

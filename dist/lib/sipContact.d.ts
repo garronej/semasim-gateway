@@ -6,14 +6,21 @@ export interface PsContact {
     user_agent: string;
 }
 export declare namespace PsContact {
-    function buildUserAgentFieldValue(ua_instance: string, ua_software: string): string;
+    type Wrapped = {
+        ua_instance: string;
+        ua_software: string;
+        connectionId: number;
+    };
+    function buildUserAgentFieldValue(wrap: Wrapped): string;
+    function parseWrapped(user_agent: string): Wrapped;
     function buildContact(psContact: PsContact): Promise<Contact>;
 }
 export interface Contact {
-    readonly ps: PsContact;
+    readonly id: string;
+    readonly uri: string;
+    readonly path: string;
+    readonly connectionId: number;
     readonly uaEndpoint: Contact.UaEndpoint;
-    readonly flowToken: string;
-    readonly pretty: string;
 }
 export declare namespace Contact {
     interface UaEndpointRef {
@@ -59,7 +66,6 @@ export declare namespace Contact {
                 readonly imei: string;
             }
             interface Dongle extends DongleRef {
-                readonly lastConnectionDate: Date;
                 readonly isVoiceEnabled?: boolean;
             }
             interface SimRef {

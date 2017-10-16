@@ -308,12 +308,12 @@ var asterisk;
     function deleteContact(contact) {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            var timerId = setTimeout(function () { return reject(new Error("Delete contact " + contact.pretty + " timeout error")); }, 3000);
+            var timerId = setTimeout(function () { return reject(new Error("Delete contact timeout error")); }, 3000);
             var queryPromise = (function () { return __awaiter(_this, void 0, void 0, function () {
                 var affectedRows, isDeleted;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, query("DELETE FROM ps_contacts WHERE id=?", [contact.ps.id])];
+                        case 0: return [4 /*yield*/, query("DELETE FROM ps_contacts WHERE id=?", [contact.id])];
                         case 1:
                             affectedRows = (_a.sent()).affectedRows;
                             isDeleted = affectedRows ? true : false;
@@ -327,8 +327,8 @@ var asterisk;
                 });
             }); })();
             getEvtExpiredContact().attachOnceExtract(function (_a) {
-                var ps = _a.ps;
-                return ps.id === contact.ps.id;
+                var id = _a.id;
+                return id === contact.id;
             }, timerId, function (deletedContact) { return queryPromise.then(function () {
                 clearTimeout(timerId);
                 resolve(true);
@@ -620,7 +620,6 @@ var semasim;
                         sql = [
                             "SELECT",
                             "dongle.imei,",
-                            "dongle.last_connection_date,",
                             "dongle.is_voice_enabled,",
                             "sim.iccid,",
                             "sim.imsi",
@@ -645,7 +644,6 @@ var semasim;
                                 out[out.length] = {
                                     "dongle": {
                                         "imei": row["imei"],
-                                        "lastConnectionDate": new Date(row["last_connection_date"]),
                                         "isVoiceEnabled": f.smallIntOrNullToBooleanOrUndefined(row.is_voice_enabled)
                                     },
                                     "sim": {
@@ -804,7 +802,6 @@ var semasim;
                                 "ua.push_token,",
                                 "ua.software,",
                                 "dongle.imei,",
-                                "dongle.last_connection_date,",
                                 "dongle.is_voice_enabled,",
                                 "sim.iccid,",
                                 "sim.imsi",
@@ -833,7 +830,6 @@ var semasim;
                                         "endpoint": {
                                             "dongle": {
                                                 "imei": row["imei"],
-                                                "lastConnectionDate": new Date(row["last_connection_date"]),
                                                 "isVoiceEnabled": f.smallIntOrNullToBooleanOrUndefined(row["is_voice_enabled"])
                                             },
                                             "sim": {

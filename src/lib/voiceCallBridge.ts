@@ -146,9 +146,9 @@ function getDialString(
 
                     let dialStringSplit: string[] = [];
 
-                    for (let { ps } of contacts){
+                    for (let contact of contacts){
 
-                        dialStringSplit.push(`PJSIP/${ps.endpoint}/${ps.uri}`);
+                        dialStringSplit.push(`PJSIP/${contact.uaEndpoint.endpoint.dongle.imei}/${contact.uri}`);
 
                     }
 

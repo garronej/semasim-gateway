@@ -378,7 +378,7 @@ async function testDbSemasim() {
     console.assert((await db.semasim.MessageTowardGsm.getUnsent(endpoint)).length === 1);
 
     let to_number2 = "123446444";
-    let t2 = (new Array(1000)).fill("èç(à$&àààààààà@d").join("-");
+    let t2 = (new Array(1000)).fill("èç(à$&à@d").join("-");
 
     await db.semasim.MessageTowardGsm.add(to_number2, t2, uaEndpoint2);
 
@@ -390,7 +390,6 @@ async function testDbSemasim() {
         console.assert(m1.to_number === to_number1);
         console.assert(Contact.UaEndpoint.areSame(m1.uaEndpoint, uaEndpoint1));
         console.assert(m1.uaEndpoint.endpoint.dongle.isVoiceEnabled === endpoint.dongle.isVoiceEnabled);
-        console.assert(m1.uaEndpoint.endpoint.dongle.lastConnectionDate.getTime() === endpoint.dongle.lastConnectionDate.getTime());
         console.assert(m1.uaEndpoint.endpoint.sim.imsi === endpoint.sim.imsi);
         console.assert(m1.uaEndpoint.ua.pushToken!.token === uaEndpoint1.ua.pushToken!.token);
         console.assert(m1.uaEndpoint.ua.pushToken!.type === uaEndpoint1.ua.pushToken!.type);
@@ -399,7 +398,6 @@ async function testDbSemasim() {
         console.assert(m2.to_number === to_number2);
         console.assert(Contact.UaEndpoint.areSame(m2.uaEndpoint, uaEndpoint2));
         console.assert(m2.uaEndpoint.endpoint.dongle.isVoiceEnabled === endpoint.dongle.isVoiceEnabled);
-        console.assert(m2.uaEndpoint.endpoint.dongle.lastConnectionDate.getTime() === endpoint.dongle.lastConnectionDate.getTime());
         console.assert(m2.uaEndpoint.endpoint.sim.imsi === endpoint.sim.imsi);
         console.assert(m2.uaEndpoint.ua.pushToken === uaEndpoint2.ua.pushToken);
 
@@ -467,11 +465,11 @@ async function testDbAsterisk() {
 
     console.assert(dongle.sim.iccid === await db.asterisk.getIccidOfEndpoint(dongle.imei));
 
-    let flowToken= "flowToken1";
+    let connectionId= Date.now();
 
     let ua: Contact.UaEndpoint.Ua= {
-        "instance": "instance1",
-        "software": "software1",
+        "instance": "instance1__________________________________________",
+        "software": "software1__________________________________________________________",
         "pushToken": {
             "type": "type1",
             "token": "token1"
@@ -481,25 +479,27 @@ async function testDbAsterisk() {
     let psContact: PsContact = {
         "endpoint": dongle.imei,
         "id": "contactId",
-        "user_agent": PsContact.buildUserAgentFieldValue(ua.instance, ua.software),
+        "user_agent": PsContact.buildUserAgentFieldValue({
+            connectionId,
+            "ua_instance": ua.instance,
+            "ua_software": ua.software
+        }),
         "uri": `sip:semasim.com;pn-type=${ua.pushToken!.type};pn-tok=${ua.pushToken!.token}`,
-        "path": `<sip:0.0.0.1:666;lr>, <sip:0.0.0.0:333;lr;flowtoken=${flowToken}>`
+        "path": `<sip:0.0.0.1:666;lr>, <sip:0.0.0.0:333;lr>`
     };
 
     let validateContact = function(
         contact: Contact, 
         psContact: PsContact, 
         ua: Contact.UaEndpoint.Ua, 
-        flowToken: string
+        connectionId: number
     ) {
 
-        console.assert(contact.ps.endpoint === psContact.endpoint);
-        console.assert(contact.ps.id === psContact.id);
-        console.assert(contact.ps.user_agent === psContact.user_agent);
-        console.assert(contact.ps.uri === psContact.uri);
-        console.assert(contact.ps.path === psContact.path);
+        console.assert(contact.id === psContact.id);
+        console.assert(contact.uri === psContact.uri);
+        console.assert(contact.path === psContact.path);
 
-        console.assert(contact.flowToken === flowToken);
+        console.assert(contact.connectionId === connectionId);
 
         console.assert(Contact.UaEndpoint.Endpoint.areSame(contact.uaEndpoint.endpoint, endpoint));
         console.assert(contact.uaEndpoint.endpoint.dongle.isVoiceEnabled === endpoint.dongle.isVoiceEnabled);
@@ -516,7 +516,7 @@ async function testDbAsterisk() {
 
     let pr: Promise<any> = db.asterisk.getEvtNewContact().attachOnce(
         3001,
-        contact => validateContact(contact, psContact, ua, flowToken)
+        contact => validateContact(contact, psContact, ua, connectionId)
     );
 
     await (async () => {
@@ -537,13 +537,13 @@ async function testDbAsterisk() {
 
         let [contact] = contacts;
 
-        validateContact(contact, psContact, ua, flowToken);
+        validateContact(contact, psContact, ua, connectionId);
 
     })();
 
     pr = db.asterisk.getEvtExpiredContact().attachOnce(
         3002,
-        contact => validateContact(contact, psContact, ua, flowToken)
+        contact => validateContact(contact, psContact, ua, connectionId)
     );
 
     await db.asterisk.query("DELETE FROM ps_contacts WHERE id=?", [psContact.id]);
@@ -577,11 +577,11 @@ async function testDbAsterisk() {
 
     console.assert((await db.asterisk.getContacts(endpoint)).length === 0);
 
-    let flowToken2 = "flowToken2";
+    let connectionId2 = Date.now();
 
     let ua2: Contact.UaEndpoint.Ua = {
-        "instance": "instance2",
-        "software": "software2",
+        "instance": "instance2____________________________________",
+        "software": "software2______________________________________________________",
         "pushToken": {
             "type": "type2",
             "token": "token2"
@@ -591,9 +591,13 @@ async function testDbAsterisk() {
     let psContact2: PsContact = {
         "endpoint": dongle.imei,
         "id": "contactId2",
-        "user_agent": PsContact.buildUserAgentFieldValue(ua2.instance, ua2.software),
+        "user_agent": PsContact.buildUserAgentFieldValue({
+            "connectionId": connectionId2,
+            "ua_instance": ua2.instance,
+            "ua_software": ua2.software
+        }),
         "uri": `sip:semasim.com;pn-type=${ua2.pushToken!.type};pn-tok=${ua2.pushToken!.token}`,
-        "path": `<sip:0.0.0.1:666;lr>, <sip:0.0.0.0:333;lr;flowtoken=${flowToken2}>`
+        "path": `<sip:0.0.0.1:666;lr>, <sip:0.0.0.0:333;lr>`
     };
 
     await (async () => {
@@ -616,15 +620,15 @@ async function testDbAsterisk() {
 
     let [contact1, contact2] = await db.asterisk.getContacts(endpoint);
 
-    if (contact1.ps.id === psContact.id) {
+    if (contact1.id === psContact.id) {
 
-        validateContact(contact1, psContact, ua, flowToken);
-        validateContact(contact2, psContact2, ua2, flowToken2);
+        validateContact(contact1, psContact, ua, connectionId);
+        validateContact(contact2, psContact2, ua2, connectionId2);
 
     } else {
 
-        validateContact(contact2, psContact, ua, flowToken);
-        validateContact(contact1, psContact2, ua2, flowToken2);
+        validateContact(contact2, psContact, ua, connectionId);
+        validateContact(contact1, psContact2, ua2, connectionId2);
 
     }
 

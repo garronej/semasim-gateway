@@ -34,16 +34,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -59,6 +49,16 @@ var __read = (this && this.__read) || function (o, n) {
         finally { if (e) throw e.error; }
     }
     return ar;
+};
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var tls = require("tls");
@@ -98,44 +98,94 @@ function getBackendSocket() {
     });
 }
 exports.getBackendSocket = getBackendSocket;
-var asteriskSockets = new Map();
-asteriskSockets.set = function set(flowToken, socket) {
-    var self = this;
-    socket.evtClose.attachOnce(function () {
-        return Map.prototype.set.call(self, flowToken, null);
-    });
-    return Map.prototype.set.call(self, flowToken, socket);
-};
-var mapAstSockContact = new trackable_map_1.TrackableMap();
-//Parfois on a old contact et contact en même temps dans la db
-//si on wakeUp un contact qui a ete overwrite ou est entrain de l'être
-//alors le backend vas faire un qualify qui vas fail et enchainer avec une push
-//ce qui vas forcer le ré enregistrement.
-//Normalement quand on fait getContacts on a jamais un doublon pk delete contact est appeler avant
-//syncronement avent que des trigers soit declancher pour le nvx contact.
-mapAstSockContact.set = function set(socket, contact) {
-    debug("associate contact to asteriskSocket: " + contact.flowToken);
-    var self = this;
-    var boundTo = [];
-    socket.evtClose.attachOnce(function () {
-        debug("closed asteriskSocket: " + contact.flowToken);
-        db.asterisk.getEvtExpiredContact().detach(boundTo),
-            self.delete(socket);
-        db.asterisk.deleteContact(contact);
-    });
-    db.asterisk.getEvtExpiredContact().attachOnce(function (expiredContact) { return expiredContact.ps.id === contact.ps.id; }, boundTo, function () {
-        debug("expired contact " + contact.flowToken);
-        socket.destroy();
-        sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
-    });
-    var oldContact = self.find(function (oldContact) { return sipContact_1.Contact.UaEndpoint.areSame(oldContact.uaEndpoint, contact.uaEndpoint); });
-    if (oldContact) {
-        debug("uaInstance re-registered, with new contact, overwritten contact: " + oldContact.pretty);
-        var oldSocket = self.keyOf(oldContact);
-        oldSocket.destroy();
+var asteriskSockets;
+(function (asteriskSockets) {
+    var map = new Map();
+    var mapAstSockContact = new trackable_map_1.TrackableMap();
+    function set(connectionId, imei, socket) {
+        var key = "" + connectionId + imei;
+        socket.evtClose.attachOnce(function () { return map.set(key, null); });
+        map.set(key, socket);
+        db.asterisk.getEvtNewContact().attachOncePrepend(function (contact) { return (contact.connectionId === connectionId &&
+            contact.uaEndpoint.endpoint.dongle.imei === imei); }, 6000, function (contact) { return mapAstSockContact.set(socket, contact); }).catch(function () { return socket.destroy(); });
     }
-    return trackable_map_1.TrackableMap.prototype.set.call(self, socket, contact);
-};
+    asteriskSockets.set = set;
+    function get(connectionId, imei) {
+        return map.get("" + connectionId + imei);
+    }
+    asteriskSockets.get = get;
+    function getContact(socket) {
+        return __awaiter(this, void 0, void 0, function () {
+            var contact, boundTo_1, _a, contact_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        contact = mapAstSockContact.get(socket);
+                        if (!contact) return [3 /*break*/, 1];
+                        return [2 /*return*/, contact];
+                    case 1:
+                        boundTo_1 = [];
+                        socket.evtClose.attachOnce(boundTo_1, function () {
+                            return mapAstSockContact.evtSet.detach(boundTo_1);
+                        });
+                        return [4 /*yield*/, mapAstSockContact.evtSet.attachOnce(function (_a) {
+                                var _b = __read(_a, 2), _ = _b[0], s = _b[1];
+                                return s === socket;
+                            }, boundTo_1, function () { })];
+                    case 2:
+                        _a = __read.apply(void 0, [_b.sent(), 1]), contact_1 = _a[0];
+                        socket.evtClose.detach(boundTo_1);
+                        return [2 /*return*/, contact_1];
+                }
+            });
+        });
+    }
+    asteriskSockets.getContact = getContact;
+    function flush() {
+        try {
+            for (var _a = __values(map.values()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var socket = _b.value;
+                if (!socket)
+                    continue;
+                socket.destroy();
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        var e_1, _c;
+    }
+    asteriskSockets.flush = flush;
+    //Parfois on a old contact et contact en même temps dans la db
+    //si on wakeUp un contact qui a ete overwrite ou est entrain de l'être
+    //alors le backend vas faire un qualify qui vas fail et enchainer avec une push
+    //ce qui vas forcer le ré enregistrement.
+    //Normalement quand on fait getContacts on a jamais un doublon pk delete contact est appeler avant
+    //syncronement avent que des trigers soit declancher pour le nvx contact.
+    mapAstSockContact.set = function set(socket, contact) {
+        var self = this;
+        var boundTo = [];
+        socket.evtClose.attachOnce(function () {
+            db.asterisk.getEvtExpiredContact().detach(boundTo),
+                self.delete(socket);
+            db.asterisk.deleteContact(contact);
+        });
+        db.asterisk.getEvtExpiredContact().attachOnce(function (expiredContact) { return expiredContact.id === contact.id; }, boundTo, function () {
+            socket.destroy();
+            sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
+        });
+        var oldContact = self.find(function (oldContact) { return sipContact_1.Contact.UaEndpoint.areSame(oldContact.uaEndpoint, contact.uaEndpoint); });
+        if (oldContact) {
+            var oldSocket = self.keyOf(oldContact);
+            oldSocket.destroy();
+        }
+        return trackable_map_1.TrackableMap.prototype.set.call(self, socket, contact);
+    };
+})(asteriskSockets || (asteriskSockets = {}));
 var localIp = "";
 function start() {
     return __awaiter(this, void 0, void 0, function () {
@@ -173,7 +223,7 @@ function start() {
                     */
                     backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
                         var _this = this;
-                        var handledUa, _loop_1, _a, _b, _c, imei, e_1_1, e_1, _d;
+                        var handledUa, _loop_1, _a, _b, _c, imei, e_2_1, e_2, _d;
                         return __generator(this, function (_e) {
                             switch (_e.label) {
                                 case 0:
@@ -182,7 +232,7 @@ function start() {
                                     handledUa = new Set();
                                     _loop_1 = function (imei) {
                                         sipApiBackend.claimDongle.makeCall(imei).then(function (isGranted) { return __awaiter(_this, void 0, void 0, function () {
-                                            var uas, uas_1, uas_1_1, ua, e_2, _a;
+                                            var uas, uas_1, uas_1_1, ua, e_3, _a;
                                             return __generator(this, function (_b) {
                                                 switch (_b.label) {
                                                     case 0:
@@ -200,12 +250,12 @@ function start() {
                                                                 handledUa.add(ua.instance);
                                                             }
                                                         }
-                                                        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                                                        catch (e_3_1) { e_3 = { error: e_3_1 }; }
                                                         finally {
                                                             try {
                                                                 if (uas_1_1 && !uas_1_1.done && (_a = uas_1.return)) _a.call(uas_1);
                                                             }
-                                                            finally { if (e_2) throw e_2.error; }
+                                                            finally { if (e_3) throw e_3.error; }
                                                         }
                                                         return [2 /*return*/];
                                                 }
@@ -229,14 +279,14 @@ function start() {
                                     return [3 /*break*/, 3];
                                 case 5: return [3 /*break*/, 8];
                                 case 6:
-                                    e_1_1 = _e.sent();
-                                    e_1 = { error: e_1_1 };
+                                    e_2_1 = _e.sent();
+                                    e_2 = { error: e_2_1 };
                                     return [3 /*break*/, 8];
                                 case 7:
                                     try {
                                         if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
                                     }
-                                    finally { if (e_1) throw e_1.error; }
+                                    finally { if (e_2) throw e_2.error; }
                                     return [7 /*endfinally*/];
                                 case 8: return [2 /*return*/];
                             }
@@ -244,19 +294,19 @@ function start() {
                     }); });
                     backendSocket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {
                         var _this = this;
-                        var flowToken, asteriskSocket, branch;
+                        var connectionId, imei, asteriskSocket, branch;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    flowToken = sipRequest.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                                    asteriskSocket = asteriskSockets.get(flowToken);
+                                    connectionId = parseInt(sipRequest.headers.via[0].params["connection_id"]);
+                                    imei = sipLibrary.parseUri(sipRequest.headers.from.uri).user;
+                                    asteriskSocket = asteriskSockets.get(connectionId, imei);
                                     if (asteriskSocket === undefined) {
-                                        asteriskSocket = createAsteriskSocket(flowToken, backendSocket);
+                                        asteriskSocket = createAsteriskSocket(connectionId, imei, backendSocket);
                                     }
                                     else if (asteriskSocket === null) {
                                         return [2 /*return*/];
                                     }
-                                    debug(("(backend) " + sipRequest.method + " " + flowToken.split("-")[1]).yellow);
                                     if (!!asteriskSocket.evtConnect.postCount) return [3 /*break*/, 2];
                                     return [4 /*yield*/, asteriskSocket.evtConnect.waitFor()];
                                 case 1:
@@ -264,7 +314,11 @@ function start() {
                                     _a.label = 2;
                                 case 2:
                                     if (sipRequest.method === "REGISTER") {
-                                        sipRequest.headers["user-agent"] = sipContact_1.PsContact.buildUserAgentFieldValue(sipRequest.headers.contact[0].params["+sip.instance"], sipRequest.headers["user-agent"]);
+                                        sipRequest.headers["user-agent"] = sipContact_1.PsContact.buildUserAgentFieldValue({
+                                            connectionId: connectionId,
+                                            "ua_instance": sipRequest.headers.contact[0].params["+sip.instance"],
+                                            "ua_software": sipRequest.headers["user-agent"]
+                                        });
                                         asteriskSocket.addPathHeader(sipRequest);
                                     }
                                     else {
@@ -283,17 +337,9 @@ function start() {
                                                     case 0:
                                                         if (sipResponse.status !== 202)
                                                             return [2 /*return*/];
-                                                        fromContact = mapAstSockContact.get(asteriskSocket);
-                                                        if (!!fromContact) return [3 /*break*/, 2];
-                                                        return [4 /*yield*/, mapAstSockContact.evtSet.waitFor(function (_a) {
-                                                                var _b = __read(_a, 2), _ = _b[0], socket = _b[1];
-                                                                return socket === asteriskSocket;
-                                                            })];
+                                                        return [4 /*yield*/, asteriskSockets.getContact(asteriskSocket)];
                                                     case 1:
-                                                        //TODO: test, should not cause memory leak
-                                                        fromContact = (_a.sent())[0];
-                                                        _a.label = 2;
-                                                    case 2:
+                                                        fromContact = _a.sent();
                                                         exports.evtIncomingMessage.post({ fromContact: fromContact, sipRequest: sipRequest });
                                                         return [2 /*return*/];
                                                 }
@@ -306,9 +352,9 @@ function start() {
                         });
                     }); });
                     backendSocket.evtResponse.attach(function (sipResponse) {
-                        var flowToken = sipResponse.headers.via[0].params[_constants_1.c.shared.flowTokenKey];
-                        debug(("(backend): " + sipResponse.status + " " + sipResponse.reason).yellow);
-                        var asteriskSocket = asteriskSockets.get(flowToken);
+                        var connectionId = parseInt(sipResponse.headers.via[0].params["connection_id"]);
+                        var imei = sipLibrary.parseUri(sipResponse.headers.to.uri).user;
+                        var asteriskSocket = asteriskSockets.get(connectionId, imei);
                         if (!asteriskSocket)
                             return;
                         asteriskSocket.rewriteRecordRoute(sipResponse);
@@ -316,33 +362,19 @@ function start() {
                         asteriskSocket.write(sipResponse);
                     });
                     backendSocket.evtClose.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
-                        var _a, _b, asteriskSocket, delay, e_3, _c;
-                        return __generator(this, function (_d) {
-                            switch (_d.label) {
+                        var delay;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
                                 case 0:
                                     debug("Backend socket closed, waiting and restarting");
-                                    try {
-                                        for (_a = __values(asteriskSockets.values()), _b = _a.next(); !_b.done; _b = _a.next()) {
-                                            asteriskSocket = _b.value;
-                                            if (!asteriskSocket)
-                                                continue;
-                                            asteriskSocket.destroy();
-                                        }
-                                    }
-                                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
-                                    finally {
-                                        try {
-                                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-                                        }
-                                        finally { if (e_3) throw e_3.error; }
-                                    }
+                                    asteriskSockets.flush();
                                     delay = (function getRandomArbitrary(min, max) {
                                         return Math.floor(Math.random() * (max - min) + min);
                                     })(15000, 120000);
                                     debug("Delay before restarting: " + delay + "ms");
                                     return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, delay); })];
                                 case 1:
-                                    _d.sent();
+                                    _a.sent();
                                     start();
                                     return [2 /*return*/];
                             }
@@ -354,11 +386,9 @@ function start() {
     });
 }
 exports.start = start;
-function createAsteriskSocket(flowToken, backendSocket) {
+function createAsteriskSocket(connectionId, imei, backendSocket) {
     var asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
-    debug("New asterisk socket flowToken " + flowToken);
-    asteriskSockets.set(flowToken, asteriskSocket);
-    db.asterisk.getEvtNewContact().attachOncePrepend(function (contact) { return contact.flowToken === flowToken; }, 6000, function (contact) { return mapAstSockContact.set(asteriskSocket, contact); }).catch(function () { return asteriskSocket.destroy(); });
+    asteriskSockets.set(connectionId, imei, asteriskSocket);
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
         console.log("From Asterisk:\n", sipLibrary.stringify(sipPacket).grey, "\n\n")
@@ -378,10 +408,7 @@ function createAsteriskSocket(flowToken, backendSocket) {
     asteriskSocket.evtRequest.attach(function (sipRequest) {
         if (backendSocket.evtClose.postCount)
             return;
-        debug(("(asterisk " + flowToken + ") " + sipRequest.method).cyan);
-        var extraParamsFlowToken = {};
-        extraParamsFlowToken[_constants_1.c.shared.flowTokenKey] = flowToken;
-        var branch = backendSocket.addViaHeader(sipRequest, extraParamsFlowToken);
+        var branch = backendSocket.addViaHeader(sipRequest, { "connection_id": "" + connectionId });
         backendSocket.shiftRouteAndAddRecordRoute(sipRequest, informativeHostname);
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
             var prSipResponse = backendSocket.evtResponse.attachOncePrepend(function (_a) {
@@ -395,7 +422,6 @@ function createAsteriskSocket(flowToken, backendSocket) {
     asteriskSocket.evtResponse.attach(function (sipResponse) {
         if (backendSocket.evtClose.postCount)
             return;
-        debug(("(asterisk " + flowToken + "): " + sipResponse.status + " " + sipResponse.reason).cyan);
         backendSocket.rewriteRecordRoute(sipResponse, informativeHostname);
         sipResponse.headers.via.shift();
         backendSocket.write(sipResponse);

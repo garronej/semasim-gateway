@@ -1,4 +1,3 @@
-import { Ami } from "chan-dongle-extended-client";
 import { SyncEvent } from "ts-events-extended";
 import * as runExclusive from "run-exclusive";
 import * as sipLibrary from "../tools/sipLibrary";
@@ -20,31 +19,29 @@ export interface PsContact {
 
 export namespace PsContact {
 
+    export type Wrapped= {
+        ua_instance: string;
+        ua_software: string;
+        connectionId: number;
+    }
+
     export function buildUserAgentFieldValue(
-        ua_instance: string,
-        ua_software: string
+        wrap: Wrapped
     ): string {
-        let wrap = { ua_instance, ua_software };
-        return Ami.b64.enc(JSON.stringify(wrap));
+        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
     }
 
-    function decodeUserAgentFieldValue(psContact: PsContact): {
-        ua_instance: string,
-        ua_software: string
-    } {
-        return JSON.parse(Ami.b64.dec(psContact.user_agent));
+    export function parseWrapped(
+        user_agent: string
+    ): Wrapped {
+        return JSON.parse((new Buffer(user_agent, "base64")).toString("utf8"));
     }
-
-    function readFlowToken(psContact: PsContact): string {
-        return sipLibrary.parsePath(psContact.path).pop()!.uri.params[c.shared.flowTokenKey]!;
-    }
-
 
     function readPushNotification(
-        psContact: PsContact
+        uri: string
     ): Contact.UaEndpoint.Ua.PushToken | undefined {
 
-        let { params } = sipLibrary.parseUri(psContact.uri);
+        let { params } = sipLibrary.parseUri(uri);
 
         let type = params["pn-type"];
         let token = params["pn-tok"];
@@ -55,33 +52,29 @@ export namespace PsContact {
 
     }
 
-
     export async function buildContact(psContact: PsContact): Promise<Contact> {
 
-        psContact.uri = psContact.uri.replace(/\^3B/g, ";");
-        psContact.path = psContact.path.replace(/\^3B/g, ";");
+        let uri = psContact.uri.replace(/\^3B/g, ";");
+        let imei= psContact.endpoint;
 
-        let { ua_instance, ua_software } = decodeUserAgentFieldValue(psContact);
+        let { ua_instance, ua_software, connectionId } = parseWrapped(psContact.user_agent);
 
         return {
-            "ps": psContact,
+            "id": psContact.id,
+            uri, 
+            "path": psContact.path.replace(/\^3B/g, ";"),
+            connectionId,
             "uaEndpoint": {
                 "ua": {
                     "instance": ua_instance,
                     "software": ua_software,
-                    "pushToken": readPushNotification(psContact)
+                    "pushToken": readPushNotification(uri)
                 },
                 "endpoint": await db.semasim.getEndpoint({ 
-                    "dongle": { 
-                        "imei": psContact.endpoint 
-                    }, 
-                    "sim": { 
-                        "iccid": await db.asterisk.getIccidOfEndpoint(psContact.endpoint)
-                    }
+                    "dongle": { imei }, 
+                    "sim": { "iccid": await db.asterisk.getIccidOfEndpoint(imei) }
                 })
-            },
-            "flowToken": readFlowToken(psContact),
-            "pretty": `flowToken: ${readFlowToken(psContact)}`
+            }
         };
 
     }
@@ -91,10 +84,11 @@ export namespace PsContact {
 
 
 export interface Contact {
-    readonly ps: PsContact;
+    readonly id: string;
+    readonly uri: string;
+    readonly path: string;
+    readonly connectionId: number;
     readonly uaEndpoint: Contact.UaEndpoint;
-    readonly flowToken: string;
-    readonly pretty: string;
 }
 
 export namespace Contact {
@@ -199,7 +193,6 @@ export namespace Contact {
             }
 
             export interface Dongle extends DongleRef {
-                readonly lastConnectionDate: Date;
                 readonly isVoiceEnabled?: boolean;
             }
 

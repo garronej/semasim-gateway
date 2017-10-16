@@ -35,27 +35,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var sipLibrary = require("../tools/sipLibrary");
 var db = require("./db");
-var _constants_1 = require("./_constants");
 var _debug = require("debug");
 var debug = _debug("_sipContact");
 var PsContact;
 (function (PsContact) {
-    function buildUserAgentFieldValue(ua_instance, ua_software) {
-        var wrap = { ua_instance: ua_instance, ua_software: ua_software };
-        return chan_dongle_extended_client_1.Ami.b64.enc(JSON.stringify(wrap));
+    function buildUserAgentFieldValue(wrap) {
+        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
     }
     PsContact.buildUserAgentFieldValue = buildUserAgentFieldValue;
-    function decodeUserAgentFieldValue(psContact) {
-        return JSON.parse(chan_dongle_extended_client_1.Ami.b64.dec(psContact.user_agent));
+    function parseWrapped(user_agent) {
+        return JSON.parse((new Buffer(user_agent, "base64")).toString("utf8"));
     }
-    function readFlowToken(psContact) {
-        return sipLibrary.parsePath(psContact.path).pop().uri.params[_constants_1.c.shared.flowTokenKey];
-    }
-    function readPushNotification(psContact) {
-        var params = sipLibrary.parseUri(psContact.uri).params;
+    PsContact.parseWrapped = parseWrapped;
+    function readPushNotification(uri) {
+        var params = sipLibrary.parseUri(uri).params;
         var type = params["pn-type"];
         var token = params["pn-tok"];
         if (type === null || token === null)
@@ -64,42 +59,40 @@ var PsContact;
     }
     function buildContact(psContact) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, ua_instance, ua_software, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+            var uri, imei, _a, ua_instance, ua_software, connectionId, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
             return __generator(this, function (_m) {
                 switch (_m.label) {
                     case 0:
-                        psContact.uri = psContact.uri.replace(/\^3B/g, ";");
-                        psContact.path = psContact.path.replace(/\^3B/g, ";");
-                        _a = decodeUserAgentFieldValue(psContact), ua_instance = _a.ua_instance, ua_software = _a.ua_software;
+                        uri = psContact.uri.replace(/\^3B/g, ";");
+                        imei = psContact.endpoint;
+                        _a = parseWrapped(psContact.user_agent), ua_instance = _a.ua_instance, ua_software = _a.ua_software, connectionId = _a.connectionId;
                         _b = {
-                            "ps": psContact
+                            "id": psContact.id,
+                            uri: uri,
+                            "path": psContact.path.replace(/\^3B/g, ";"),
+                            connectionId: connectionId
                         };
                         _c = "uaEndpoint";
                         _d = {
                             "ua": {
                                 "instance": ua_instance,
                                 "software": ua_software,
-                                "pushToken": readPushNotification(psContact)
+                                "pushToken": readPushNotification(uri)
                             }
                         };
                         _e = "endpoint";
                         _g = (_f = db.semasim).getEndpoint;
                         _h = {
-                            "dongle": {
-                                "imei": psContact.endpoint
-                            }
+                            "dongle": { imei: imei }
                         };
                         _j = "sim";
                         _k = {};
                         _l = "iccid";
-                        return [4 /*yield*/, db.asterisk.getIccidOfEndpoint(psContact.endpoint)];
-                    case 1: return [4 /*yield*/, _g.apply(_f, [(_h[_j] = (_k[_l] = _m.sent(),
-                                _k),
+                        return [4 /*yield*/, db.asterisk.getIccidOfEndpoint(imei)];
+                    case 1: return [4 /*yield*/, _g.apply(_f, [(_h[_j] = (_k[_l] = _m.sent(), _k),
                                 _h)])];
                     case 2: return [2 /*return*/, (_b[_c] = (_d[_e] = _m.sent(),
                             _d),
-                            _b["flowToken"] = readFlowToken(psContact),
-                            _b["pretty"] = "flowToken: " + readFlowToken(psContact),
                             _b)];
                 }
             });

@@ -180,14 +180,14 @@ export namespace asterisk {
         return new Promise<boolean>((resolve, reject) => {
 
             let timerId = setTimeout(
-                () => reject(new Error(`Delete contact ${contact.pretty} timeout error`)),
+                () => reject(new Error(`Delete contact timeout error`)),
                 3000
             );
 
             let queryPromise = (async () => {
 
                 let { affectedRows } = await query(
-                    "DELETE FROM ps_contacts WHERE id=?", [contact.ps.id]
+                    "DELETE FROM ps_contacts WHERE id=?", [contact.id]
                 );
 
                 let isDeleted = affectedRows ? true : false;
@@ -201,7 +201,7 @@ export namespace asterisk {
             })();
 
             getEvtExpiredContact().attachOnceExtract(
-                ({ ps }) => ps.id === contact.ps.id,
+                ({ id }) => id === contact.id,
                 timerId,
                 deletedContact => queryPromise.then(() => {
                     clearTimeout(timerId);
@@ -495,7 +495,6 @@ export namespace semasim {
         let sql = [
             "SELECT",
             "dongle.imei,",
-            "dongle.last_connection_date,",
             "dongle.is_voice_enabled,",
             "sim.iccid,",
             "sim.imsi",
@@ -526,7 +525,6 @@ export namespace semasim {
             out[out.length] = {
                 "dongle": {
                     "imei": row["imei"],
-                    "lastConnectionDate": new Date(row["last_connection_date"]),
                     "isVoiceEnabled": f.smallIntOrNullToBooleanOrUndefined(row.is_voice_enabled)
                 },
                 "sim": {
@@ -725,7 +723,6 @@ export namespace semasim {
                 `ua.push_token,`,
                 `ua.software,`,
                 `dongle.imei,`,
-                `dongle.last_connection_date,`,
                 `dongle.is_voice_enabled,`,
                 `sim.iccid,`,
                 `sim.imsi`,
@@ -757,7 +754,6 @@ export namespace semasim {
                         "endpoint": {
                             "dongle": {
                                 "imei": row["imei"],
-                                "lastConnectionDate": new Date(row["last_connection_date"]),
                                 "isVoiceEnabled": f.smallIntOrNullToBooleanOrUndefined(row["is_voice_enabled"])
                             },
                             "sim": {

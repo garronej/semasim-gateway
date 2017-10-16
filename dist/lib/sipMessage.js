@@ -88,9 +88,9 @@ exports.getEvtMessage = getEvtMessage;
 function sendMessage(contact, from_number, headers, text, from_number_sim_name) {
     return new Promise(function (resolve, reject) {
         var actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
-        var uri = contact.ps.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
+        var uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
         from_number = phone.toNationalNumber(from_number, contact.uaEndpoint.endpoint.sim.imsi);
-        chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend("pjsip:" + contact.ps.endpoint + "/" + uri, from_number, actionId).catch(function (amiError) { return reject(amiError); });
+        chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend("pjsip:" + contact.uaEndpoint.endpoint.dongle.imei + "/" + uri, from_number, actionId).catch(function (amiError) { return reject(amiError); });
         sipProxy_1.evtOutgoingMessage.attachOnce(function (_a) {
             var sipRequest = _a.sipRequest;
             return sipRequest.content === actionId;
@@ -98,8 +98,8 @@ function sendMessage(contact, from_number, headers, text, from_number_sim_name) 
             var sipRequest = _a.sipRequest, prSipResponse = _a.prSipResponse;
             if (from_number_sim_name)
                 sipRequest.headers.from.name = "\"" + from_number_sim_name + " (sim)\"";
-            sipRequest.uri = contact.ps.uri;
-            sipRequest.headers.to = { "name": undefined, "uri": contact.ps.uri, "params": {} };
+            sipRequest.uri = contact.uri;
+            sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
             delete sipRequest.headers.contact;
             sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
             sipRequest.headers = __assign({}, sipRequest.headers, headers);
