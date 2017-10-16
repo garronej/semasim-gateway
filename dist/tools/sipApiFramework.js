@@ -100,8 +100,13 @@ var ApiMessage;
         }
         Request.buildSip = buildSip;
         function matchSip(sipRequest) {
-            return (ApiMessage.matchSip(sipRequest) &&
-                sipRequest.headers[methodKey]);
+            try {
+                return (ApiMessage.matchSip(sipRequest) &&
+                    sipRequest.headers[methodKey]);
+            }
+            catch (_a) {
+                return false;
+            }
         }
         Request.matchSip = matchSip;
         function readMethod(sipRequest) {
@@ -117,9 +122,14 @@ var ApiMessage;
         }
         Response.buildSip = buildSip;
         function matchSip(sipRequest, actionId) {
-            return (ApiMessage.matchSip(sipRequest) &&
-                sipRequest.headers[methodKey] === undefined &&
-                ApiMessage.readActionId(sipRequest) === actionId);
+            try {
+                return (ApiMessage.matchSip(sipRequest) &&
+                    sipRequest.headers[methodKey] === undefined &&
+                    ApiMessage.readActionId(sipRequest) === actionId);
+            }
+            catch (_a) {
+                return false;
+            }
         }
         Response.matchSip = matchSip;
     })(Response = ApiMessage.Response || (ApiMessage.Response = {}));
@@ -127,9 +137,24 @@ var ApiMessage;
 function startListening(sipSocket) {
     var evt = new ts_events_extended_1.SyncEvent();
     sipSocket.evtRequest.attachExtract(function (sipRequest) { return ApiMessage.Request.matchSip(sipRequest); }, function (sipRequest) {
-        var actionId = ApiMessage.readActionId(sipRequest);
-        var method = ApiMessage.Request.readMethod(sipRequest);
-        var params = ApiMessage.parsePayload(sipRequest);
+        var actionId;
+        var method;
+        var params;
+        try {
+            actionId = ApiMessage.readActionId(sipRequest);
+            method = ApiMessage.Request.readMethod(sipRequest);
+            params = ApiMessage.parsePayload(sipRequest);
+            if (typeof actionId !== "number" || isNaN(actionId)) {
+                throw Error();
+            }
+            if (typeof method !== "string") {
+                throw Error();
+            }
+        }
+        catch (_a) {
+            console.log("Remote api bad message");
+            return;
+        }
         var sendResponse = function (response) {
             var sipRequest = ApiMessage.Response.buildSip(actionId, response);
             //TODO: test!
@@ -144,7 +169,8 @@ exports.startListening = startListening;
 exports.errorSendRequest = {
     "timeout": "Timeout, No response in allowed delay",
     "writeFailed": "Can't send request, write error",
-    "sockedCloseBeforeResponse": "Socket has been closed before receiving response"
+    "sockedCloseBeforeResponse": "Socket has been closed before receiving response",
+    "malformedResponse": "Body response could not be parsed"
 };
 function sendRequest(sipSocket, method, params, timeout) {
     if (timeout === void 0) { timeout = 5 * 60 * 1000; }
@@ -178,7 +204,14 @@ function sendRequest(sipSocket, method, params, timeout) {
                         throw new Error(exports.errorSendRequest.timeout);
                     }
                     return [3 /*break*/, 4];
-                case 4: return [2 /*return*/, ApiMessage.parsePayload(sipRequestResponse)];
+                case 4:
+                    try {
+                        return [2 /*return*/, ApiMessage.parsePayload(sipRequestResponse)];
+                    }
+                    catch (_b) {
+                        throw new Error(exports.errorSendRequest.malformedResponse);
+                    }
+                    return [2 /*return*/];
             }
         });
     });

@@ -14,6 +14,8 @@ export const instanceIdKey = "+sip.instance";
 export const parseSdp: (rawSdp: string) => any = _sdp_.parse;
 export const stringifySdp: (sdp: any) => string = _sdp_.stringify;
 
+
+//TODO Only on the gateway side, remove ?
 export function overwriteGlobalAndAudioAddrInSdpCandidates(sdp: any) {
 
     let getSrflxAddr = (): string => {
@@ -97,6 +99,7 @@ export function overwriteGlobalAndAudioAddrInSdpCandidates(sdp: any) {
 
 }
 
+//TODO: only on gw remove ?
 export function isPlainMessageRequest(sipRequest: sip.Request): boolean {
 
     return (
@@ -124,7 +127,6 @@ export class Socket {
     public readonly evtRequest = new SyncEvent<Request>();
 
     public readonly evtClose = new SyncEvent<boolean>();
-    public readonly evtError = new SyncEvent<Error>();
     public readonly evtConnect = new VoidSyncEvent();
 
     private timer: NodeJS.Timer;
@@ -152,10 +154,7 @@ export class Socket {
                     this.evtResponse.post(sipPacket);
 
             },
-            () => {
-                debug("Flood detected");
-                this.destroy();
-            },
+            () => this.connection.emit("error", new Error("Flood")),
             Socket.maxBytesHeaders,
             Socket.maxContentLength
         );
@@ -174,14 +173,28 @@ export class Socket {
 
             this.evtData.post(dataAsBinaryString);
 
-            streamParser(dataAsBinaryString);
+            try{
+
+                streamParser(dataAsBinaryString);
+
+            }catch(error){
+
+                debug("Stream parser error");
+
+                this.connection.emit("error", error);
+
+            }
 
         })
             .once("close", had_error => {
                 if (timeoutDelay) clearTimeout(this.timer);
+                this.connection.destroy();
                 this.evtClose.post(had_error);
             })
-            .once("error", error => this.evtError.post(error))
+            .once("error", error => {
+                debug("Socket error", error);
+                this.connection.emit("close", true)
+            })
             .setMaxListeners(Infinity);
 
         if (this.encrypted)
@@ -242,9 +255,6 @@ export class Socket {
         this.evtResponse.detach();
         this.evtRequest.detach();
         */
-
-        this.connection.destroy();
-
         //TODO: test, on destroy syncronously post close.
         this.connection.emit("close", false);
 
@@ -409,31 +419,6 @@ export class Socket {
 
 
 }
-
-export class Store extends TrackableMap<string, Socket> {
-
-    public set(key: string, socket: Socket): this {
-
-        socket.evtClose.attachOnce(() => super.delete(key));
-
-        super.set(key, socket);
-
-        return this;
-
-    }
-
-    public destroyAll() {
-
-        for( let socket of this.valuesAsArrayNoDuplicate() )
-            socket.destroy();
-
-    }
-
-
-}
-
-
-
 
 
 export const stringify: (sipPacket: Packet) => string = sip.stringify;

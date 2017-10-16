@@ -39,7 +39,7 @@ namespace ApiMessage {
 
     export function buildSip(
         actionId: number,
-        payload: Record<string, any>
+        payload: any
     ): sip.Request {
 
         let sipRequest = sip.parse([
@@ -66,8 +66,10 @@ namespace ApiMessage {
         return parseInt(sipRequest.headers[actionIdKey]);
     }
 
-    export function parsePayload(sipRequest: sip.Request): Record<string, any>{
+    export function parsePayload(sipRequest: sip.Request): any{
+
         return JSON.parse(sipRequest.content);
+
     }
 
     export namespace Request {
@@ -76,7 +78,7 @@ namespace ApiMessage {
 
         export function buildSip(
             method: string,
-            payload: Record<string, any>,
+            payload: any,
         ) {
 
             let sipRequest = ApiMessage.buildSip(actionIdCounter++, payload);
@@ -91,10 +93,19 @@ namespace ApiMessage {
             sipRequest: sip.Request
         ): boolean {
 
-            return (
-                ApiMessage.matchSip(sipRequest) &&
-                sipRequest.headers[methodKey]
-            );
+            try {
+
+                return (
+                    ApiMessage.matchSip(sipRequest) &&
+                    sipRequest.headers[methodKey]
+                );
+
+            } catch{
+
+                return false;
+
+            }
+
 
         }
 
@@ -109,7 +120,7 @@ namespace ApiMessage {
 
         export function buildSip(
             actionId: number,
-            payload: Record<string, any>,
+            payload: any,
         ) {
 
             let sipRequest = ApiMessage.buildSip(actionId, payload);
@@ -119,15 +130,23 @@ namespace ApiMessage {
         }
 
         export function matchSip(
-            sipRequest: sip.Request, 
+            sipRequest: sip.Request,
             actionId: number
         ): boolean {
 
-            return (
-                ApiMessage.matchSip(sipRequest) &&
-                sipRequest.headers[methodKey] === undefined &&
-                ApiMessage.readActionId(sipRequest) === actionId
-            );
+            try {
+
+                return (
+                    ApiMessage.matchSip(sipRequest) &&
+                    sipRequest.headers[methodKey] === undefined &&
+                    ApiMessage.readActionId(sipRequest) === actionId
+                );
+
+            } catch{
+
+                return false;
+
+            }
 
         }
 
@@ -138,10 +157,10 @@ namespace ApiMessage {
 }
 
 
-export type ApiRequest= {
+export type ApiRequest = {
     method: string;
-    params: Record<string, any>;
-    sendResponse: (response: Record<string, any>) => void;
+    params: any;
+    sendResponse: (response: any) => void;
 }
 
 export function startListening(sipSocket: sip.Socket): SyncEvent<ApiRequest> {
@@ -152,15 +171,34 @@ export function startListening(sipSocket: sip.Socket): SyncEvent<ApiRequest> {
         sipRequest => ApiMessage.Request.matchSip(sipRequest),
         sipRequest => {
 
-            let actionId= ApiMessage.readActionId(sipRequest);
+            let actionId: number;
+            let method: string;
+            let params: any;
 
-            let method= ApiMessage.Request.readMethod(sipRequest);
+            try {
 
-            let params= ApiMessage.parsePayload(sipRequest);
+                actionId = ApiMessage.readActionId(sipRequest);
 
-            let sendResponse= response => {
+                method = ApiMessage.Request.readMethod(sipRequest);
 
-                let sipRequest= ApiMessage.Response.buildSip(actionId, response);
+                params = ApiMessage.parsePayload(sipRequest);
+
+                if (typeof actionId !== "number" || isNaN(actionId)) {
+                    throw Error();
+                }
+
+                if (typeof method !== "string") {
+                    throw Error();
+                }
+
+            } catch{
+                console.log(`Remote api bad message`);
+                return;
+            }
+
+            let sendResponse = response => {
+
+                let sipRequest = ApiMessage.Response.buildSip(actionId, response);
 
                 //TODO: test!
                 sipSocket.addViaHeader(sipRequest);
@@ -181,15 +219,16 @@ export function startListening(sipSocket: sip.Socket): SyncEvent<ApiRequest> {
 export const errorSendRequest = {
     "timeout": "Timeout, No response in allowed delay",
     "writeFailed": "Can't send request, write error",
-    "sockedCloseBeforeResponse": "Socket has been closed before receiving response"
+    "sockedCloseBeforeResponse": "Socket has been closed before receiving response",
+    "malformedResponse": "Body response could not be parsed"
 }
 
 export async function sendRequest(
     sipSocket: sip.Socket,
     method: string,
-    params: Record<string, any>,
-    timeout: number= 5*60*1000
-): Promise<Record<string, any>> {
+    params: any,
+    timeout: number = 5 * 60 * 1000
+): Promise<any> {
 
     let sipRequest = ApiMessage.Request.buildSip(method, params);
 
@@ -209,21 +248,29 @@ export async function sendRequest(
             sipSocket.evtRequest.attachOnceExtract(
                 sipRequestResponse => ApiMessage.Response.matchSip(sipRequestResponse, actionId),
                 timeout,
-                ()=>{}
+                () => { }
             ),
             new Promise<never>((_, reject) => sipSocket.evtClose.attachOnce(sipRequest, reject))
         ]);
 
     } catch (error) {
 
-        if (typeof error === "boolean"){
+        if (typeof error === "boolean") {
             throw new Error(errorSendRequest.sockedCloseBeforeResponse);
-        }else{
+        } else {
             throw new Error(errorSendRequest.timeout);
         }
 
     }
 
-    return ApiMessage.parsePayload(sipRequestResponse);
+    try{
+
+        return ApiMessage.parsePayload(sipRequestResponse);
+
+    }catch{
+
+        throw new Error(errorSendRequest.malformedResponse);
+
+    }
 
 }

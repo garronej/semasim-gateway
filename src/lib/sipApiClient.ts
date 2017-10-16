@@ -45,7 +45,8 @@ export namespace isDongleConnected {
         let response = await sendRequest(
             gatewaySocket,
             methodName,
-            params
+            params,
+            4000
         ) as Response;
 
         return response;

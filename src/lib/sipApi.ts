@@ -26,9 +26,8 @@ export function startListening(backendSocket: sipLibrary.Socket) {
 
 }
 
-type Payload = Record<string, any>;
 
-const handlers: Record<string, (params: Payload) => Promise<Payload>> = {};
+const handlers: Record<string, (params: any) => Promise<any>> = {};
 
 (() => {
 

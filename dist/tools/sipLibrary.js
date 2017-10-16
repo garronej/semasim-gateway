@@ -1,14 +1,4 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
@@ -32,13 +22,13 @@ var ts_events_extended_1 = require("ts-events-extended");
 var md5 = require("md5");
 var sip = require("sip");
 var _sdp_ = require("sip/sdp");
-var trackable_map_1 = require("trackable-map");
 var _debug = require("debug");
 var debug = _debug("_tools/sipLibrary");
 exports.regIdKey = "reg-id";
 exports.instanceIdKey = "+sip.instance";
 exports.parseSdp = _sdp_.parse;
 exports.stringifySdp = _sdp_.stringify;
+//TODO Only on the gateway side, remove ?
 function overwriteGlobalAndAudioAddrInSdpCandidates(sdp) {
     var getSrflxAddr = function () {
         try {
@@ -127,6 +117,7 @@ function overwriteGlobalAndAudioAddrInSdpCandidates(sdp) {
     */
 }
 exports.overwriteGlobalAndAudioAddrInSdpCandidates = overwriteGlobalAndAudioAddrInSdpCandidates;
+//TODO: only on gw remove ?
 function isPlainMessageRequest(sipRequest) {
     return (sipRequest.method === "MESSAGE" &&
         sipRequest.headers["content-type"].match(/^text\/plain/));
@@ -142,7 +133,6 @@ var Socket = /** @class */ (function () {
         this.evtResponse = new ts_events_extended_1.SyncEvent();
         this.evtRequest = new ts_events_extended_1.SyncEvent();
         this.evtClose = new ts_events_extended_1.SyncEvent();
-        this.evtError = new ts_events_extended_1.SyncEvent();
         this.evtConnect = new ts_events_extended_1.VoidSyncEvent();
         this.evtTimeout = new ts_events_extended_1.VoidSyncEvent();
         this.evtData = new ts_events_extended_1.SyncEvent();
@@ -163,10 +153,7 @@ var Socket = /** @class */ (function () {
                 _this.evtRequest.post(sipPacket);
             else
                 _this.evtResponse.post(sipPacket);
-        }, function () {
-            debug("Flood detected");
-            _this.destroy();
-        }, Socket.maxBytesHeaders, Socket.maxContentLength);
+        }, function () { return _this.connection.emit("error", new Error("Flood")); }, Socket.maxBytesHeaders, Socket.maxContentLength);
         connection.on("data", function (data) {
             if (timeoutDelay) {
                 clearTimeout(_this.timer);
@@ -174,14 +161,24 @@ var Socket = /** @class */ (function () {
             }
             var dataAsBinaryString = data.toString("binary");
             _this.evtData.post(dataAsBinaryString);
-            streamParser(dataAsBinaryString);
+            try {
+                streamParser(dataAsBinaryString);
+            }
+            catch (error) {
+                debug("Stream parser error");
+                _this.connection.emit("error", error);
+            }
         })
             .once("close", function (had_error) {
             if (timeoutDelay)
                 clearTimeout(_this.timer);
+            _this.connection.destroy();
             _this.evtClose.post(had_error);
         })
-            .once("error", function (error) { return _this.evtError.post(error); })
+            .once("error", function (error) {
+            debug("Socket error", error);
+            _this.connection.emit("close", true);
+        })
             .setMaxListeners(Infinity);
         if (this.encrypted)
             connection.once("secureConnect", function () {
@@ -218,7 +215,6 @@ var Socket = /** @class */ (function () {
         this.evtResponse.detach();
         this.evtRequest.detach();
         */
-        this.connection.destroy();
         //TODO: test, on destroy syncronously post close.
         this.connection.emit("close", false);
     };
@@ -342,36 +338,6 @@ var Socket = /** @class */ (function () {
     return Socket;
 }());
 exports.Socket = Socket;
-var Store = /** @class */ (function (_super) {
-    __extends(Store, _super);
-    function Store() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Store.prototype.set = function (key, socket) {
-        var _this = this;
-        socket.evtClose.attachOnce(function () { return _super.prototype.delete.call(_this, key); });
-        _super.prototype.set.call(this, key, socket);
-        return this;
-    };
-    Store.prototype.destroyAll = function () {
-        try {
-            for (var _a = __values(this.valuesAsArrayNoDuplicate()), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var socket = _b.value;
-                socket.destroy();
-            }
-        }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-            }
-            finally { if (e_3) throw e_3.error; }
-        }
-        var e_3, _c;
-    };
-    return Store;
-}(trackable_map_1.TrackableMap));
-exports.Store = Store;
 exports.stringify = sip.stringify;
 exports.parseUri = sip.parseUri;
 exports.generateBranch = sip.generateBranch;

@@ -2,7 +2,6 @@
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import * as net from "net";
 import * as sip from "sip";
-import { TrackableMap } from "trackable-map";
 export declare const regIdKey = "reg-id";
 export declare const instanceIdKey = "+sip.instance";
 export declare const parseSdp: (rawSdp: string) => any;
@@ -16,7 +15,6 @@ export declare class Socket {
     readonly evtResponse: SyncEvent<Response>;
     readonly evtRequest: SyncEvent<Request>;
     readonly evtClose: SyncEvent<boolean>;
-    readonly evtError: SyncEvent<Error>;
     readonly evtConnect: VoidSyncEvent;
     private timer;
     readonly evtTimeout: VoidSyncEvent;
@@ -43,10 +41,6 @@ export declare class Socket {
     private buildRecordRoute(host);
     shiftRouteAndAddRecordRoute(sipRequest: Request, host?: string): void;
     rewriteRecordRoute(sipResponse: Response, host?: string): void;
-}
-export declare class Store extends TrackableMap<string, Socket> {
-    set(key: string, socket: Socket): this;
-    destroyAll(): void;
 }
 export declare const stringify: (sipPacket: Packet) => string;
 export declare const parseUri: (uri: string) => ParsedUri;

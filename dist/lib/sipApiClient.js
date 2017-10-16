@@ -54,7 +54,7 @@ var isDongleConnected;
                 switch (_a.label) {
                     case 0:
                         params = { imei: imei };
-                        return [4 /*yield*/, sendRequest(gatewaySocket, isDongleConnected.methodName, params)];
+                        return [4 /*yield*/, sendRequest(gatewaySocket, isDongleConnected.methodName, params, 4000)];
                     case 1:
                         response = _a.sent();
                         return [2 /*return*/, response];
