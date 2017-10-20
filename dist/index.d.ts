@@ -8,7 +8,6 @@ import { Contact } from "./lib/sipContact";
 export declare const c: {
     new (): {};
     readonly gatewayPort: 80;
-    readonly flowTokenKey: "flowtoken";
     readonly domain: "semasim.com";
     readonly regExpImei: RegExp;
     readonly regExpFourDigits: RegExp;

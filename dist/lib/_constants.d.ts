@@ -2,7 +2,6 @@ export declare class c {
     static readonly shared: {
         new (): {};
         readonly gatewayPort: 80;
-        readonly flowTokenKey: "flowtoken";
         readonly domain: "semasim.com";
         readonly regExpImei: RegExp;
         readonly regExpFourDigits: RegExp;
@@ -16,7 +15,6 @@ export declare class c {
         "host": string;
         "user": string;
         "password": string;
-        "database": string;
     };
     static readonly gain: string;
     static readonly jitterBuffer: {

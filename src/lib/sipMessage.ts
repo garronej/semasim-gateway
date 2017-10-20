@@ -53,6 +53,16 @@ export function getEvtMessage() {
 }
 
 
+/*
+
+TODO: consider: 
+
+ Apply patch for overighting Content-Type in outgoing SIP message 
+
+Patch ref: https://issues.asterisk.org/jira/browse/ASTERISK-26082
+
+
+*/
 
 export function sendMessage(
     contact: Contact,

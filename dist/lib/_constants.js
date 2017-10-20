@@ -30,7 +30,6 @@ var c = /** @class */ (function () {
             return shared;
         }()),
         _a.gatewayPort = 80,
-        _a.flowTokenKey = "flowtoken",
         _a.domain = "semasim.com",
         _a.regExpImei = /^[0-9]{15}$/,
         _a.regExpFourDigits = /^[0-9]{4}$/,
@@ -39,8 +38,7 @@ var c = /** @class */ (function () {
     c.dbParamsGateway = {
         "host": "127.0.0.1",
         "user": "root",
-        "password": "abcde12345",
-        "database": "semasim"
+        "password": "abcde12345"
     };
     c.gain = "" + 4000;
     c.jitterBuffer = {

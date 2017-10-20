@@ -8,8 +8,6 @@ export class c {
 
         public static readonly gatewayPort = 80;
 
-        public static readonly flowTokenKey = "flowtoken";
-
         public static readonly domain = "semasim.com";
 
         public static readonly regExpImei = /^[0-9]{15}$/;
@@ -52,8 +50,7 @@ export class c {
     public static readonly dbParamsGateway = {
         "host": "127.0.0.1",
         "user": "root",
-        "password": "abcde12345",
-        "database": "semasim"
+        "password": "abcde12345"
     };
 
     public static readonly gain = `${4000}`;

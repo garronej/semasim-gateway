@@ -83,7 +83,7 @@ var _debug = require("debug");
 var debug = _debug("_db");
 var asterisk;
 (function (asterisk) {
-    var connectionConfig = __assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk", "multipleStatements": true });
+    var connectionConfig = __assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk" });
     function initializeEvt() {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
@@ -100,7 +100,7 @@ var asterisk;
     var connection = undefined;
     function query(sql, values) {
         if (!connection) {
-            connection = mysql.createConnection(connectionConfig);
+            connection = mysql.createConnection(__assign({}, connectionConfig, { "multipleStatements": true }));
         }
         return f.queryOnConnection(connection, sql, values);
     }
@@ -421,7 +421,7 @@ var semasim;
     var connection = undefined;
     function query(sql, values) {
         if (!connection) {
-            connection = mysql.createConnection(__assign({}, _constants_1.c.dbParamsGateway, { "multipleStatements": true }));
+            connection = mysql.createConnection(__assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim", "multipleStatements": true }));
         }
         return f.queryOnConnection(connection, sql, values);
     }

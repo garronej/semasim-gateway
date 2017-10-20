@@ -15,8 +15,7 @@ export namespace asterisk {
 
     const connectionConfig: mysql.IConnectionConfig = {
         ...c.dbParamsGateway,
-        "database": "asterisk",
-        "multipleStatements": true
+        "database": "asterisk"
     };
 
     export async function initializeEvt(): Promise<void> {
@@ -34,7 +33,10 @@ export namespace asterisk {
 
         if (!connection){
 
-            connection = mysql.createConnection(connectionConfig);
+            connection = mysql.createConnection({ 
+                ...connectionConfig,
+                "multipleStatements": true
+            });
 
         }
 
@@ -317,6 +319,7 @@ export namespace semasim {
 
             connection = mysql.createConnection({
                 ...c.dbParamsGateway,
+                "database": "semasim",
                 "multipleStatements": true
             });
 

@@ -85,6 +85,16 @@ function getEvtMessage() {
     return evtMessage;
 }
 exports.getEvtMessage = getEvtMessage;
+/*
+
+TODO: consider:
+
+ Apply patch for overighting Content-Type in outgoing SIP message
+
+Patch ref: https://issues.asterisk.org/jira/browse/ASTERISK-26082
+
+
+*/
 function sendMessage(contact, from_number, headers, text, from_number_sim_name) {
     return new Promise(function (resolve, reject) {
         var actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
