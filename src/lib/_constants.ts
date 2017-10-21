@@ -10,10 +10,6 @@ export class c {
 
         public static readonly domain = "semasim.com";
 
-        public static readonly regExpImei = /^[0-9]{15}$/;
-
-        public static readonly regExpFourDigits = /^[0-9]{4}$/;
-
         public static get dnsSrv_sips_tcp(){
 
             if (dnsSrc_sips_tcp) return Promise.resolve(dnsSrc_sips_tcp);
@@ -49,8 +45,8 @@ export class c {
 
     public static readonly dbParamsGateway = {
         "host": "127.0.0.1",
-        "user": "root",
-        "password": "abcde12345"
+        "user": "semasim",
+        "password": "semasim"
     };
 
     public static readonly gain = `${4000}`;
@@ -70,7 +66,6 @@ export class c {
 
     public static readonly sipMessageContext = "from-sip-message";
 
-    //public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
     public static readonly strMissedCall = "Missed call";
 
 }

@@ -31,14 +31,12 @@ var c = /** @class */ (function () {
         }()),
         _a.gatewayPort = 80,
         _a.domain = "semasim.com",
-        _a.regExpImei = /^[0-9]{15}$/,
-        _a.regExpFourDigits = /^[0-9]{4}$/,
         _a);
     c.serviceName = "semasim-gateway";
     c.dbParamsGateway = {
         "host": "127.0.0.1",
-        "user": "root",
-        "password": "abcde12345"
+        "user": "semasim",
+        "password": "semasim"
     };
     c.gain = "" + 4000;
     c.jitterBuffer = {
@@ -52,7 +50,6 @@ var c = /** @class */ (function () {
     c.phoneNumber = "_[+0-9].";
     c.sipCallContext = "from-sip-call";
     c.sipMessageContext = "from-sip-message";
-    //public static readonly strMissedCall = "This correspondent tried to reach you but hanged up before the call could be forwarded.";
     c.strMissedCall = "Missed call";
     return c;
     var _a;
