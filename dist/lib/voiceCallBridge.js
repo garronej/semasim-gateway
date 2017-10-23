@@ -168,19 +168,7 @@ function getDialString(endpoint) {
                     db.asterisk.getEvtNewContact().attach(function (_a) {
                         var uaEndpoint = _a.uaEndpoint;
                         return sipContact_1.Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint);
-                    }, reachableContacts, function (contact) { return __awaiter(_this, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    debug("newly registred contact");
-                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
-                                case 1:
-                                    _a.sent();
-                                    evtReachableContact.post(contact);
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); });
+                    }, reachableContacts, function (contact) { return evtReachableContact.post(contact); });
                     resolver = function () {
                         db.asterisk.getEvtNewContact().detach(reachableContacts);
                         //evtReachableContact.detach();

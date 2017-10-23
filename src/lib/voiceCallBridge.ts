@@ -132,14 +132,7 @@ function getDialString(
             db.asterisk.getEvtNewContact().attach(
                 ({ uaEndpoint }) => Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint),
                 reachableContacts,
-                async contact => {
-
-                    debug("newly registred contact");
-
-                    await new Promise(resolve=> setTimeout(resolve, 3000));
-
-                    evtReachableContact.post(contact);
-                }
+                contact => evtReachableContact.post(contact)
             );
 
             let resolver = () => {
