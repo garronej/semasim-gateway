@@ -75,7 +75,6 @@ var _constants_1 = require("./_constants");
 require("colors");
 var _debug = require("debug");
 var debug = _debug("_sipProxy");
-var informativeHostname = "semasim-gateway.invalid";
 exports.evtIncomingMessage = new ts_events_extended_1.SyncEvent();
 exports.evtOutgoingMessage = new ts_events_extended_1.SyncEvent();
 var backendSocket;
@@ -170,16 +169,18 @@ var asteriskSockets;
         var self = this;
         var boundTo = [];
         socket.evtClose.attachOnce(function () {
-            db.asterisk.getEvtExpiredContact().detach(boundTo),
-                self.delete(socket);
+            db.asterisk.getEvtExpiredContact().detach(boundTo);
+            self.delete(socket);
             db.asterisk.deleteContact(contact);
         });
         db.asterisk.getEvtExpiredContact().attachOnce(function (expiredContact) { return expiredContact.id === contact.id; }, boundTo, function () {
+            debug("expired contact");
             socket.destroy();
             sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
         });
         var oldContact = self.find(function (oldContact) { return sipContact_1.Contact.UaEndpoint.areSame(oldContact.uaEndpoint, contact.uaEndpoint); });
         if (oldContact) {
+            debug("ua re-register with an other connection");
             var oldSocket = self.keyOf(oldContact);
             oldSocket.destroy();
         }
@@ -322,7 +323,7 @@ function start() {
                                         asteriskSocket.addPathHeader(sipRequest);
                                     }
                                     else {
-                                        asteriskSocket.shiftRouteAndAddRecordRoute(sipRequest);
+                                        asteriskSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
                                     }
                                     branch = asteriskSocket.addViaHeader(sipRequest);
                                     //TODO match with authentication
@@ -357,7 +358,7 @@ function start() {
                         var asteriskSocket = asteriskSockets.get(connectionId, imei);
                         if (!asteriskSocket)
                             return;
-                        asteriskSocket.rewriteRecordRoute(sipResponse);
+                        asteriskSocket.pushRecordRoute(sipResponse, false);
                         sipResponse.headers.via.shift();
                         asteriskSocket.write(sipResponse);
                     });
@@ -409,7 +410,7 @@ function createAsteriskSocket(connectionId, imei, backendSocket) {
         if (backendSocket.evtClose.postCount)
             return;
         var branch = backendSocket.addViaHeader(sipRequest, { "connection_id": "" + connectionId });
-        backendSocket.shiftRouteAndAddRecordRoute(sipRequest, informativeHostname);
+        backendSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
             var prSipResponse = backendSocket.evtResponse.attachOncePrepend(function (_a) {
                 var headers = _a.headers;
@@ -422,7 +423,7 @@ function createAsteriskSocket(connectionId, imei, backendSocket) {
     asteriskSocket.evtResponse.attach(function (sipResponse) {
         if (backendSocket.evtClose.postCount)
             return;
-        backendSocket.rewriteRecordRoute(sipResponse, informativeHostname);
+        backendSocket.pushRecordRoute(sipResponse, true);
         sipResponse.headers.via.shift();
         backendSocket.write(sipResponse);
     });

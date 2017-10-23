@@ -74,7 +74,7 @@ function fromSip(channel) {
             switch (_a.label) {
                 case 0:
                     _ = channel.relax;
-                    debug("FROM SIP CALL!");
+                    debug("Call originated from sip");
                     imei = channel.request.callerid;
                     return [4 /*yield*/, _.setVariable("JITTERBUFFER(" + _constants_1.c.jitterBuffer.type + ")", _constants_1.c.jitterBuffer.params)];
                 case 1:
@@ -99,7 +99,7 @@ function fromDongle(channel) {
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
-                    debug("DONGLE CALL");
+                    debug("Call originated from dongle");
                     _ = channel.relax;
                     return [4 /*yield*/, _.getVariable("DONGLEIMEI")];
                 case 1:
@@ -138,6 +138,7 @@ function fromDongle(channel) {
                         }); }]))];
                 case 4:
                     failure = _d.sent();
+                    debug("Call terminated");
                     if (!failure) return [3 /*break*/, 6];
                     //TODO: see if we send missed call if no pick up
                     return [4 /*yield*/, db.semasim.MessageTowardSip.add(number, _constants_1.c.strMissedCall, new Date(), true, {
@@ -167,10 +168,22 @@ function getDialString(endpoint) {
                     db.asterisk.getEvtNewContact().attach(function (_a) {
                         var uaEndpoint = _a.uaEndpoint;
                         return sipContact_1.Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint);
-                    }, reachableContacts, function (contact) { return evtReachableContact.post(contact); });
+                    }, reachableContacts, function (contact) { return __awaiter(_this, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    debug("newly registred contact");
+                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                                case 1:
+                                    _a.sent();
+                                    evtReachableContact.post(contact);
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
                     resolver = function () {
                         db.asterisk.getEvtNewContact().detach(reachableContacts);
-                        evtReachableContact.detach();
+                        //evtReachableContact.detach();
                         clearTimeout(timer);
                         clearTimeout(timer2);
                         var dialString = (function buildDialString(contacts) {
@@ -191,6 +204,7 @@ function getDialString(endpoint) {
                             return dialStringSplit.join("&");
                             var e_2, _a;
                         })(reachableContacts);
+                        debug("Dial string: ", dialString);
                         resolve(dialString);
                     };
                     timer = setTimeout(function () {

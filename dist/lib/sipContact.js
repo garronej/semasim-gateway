@@ -53,7 +53,7 @@ var PsContact;
         var params = sipLibrary.parseUri(uri).params;
         var type = params["pn-type"];
         var token = params["pn-tok"];
-        if (type === null || token === null)
+        if (!type || !token)
             return undefined;
         return { type: type, token: token };
     }

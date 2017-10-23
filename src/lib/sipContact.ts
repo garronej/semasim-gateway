@@ -46,7 +46,7 @@ export namespace PsContact {
         let type = params["pn-type"];
         let token = params["pn-tok"];
 
-        if (type === null || token === null) return undefined;
+        if (!type || !token) return undefined;
 
         return { type, token };
 

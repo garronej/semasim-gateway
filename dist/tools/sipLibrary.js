@@ -19,7 +19,6 @@ var __values = (this && this.__values) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var ts_events_extended_1 = require("ts-events-extended");
-var md5 = require("md5");
 var sip = require("sip");
 var _sdp_ = require("sip/sdp");
 var _debug = require("debug");
@@ -272,66 +271,88 @@ var Socket = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    //TODO: need validate or crash
     Socket.prototype.addViaHeader = function (sipRequest, extraParams) {
+        if (extraParams === void 0) { extraParams = {}; }
         var branch = (function () {
             var via = sipRequest.headers.via;
             if (!via.length)
                 return exports.generateBranch();
             sipRequest.headers["max-forwards"] = "" + (parseInt(sipRequest.headers["max-forwards"]) - 1);
             var previousBranch = via[0].params["branch"];
-            return "z9hG4bK-" + md5(previousBranch);
+            //return `z9hG4bK-${md5(previousBranch)}`;
+            return "z9hG4bK-" + previousBranch;
         })();
-        var params = __assign({}, (extraParams || {}), { branch: branch, "rport": null });
         sipRequest.headers.via.unshift({
             "version": "2.0",
             "protocol": this.protocol,
             "host": this.localAddress,
             "port": this.localPort,
-            params: params
+            "params": __assign({}, extraParams, { branch: branch, "rport": null })
         });
         return branch;
     };
     Socket.prototype.addPathHeader = function (sipRegisterRequest, host, extraParams) {
-        var parsedUri = createParsedUri();
-        parsedUri.host = host || this.localAddress;
-        parsedUri.port = this.localPort;
-        parsedUri.params = __assign({}, (extraParams || {}), { "transport": this.protocol, "lr": null });
         if (!sipRegisterRequest.headers.path)
             sipRegisterRequest.headers.path = [];
-        sipRegisterRequest.headers.path.unshift({
-            "uri": parsedUri,
+        sipRegisterRequest.headers.path.unshift(this.buildRoute(host, extraParams));
+    };
+    Socket.prototype.buildRoute = function (host, extraParams) {
+        if (host === void 0) { host = this.localAddress; }
+        if (extraParams === void 0) { extraParams = {}; }
+        return {
+            "uri": __assign({}, exports.parseUri("sip:" + host + ":" + this.localPort), { "params": __assign({}, extraParams, { "transport": this.protocol, "lr": null }) }),
             "params": {}
-        });
+        };
     };
-    Socket.prototype.buildRecordRoute = function (host) {
-        var parsedUri = createParsedUri();
-        parsedUri.host = host || this.localAddress;
-        parsedUri.port = this.localPort;
-        parsedUri.params["transport"] = this.protocol;
-        parsedUri.params["lr"] = null;
-        return { "uri": parsedUri, "params": {} };
-    };
-    Socket.prototype.shiftRouteAndAddRecordRoute = function (sipRequest, host) {
+    /**
+     *
+     * Assert sipRequest is NOT register.
+     *
+     * HOP_X => LOCAL_X LOCAL_this => HOP_Y
+     *
+     * Before:
+     * Route: LOCAL_X, HOP_Y
+     * Record-Route: HOP_X
+     *
+     * After:
+     * Route: HOP_Y
+     * Record-Route: LOCAL_this, HOP_X
+     *
+     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
+     *
+     */
+    Socket.prototype.shiftRouteAndUnshiftRecordRoute = function (sipRequest, host) {
         if (sipRequest.headers.route)
             sipRequest.headers.route.shift();
         if (!sipRequest.headers.contact)
             return;
         if (!sipRequest.headers["record-route"])
             sipRequest.headers["record-route"] = [];
-        sipRequest.headers["record-route"].unshift(this.buildRecordRoute(host));
+        sipRequest.headers["record-route"].unshift(this.buildRoute(host));
     };
-    Socket.prototype.rewriteRecordRoute = function (sipResponse, host) {
-        if (sipResponse.headers.cseq.method === "REGISTER")
-            return;
-        var lastHopAddr = sipResponse.headers.via[0].host;
-        if (lastHopAddr === this.localAddress)
-            sipResponse.headers["record-route"] = undefined;
-        if (!sipResponse.headers.contact)
-            return;
+    /**
+     *
+     * Assert sipRequest is NOT register.
+     *
+     * HOP_X <= LOCAL_this LOCAL_Y <= HOP_Y
+     *
+     * Before:
+     * Record-Route: HOP_X, LOCAL_Y, HOP_Y
+     *
+     * After:
+     * Record-Route: HOP_X, LOCAL_this, HOP_Y
+     *
+     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;lr>
+     *
+     * NOTE: We use a different implementation but peer to peer result is same.
+     *
+     */
+    Socket.prototype.pushRecordRoute = function (sipResponse, isFirstHop, host) {
         if (!sipResponse.headers["record-route"])
+            return;
+        if (isFirstHop)
             sipResponse.headers["record-route"] = [];
-        sipResponse.headers["record-route"].push(this.buildRecordRoute(host));
+        sipResponse.headers["record-route"].push(this.buildRoute(host));
     };
     Socket.maxBytesHeaders = 7820;
     Socket.maxContentLength = 24624;
@@ -343,14 +364,6 @@ exports.parseUri = sip.parseUri;
 exports.generateBranch = sip.generateBranch;
 exports.stringifyUri = sip.stringifyUri;
 exports.parse = sip.parse;
-function copyMessage(sipPacket, deep) {
-    return exports.parse(exports.stringify(sipPacket));
-}
-exports.copyMessage = copyMessage;
-function createParsedUri() {
-    return exports.parseUri("sip:127.0.0.1");
-}
-exports.createParsedUri = createParsedUri;
 function parsePath(path) {
     var message = sip.parse([
         "DUMMY _ SIP/2.0",

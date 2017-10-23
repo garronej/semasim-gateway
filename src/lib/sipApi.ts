@@ -80,7 +80,7 @@ const handlers: Record<string, (params: any) => Promise<any>> = {};
             return { "status": "ERROR", "message": "Dongle is not connected" };
         }
 
-        if (dongle.sim.iccid && checkIfIccidMatch(dongle.sim.iccid, last_four_digits_of_iccid)) {
+        if (dongle.sim.iccid && !checkIfIccidMatch(dongle.sim.iccid, last_four_digits_of_iccid)) {
             return { "status": "ERROR", "message": "Sim ICCID mismatch" };
         }
 
@@ -108,7 +108,11 @@ const handlers: Record<string, (params: any) => Promise<any>> = {};
 
                 try {
 
+                    debug({ pin });
+
                     unlockResult = await dc.unlock(dongle.imei, pin);
+
+                    debug({ unlockResult });
 
                 } catch{
 
@@ -116,12 +120,7 @@ const handlers: Record<string, (params: any) => Promise<any>> = {};
 
                 }
 
-                if (unlockResult.success) {
-                    break;
-                } else {
-                    dongle.sim.pinState = unlockResult.pinState;
-                    dongle.sim.tryLeft = unlockResult.tryLeft;
-                }
+                if (unlockResult.success) break;
 
             }
 
@@ -142,7 +141,7 @@ const handlers: Record<string, (params: any) => Promise<any>> = {};
 
         }
 
-        if (checkIfIccidMatch(activeDongle.sim.iccid, last_four_digits_of_iccid)) {
+        if ( !checkIfIccidMatch(activeDongle.sim.iccid, last_four_digits_of_iccid) ) {
             return { "status": "ERROR", "message": "Sim have been unlocked but ICCID mismatch" };
         }
 

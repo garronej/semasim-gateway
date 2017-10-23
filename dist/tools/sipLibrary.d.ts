@@ -38,17 +38,49 @@ export declare class Socket {
     readonly protocol: "TCP" | "TLS";
     addViaHeader(sipRequest: Request, extraParams?: Record<string, string>): string;
     addPathHeader(sipRegisterRequest: Request, host?: string, extraParams?: Record<string, string>): void;
-    private buildRecordRoute(host);
-    shiftRouteAndAddRecordRoute(sipRequest: Request, host?: string): void;
-    rewriteRecordRoute(sipResponse: Response, host?: string): void;
+    private buildRoute(host?, extraParams?);
+    /**
+     *
+     * Assert sipRequest is NOT register.
+     *
+     * HOP_X => LOCAL_X LOCAL_this => HOP_Y
+     *
+     * Before:
+     * Route: LOCAL_X, HOP_Y
+     * Record-Route: HOP_X
+     *
+     * After:
+     * Route: HOP_Y
+     * Record-Route: LOCAL_this, HOP_X
+     *
+     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
+     *
+     */
+    shiftRouteAndUnshiftRecordRoute(sipRequest: Request, host?: string): void;
+    /**
+     *
+     * Assert sipRequest is NOT register.
+     *
+     * HOP_X <= LOCAL_this LOCAL_Y <= HOP_Y
+     *
+     * Before:
+     * Record-Route: HOP_X, LOCAL_Y, HOP_Y
+     *
+     * After:
+     * Record-Route: HOP_X, LOCAL_this, HOP_Y
+     *
+     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;lr>
+     *
+     * NOTE: We use a different implementation but peer to peer result is same.
+     *
+     */
+    pushRecordRoute(sipResponse: Response, isFirstHop: boolean, host?: string): void;
 }
 export declare const stringify: (sipPacket: Packet) => string;
 export declare const parseUri: (uri: string) => ParsedUri;
 export declare const generateBranch: () => string;
 export declare const stringifyUri: (parsedUri: ParsedUri) => string;
 export declare const parse: (rawSipPacket: string) => Packet;
-export declare function copyMessage<T extends Packet>(sipPacket: T, deep?: boolean): T;
-export declare function createParsedUri(): ParsedUri;
 export declare function parsePath(path: string): AoRWithParsedUri[];
 export declare function parseOptionTags(headerFieldValue: string | undefined): string[];
 export declare function hasOptionTag(headers: Headers, headerField: string, optionTag: string): boolean;

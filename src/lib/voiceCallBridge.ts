@@ -37,7 +37,7 @@ async function fromSip(channel: agi.AGIChannel) {
 
     let _ = channel.relax;
 
-    debug("FROM SIP CALL!");
+    debug("Call originated from sip");
 
     let imei = channel.request.callerid;
 
@@ -55,7 +55,7 @@ async function fromSip(channel: agi.AGIChannel) {
 
 async function fromDongle(channel: agi.AGIChannel) {
 
-    debug(`DONGLE CALL`);
+    debug("Call originated from dongle");
 
     let _ = channel.relax;
 
@@ -96,6 +96,8 @@ async function fromDongle(channel: agi.AGIChannel) {
         }
     );
 
+    debug("Call terminated");
+
     if (failure) {
 
         //TODO: see if we send missed call if no pick up
@@ -130,13 +132,20 @@ function getDialString(
             db.asterisk.getEvtNewContact().attach(
                 ({ uaEndpoint }) => Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint),
                 reachableContacts,
-                contact => evtReachableContact.post(contact)
+                async contact => {
+
+                    debug("newly registred contact");
+
+                    await new Promise(resolve=> setTimeout(resolve, 3000));
+
+                    evtReachableContact.post(contact);
+                }
             );
 
             let resolver = () => {
 
                 db.asterisk.getEvtNewContact().detach(reachableContacts);
-                evtReachableContact.detach();
+                //evtReachableContact.detach();
                 clearTimeout(timer);
                 clearTimeout(timer2);
 
@@ -155,6 +164,8 @@ function getDialString(
                     return dialStringSplit.join("&");
 
                 })(reachableContacts);
+
+                debug("Dial string: ", dialString);
 
                 resolve(dialString);
 

@@ -22,11 +22,11 @@ dc.dongles.evtSet.attachPrepend(
 
         if (Dc.ActiveDongle.match(dongle)) {
 
-            await onNewActiveDongle(dongle);
+            await handleActiveDongle(dongle);
 
         } else {
 
-            await db.semasim.addDongle(dongle);
+            await handleLockedDongle(dongle);
 
         }
 
@@ -39,7 +39,6 @@ dc.evtMessage.attach(
     async ({ dongle, message }) => {
 
         debug("FROM DONGLE MESSAGE", { message });
-
 
         let endpoint= { 
             "dongle": { 
@@ -70,20 +69,26 @@ dc.evtMessage.attach(
 db.asterisk.getEvtNewContact().attach(
     async contact => {
 
-        debug(`New contact`);
+        debug(`New sip contact`);
 
         let { isNewUa, isFirstUaEndpointOfEndpoint } = await db.semasim.addUaEndpoint(contact.uaEndpoint);
 
         if (isFirstUaEndpointOfEndpoint) {
+
+            debug("First ua of endpoint");
 
             await (async function retrieveGsmMessageAlreadyReceived() {
 
                 let imei = contact.uaEndpoint.endpoint.dongle.imei;
                 let iccid = contact.uaEndpoint.endpoint.sim.iccid;
 
-                let messages = (await dc.getMessages({ "flush": true, imei, iccid }))[imei][iccid]
+                let messages = await dc.getMessages({ "flush": true, imei, iccid });
 
-                for (let message of messages) {
+                debug(`${messages[imei][iccid].length} messages to send`);
+
+                for (let message of messages[imei][iccid]) {
+
+                    debug(message);
 
                     db.semasim.MessageTowardSip.add(
                         message.number,
@@ -125,10 +130,17 @@ sipMessage.getEvtMessage().attach(
     }
 );
 
+async function handleLockedDongle(dongle: Dc.LockedDongle) {
 
-async function onNewActiveDongle(dongle: Dc.ActiveDongle) {
+    debug("handleLockedDongle: ", dongle);
 
-    debug("onNewActiveDongle");
+    await db.semasim.addDongle(dongle);
+
+}
+
+async function handleActiveDongle(dongle: Dc.ActiveDongle) {
+
+    debug("handleActiveDongle: ", dongle);
 
     (function leveragePhoneNumberLib(dongle: Dc.ActiveDongle) {
 
@@ -141,7 +153,6 @@ async function onNewActiveDongle(dongle: Dc.ActiveDongle) {
         }
 
         dongle.sim.phonebook.contacts = contacts;
-
 
         if (dongle.sim.number) {
             dongle.sim.number = phone.toNationalNumber(dongle.sim.number, dongle.sim.imsi);
@@ -166,7 +177,7 @@ async function onNewActiveDongle(dongle: Dc.ActiveDongle) {
 
 }
 
-(async function initializeActiveDonglesAndStartProxy() {
+(async function handleConnectedDonglesThenStartSipProxy() {
 
     let tasks: Promise<void>[] = [];
 
@@ -195,6 +206,8 @@ async function onNewActiveDongle(dongle: Dc.ActiveDongle) {
 
                 for (let message of messages[imei][iccid]) {
 
+                    debug(`Message received while down: `, message);
+
                     tasks[tasks.length] = db.semasim.MessageTowardSip.add(
                         message.number,
                         message.text,
@@ -218,9 +231,13 @@ async function onNewActiveDongle(dongle: Dc.ActiveDongle) {
 
     })();
 
-    for (let dongle of dc.activeDongles.values()) {
+    for( let dongle of dc.dongles.values() ){
 
-        tasks.push(onNewActiveDongle(dongle));
+        if( Dc.ActiveDongle.match(dongle) ){
+            tasks.push(handleActiveDongle(dongle));
+        }else{
+            tasks.push(handleLockedDongle(dongle));
+        }
 
     }
 

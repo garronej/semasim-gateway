@@ -17,8 +17,6 @@ import "colors";
 import * as _debug from "debug";
 let debug = _debug("_sipProxy");
 
-const informativeHostname = "semasim-gateway.invalid";
-
 export const evtIncomingMessage = new SyncEvent<{
     fromContact: Contact;
     sipRequest: sipLibrary.Request;
@@ -135,8 +133,8 @@ namespace asteriskSockets {
         let boundTo = [];
 
         socket.evtClose.attachOnce(() => {
-            db.asterisk.getEvtExpiredContact().detach(boundTo),
-                self.delete(socket);
+            db.asterisk.getEvtExpiredContact().detach(boundTo);
+            self.delete(socket);
             db.asterisk.deleteContact(contact);
         });
 
@@ -144,6 +142,7 @@ namespace asteriskSockets {
             expiredContact => expiredContact.id === contact.id,
             boundTo,
             () => {
+                debug("expired contact");
                 socket.destroy();
                 sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
             }
@@ -157,6 +156,7 @@ namespace asteriskSockets {
         );
 
         if (oldContact) {
+            debug("ua re-register with an other connection");
             let oldSocket = self.keyOf(oldContact)!;
             oldSocket.destroy();
         }
@@ -241,6 +241,7 @@ export async function start() {
     backendSocket.evtRequest.attach(async sipRequest => {
 
         let connectionId = parseInt(sipRequest.headers.via[0].params["connection_id"]!);
+
         let imei = sipLibrary.parseUri(sipRequest.headers.from.uri).user!;
 
         let asteriskSocket = asteriskSockets.get(connectionId, imei);
@@ -269,7 +270,7 @@ export async function start() {
 
         } else {
 
-            asteriskSocket.shiftRouteAndAddRecordRoute(sipRequest);
+            asteriskSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
 
         }
 
@@ -309,7 +310,7 @@ export async function start() {
 
         if (!asteriskSocket) return;
 
-        asteriskSocket.rewriteRecordRoute(sipResponse);
+        asteriskSocket.pushRecordRoute(sipResponse, false);
 
         sipResponse.headers.via.shift();
 
@@ -378,7 +379,7 @@ function createAsteriskSocket(
 
         let branch = backendSocket.addViaHeader(sipRequest, { "connection_id": `${connectionId}` });
 
-        backendSocket.shiftRouteAndAddRecordRoute(sipRequest, informativeHostname);
+        backendSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
 
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
 
@@ -400,7 +401,7 @@ function createAsteriskSocket(
 
         if (backendSocket.evtClose.postCount) return;
 
-        backendSocket.rewriteRecordRoute(sipResponse, informativeHostname);
+        backendSocket.pushRecordRoute(sipResponse, true);
 
         sipResponse.headers.via.shift();
 

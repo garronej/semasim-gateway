@@ -50,7 +50,7 @@ function sendRequest(method, params) {
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, 4, , 5]);
-                    debug(method + ": params: " + JSON.stringify(params) + "...");
+                    debug(method + ": params: " + JSON.stringify(params).substring(0, 20) + "...");
                     return [4 /*yield*/, framework.sendRequest(backendSocket, method, params)];
                 case 3:
                     response = _a.sent();

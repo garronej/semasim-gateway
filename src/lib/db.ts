@@ -1,6 +1,5 @@
 import { SyncEvent } from "ts-events-extended";
 import * as mysql from "mysql";
-import * as md5 from "md5";
 import { PsContact, Contact } from "./sipContact";
 
 import * as f from "../tools/mySqlFunctions";

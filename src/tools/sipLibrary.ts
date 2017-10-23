@@ -1,6 +1,5 @@
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import * as net from "net";
-import * as md5 from "md5";
 import * as sip from "sip";
 import * as _sdp_ from "sip/sdp";
 import { TrackableMap } from "trackable-map";
@@ -304,10 +303,9 @@ export class Socket {
         return this.encrypted ? "TLS" : "TCP";
     }
 
-    //TODO: need validate or crash
     public addViaHeader(
         sipRequest: Request,
-        extraParams?: Record<string, string>
+        extraParams: Record<string, string>= {}
     ): string {
 
         let branch = (() => {
@@ -320,18 +318,21 @@ export class Socket {
 
             let previousBranch = via[0].params["branch"]!;
 
-            return `z9hG4bK-${md5(previousBranch)}`;
+            //return `z9hG4bK-${md5(previousBranch)}`;
+            return `z9hG4bK-${previousBranch}`;
 
         })();
-
-        let params = { ...(extraParams || {}), branch, "rport": null };
 
         sipRequest.headers.via.unshift({
             "version": "2.0",
             "protocol": this.protocol,
             "host": this.localAddress,
             "port": this.localPort,
-            params
+            "params": {
+                ...extraParams,
+                branch,
+                "rport": null
+            }
         });
 
         return branch;
@@ -345,99 +346,103 @@ export class Socket {
         extraParams?: Record<string, string>
     ) {
 
-        let parsedUri = createParsedUri();
+        if (!sipRegisterRequest.headers.path) sipRegisterRequest.headers.path = [];
 
-        parsedUri.host = host || this.localAddress;
+        sipRegisterRequest.headers.path!.unshift( this.buildRoute(host, extraParams) );
 
-        parsedUri.port = this.localPort;
+    }
 
-        parsedUri.params = { ...(extraParams || {}), "transport": this.protocol, "lr": null };
 
-        if (!sipRegisterRequest.headers.path)
-            sipRegisterRequest.headers.path = [];
+    private buildRoute(
+        host: string= this.localAddress,
+        extraParams: Record<string, string> = {}
+    ): AoRWithParsedUri {
 
-        sipRegisterRequest.headers.path!.unshift({
-            "uri": parsedUri,
+        return {
+            "uri": {
+                ...parseUri(`sip:${host}:${this.localPort}`),
+                "params": {
+                    ...extraParams,
+                    "transport": this.protocol,
+                    "lr": null
+                }
+            },
             "params": {}
-        });
+        };
 
     }
 
+    /**
+     * 
+     * Assert sipRequest is NOT register.
+     * 
+     * HOP_X => LOCAL_X LOCAL_this => HOP_Y
+     * 
+     * Before: 
+     * Route: LOCAL_X, HOP_Y
+     * Record-Route: HOP_X
+     * 
+     * After:
+     * Route: HOP_Y
+     * Record-Route: LOCAL_this, HOP_X
+     * 
+     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
+     * 
+     */
+    public shiftRouteAndUnshiftRecordRoute(
+        sipRequest: Request,
+        host?: string
+    ) {
 
-    private buildRecordRoute(host: string | undefined): AoRWithParsedUri {
-
-        let parsedUri = createParsedUri();
-
-        parsedUri.host = host || this.localAddress;
-
-        parsedUri.port = this.localPort;
-
-        parsedUri.params["transport"] = this.protocol;
-
-        parsedUri.params["lr"] = null;
-
-        return { "uri": parsedUri, "params": {} };
-
-    }
-
-    public shiftRouteAndAddRecordRoute(sipRequest: Request, host?: string) {
-
-        if (sipRequest.headers.route)
-            sipRequest.headers.route.shift();
+        if (sipRequest.headers.route) sipRequest.headers.route.shift();
 
         if (!sipRequest.headers.contact) return;
 
-        if (!sipRequest.headers["record-route"])
-            sipRequest.headers["record-route"] = [];
+        if (!sipRequest.headers["record-route"]) sipRequest.headers["record-route"] = [];
 
-        (sipRequest.headers["record-route"] as Headers["record-route"])!.unshift(
-            this.buildRecordRoute(host)
-        );
+        sipRequest.headers["record-route"]!.unshift( this.buildRoute(host));
 
     }
 
+    /**
+     * 
+     * Assert sipRequest is NOT register.
+     * 
+     * HOP_X <= LOCAL_this LOCAL_Y <= HOP_Y
+     * 
+     * Before: 
+     * Record-Route: HOP_X, LOCAL_Y, HOP_Y
+     * 
+     * After:
+     * Record-Route: HOP_X, LOCAL_this, HOP_Y
+     *
+     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;lr>
+     *
+     * NOTE: We use a different implementation but peer to peer result is same.
+     *
+     */
+    public pushRecordRoute(
+        sipResponse: Response,
+        isFirstHop: boolean,
+        host?: string
+    ) {
 
-    public rewriteRecordRoute(sipResponse: Response, host?: string) {
+        if (!sipResponse.headers["record-route"]) return;
 
-        if (sipResponse.headers.cseq.method === "REGISTER") return;
+        if (isFirstHop) sipResponse.headers["record-route"] = [];
 
-        let lastHopAddr = sipResponse.headers.via[0].host;
-
-        if (lastHopAddr === this.localAddress)
-            sipResponse.headers["record-route"] = undefined;
-
-        if (!sipResponse.headers.contact) return;
-
-        if (!sipResponse.headers["record-route"])
-            sipResponse.headers["record-route"] = [];
-
-        (sipResponse.headers["record-route"] as Headers["record-route"])!.push(
-            this.buildRecordRoute(host)
-        );
+        sipResponse.headers["record-route"]!.push(this.buildRoute(host));
 
     }
 
 
 }
-
 
 export const stringify: (sipPacket: Packet) => string = sip.stringify;
 export const parseUri: (uri: string) => ParsedUri = sip.parseUri;
 export const generateBranch: () => string = sip.generateBranch;
 export const stringifyUri: (parsedUri: ParsedUri) => string = sip.stringifyUri;
 export const parse: (rawSipPacket: string) => Packet = sip.parse;
-
-
-
-export function copyMessage<T extends Packet>(sipPacket: T, deep?: boolean): T {
-
-    return parse(stringify(sipPacket)) as T;
-
-}
-
-export function createParsedUri(): ParsedUri {
-    return parseUri(`sip:127.0.0.1`);
-}
 
 export function parsePath(path: string): AoRWithParsedUri[] {
 

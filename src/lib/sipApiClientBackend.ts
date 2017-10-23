@@ -15,7 +15,7 @@ async function sendRequest(
 
     try {
 
-        debug(`${method}: params: ${JSON.stringify(params)}...`);
+        debug(`${method}: params: ${JSON.stringify(params).substring(0, 20)}...`);
 
         let response = await framework.sendRequest(
             backendSocket,

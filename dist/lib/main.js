@@ -81,11 +81,11 @@ dc.dongles.evtSet.attachPrepend(function (_a) {
             switch (_a.label) {
                 case 0:
                     if (!chan_dongle_extended_client_1.DongleController.ActiveDongle.match(dongle)) return [3 /*break*/, 2];
-                    return [4 /*yield*/, onNewActiveDongle(dongle)];
+                    return [4 /*yield*/, handleActiveDongle(dongle)];
                 case 1:
                     _a.sent();
                     return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, db.semasim.addDongle(dongle)];
+                case 2: return [4 /*yield*/, handleLockedDongle(dongle)];
                 case 3:
                     _a.sent();
                     _a.label = 4;
@@ -129,25 +129,28 @@ db.asterisk.getEvtNewContact().attach(function (contact) { return __awaiter(_thi
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                debug("New contact");
+                debug("New sip contact");
                 return [4 /*yield*/, db.semasim.addUaEndpoint(contact.uaEndpoint)];
             case 1:
                 _a = _b.sent(), isNewUa = _a.isNewUa, isFirstUaEndpointOfEndpoint = _a.isFirstUaEndpointOfEndpoint;
                 if (!isFirstUaEndpointOfEndpoint) return [3 /*break*/, 3];
+                debug("First ua of endpoint");
                 return [4 /*yield*/, (function retrieveGsmMessageAlreadyReceived() {
                         return __awaiter(this, void 0, void 0, function () {
-                            var imei, iccid, messages, messages_1, messages_1_1, message, e_1, _a;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
+                            var imei, iccid, messages, _a, _b, message, e_1, _c;
+                            return __generator(this, function (_d) {
+                                switch (_d.label) {
                                     case 0:
                                         imei = contact.uaEndpoint.endpoint.dongle.imei;
                                         iccid = contact.uaEndpoint.endpoint.sim.iccid;
                                         return [4 /*yield*/, dc.getMessages({ "flush": true, imei: imei, iccid: iccid })];
                                     case 1:
-                                        messages = (_b.sent())[imei][iccid];
+                                        messages = _d.sent();
+                                        debug(messages[imei][iccid].length + " messages to send");
                                         try {
-                                            for (messages_1 = __values(messages), messages_1_1 = messages_1.next(); !messages_1_1.done; messages_1_1 = messages_1.next()) {
-                                                message = messages_1_1.value;
+                                            for (_a = __values(messages[imei][iccid]), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                                message = _b.value;
+                                                debug(message);
                                                 db.semasim.MessageTowardSip.add(message.number, message.text, message.date, false, {
                                                     "is": "ALL UA_ENDPOINT OF ENDPOINT",
                                                     "endpoint": { "dongle": { imei: imei }, "sim": { iccid: iccid } }
@@ -157,7 +160,7 @@ db.asterisk.getEvtNewContact().attach(function (contact) { return __awaiter(_thi
                                         catch (e_1_1) { e_1 = { error: e_1_1 }; }
                                         finally {
                                             try {
-                                                if (messages_1_1 && !messages_1_1.done && (_a = messages_1.return)) _a.call(messages_1);
+                                                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
                                             }
                                             finally { if (e_1) throw e_1.error; }
                                         }
@@ -193,13 +196,27 @@ sipMessage.getEvtMessage().attach(function (_a) {
         });
     });
 });
-function onNewActiveDongle(dongle) {
+function handleLockedDongle(dongle) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    debug("handleLockedDongle: ", dongle);
+                    return [4 /*yield*/, db.semasim.addDongle(dongle)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function handleActiveDongle(dongle) {
     return __awaiter(this, void 0, void 0, function () {
         var imei, iccid;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    debug("onNewActiveDongle");
+                    debug("handleActiveDongle: ", dongle);
                     (function leveragePhoneNumberLib(dongle) {
                         var contacts = [];
                         try {
@@ -242,7 +259,7 @@ function onNewActiveDongle(dongle) {
         });
     });
 }
-(function initializeActiveDonglesAndStartProxy() {
+(function handleConnectedDonglesThenStartSipProxy() {
     return __awaiter(this, void 0, void 0, function () {
         var tasks, _a, _b, dongle, e_3, _c;
         return __generator(this, function (_d) {
@@ -279,6 +296,7 @@ function onNewActiveDongle(dongle) {
                                                             try {
                                                                 for (_a = __values(messages[imei][iccid]), _b = _a.next(); !_b.done; _b = _a.next()) {
                                                                     message = _b.value;
+                                                                    debug("Message received while down: ", message);
                                                                     tasks[tasks.length] = db.semasim.MessageTowardSip.add(message.number, message.text, message.date, false, {
                                                                         "is": "ALL UA_ENDPOINT OF ENDPOINT",
                                                                         "endpoint": endpoint
@@ -335,9 +353,14 @@ function onNewActiveDongle(dongle) {
                         });
                     })();
                     try {
-                        for (_a = __values(dc.activeDongles.values()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                        for (_a = __values(dc.dongles.values()), _b = _a.next(); !_b.done; _b = _a.next()) {
                             dongle = _b.value;
-                            tasks.push(onNewActiveDongle(dongle));
+                            if (chan_dongle_extended_client_1.DongleController.ActiveDongle.match(dongle)) {
+                                tasks.push(handleActiveDongle(dongle));
+                            }
+                            else {
+                                tasks.push(handleLockedDongle(dongle));
+                            }
                         }
                     }
                     catch (e_3_1) { e_3 = { error: e_3_1 }; }

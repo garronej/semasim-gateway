@@ -129,7 +129,7 @@ var handlers = {};
                     if (!dongle) {
                         return [2 /*return*/, { "status": "ERROR", "message": "Dongle is not connected" }];
                     }
-                    if (dongle.sim.iccid && checkIfIccidMatch(dongle.sim.iccid, last_four_digits_of_iccid)) {
+                    if (dongle.sim.iccid && !checkIfIccidMatch(dongle.sim.iccid, last_four_digits_of_iccid)) {
                         return [2 /*return*/, { "status": "ERROR", "message": "Sim ICCID mismatch" }];
                     }
                     if (!chan_dongle_extended_client_1.DongleController.ActiveDongle.match(dongle)) return [3 /*break*/, 1];
@@ -153,21 +153,18 @@ var handlers = {};
                     _g.label = 3;
                 case 3:
                     _g.trys.push([3, 5, , 6]);
+                    debug({ pin: pin });
                     return [4 /*yield*/, dc.unlock(dongle.imei, pin)];
                 case 4:
                     unlockResult = _g.sent();
+                    debug({ unlockResult: unlockResult });
                     return [3 /*break*/, 6];
                 case 5:
                     _c = _g.sent();
                     return [2 /*return*/, { "status": "ERROR", "message": "dongle disconnect while unlocking" }];
                 case 6:
-                    if (unlockResult.success) {
+                    if (unlockResult.success)
                         return [3 /*break*/, 8];
-                    }
-                    else {
-                        dongle.sim.pinState = unlockResult.pinState;
-                        dongle.sim.tryLeft = unlockResult.tryLeft;
-                    }
                     _g.label = 7;
                 case 7:
                     _b = _a.next();
@@ -197,7 +194,7 @@ var handlers = {};
                     _e = _g.sent();
                     return [2 /*return*/, { "status": "ERROR", "message": "Unlock success but dongle not found" }];
                 case 14:
-                    if (checkIfIccidMatch(activeDongle.sim.iccid, last_four_digits_of_iccid)) {
+                    if (!checkIfIccidMatch(activeDongle.sim.iccid, last_four_digits_of_iccid)) {
                         return [2 /*return*/, { "status": "ERROR", "message": "Sim have been unlocked but ICCID mismatch" }];
                     }
                     return [2 /*return*/, { "status": "SUCCESS", "dongle": activeDongle }];
