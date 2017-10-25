@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var dns = require("dns");
 var dnsSrc_sips_tcp = undefined;
 var c = /** @class */ (function () {
     function c() {
@@ -8,25 +7,6 @@ var c = /** @class */ (function () {
     c.shared = (_a = /** @class */ (function () {
             function shared() {
             }
-            Object.defineProperty(shared, "dnsSrv_sips_tcp", {
-                get: function () {
-                    if (dnsSrc_sips_tcp)
-                        return Promise.resolve(dnsSrc_sips_tcp);
-                    var ofType = dnsSrc_sips_tcp;
-                    return new Promise(function (resolve, reject) {
-                        dns.resolveSrv("_sips._tcp." + c.shared.domain, function (error, addresses) {
-                            if (error || !addresses.length) {
-                                return reject(error);
-                            }
-                            var _a = addresses[0], name = _a.name, port = _a.port;
-                            dnsSrc_sips_tcp = { name: name, port: port };
-                            resolve(dnsSrc_sips_tcp);
-                        });
-                    });
-                },
-                enumerable: true,
-                configurable: true
-            });
             return shared;
         }()),
         _a.gatewayPort = 80,
@@ -47,7 +27,6 @@ var c = /** @class */ (function () {
         type: "adaptive",
         params: "default"
     };
-    c.phoneNumber = "_[+0-9].";
     c.sipCallContext = "from-sip-call";
     c.sipMessageContext = "from-sip-message";
     c.strMissedCall = "Missed call";

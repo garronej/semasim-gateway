@@ -63,7 +63,7 @@ var __values = (this && this.__values) || function (o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var tls = require("tls");
 var net = require("net");
-var network = require("network");
+var networkTools = require("../tools/networkTools");
 var ts_events_extended_1 = require("ts-events-extended");
 var sipLibrary = require("../tools/sipLibrary");
 var sipApiBackend = require("./sipApiClientBackend");
@@ -196,19 +196,16 @@ function start() {
             switch (_g.label) {
                 case 0:
                     debug("(re)Staring !");
-                    if (!!localIp) return [3 /*break*/, 2];
-                    return [4 /*yield*/, new Promise(function (resolve, reject) { return network.get_private_ip(function (err, ip) { return err ? reject(err) : resolve(ip); }); })];
+                    return [4 /*yield*/, networkTools.getActiveInterfaceIp()];
                 case 1:
                     localIp = _g.sent();
-                    _g.label = 2;
-                case 2:
                     _b = (_a = sipLibrary.Socket).bind;
                     _d = (_c = tls).connect;
                     _e = {};
                     _f = "host";
-                    return [4 /*yield*/, _constants_1.c.shared.dnsSrv_sips_tcp];
-                case 3:
-                    backendSocket = new (_b.apply(_a, [void 0, _d.apply(_c, [(_e[_f] = (_g.sent()).name,
+                    return [4 /*yield*/, networkTools.resolveSrv("_sips._tcp." + _constants_1.c.shared.domain)];
+                case 2:
+                    backendSocket = new (_b.apply(_a, [void 0, _d.apply(_c, [(_e[_f] = (_g.sent())[0].name,
                                 _e["port"] = _constants_1.c.shared.gatewayPort,
                                 _e)])]))();
                     //TODO: see if it really does it's job

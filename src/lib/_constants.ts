@@ -10,35 +10,6 @@ export class c {
 
         public static readonly domain = "semasim.com";
 
-        public static get dnsSrv_sips_tcp(){
-
-            if (dnsSrc_sips_tcp) return Promise.resolve(dnsSrc_sips_tcp);
-
-            let ofType = dnsSrc_sips_tcp!;
-
-            return new Promise<typeof ofType>((resolve, reject) => {
-
-                dns.resolveSrv(
-                    `_sips._tcp.${c.shared.domain}`,
-                    (error, addresses) => {
-
-                        if (error || !addresses.length) {
-                            return reject(error);
-                        }
-
-                        let { name, port }= addresses[0];
-
-                        dnsSrc_sips_tcp= { name, port };
-
-                        resolve(dnsSrc_sips_tcp);
-
-                    }
-                );
-
-            });
-
-        }
-
     }
 
     public static readonly serviceName = "semasim-gateway";
@@ -59,8 +30,6 @@ export class c {
         type: "adaptive",
         params: "default"
     };
-
-    public static readonly phoneNumber = "_[+0-9].";
 
     public static readonly sipCallContext = "from-sip-call";
 

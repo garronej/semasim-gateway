@@ -61,9 +61,9 @@ function start() {
     var dongleCallContext = dc.moduleConfiguration.defaults.context;
     var scripts = {};
     scripts[_constants_1.c.sipCallContext] = {};
-    scripts[_constants_1.c.sipCallContext][_constants_1.c.phoneNumber] = fromSip;
+    scripts[_constants_1.c.sipCallContext]["_[+0-9]."] = fromSip;
     scripts[dongleCallContext] = {};
-    scripts[dongleCallContext][_constants_1.c.phoneNumber] = fromDongle;
+    scripts[dongleCallContext]["_[+0-9]."] = fromDongle;
     agi.startServer(scripts, dc.ami);
 }
 exports.start = start;

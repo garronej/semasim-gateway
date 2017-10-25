@@ -24,10 +24,10 @@ export function start() {
     let scripts: agi.Scripts = {};
 
     scripts[c.sipCallContext] = {};
-    scripts[c.sipCallContext][c.phoneNumber] = fromSip
+    scripts[c.sipCallContext]["_[+0-9]."] = fromSip
 
     scripts[dongleCallContext] = {};
-    scripts[dongleCallContext][c.phoneNumber] = fromDongle
+    scripts[dongleCallContext]["_[+0-9]."] = fromDongle
 
     agi.startServer(scripts, dc.ami);
 

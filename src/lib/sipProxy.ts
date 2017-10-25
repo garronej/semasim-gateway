@@ -1,6 +1,6 @@
 import * as tls from "tls";
 import * as net from "net";
-import * as network from "network";
+import * as networkTools from "../tools/networkTools";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import * as sipLibrary from "../tools/sipLibrary";
 import * as sipApiBackend from "./sipApiClientBackend";
@@ -175,17 +175,11 @@ export async function start() {
 
     debug("(re)Staring !");
 
-    if (!localIp) {
-        localIp = await new Promise<string>(
-            (resolve, reject) => network.get_private_ip(
-                (err, ip) => err ? reject(err) : resolve(ip)
-            )
-        );
-    }
+    localIp= await networkTools.getActiveInterfaceIp();
 
     backendSocket = new sipLibrary.Socket(
         tls.connect({
-            "host": (await c.shared.dnsSrv_sips_tcp).name,
+            "host": (await networkTools.resolveSrv(`_sips._tcp.${c.shared.domain}`))[0].name,
             "port": c.shared.gatewayPort
         }) as any
     );
