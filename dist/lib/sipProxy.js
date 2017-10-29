@@ -191,23 +191,36 @@ var localIp = "";
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var _this = this;
-        var _a, _b, _c, _d, _e, _f;
-        return __generator(this, function (_g) {
-            switch (_g.label) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        return __generator(this, function (_h) {
+            switch (_h.label) {
                 case 0:
-                    debug("(re)Staring !");
-                    return [4 /*yield*/, networkTools.getActiveInterfaceIp()];
+                    debug((localIp ? "re-" : "") + "Starting");
+                    _h.label = 1;
                 case 1:
-                    localIp = _g.sent();
-                    _b = (_a = sipLibrary.Socket).bind;
-                    _d = (_c = tls).connect;
-                    _e = {};
-                    _f = "host";
-                    return [4 /*yield*/, networkTools.resolveSrv("_sips._tcp." + _constants_1.c.shared.domain)];
+                    _h.trys.push([1, 3, , 5]);
+                    return [4 /*yield*/, networkTools.getActiveInterfaceIp()];
                 case 2:
-                    backendSocket = new (_b.apply(_a, [void 0, _d.apply(_c, [(_e[_f] = (_g.sent())[0].name,
-                                _e["port"] = _constants_1.c.shared.gatewayPort,
-                                _e)])]))();
+                    localIp = _h.sent();
+                    return [3 /*break*/, 5];
+                case 3:
+                    _a = _h.sent();
+                    debug("No active interface IP sheduling retry...");
+                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 5000); })];
+                case 4:
+                    _h.sent();
+                    start();
+                    return [2 /*return*/];
+                case 5:
+                    _c = (_b = sipLibrary.Socket).bind;
+                    _e = (_d = tls).connect;
+                    _f = {};
+                    _g = "host";
+                    return [4 /*yield*/, networkTools.resolveSrv("_sips._tcp." + _constants_1.c.shared.domain)];
+                case 6:
+                    backendSocket = new (_c.apply(_b, [void 0, _e.apply(_d, [(_f[_g] = (_h.sent())[0].name,
+                                _f["port"] = _constants_1.c.shared.gatewayPort,
+                                _f)])]))();
                     //TODO: see if it really does it's job
                     backendSocket.setKeepAlive(true);
                     sipApi_1.startListening(backendSocket);

@@ -173,9 +173,21 @@ let localIp = "";
 
 export async function start() {
 
-    debug("(re)Staring !");
+    debug(`${localIp?"re-":""}Starting`);
 
-    localIp= await networkTools.getActiveInterfaceIp();
+    try{
+
+        localIp = await networkTools.getActiveInterfaceIp();
+
+    }catch{
+        
+        debug("No active interface IP sheduling retry...");
+
+        await new Promise(resolve=> setTimeout(resolve,5000));
+        start();
+        return;
+
+    }
 
     backendSocket = new sipLibrary.Socket(
         tls.connect({
