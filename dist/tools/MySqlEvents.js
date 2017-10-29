@@ -18,9 +18,19 @@ var MySqlEvents = /** @class */ (function () {
         this.evtNewRow = new ts_events_extended_1.SyncEvent();
         this.evtDeleteRow = new ts_events_extended_1.SyncEvent();
         this.zongji = new ZongJi(connectionConfig);
-        var sql = "SET SESSION wait_timeout=31536000";
-        this.zongji.connection.query(sql);
-        this.zongji.ctrlConnection.query(sql);
+        try {
+            for (var _a = __values(["connection", "ctrlConnection"]), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var key = _b.value;
+                this.zongji[key].query("SET SESSION wait_timeout=31536000");
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
         this.zongji.once("binlog", function (evt) {
             _this.zongji.set({
                 "includeEvents": ['tablemap', 'writerows', 'updaterows', 'deleterows']
@@ -32,6 +42,7 @@ var MySqlEvents = /** @class */ (function () {
             "startAtEnd": true,
             "includeEvents": ["rotate"]
         });
+        var e_1, _c;
     }
     MySqlEvents.initialize = function (connectionConfig) {
         var _this = this;
@@ -70,14 +81,14 @@ var MySqlEvents = /** @class */ (function () {
                 });
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_d = _b.return)) _d.call(_b);
             }
-            finally { if (e_1) throw e_1.error; }
+            finally { if (e_2) throw e_2.error; }
         }
-        var e_1, _d;
+        var e_2, _d;
     };
     MySqlEvents._instance = undefined;
     return MySqlEvents;
