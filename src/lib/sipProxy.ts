@@ -198,6 +198,31 @@ export async function start() {
     );
     */
 
+    /*
+    backendSocket.evtPacket.attachPrepend(
+        ({ headers }) => headers["content-type"] === "application/sdp",
+        sipPacket => {
+
+            let sdp = sipLibrary.parseSdp(sipPacket.content);
+
+            let arr = sdp.m[0].a;
+
+            for (let line of [...arr]) {
+
+                if (line.match(/^candidate/) && !line.match(/relay/)) {
+                    arr.splice(arr.indexOf(line), 1);
+                }
+
+            }
+
+            console.log(arr);
+
+            sipPacket.content = sipLibrary.stringifySdp(sdp);
+
+        }
+    );
+    */
+
     backendSocket.evtConnect.attachOnce(async () => {
 
         debug("Connection established with backend");
@@ -255,8 +280,8 @@ export async function start() {
         if (sipRequest.method === "REGISTER") {
 
             sipRequest.headers["user-agent"] = PsContact.buildUserAgentFieldValue({
-                connectionId, 
-                "ua_instance": sipRequest.headers.contact![0].params["+sip.instance"]!, 
+                connectionId,
+                "ua_instance": sipRequest.headers.contact![0].params["+sip.instance"]!,
                 "ua_software": sipRequest.headers["user-agent"]
             });
 
@@ -321,7 +346,7 @@ export async function start() {
 
         let delay = (function getRandomArbitrary(min, max) {
             return Math.floor(Math.random() * (max - min) + min);
-        })(15000, 120000);
+        })(3000, 5000);
 
         debug(`Delay before restarting: ${delay}ms`);
 

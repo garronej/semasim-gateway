@@ -74,7 +74,6 @@ var __spread = (this && this.__spread) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var ts_events_extended_1 = require("ts-events-extended");
-var mysql = require("mysql");
 var sipContact_1 = require("./sipContact");
 var f = require("../tools/mySqlFunctions");
 var MySqlEvents_1 = require("../tools/MySqlEvents");
@@ -97,14 +96,7 @@ var asterisk;
         });
     }
     asterisk.initializeEvt = initializeEvt;
-    var connection = undefined;
-    function query(sql, values) {
-        if (!connection) {
-            connection = mysql.createConnection(__assign({}, connectionConfig, { "multipleStatements": true }));
-        }
-        return f.queryOnConnection(connection, sql, values);
-    }
-    asterisk.query = query;
+    asterisk.query = f.buildQueryFunction(connectionConfig);
     var evtNewContact = undefined;
     function getEvtNewContact() {
         var _this = this;
@@ -186,7 +178,7 @@ var asterisk;
                             "WHERE ps_endpoints.id= ? AND ps_endpoints.set_var='ICCID=" + endpoint.sim.iccid + "'"
                         ].join("\n");
                         values = [endpoint.dongle.imei];
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, asterisk.query(sql, values)];
                     case 1:
                         psContacts = _b.sent();
                         contacts = [];
@@ -236,7 +228,7 @@ var asterisk;
                             "DELETE FROM ps_contacts;",
                             "DELETE FROM ps_endpoints;",
                         ].join("\n");
-                        return [4 /*yield*/, query(sql)];
+                        return [4 /*yield*/, asterisk.query(sql)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -313,7 +305,7 @@ var asterisk;
                 var affectedRows, isDeleted;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, query("DELETE FROM ps_contacts WHERE id=?", [contact.id])];
+                        case 0: return [4 /*yield*/, asterisk.query("DELETE FROM ps_contacts WHERE id=?", [contact.id])];
                         case 1:
                             affectedRows = (_a.sent()).affectedRows;
                             isDeleted = affectedRows ? true : false;
@@ -391,7 +383,7 @@ var asterisk;
                             sql += _sql;
                             values = __spread(values, _values);
                         })();
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, asterisk.query(sql, values)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -405,7 +397,7 @@ var asterisk;
             var _a, set_var, iccid;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0: return [4 /*yield*/, query("SELECT set_var FROM ps_endpoints WHERE id=?", [imei])];
+                    case 0: return [4 /*yield*/, asterisk.query("SELECT set_var FROM ps_endpoints WHERE id=?", [imei])];
                     case 1:
                         _a = __read.apply(void 0, [_b.sent(), 1]), set_var = _a[0].set_var;
                         iccid = set_var.match(/ICCID=([0-9]+)/)[1];
@@ -418,14 +410,7 @@ var asterisk;
 })(asterisk = exports.asterisk || (exports.asterisk = {}));
 var semasim;
 (function (semasim) {
-    var connection = undefined;
-    function query(sql, values) {
-        if (!connection) {
-            connection = mysql.createConnection(__assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim", "multipleStatements": true }));
-        }
-        return f.queryOnConnection(connection, sql, values);
-    }
-    semasim.query = query;
+    semasim.query = f.buildQueryFunction(__assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim" }));
     /** Only for test purpose */
     function flush() {
         return __awaiter(this, void 0, void 0, function () {
@@ -439,7 +424,7 @@ var semasim;
                             "DELETE FROM ua;",
                             "DELETE FROM message_toward_sip;",
                         ].join("\n");
-                        return [4 /*yield*/, query(sql)];
+                        return [4 /*yield*/, semasim.query(sql)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -461,7 +446,7 @@ var semasim;
                             "ON DUPLICATE KEY UPDATE last_connection_date = VALUES(last_connection_date)"
                         ].join("\n");
                         values = [dongle.imei, Date.now(), null];
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, semasim.query(sql, values)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -478,7 +463,7 @@ var semasim;
                 switch (_b.label) {
                     case 0:
                         sql = "SELECT imei, last_connection_date FROM dongle";
-                        return [4 /*yield*/, query(sql)];
+                        return [4 /*yield*/, semasim.query(sql)];
                     case 1:
                         rows = _b.sent();
                         out = new Map();
@@ -539,7 +524,7 @@ var semasim;
                             sql += _sql;
                             values = __spread(values, _values);
                         })();
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, semasim.query(sql, values)];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -565,7 +550,7 @@ var semasim;
                             "WHERE endpoint.dongle_imei= ?"
                         ].join("\n");
                         values = [imei];
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, semasim.query(sql, values)];
                     case 1:
                         rows = _b.sent();
                         out = [];
@@ -634,7 +619,7 @@ var semasim;
                         else {
                             values = [];
                         }
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, semasim.query(sql, values)];
                     case 1:
                         rows = _b.sent();
                         out = [];
@@ -719,7 +704,7 @@ var semasim;
                             sql += _sql;
                             values = __spread(values, _values);
                         })();
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, semasim.query(sql, values)];
                     case 1:
                         rows = _b.sent();
                         insertId = rows.pop().insertId;
@@ -776,7 +761,7 @@ var semasim;
                                 sql += _sql;
                                 values = __spread(values, _values);
                             })();
-                            return [4 /*yield*/, query(sql, values)];
+                            return [4 /*yield*/, semasim.query(sql, values)];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -819,7 +804,7 @@ var semasim;
                                 endpoint.dongle.imei,
                                 endpoint.sim.iccid
                             ];
-                            return [4 /*yield*/, query(sql, values)];
+                            return [4 /*yield*/, semasim.query(sql, values)];
                         case 1:
                             rows = _b.sent();
                             out = [];
@@ -857,7 +842,7 @@ var semasim;
                                                         "id_": message_toward_gsm_id_,
                                                         "send_date": sentDate ? sentDate.getTime() : -1
                                                     }), 2), sql = _a[0], values = _a[1];
-                                                    return [4 /*yield*/, query(sql, values)];
+                                                    return [4 /*yield*/, semasim.query(sql, values)];
                                                 case 1:
                                                     _b.sent();
                                                     return [2 /*return*/];
@@ -875,7 +860,7 @@ var semasim;
                                                         "discharge_date": isNaN(statusReport.dischargeDate.getTime()) ? null : statusReport.dischargeDate.getTime(),
                                                         "status": statusReport.status
                                                     }), 2), sql = _a[0], values = _a[1];
-                                                    return [4 /*yield*/, query(sql, values)];
+                                                    return [4 /*yield*/, semasim.query(sql, values)];
                                                 case 1:
                                                     _b.sent();
                                                     return [2 /*return*/];
@@ -929,7 +914,7 @@ var semasim;
                             endpoint.sim.iccid
                         ];
                         values = __spread(values, values);
-                        return [4 /*yield*/, query(sql, values)];
+                        return [4 /*yield*/, semasim.query(sql, values)];
                     case 1:
                         _a = __read.apply(void 0, [_d.sent(), 2]), _b = __read(_a[0], 1), count = _b[0].count, r2 = _a[1];
                         if (!count) {
@@ -1009,7 +994,7 @@ var semasim;
                                 sql_
                             ].join("\n");
                             values = __spread(values, values_);
-                            return [4 /*yield*/, query(sql, values)];
+                            return [4 /*yield*/, semasim.query(sql, values)];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -1040,7 +1025,7 @@ var semasim;
                                 uaEndpoint.endpoint.dongle.imei,
                                 uaEndpoint.endpoint.sim.iccid
                             ];
-                            return [4 /*yield*/, query(sql, values)];
+                            return [4 /*yield*/, semasim.query(sql, values)];
                         case 1: return [2 /*return*/, (_a.sent())[0]["count"]];
                     }
                 });
@@ -1076,7 +1061,7 @@ var semasim;
                                 uaEndpoint.endpoint.dongle.imei,
                                 uaEndpoint.endpoint.sim.iccid
                             ];
-                            return [4 /*yield*/, query(sql, values)];
+                            return [4 /*yield*/, semasim.query(sql, values)];
                         case 1:
                             rows = _b.sent();
                             out = new Array();
@@ -1096,7 +1081,7 @@ var semasim;
                                                     "id_": row["id_"],
                                                     "delivered_date": Date.now()
                                                 }), 2), sql = _a[0], values = _a[1];
-                                                return [4 /*yield*/, query(sql, values)];
+                                                return [4 /*yield*/, semasim.query(sql, values)];
                                             case 1:
                                                 _b.sent();
                                                 return [2 /*return*/];

@@ -3,7 +3,7 @@ import { Contact } from "./sipContact";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 export declare namespace asterisk {
     function initializeEvt(): Promise<void>;
-    function query(sql: string, values?: (string | number | null)[]): Promise<any>;
+    const query: (sql: string, values?: (string | number | null)[] | undefined) => Promise<any>;
     function getEvtNewContact(): SyncEvent<Contact>;
     function getEvtExpiredContact(): SyncEvent<Contact>;
     function getContacts(endpoint: Contact.UaEndpoint.EndpointRef): Promise<Contact[]>;
@@ -15,7 +15,7 @@ export declare namespace asterisk {
     function getIccidOfEndpoint(imei: string): Promise<string>;
 }
 export declare namespace semasim {
-    function query(sql: string, values?: (string | number | null)[]): Promise<any>;
+    const query: (sql: string, values?: (string | number | null)[] | undefined) => Promise<any>;
     /** Only for test purpose */
     function flush(): Promise<void>;
     function addDongle(dongle: Dc.LockedDongle): Promise<void>;

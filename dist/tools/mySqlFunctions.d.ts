@@ -1,5 +1,6 @@
 import * as mysql from "mysql";
-export declare function queryOnConnection(connection: mysql.IConnection, sql: string, values?: (string | number | null)[]): Promise<any>;
+export declare function buildQueryFunction(connectionConfig: mysql.IConnectionConfig): (sql: string, values?: (string | number | null)[] | undefined) => Promise<any>;
+export declare function buildQueryFunctionSafe(connectionConfig: mysql.IConnectionConfig): (sql: string, values?: (string | number | null)[] | undefined) => Promise<any>;
 export declare function buildInsertOrUpdateQuery(table: string, values: Record<string, string | number | null | {
     "@": string;
 }>): [string, (string | number | null)[]];

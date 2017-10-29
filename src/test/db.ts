@@ -4,6 +4,7 @@ import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Contact, PsContact } from "../lib/sipContact";
 import * as db from "../lib/db";
 import * as f from "../tools/mySqlFunctions";
+import { MySqlEvents } from "../tools/MySqlEvents";
 
 (async ()=>{
 
@@ -512,7 +513,11 @@ async function testDbAsterisk() {
 
     };
 
-    await db.asterisk.initializeEvt();
+    try{
+        MySqlEvents.instance;
+    }catch{
+        await db.asterisk.initializeEvt();
+    }
 
     let pr: Promise<any> = db.asterisk.getEvtNewContact().attachOnce(
         3001,

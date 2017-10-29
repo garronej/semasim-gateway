@@ -18,6 +18,9 @@ var MySqlEvents = /** @class */ (function () {
         this.evtNewRow = new ts_events_extended_1.SyncEvent();
         this.evtDeleteRow = new ts_events_extended_1.SyncEvent();
         this.zongji = new ZongJi(connectionConfig);
+        var sql = "SET SESSION wait_timeout=31536000";
+        this.zongji.connection.query(sql);
+        this.zongji.ctrlConnection.query(sql);
         this.zongji.once("binlog", function (evt) {
             _this.zongji.set({
                 "includeEvents": ['tablemap', 'writerows', 'updaterows', 'deleterows']

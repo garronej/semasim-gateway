@@ -49,6 +49,10 @@ export class MySqlEvents {
 
         this.zongji = new ZongJi(connectionConfig);
 
+        let sql= "SET SESSION wait_timeout=31536000";
+        this.zongji.connection.query(sql);
+        this.zongji.ctrlConnection.query(sql);
+
         this.zongji.once("binlog", evt=> {
 
             this.zongji.set({ 

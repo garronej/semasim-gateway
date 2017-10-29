@@ -18,30 +18,10 @@ export namespace asterisk {
     };
 
     export async function initializeEvt(): Promise<void> {
-
         await MySqlEvents.initialize(connectionConfig);
-
     }
 
-    let connection: mysql.IConnection | undefined = undefined;
-
-    export function query(
-        sql: string,
-        values?: (string | number | null)[]
-    ): Promise<any> {
-
-        if (!connection){
-
-            connection = mysql.createConnection({ 
-                ...connectionConfig,
-                "multipleStatements": true
-            });
-
-        }
-
-        return f.queryOnConnection(connection, sql, values);
-
-    }
+    export const query= f.buildQueryFunction(connectionConfig);
 
     let evtNewContact: SyncEvent<Contact> | undefined = undefined;
     export function getEvtNewContact() {
@@ -307,26 +287,10 @@ export namespace asterisk {
 
 export namespace semasim {
 
-    let connection: mysql.IConnection | undefined = undefined;
-
-    export function query(
-        sql: string,
-        values?: (string | number | null)[]
-    ): Promise<any> {
-
-        if (!connection) {
-
-            connection = mysql.createConnection({
-                ...c.dbParamsGateway,
-                "database": "semasim",
-                "multipleStatements": true
-            });
-
-        }
-
-        return f.queryOnConnection(connection, sql, values);
-
-    }
+    export const query= f.buildQueryFunction({
+        ...c.dbParamsGateway,
+        "database": "semasim"
+    });
 
     /** Only for test purpose */
     export async function flush() {

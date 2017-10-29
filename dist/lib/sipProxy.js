@@ -219,6 +219,30 @@ function start() {
                         console.log("From backend raw:\n", chunk.yellow, "\n\n")
                     );
                     */
+                    /*
+                    backendSocket.evtPacket.attachPrepend(
+                        ({ headers }) => headers["content-type"] === "application/sdp",
+                        sipPacket => {
+                
+                            let sdp = sipLibrary.parseSdp(sipPacket.content);
+                
+                            let arr = sdp.m[0].a;
+                
+                            for (let line of [...arr]) {
+                
+                                if (line.match(/^candidate/) && !line.match(/relay/)) {
+                                    arr.splice(arr.indexOf(line), 1);
+                                }
+                
+                            }
+                
+                            console.log(arr);
+                
+                            sipPacket.content = sipLibrary.stringifySdp(sdp);
+                
+                        }
+                    );
+                    */
                     backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
                         var _this = this;
                         var handledUa, _loop_1, _a, _b, _c, imei, e_2_1, e_2, _d;
@@ -368,7 +392,7 @@ function start() {
                                     asteriskSockets.flush();
                                     delay = (function getRandomArbitrary(min, max) {
                                         return Math.floor(Math.random() * (max - min) + min);
-                                    })(15000, 120000);
+                                    })(3000, 5000);
                                     debug("Delay before restarting: " + delay + "ms");
                                     return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, delay); })];
                                 case 1:
