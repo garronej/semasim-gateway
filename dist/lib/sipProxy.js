@@ -329,12 +329,13 @@ function start() {
                     }); });
                     backendSocket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {
                         var _this = this;
-                        var connectionId, imei, asteriskSocket, branch;
+                        var headers, connectionId, imei, asteriskSocket, contactAoR, parsedUri, branch;
                         return __generator(this, function (_a) {
                             switch (_a.label) {
                                 case 0:
-                                    connectionId = parseInt(sipRequest.headers.via[0].params["connection_id"]);
-                                    imei = sipLibrary.parseUri(sipRequest.headers.from.uri).user;
+                                    headers = sipRequest.headers;
+                                    connectionId = parseInt(headers.via[0].params["connection_id"]);
+                                    imei = sipLibrary.parseUri(headers.from.uri).user;
                                     asteriskSocket = asteriskSockets.get(connectionId, imei);
                                     if (asteriskSocket === undefined) {
                                         asteriskSocket = createAsteriskSocket(connectionId, imei, backendSocket);
@@ -348,16 +349,28 @@ function start() {
                                     _a.sent();
                                     _a.label = 2;
                                 case 2:
+                                    contactAoR = headers.contact ? headers.contact[0] : undefined;
                                     if (sipRequest.method === "REGISTER") {
-                                        sipRequest.headers["user-agent"] = sipContact_1.PsContact.buildUserAgentFieldValue({
+                                        headers["user-agent"] = sipContact_1.PsContact.stringifyMisc({
+                                            "ua_instance": contactAoR.params["+sip.instance"],
+                                            "ua_software": headers["user-agent"],
                                             connectionId: connectionId,
-                                            "ua_instance": sipRequest.headers.contact[0].params["+sip.instance"],
-                                            "ua_software": sipRequest.headers["user-agent"]
+                                            "pushToken": (function () {
+                                                var params = sipLibrary.parseUri(contactAoR.uri).params;
+                                                var type = params["pn-type"];
+                                                var token = params["pn-tok"];
+                                                return (type && token) ? { type: type, token: token } : undefined;
+                                            })()
                                         });
                                         asteriskSocket.addPathHeader(sipRequest);
                                     }
                                     else {
                                         asteriskSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
+                                    }
+                                    if (contactAoR) {
+                                        parsedUri = sipLibrary.parseUri(contactAoR.uri);
+                                        parsedUri.params = {};
+                                        contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
                                     }
                                     branch = asteriskSocket.addViaHeader(sipRequest);
                                     //TODO match with authentication

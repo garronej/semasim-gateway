@@ -108,9 +108,6 @@ export function isPlainMessageRequest(sipRequest: sip.Request): boolean {
 
 }
 
-
-
-
 export const makeStreamParser: (
     handler: (sipPacket: Packet) => void, 
     onFlood: ()=> void, 
@@ -136,7 +133,6 @@ export class Socket {
     private static readonly maxBytesHeaders= 7820;
     private static readonly maxContentLength= 24624;
 
-
     constructor(
         private readonly connection: net.Socket,
         timeoutDelay?: number
@@ -158,54 +154,52 @@ export class Socket {
             Socket.maxContentLength
         );
 
-        connection.on("data", (data: Buffer) => {
-
-            if (timeoutDelay) {
-
-                clearTimeout(this.timer);
-
-                this.timer = setTimeout(() => this.evtTimeout.post(), timeoutDelay);
-
-            }
-
-            let dataAsBinaryString = data.toString("binary");
-
-            this.evtData.post(dataAsBinaryString);
-
-            try{
-
-                streamParser(dataAsBinaryString);
-
-            }catch(error){
-
-                debug("Stream parser error");
-
-                this.connection.emit("error", error);
-
-            }
-
-        })
+        connection
+            .setMaxListeners(Infinity)
+            .once("error", error => {
+                debug("Socket error", error);
+                this.connection.emit("close", true)
+            })
             .once("close", had_error => {
                 if (timeoutDelay) clearTimeout(this.timer);
                 this.connection.destroy();
                 this.evtClose.post(had_error);
             })
-            .once("error", error => {
-                debug("Socket error", error);
-                this.connection.emit("close", true)
-            })
-            .setMaxListeners(Infinity);
+            .on("data", (data: Buffer) => {
 
-        if (this.encrypted)
-            connection.once("secureConnect", () => {
+                if (timeoutDelay) {
+
+                    clearTimeout(this.timer);
+
+                    this.timer = setTimeout(() => this.evtTimeout.post(), timeoutDelay);
+
+                }
+
+                let dataAsBinaryString = data.toString("binary");
+
+                this.evtData.post(dataAsBinaryString);
+
+                try {
+
+                    streamParser(dataAsBinaryString);
+
+                } catch (error) {
+
+                    debug("Stream parser error");
+
+                    this.connection.emit("error", error);
+
+                }
+
+            });
+
+        connection.once(
+            this.encrypted ? "secureConnect" : "connect",
+            () => {
                 this.fixPortAndAddr();
                 this.evtConnect.post();
-            });
-        else
-            connection.once("connect", () => {
-                this.fixPortAndAddr();
-                this.evtConnect.post();
-            });
+            }
+        );
 
 
     }
@@ -234,7 +228,7 @@ export class Socket {
         if (matchRequest(sipPacket) && parseInt(sipPacket.headers["max-forwards"]) < 0)
             return false;
 
-        if( !sipPacket.headers.via.length ) {
+        if (!sipPacket.headers.via.length) {
             debug("Prevent sending packet without via header");
             return false;
         }
@@ -244,7 +238,6 @@ export class Socket {
         );
 
     }
-
 
     public destroy() {
 
@@ -267,6 +260,7 @@ export class Socket {
 
         return localPort;
     }
+
     public get localAddress(): string {
         let localAddress = this.__localAddress__ || this.connection.localAddress;
 
@@ -284,6 +278,7 @@ export class Socket {
         return remotePort;
 
     }
+
     public get remoteAddress(): string {
 
         let remoteAddress = this.__remoteAddress__ || this.connection.remoteAddress;
@@ -294,9 +289,7 @@ export class Socket {
     }
 
     public get encrypted(): boolean {
-
         return this.connection["encrypted"] ? true : false;
-
     }
 
     public get protocol(): "TCP" | "TLS" {
@@ -305,7 +298,7 @@ export class Socket {
 
     public addViaHeader(
         sipRequest: Request,
-        extraParams: Record<string, string>= {}
+        extraParams: Record<string, string> = {}
     ): string {
 
         let branch = (() => {
@@ -348,13 +341,19 @@ export class Socket {
 
         if (!sipRegisterRequest.headers.path) sipRegisterRequest.headers.path = [];
 
-        sipRegisterRequest.headers.path!.unshift( this.buildRoute(host, extraParams) );
+        sipRegisterRequest.headers.path!.unshift(this.buildRoute(host, extraParams));
 
     }
 
+    /**
+     * 
+     * Return stringified:
+     * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
+     * 
+     */
 
     private buildRoute(
-        host: string= this.localAddress,
+        host: string = this.localAddress,
         extraParams: Record<string, string> = {}
     ): AoRWithParsedUri {
 
@@ -376,7 +375,7 @@ export class Socket {
      * 
      * Assert sipRequest is NOT register.
      * 
-     * HOP_X => LOCAL_X LOCAL_this => HOP_Y
+     * HOP_X ] => [ LOCAL_X, LOCAL_this ] => [ HOP_Y
      * 
      * Before: 
      * Route: LOCAL_X, HOP_Y
@@ -385,8 +384,6 @@ export class Socket {
      * After:
      * Route: HOP_Y
      * Record-Route: LOCAL_this, HOP_X
-     * 
-     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
      * 
      */
     public shiftRouteAndUnshiftRecordRoute(
@@ -400,15 +397,13 @@ export class Socket {
 
         if (!sipRequest.headers["record-route"]) sipRequest.headers["record-route"] = [];
 
-        sipRequest.headers["record-route"]!.unshift( this.buildRoute(host));
+        sipRequest.headers["record-route"]!.unshift(this.buildRoute(host));
 
     }
 
     /**
      * 
-     * Assert sipRequest is NOT register.
-     * 
-     * HOP_X <= LOCAL_this LOCAL_Y <= HOP_Y
+     * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
      * 
      * Before: 
      * Record-Route: HOP_X, LOCAL_Y, HOP_Y
@@ -416,9 +411,9 @@ export class Socket {
      * After:
      * Record-Route: HOP_X, LOCAL_this, HOP_Y
      *
-     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;lr>
-     *
-     * NOTE: We use a different implementation but peer to peer result is same.
+     * NOTE: We use a different implementation but end to end result is same.
+     * In consequence isFirst hop must be set to true if and only if this is 
+     * this first hop of the response.
      *
      */
     public pushRecordRoute(
@@ -495,8 +490,6 @@ export function addOptionTag(
 
 }
 
-
-
 export function matchRequest(sipPacket: Packet): sipPacket is Request {
     return "method" in sipPacket;
 }
@@ -531,7 +524,6 @@ export type AoRWithParsedUri = {
     uri: ParsedUri;
     params: Record<string, string | null>
 }
-
 
 export type Headers = {
     via: Via[];

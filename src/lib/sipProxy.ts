@@ -271,9 +271,11 @@ export async function start() {
 
     backendSocket.evtRequest.attach(async sipRequest => {
 
-        let connectionId = parseInt(sipRequest.headers.via[0].params["connection_id"]!);
+        let { headers }= sipRequest;
 
-        let imei = sipLibrary.parseUri(sipRequest.headers.from.uri).user!;
+        let connectionId = parseInt(headers.via[0].params["connection_id"]!);
+
+        let imei = sipLibrary.parseUri(headers.from.uri).user!;
 
         let asteriskSocket = asteriskSockets.get(connectionId, imei);
 
@@ -289,12 +291,24 @@ export async function start() {
 
         if (!asteriskSocket.evtConnect.postCount) await asteriskSocket.evtConnect.waitFor();
 
+        let contactAoR= headers.contact?headers.contact[0]:undefined;
+
         if (sipRequest.method === "REGISTER") {
 
-            sipRequest.headers["user-agent"] = PsContact.buildUserAgentFieldValue({
+            headers["user-agent"] = PsContact.stringifyMisc({
+                "ua_instance": contactAoR!.params["+sip.instance"]!,
+                "ua_software": headers["user-agent"],
                 connectionId,
-                "ua_instance": sipRequest.headers.contact![0].params["+sip.instance"]!,
-                "ua_software": sipRequest.headers["user-agent"]
+                "pushToken": (() => {
+
+                    let { params } = sipLibrary.parseUri(contactAoR!.uri);
+
+                    let type = params["pn-type"];
+                    let token = params["pn-tok"];
+
+                    return (type && token)?{ type, token }:undefined;
+
+                })()
             });
 
             asteriskSocket.addPathHeader(sipRequest);
@@ -305,6 +319,15 @@ export async function start() {
 
         }
 
+        if (contactAoR) {
+
+            let parsedUri = sipLibrary.parseUri(contactAoR.uri);
+
+            parsedUri.params = {};
+
+            contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
+
+        }
 
         let branch = asteriskSocket.addViaHeader(sipRequest);
 

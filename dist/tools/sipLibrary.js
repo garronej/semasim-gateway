@@ -153,7 +153,19 @@ var Socket = /** @class */ (function () {
             else
                 _this.evtResponse.post(sipPacket);
         }, function () { return _this.connection.emit("error", new Error("Flood")); }, Socket.maxBytesHeaders, Socket.maxContentLength);
-        connection.on("data", function (data) {
+        connection
+            .setMaxListeners(Infinity)
+            .once("error", function (error) {
+            debug("Socket error", error);
+            _this.connection.emit("close", true);
+        })
+            .once("close", function (had_error) {
+            if (timeoutDelay)
+                clearTimeout(_this.timer);
+            _this.connection.destroy();
+            _this.evtClose.post(had_error);
+        })
+            .on("data", function (data) {
             if (timeoutDelay) {
                 clearTimeout(_this.timer);
                 _this.timer = setTimeout(function () { return _this.evtTimeout.post(); }, timeoutDelay);
@@ -167,28 +179,11 @@ var Socket = /** @class */ (function () {
                 debug("Stream parser error");
                 _this.connection.emit("error", error);
             }
-        })
-            .once("close", function (had_error) {
-            if (timeoutDelay)
-                clearTimeout(_this.timer);
-            _this.connection.destroy();
-            _this.evtClose.post(had_error);
-        })
-            .once("error", function (error) {
-            debug("Socket error", error);
-            _this.connection.emit("close", true);
-        })
-            .setMaxListeners(Infinity);
-        if (this.encrypted)
-            connection.once("secureConnect", function () {
-                _this.fixPortAndAddr();
-                _this.evtConnect.post();
-            });
-        else
-            connection.once("connect", function () {
-                _this.fixPortAndAddr();
-                _this.evtConnect.post();
-            });
+        });
+        connection.once(this.encrypted ? "secureConnect" : "connect", function () {
+            _this.fixPortAndAddr();
+            _this.evtConnect.post();
+        });
     }
     Socket.prototype.fixPortAndAddr = function () {
         this.__localPort__ = this.connection.localPort;
@@ -296,6 +291,12 @@ var Socket = /** @class */ (function () {
             sipRegisterRequest.headers.path = [];
         sipRegisterRequest.headers.path.unshift(this.buildRoute(host, extraParams));
     };
+    /**
+     *
+     * Return stringified:
+     * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
+     *
+     */
     Socket.prototype.buildRoute = function (host, extraParams) {
         if (host === void 0) { host = this.localAddress; }
         if (extraParams === void 0) { extraParams = {}; }
@@ -308,7 +309,7 @@ var Socket = /** @class */ (function () {
      *
      * Assert sipRequest is NOT register.
      *
-     * HOP_X => LOCAL_X LOCAL_this => HOP_Y
+     * HOP_X ] => [ LOCAL_X, LOCAL_this ] => [ HOP_Y
      *
      * Before:
      * Route: LOCAL_X, HOP_Y
@@ -317,8 +318,6 @@ var Socket = /** @class */ (function () {
      * After:
      * Route: HOP_Y
      * Record-Route: LOCAL_this, HOP_X
-     *
-     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
      *
      */
     Socket.prototype.shiftRouteAndUnshiftRecordRoute = function (sipRequest, host) {
@@ -332,9 +331,7 @@ var Socket = /** @class */ (function () {
     };
     /**
      *
-     * Assert sipRequest is NOT register.
-     *
-     * HOP_X <= LOCAL_this LOCAL_Y <= HOP_Y
+     * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
      *
      * Before:
      * Record-Route: HOP_X, LOCAL_Y, HOP_Y
@@ -342,9 +339,9 @@ var Socket = /** @class */ (function () {
      * After:
      * Record-Route: HOP_X, LOCAL_this, HOP_Y
      *
-     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;lr>
-     *
-     * NOTE: We use a different implementation but peer to peer result is same.
+     * NOTE: We use a different implementation but end to end result is same.
+     * In consequence isFirst hop must be set to true if and only if this is
+     * this first hop of the response.
      *
      */
     Socket.prototype.pushRecordRoute = function (sipResponse, isFirstHop, host) {

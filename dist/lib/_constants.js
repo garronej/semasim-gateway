@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var dnsSrc_sips_tcp = undefined;
 var c = /** @class */ (function () {
     function c() {
     }

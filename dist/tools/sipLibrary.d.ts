@@ -38,12 +38,18 @@ export declare class Socket {
     readonly protocol: "TCP" | "TLS";
     addViaHeader(sipRequest: Request, extraParams?: Record<string, string>): string;
     addPathHeader(sipRegisterRequest: Request, host?: string, extraParams?: Record<string, string>): void;
+    /**
+     *
+     * Return stringified:
+     * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
+     *
+     */
     private buildRoute(host?, extraParams?);
     /**
      *
      * Assert sipRequest is NOT register.
      *
-     * HOP_X => LOCAL_X LOCAL_this => HOP_Y
+     * HOP_X ] => [ LOCAL_X, LOCAL_this ] => [ HOP_Y
      *
      * Before:
      * Route: LOCAL_X, HOP_Y
@@ -53,15 +59,11 @@ export declare class Socket {
      * Route: HOP_Y
      * Record-Route: LOCAL_this, HOP_X
      *
-     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
-     *
      */
     shiftRouteAndUnshiftRecordRoute(sipRequest: Request, host?: string): void;
     /**
      *
-     * Assert sipRequest is NOT register.
-     *
-     * HOP_X <= LOCAL_this LOCAL_Y <= HOP_Y
+     * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
      *
      * Before:
      * Record-Route: HOP_X, LOCAL_Y, HOP_Y
@@ -69,9 +71,9 @@ export declare class Socket {
      * After:
      * Record-Route: HOP_X, LOCAL_this, HOP_Y
      *
-     * Where LOCAL_this= <sip:${host||this.localAddress}:this.localPort;lr>
-     *
-     * NOTE: We use a different implementation but peer to peer result is same.
+     * NOTE: We use a different implementation but end to end result is same.
+     * In consequence isFirst hop must be set to true if and only if this is
+     * this first hop of the response.
      *
      */
     pushRecordRoute(sipResponse: Response, isFirstHop: boolean, host?: string): void;

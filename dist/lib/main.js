@@ -129,7 +129,7 @@ db.asterisk.getEvtNewContact().attach(function (contact) { return __awaiter(_thi
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                debug("New sip contact");
+                debug("Contact registered");
                 return [4 /*yield*/, db.semasim.addUaEndpoint(contact.uaEndpoint)];
             case 1:
                 _a = _b.sent(), isNewUa = _a.isNewUa, isFirstUaEndpointOfEndpoint = _a.isFirstUaEndpointOfEndpoint;

@@ -8,7 +8,6 @@ import { c } from "./_constants";
 import * as _debug from "debug";
 let debug = _debug("_sipContact");
 
-
 export interface PsContact {
     id: string;
     uri: string;
@@ -19,59 +18,43 @@ export interface PsContact {
 
 export namespace PsContact {
 
-    export type Wrapped= {
+    export type Misc = {
         ua_instance: string;
         ua_software: string;
         connectionId: number;
+        pushToken: Contact.UaEndpoint.Ua.PushToken | undefined;
     }
 
-    export function buildUserAgentFieldValue(
-        wrap: Wrapped
-    ): string {
-        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
+    export function stringifyMisc(misc: Misc): string {
+        let user_agent = (new Buffer(JSON.stringify(misc), "utf8")).toString("base64");
+        return user_agent;
     }
 
-    export function parseWrapped(
-        user_agent: string
-    ): Wrapped {
+    export function parseMisc(user_agent: string): Misc {
         return JSON.parse((new Buffer(user_agent, "base64")).toString("utf8"));
-    }
-
-    function readPushNotification(
-        uri: string
-    ): Contact.UaEndpoint.Ua.PushToken | undefined {
-
-        let { params } = sipLibrary.parseUri(uri);
-
-        let type = params["pn-type"];
-        let token = params["pn-tok"];
-
-        if (!type || !token) return undefined;
-
-        return { type, token };
-
     }
 
     export async function buildContact(psContact: PsContact): Promise<Contact> {
 
-        let uri = psContact.uri.replace(/\^3B/g, ";");
-        let imei= psContact.endpoint;
+        let imei = psContact.endpoint;
 
-        let { ua_instance, ua_software, connectionId } = parseWrapped(psContact.user_agent);
+        let {
+            ua_instance, ua_software, connectionId, pushToken
+        } = parseMisc(psContact.user_agent);
 
         return {
             "id": psContact.id,
-            uri, 
+            "uri": psContact.uri.replace(/\^3B/g, ";"),
             "path": psContact.path.replace(/\^3B/g, ";"),
             connectionId,
             "uaEndpoint": {
                 "ua": {
                     "instance": ua_instance,
                     "software": ua_software,
-                    "pushToken": readPushNotification(uri)
+                    pushToken
                 },
-                "endpoint": await db.semasim.getEndpoint({ 
-                    "dongle": { imei }, 
+                "endpoint": await db.semasim.getEndpoint({
+                    "dongle": { imei },
                     "sim": { "iccid": await db.asterisk.getIccidOfEndpoint(imei) }
                 })
             }
@@ -80,8 +63,6 @@ export namespace PsContact {
     }
 
 }
-
-
 
 export interface Contact {
     readonly id: string;
@@ -98,7 +79,7 @@ export namespace Contact {
         readonly endpoint: UaEndpoint.EndpointRef
     }
 
-    export interface UaEndpoint extends UaEndpointRef{
+    export interface UaEndpoint extends UaEndpointRef {
         readonly ua: UaEndpoint.Ua;
         readonly endpoint: UaEndpoint.Endpoint;
     }
@@ -178,18 +159,18 @@ export namespace Contact {
             export function id(
                 o: EndpointRef
             ): string {
-                return JSON.stringify([ o.dongle.imei, o.sim.iccid ]);
+                return JSON.stringify([o.dongle.imei, o.sim.iccid]);
             }
 
             export function areSame(
-                o1: EndpointRef, 
+                o1: EndpointRef,
                 o2: EndpointRef
             ): boolean {
                 return id(o1) === id(o2);
             }
 
-            export interface DongleRef {
-                readonly imei: string;
+            export interface DongleRef { 
+                readonly imei: string; 
             }
 
             export interface Dongle extends DongleRef {
@@ -200,17 +181,13 @@ export namespace Contact {
                 readonly iccid: string;
             }
 
-            export interface Sim extends SimRef{
+            export interface Sim extends SimRef {
                 readonly imsi: string;
             }
 
 
         }
 
-
     }
 
-
 }
-
-

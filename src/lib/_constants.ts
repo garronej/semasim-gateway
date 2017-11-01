@@ -1,7 +1,3 @@
-import * as dns from "dns";
-
-let dnsSrc_sips_tcp: { name: string; port: number } | undefined = undefined;
-
 export class c {
 
     public static readonly shared= class shared {

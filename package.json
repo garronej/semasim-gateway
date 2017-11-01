@@ -32,7 +32,6 @@
     "sip": "github:garronej/sip.js",
     "super-json": "^2.2.0",
     "trackable-map": "github:garronej/trackable-map",
-    "ts-async-agi": "garronej/ts-async-agi",
     "ts-events-extended": "garronej/ts-events-extended",
     "zongji": "^0.4.4"
   },

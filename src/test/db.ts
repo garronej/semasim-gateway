@@ -5,6 +5,7 @@ import { Contact, PsContact } from "../lib/sipContact";
 import * as db from "../lib/db";
 import * as f from "../tools/mySqlFunctions";
 import { MySqlEvents } from "../tools/MySqlEvents";
+import * as sipLibrary from "../tools/sipLibrary";
 
 (async ()=>{
 
@@ -477,15 +478,42 @@ async function testDbAsterisk() {
         }
     }
 
+    let contactUri= [
+        `sip:${dongle.imei}@192.168.0.13:48805;app-id=851039092461;`,
+        `pn-type=${ua.pushToken!.type};pn-tok=${ua.pushToken!.token};pn-silent=1;transport=tls`
+    ].join("");
+
     let psContact: PsContact = {
         "endpoint": dongle.imei,
         "id": "contactId",
-        "user_agent": PsContact.buildUserAgentFieldValue({
+        "user_agent": PsContact.stringifyMisc({
             connectionId,
             "ua_instance": ua.instance,
-            "ua_software": ua.software
+            "ua_software": ua.software,
+            "pushToken": (()=>{
+
+                    let { params } = sipLibrary.parseUri(contactUri);
+
+                    let type = params["pn-type"];
+                    let token = params["pn-tok"];
+
+                    return (type && token)?{ type, token }:undefined;
+
+            })()
         }),
-        "uri": `sip:semasim.com;pn-type=${ua.pushToken!.type};pn-tok=${ua.pushToken!.token}`,
+        "uri": (()=>{
+
+            let contactAoR: any= { "uri": contactUri };
+
+            let parsedUri = sipLibrary.parseUri(contactAoR.uri);
+
+            parsedUri.params = {};
+
+            contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
+
+            return contactAoR.uri;
+
+        })(),
         "path": `<sip:0.0.0.1:666;lr>, <sip:0.0.0.0:333;lr>`
     };
 
@@ -584,6 +612,7 @@ async function testDbAsterisk() {
 
     let connectionId2 = Date.now();
 
+
     let ua2: Contact.UaEndpoint.Ua = {
         "instance": "instance2____________________________________",
         "software": "software2______________________________________________________",
@@ -593,15 +622,42 @@ async function testDbAsterisk() {
         }
     }
 
+    let contactUri2= [
+        `sip:${dongle.imei}@192.168.0.10:54433;app-id=851039092461;`,
+        `pn-type=${ua2.pushToken!.type};pn-tok=${ua2.pushToken!.token};pn-silent=1;transport=tls`
+    ].join("");
+
     let psContact2: PsContact = {
         "endpoint": dongle.imei,
         "id": "contactId2",
-        "user_agent": PsContact.buildUserAgentFieldValue({
+        "user_agent": PsContact.stringifyMisc({
             "connectionId": connectionId2,
             "ua_instance": ua2.instance,
-            "ua_software": ua2.software
+            "ua_software": ua2.software,
+            "pushToken": (()=>{
+
+                    let { params } = sipLibrary.parseUri(contactUri2);
+
+                    let type = params["pn-type"];
+                    let token = params["pn-tok"];
+
+                    return (type && token)?{ type, token }:undefined;
+
+            })()
         }),
-        "uri": `sip:semasim.com;pn-type=${ua2.pushToken!.type};pn-tok=${ua2.pushToken!.token}`,
+        "uri": (()=>{
+
+            let contactAoR: any= { "uri": contactUri2 };
+
+            let parsedUri = sipLibrary.parseUri(contactAoR.uri);
+
+            parsedUri.params = {};
+
+            contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
+
+            return contactAoR.uri;
+
+        })(),
         "path": `<sip:0.0.0.1:666;lr>, <sip:0.0.0.0:333;lr>`
     };
 

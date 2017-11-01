@@ -6,13 +6,14 @@ export interface PsContact {
     user_agent: string;
 }
 export declare namespace PsContact {
-    type Wrapped = {
+    type Misc = {
         ua_instance: string;
         ua_software: string;
         connectionId: number;
+        pushToken: Contact.UaEndpoint.Ua.PushToken | undefined;
     };
-    function buildUserAgentFieldValue(wrap: Wrapped): string;
-    function parseWrapped(user_agent: string): Wrapped;
+    function stringifyMisc(misc: Misc): string;
+    function parseMisc(user_agent: string): Misc;
     function buildContact(psContact: PsContact): Promise<Contact>;
 }
 export interface Contact {

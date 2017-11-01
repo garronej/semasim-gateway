@@ -69,7 +69,7 @@ dc.evtMessage.attach(
 db.asterisk.getEvtNewContact().attach(
     async contact => {
 
-        debug(`New sip contact`);
+        debug(`Contact registered`);
 
         let { isNewUa, isFirstUaEndpointOfEndpoint } = await db.semasim.addUaEndpoint(contact.uaEndpoint);
 

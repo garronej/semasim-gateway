@@ -34,20 +34,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var ts_events_extended_1 = require("ts-events-extended");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
-var agi = require("../tools/agiClient");
 var phone = require("../tools/phoneNumberLibrary");
 var sipContact_1 = require("./sipContact");
 var messageQueue = require("./messageQueue");
@@ -55,18 +44,113 @@ var db = require("./db");
 var _constants_1 = require("./_constants");
 var sipApiBackend = require("./sipApiClientBackend");
 var _debug = require("debug");
-var debug = _debug("_voiceCall");
+var debug = _debug("_voiceCallBridge");
+var dc;
+var ami;
 function start() {
-    var dc = chan_dongle_extended_client_1.DongleController.getInstance();
+    dc = chan_dongle_extended_client_1.DongleController.getInstance();
+    ami = dc.ami;
     var dongleCallContext = dc.moduleConfiguration.defaults.context;
     var scripts = {};
     scripts[_constants_1.c.sipCallContext] = {};
     scripts[_constants_1.c.sipCallContext]["_[+0-9]."] = fromSip;
     scripts[dongleCallContext] = {};
     scripts[dongleCallContext]["_[+0-9]."] = fromDongle;
-    agi.startServer(scripts, dc.ami);
+    dc.ami.startAgi(scripts);
 }
 exports.start = start;
+function fromDongle(channel) {
+    return __awaiter(this, void 0, void 0, function () {
+        var imei, dongle, _a, imsi, iccid, number, endpoint, evtReachableContact, evtEstablishedOrEnded, ringingChannels, dongleChannelName;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    debug("Call originated from dongle");
+                    return [4 /*yield*/, channel.relax.getVariable("DONGLEIMEI")];
+                case 1:
+                    imei = (_b.sent());
+                    dongle = dc.activeDongles.get(imei);
+                    if (!dongle)
+                        return [2 /*return*/];
+                    _a = dongle.sim, imsi = _a.imsi, iccid = _a.iccid;
+                    number = phone.toNationalNumber(channel.request.callerid, imsi);
+                    endpoint = { "dongle": { imei: imei }, "sim": { iccid: iccid } };
+                    evtReachableContact = new ts_events_extended_1.SyncEvent();
+                    db.asterisk.getEvtNewContact().attach(function (_a) {
+                        var uaEndpoint = _a.uaEndpoint;
+                        return sipContact_1.Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint);
+                    }, evtReachableContact, function (contact) { return evtReachableContact.post(contact); });
+                    db.asterisk.getContacts(endpoint).then(function (contacts) { return contacts.forEach(function (contact) { return sipApiBackend.wakeUpContact.makeCall(contact).then(function (status) { return (status === "REACHABLE") ? evtReachableContact.post(contact) : null; }); }); });
+                    evtEstablishedOrEnded = new ts_events_extended_1.VoidSyncEvent();
+                    ringingChannels = [];
+                    evtEstablishedOrEnded.attachOnce(function () {
+                        debug("evtEstablishedOrEnded");
+                        evtReachableContact.detach();
+                        db.asterisk.getEvtNewContact().detach(evtReachableContact);
+                        debug({ ringingChannels: ringingChannels });
+                        ringingChannels.forEach(function (channel) { return ami.postAction("hangup", {
+                            channel: channel,
+                            "cause": "1"
+                        }).catch(function () { }); });
+                    });
+                    dongleChannelName = channel.request.channel;
+                    evtReachableContact.attach(function (contact) {
+                        debug("Reachable contact!");
+                        var sipChannelId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
+                        var removeFromRinging;
+                        ami.postAction("Originate", {
+                            "channel": "PJSIP/" + contact.uaEndpoint.endpoint.dongle.imei + "/" + contact.uri,
+                            "application": "Bridge",
+                            "data": dongleChannelName,
+                            "callerid": "\"\" <" + number + ">",
+                            "channelid": sipChannelId
+                        }).then(function () {
+                            debug("Answered");
+                            removeFromRinging();
+                            evtEstablishedOrEnded.post();
+                        }).catch(function (error) {
+                            removeFromRinging();
+                        });
+                        ami.evt.attachOnce(function (_a) {
+                            var event = _a.event, uniqueid = _a.uniqueid;
+                            return (event === "Newchannel" &&
+                                uniqueid === sipChannelId);
+                        }, function (data) {
+                            var sipChannelName = data.channel;
+                            debug("New sip channel: ", sipChannelName);
+                            ringingChannels.push(sipChannelName);
+                            removeFromRinging = function () { return ringingChannels.splice(ringingChannels.indexOf(sipChannelName), 1); };
+                            ami.setVar("AGC(rx)", _constants_1.c.gain, sipChannelName);
+                            ami.setVar("JITTERBUFFER(" + _constants_1.c.jitterBuffer.type + ")", _constants_1.c.jitterBuffer.params, sipChannelName);
+                        });
+                    });
+                    return [4 /*yield*/, ami.evt.waitFor(function (_a) {
+                            var event = _a.event, channel = _a.channel;
+                            return (event === "Hangup" &&
+                                channel === dongleChannelName);
+                        })];
+                case 2:
+                    _b.sent();
+                    if (!!evtEstablishedOrEnded.postCount) return [3 /*break*/, 4];
+                    debug("Dongle channel hanged up but not answered");
+                    evtEstablishedOrEnded.post();
+                    //TODO: Format date for client country
+                    return [4 /*yield*/, db.semasim.MessageTowardSip.add(number, _constants_1.c.strMissedCall, new Date(), true, {
+                            "is": "ALL UA_ENDPOINT OF ENDPOINT",
+                            endpoint: endpoint
+                        })];
+                case 3:
+                    //TODO: Format date for client country
+                    _b.sent();
+                    messageQueue.notifyNewSipMessagesToSend(endpoint);
+                    _b.label = 4;
+                case 4:
+                    debug("Call ended");
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
 function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function () {
         var _, imei;
@@ -91,168 +175,4 @@ function fromSip(channel) {
             }
         });
     });
-}
-function fromDongle(channel) {
-    return __awaiter(this, void 0, void 0, function () {
-        var _this = this;
-        var _, imei, fromDongle, imsi, iccid, number, endpoint, prDialString, failure, _a, _b, _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0:
-                    debug("Call originated from dongle");
-                    _ = channel.relax;
-                    return [4 /*yield*/, _.getVariable("DONGLEIMEI")];
-                case 1:
-                    imei = (_d.sent());
-                    fromDongle = chan_dongle_extended_client_1.DongleController.getInstance().activeDongles.get(imei);
-                    if (!fromDongle)
-                        return [2 /*return*/];
-                    imsi = fromDongle.sim.imsi;
-                    iccid = fromDongle.sim.iccid;
-                    number = phone.toNationalNumber(channel.request.callerid, imsi);
-                    debug("from number " + number);
-                    endpoint = { "dongle": { imei: imei }, "sim": { iccid: iccid } };
-                    prDialString = getDialString(endpoint);
-                    return [4 /*yield*/, _.setVariable("CALLERID(all)", "\"\" <" + number + ">")];
-                case 2:
-                    _d.sent();
-                    _b = (_a = agi).dialAndGetOutboundChannel;
-                    _c = [channel];
-                    return [4 /*yield*/, prDialString];
-                case 3: return [4 /*yield*/, _b.apply(_a, _c.concat([_d.sent(),
-                        function (outboundChannel) { return __awaiter(_this, void 0, void 0, function () {
-                            var _;
-                            return __generator(this, function (_a) {
-                                switch (_a.label) {
-                                    case 0:
-                                        _ = outboundChannel.relax;
-                                        return [4 /*yield*/, _.setVariable("JITTERBUFFER(" + _constants_1.c.jitterBuffer.type + ")", _constants_1.c.jitterBuffer.params)];
-                                    case 1:
-                                        _a.sent();
-                                        return [4 /*yield*/, _.setVariable("AGC(rx)", _constants_1.c.gain)];
-                                    case 2:
-                                        _a.sent();
-                                        return [2 /*return*/];
-                                }
-                            });
-                        }); }]))];
-                case 4:
-                    failure = _d.sent();
-                    debug("Call terminated");
-                    if (!failure) return [3 /*break*/, 6];
-                    //TODO: see if we send missed call if no pick up
-                    return [4 /*yield*/, db.semasim.MessageTowardSip.add(number, _constants_1.c.strMissedCall, new Date(), true, {
-                            "is": "ALL UA_ENDPOINT OF ENDPOINT",
-                            endpoint: endpoint
-                        })];
-                case 5:
-                    //TODO: see if we send missed call if no pick up
-                    _d.sent();
-                    messageQueue.notifyNewSipMessagesToSend(endpoint);
-                    _d.label = 6;
-                case 6: return [2 /*return*/];
-            }
-        });
-    });
-}
-function getDialString(endpoint) {
-    var _this = this;
-    return new Promise(function (resolve) { return __awaiter(_this, void 0, void 0, function () {
-        var _this = this;
-        var reachableContacts, evtReachableContact, resolver, timer, timer2, prContacts, contactsCount, contacts, _loop_1, contacts_1, contacts_1_1, contact, e_1, _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    reachableContacts = [];
-                    evtReachableContact = new ts_events_extended_1.SyncEvent();
-                    db.asterisk.getEvtNewContact().attach(function (_a) {
-                        var uaEndpoint = _a.uaEndpoint;
-                        return sipContact_1.Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint);
-                    }, reachableContacts, function (contact) { return evtReachableContact.post(contact); });
-                    resolver = function () {
-                        db.asterisk.getEvtNewContact().detach(reachableContacts);
-                        //evtReachableContact.detach();
-                        clearTimeout(timer);
-                        clearTimeout(timer2);
-                        var dialString = (function buildDialString(contacts) {
-                            var dialStringSplit = [];
-                            try {
-                                for (var contacts_2 = __values(contacts), contacts_2_1 = contacts_2.next(); !contacts_2_1.done; contacts_2_1 = contacts_2.next()) {
-                                    var contact = contacts_2_1.value;
-                                    dialStringSplit.push("PJSIP/" + contact.uaEndpoint.endpoint.dongle.imei + "/" + contact.uri);
-                                }
-                            }
-                            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                            finally {
-                                try {
-                                    if (contacts_2_1 && !contacts_2_1.done && (_a = contacts_2.return)) _a.call(contacts_2);
-                                }
-                                finally { if (e_2) throw e_2.error; }
-                            }
-                            return dialStringSplit.join("&");
-                            var e_2, _a;
-                        })(reachableContacts);
-                        debug("Dial string: ", dialString);
-                        resolve(dialString);
-                    };
-                    timer = setTimeout(function () {
-                        if (!reachableContacts.length)
-                            return;
-                        resolver();
-                    }, 9000);
-                    timer2 = setTimeout(resolver, 45000);
-                    prContacts = db.asterisk.getContacts(endpoint);
-                    contactsCount = undefined;
-                    evtReachableContact.attach(function (contact) { return __awaiter(_this, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    if (contact) {
-                                        reachableContacts.push(contact);
-                                    }
-                                    if (!(contactsCount === undefined)) return [3 /*break*/, 2];
-                                    return [4 /*yield*/, prContacts];
-                                case 1:
-                                    _a.sent();
-                                    _a.label = 2;
-                                case 2:
-                                    if (reachableContacts.length >= contactsCount) {
-                                        resolver();
-                                    }
-                                    return [2 /*return*/];
-                            }
-                        });
-                    }); });
-                    return [4 /*yield*/, prContacts];
-                case 1:
-                    contacts = _b.sent();
-                    contactsCount = contacts.length;
-                    _loop_1 = function (contact) {
-                        sipApiBackend.wakeUpContact.makeCall(contact).then(function (status) {
-                            if (status === "REACHABLE") {
-                                evtReachableContact.post(contact);
-                            }
-                            else if (status === "UNREACHABLE") {
-                                contactsCount--;
-                                evtReachableContact.post(null);
-                            }
-                        });
-                    };
-                    try {
-                        for (contacts_1 = __values(contacts), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
-                            contact = contacts_1_1.value;
-                            _loop_1(contact);
-                        }
-                    }
-                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                    finally {
-                        try {
-                            if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
-                        }
-                        finally { if (e_1) throw e_1.error; }
-                    }
-                    return [2 /*return*/];
-            }
-        });
-    }); });
 }

@@ -35,40 +35,31 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var sipLibrary = require("../tools/sipLibrary");
 var db = require("./db");
 var _debug = require("debug");
 var debug = _debug("_sipContact");
 var PsContact;
 (function (PsContact) {
-    function buildUserAgentFieldValue(wrap) {
-        return (new Buffer(JSON.stringify(wrap), "utf8")).toString("base64");
+    function stringifyMisc(misc) {
+        var user_agent = (new Buffer(JSON.stringify(misc), "utf8")).toString("base64");
+        return user_agent;
     }
-    PsContact.buildUserAgentFieldValue = buildUserAgentFieldValue;
-    function parseWrapped(user_agent) {
+    PsContact.stringifyMisc = stringifyMisc;
+    function parseMisc(user_agent) {
         return JSON.parse((new Buffer(user_agent, "base64")).toString("utf8"));
     }
-    PsContact.parseWrapped = parseWrapped;
-    function readPushNotification(uri) {
-        var params = sipLibrary.parseUri(uri).params;
-        var type = params["pn-type"];
-        var token = params["pn-tok"];
-        if (!type || !token)
-            return undefined;
-        return { type: type, token: token };
-    }
+    PsContact.parseMisc = parseMisc;
     function buildContact(psContact) {
         return __awaiter(this, void 0, void 0, function () {
-            var uri, imei, _a, ua_instance, ua_software, connectionId, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+            var imei, _a, ua_instance, ua_software, connectionId, pushToken, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
             return __generator(this, function (_m) {
                 switch (_m.label) {
                     case 0:
-                        uri = psContact.uri.replace(/\^3B/g, ";");
                         imei = psContact.endpoint;
-                        _a = parseWrapped(psContact.user_agent), ua_instance = _a.ua_instance, ua_software = _a.ua_software, connectionId = _a.connectionId;
+                        _a = parseMisc(psContact.user_agent), ua_instance = _a.ua_instance, ua_software = _a.ua_software, connectionId = _a.connectionId, pushToken = _a.pushToken;
                         _b = {
                             "id": psContact.id,
-                            uri: uri,
+                            "uri": psContact.uri.replace(/\^3B/g, ";"),
                             "path": psContact.path.replace(/\^3B/g, ";"),
                             connectionId: connectionId
                         };
@@ -77,7 +68,7 @@ var PsContact;
                             "ua": {
                                 "instance": ua_instance,
                                 "software": ua_software,
-                                "pushToken": readPushNotification(uri)
+                                pushToken: pushToken
                             }
                         };
                         _e = "endpoint";

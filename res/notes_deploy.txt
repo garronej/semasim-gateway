@@ -2,7 +2,9 @@
 
 echo fs.inotify.max_user_watches=582222 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
-ps_contact table must be modified uri VARCHAR(255) => VARCHAR(1024)
+ps_contact table must be modified uri VARCHAR(255) => VARCHAR(1024) //Not necesarry anymore
+ps_contact table must be modified user_agent  => VARCHAR(1024)
+
 
 
 //For MySqlEvents: 
