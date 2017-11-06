@@ -33,7 +33,7 @@ namespace JSON {
 
 namespace ApiMessage {
 
-    const sipMethod = "INTERNAL";
+    const sipMethod = "API";
     const actionIdKey= "action-id";
     const methodKey= "method";
 
@@ -44,6 +44,7 @@ namespace ApiMessage {
 
         let sipRequest = sip.parse([
             `${sipMethod} _ SIP/2.0`,
+            "Max-Forwards: 1",
             "\r\n"
         ].join("\r\n")) as sip.Request;
 

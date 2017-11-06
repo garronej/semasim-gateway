@@ -1,4 +1,5 @@
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
+import * as runExclusive from "run-exclusive";
 import * as net from "net";
 import * as sip from "sip";
 import * as _sdp_ from "sip/sdp";
@@ -221,21 +222,67 @@ export class Socket {
     public readonly setKeepAlive: net.Socket['setKeepAlive'] =
     (...inputs) => this.connection.setKeepAlive.apply(this.connection, inputs);
 
-    public write(sipPacket: Packet): boolean {
+    /** Return true if sent successfully */
+    public write(sipPacket: Packet): boolean | Promise<boolean> {
 
-        if (this.evtClose.postCount) return false;
+        if (this.evtClose.postCount){ 
 
-        if (matchRequest(sipPacket) && parseInt(sipPacket.headers["max-forwards"]) < 0)
+            debug("The socket you try to write on is closed");
+
             return false;
+
+        }
+
+        if( matchRequest(sipPacket) ){
+
+            let maxForwards= parseInt(sipPacket.headers["max-forwards"]);
+
+            if( isNaN(maxForwards) ){
+                throw new Error("Write error, max-forwards header should be defined");
+            }
+
+            if( maxForwards === 0 ){
+                debug("Avoid writing, max forward reached");
+                return false;
+            }
+
+            sipPacket.headers["max-forwards"]= `${maxForwards - 1}`;
+
+        }
 
         if (!sipPacket.headers.via.length) {
             debug("Prevent sending packet without via header");
             return false;
         }
 
-        return this.connection.write(
+        let flushed= this.connection.write(
             new Buffer(stringify(sipPacket), "binary")
         );
+
+        if( flushed ){
+
+            return true;
+
+        } else {
+
+            let boundTo = [];
+
+            debug("we have to whait for drain to confirg write...");
+
+            return Promise.race([
+                new Promise<false>(
+                    resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))
+                ),
+                new Promise<true>(
+                    resolve => this.connection.once("drain", () => {
+                        debug("...drain");
+                        this.evtClose.detach(boundTo);
+                        resolve(true);
+                    })
+                )
+            ]);
+
+        }
 
     }
 
@@ -305,14 +352,7 @@ export class Socket {
 
             let via = sipRequest.headers.via;
 
-            if (!via.length) return generateBranch();
-
-            sipRequest.headers["max-forwards"] = `${parseInt(sipRequest.headers["max-forwards"]) - 1}`;
-
-            let previousBranch = via[0].params["branch"]!;
-
-            //return `z9hG4bK-${md5(previousBranch)}`;
-            return `z9hG4bK-${previousBranch}`;
+            return via.length?`z9hG4bK-${via[0].params["branch"]}`:generateBranch();
 
         })();
 
@@ -339,9 +379,13 @@ export class Socket {
         extraParams?: Record<string, string>
     ) {
 
-        if (!sipRegisterRequest.headers.path) sipRegisterRequest.headers.path = [];
+        if (!sipRegisterRequest.headers.path){
+             sipRegisterRequest.headers.path = [];
+        }
 
-        sipRegisterRequest.headers.path!.unshift(this.buildRoute(host, extraParams));
+        sipRegisterRequest.headers.path!.unshift(
+            this.buildRoute(host, extraParams)
+        );
 
     }
 
@@ -351,7 +395,6 @@ export class Socket {
      * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
      * 
      */
-
     private buildRoute(
         host: string = this.localAddress,
         extraParams: Record<string, string> = {}

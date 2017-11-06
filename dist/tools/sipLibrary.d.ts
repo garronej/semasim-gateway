@@ -28,7 +28,8 @@ export declare class Socket {
     private __remoteAddress__;
     private fixPortAndAddr();
     readonly setKeepAlive: net.Socket['setKeepAlive'];
-    write(sipPacket: Packet): boolean;
+    /** Return true if sent successfully */
+    write(sipPacket: Packet): boolean | Promise<boolean>;
     destroy(): void;
     readonly localPort: number;
     readonly localAddress: string;

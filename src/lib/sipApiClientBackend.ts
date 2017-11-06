@@ -5,7 +5,6 @@ import { getBackendSocket } from "./sipProxy";
 import * as _debug from "debug";
 let debug = _debug("_sipApiClientBackend");
 
-
 async function sendRequest(
     method: string,
     params: Record<string, any>
@@ -29,7 +28,7 @@ async function sendRequest(
 
     } catch (error) {
 
-        debug("Connection lost with backend retrying...");
+        debug(`Error sending request: ${error.message}, retrying...`);
 
         return sendRequest(method, params);
 

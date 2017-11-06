@@ -191,16 +191,44 @@ var Socket = /** @class */ (function () {
         this.__localAddress__ = this.connection.localAddress;
         this.__remoteAddress__ = this.connection.remoteAddress;
     };
+    /** Return true if sent successfully */
     Socket.prototype.write = function (sipPacket) {
-        if (this.evtClose.postCount)
+        var _this = this;
+        if (this.evtClose.postCount) {
+            debug("The socket you try to write on is closed");
             return false;
-        if (matchRequest(sipPacket) && parseInt(sipPacket.headers["max-forwards"]) < 0)
-            return false;
+        }
+        if (matchRequest(sipPacket)) {
+            var maxForwards = parseInt(sipPacket.headers["max-forwards"]);
+            if (isNaN(maxForwards)) {
+                throw new Error("Write error, max-forwards header should be defined");
+            }
+            if (maxForwards === 0) {
+                debug("Avoid writing, max forward reached");
+                return false;
+            }
+            sipPacket.headers["max-forwards"] = "" + (maxForwards - 1);
+        }
         if (!sipPacket.headers.via.length) {
             debug("Prevent sending packet without via header");
             return false;
         }
-        return this.connection.write(new Buffer(exports.stringify(sipPacket), "binary"));
+        var flushed = this.connection.write(new Buffer(exports.stringify(sipPacket), "binary"));
+        if (flushed) {
+            return true;
+        }
+        else {
+            var boundTo_1 = [];
+            debug("we have to whait for drain to confirg write...");
+            return Promise.race([
+                new Promise(function (resolve) { return _this.evtClose.attachOnce(boundTo_1, function () { return resolve(false); }); }),
+                new Promise(function (resolve) { return _this.connection.once("drain", function () {
+                    debug("...drain");
+                    _this.evtClose.detach(boundTo_1);
+                    resolve(true);
+                }); })
+            ]);
+        }
     };
     Socket.prototype.destroy = function () {
         /*
@@ -270,12 +298,7 @@ var Socket = /** @class */ (function () {
         if (extraParams === void 0) { extraParams = {}; }
         var branch = (function () {
             var via = sipRequest.headers.via;
-            if (!via.length)
-                return exports.generateBranch();
-            sipRequest.headers["max-forwards"] = "" + (parseInt(sipRequest.headers["max-forwards"]) - 1);
-            var previousBranch = via[0].params["branch"];
-            //return `z9hG4bK-${md5(previousBranch)}`;
-            return "z9hG4bK-" + previousBranch;
+            return via.length ? "z9hG4bK-" + via[0].params["branch"] : exports.generateBranch();
         })();
         sipRequest.headers.via.unshift({
             "version": "2.0",
@@ -287,8 +310,9 @@ var Socket = /** @class */ (function () {
         return branch;
     };
     Socket.prototype.addPathHeader = function (sipRegisterRequest, host, extraParams) {
-        if (!sipRegisterRequest.headers.path)
+        if (!sipRegisterRequest.headers.path) {
             sipRegisterRequest.headers.path = [];
+        }
         sipRegisterRequest.headers.path.unshift(this.buildRoute(host, extraParams));
     };
     /**

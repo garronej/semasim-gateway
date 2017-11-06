@@ -63,12 +63,13 @@ var JSON;
 })(JSON || (JSON = {}));
 var ApiMessage;
 (function (ApiMessage) {
-    var sipMethod = "INTERNAL";
+    var sipMethod = "API";
     var actionIdKey = "action-id";
     var methodKey = "method";
     function buildSip(actionId, payload) {
         var sipRequest = sip.parse([
             sipMethod + " _ SIP/2.0",
+            "Max-Forwards: 1",
             "\r\n"
         ].join("\r\n"));
         //TODO: should be set to [] already :(
