@@ -176,7 +176,7 @@ var asteriskSockets;
         db.asterisk.getEvtExpiredContact().attachOnce(function (expiredContact) { return expiredContact.id === contact.id; }, boundTo, function () {
             debug("expired contact");
             socket.destroy();
-            sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
+            sipApiBackend.forceContactToReRegister.makeCall(contact);
         });
         var oldContact = self.find(function (oldContact) { return sipContact_1.Contact.UaEndpoint.areSame(oldContact.uaEndpoint, contact.uaEndpoint); });
         if (oldContact) {

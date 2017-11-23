@@ -91,6 +91,35 @@ export namespace wakeUpContact {
 
 }
 
+export namespace forceContactToReRegister {
+
+    export const methodName = "forceContactToReRegister";
+
+    export interface Params {
+        contact: Contact;
+    }
+
+    export interface Response {
+        isPushNotificationSent: boolean;
+    }
+
+    export async function makeCall(
+        contact: Contact
+    ): Promise<Response["isPushNotificationSent"]> {
+
+        let payload: Params = { contact };
+
+        let { isPushNotificationSent } = await sendRequest(
+            methodName,
+            payload
+        ) as Response;
+
+        return isPushNotificationSent;
+
+    }
+
+}
+
 //Here we can send only push infos.
 export namespace sendPushNotification {
 

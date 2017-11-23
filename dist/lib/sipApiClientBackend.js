@@ -107,6 +107,26 @@ var wakeUpContact;
     }
     wakeUpContact.makeCall = makeCall;
 })(wakeUpContact = exports.wakeUpContact || (exports.wakeUpContact = {}));
+var forceContactToReRegister;
+(function (forceContactToReRegister) {
+    forceContactToReRegister.methodName = "forceContactToReRegister";
+    function makeCall(contact) {
+        return __awaiter(this, void 0, void 0, function () {
+            var payload, isPushNotificationSent;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        payload = { contact: contact };
+                        return [4 /*yield*/, sendRequest(forceContactToReRegister.methodName, payload)];
+                    case 1:
+                        isPushNotificationSent = (_a.sent()).isPushNotificationSent;
+                        return [2 /*return*/, isPushNotificationSent];
+                }
+            });
+        });
+    }
+    forceContactToReRegister.makeCall = makeCall;
+})(forceContactToReRegister = exports.forceContactToReRegister || (exports.forceContactToReRegister = {}));
 //Here we can send only push infos.
 var sendPushNotification;
 (function (sendPushNotification) {

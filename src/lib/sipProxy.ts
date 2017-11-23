@@ -144,7 +144,7 @@ namespace asteriskSockets {
             () => {
                 debug("expired contact");
                 socket.destroy();
-                sipApiBackend.sendPushNotification.makeCall(contact.uaEndpoint.ua);
+                sipApiBackend.forceContactToReRegister.makeCall(contact);
             }
         );
 
