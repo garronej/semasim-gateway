@@ -7,6 +7,26 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     }
     return t;
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
 var __values = (this && this.__values) || function (o) {
     var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
@@ -27,95 +47,69 @@ exports.regIdKey = "reg-id";
 exports.instanceIdKey = "+sip.instance";
 exports.parseSdp = _sdp_.parse;
 exports.stringifySdp = _sdp_.stringify;
-//TODO Only on the gateway side, remove ?
-function overwriteGlobalAndAudioAddrInSdpCandidates(sdp) {
-    var getSrflxAddr = function () {
-        try {
-            for (var _a = __values(sdp.m), _b = _a.next(); !_b.done; _b = _a.next()) {
-                var m_i = _b.value;
-                if (m_i.media !== "audio")
-                    continue;
-                try {
-                    for (var _c = __values(m_i.a), _d = _c.next(); !_d.done; _d = _c.next()) {
-                        var a_i = _d.value;
-                        var match = a_i.match(/^candidate(?:[^\s]+\s){4}((?:[0-9]{1,3}\.){3}[0-9]{1,3})\s(?:[^\s]+\s){2}srflx/);
-                        if (match)
-                            return match[1];
-                    }
-                }
-                catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                finally {
-                    try {
-                        if (_d && !_d.done && (_e = _c.return)) _e.call(_c);
-                    }
-                    finally { if (e_1) throw e_1.error; }
-                }
-            }
-        }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
-        finally {
-            try {
-                if (_b && !_b.done && (_f = _a.return)) _f.call(_a);
-            }
-            finally { if (e_2) throw e_2.error; }
-        }
-        return "";
-        var e_2, _f, e_1, _e;
+function filterSdpCandidates(keep, sdp) {
+    var shouldKeepCandidate = function (candidateLine) {
+        return ((keep.host && !!candidateLine.match(/host/)) ||
+            (keep.srflx && !!candidateLine.match(/srflx/)) ||
+            (keep.relay && !!candidateLine.match(/relay/)));
     };
-    var srflxAddr = getSrflxAddr();
-    if (!srflxAddr) {
-        console.log("No srflx candidate was present in the offer");
-        return;
+    var parsedSdp = exports.parseSdp(sdp);
+    var arr = parsedSdp.m[0].a;
+    try {
+        for (var _a = __values(__spread(arr)), _b = _a.next(); !_b.done; _b = _a.next()) {
+            var line = _b.value;
+            if (!line.match(/^candidate/))
+                continue;
+            if (!shouldKeepCandidate(line)) {
+                arr.splice(arr.indexOf(line), 1);
+            }
+        }
     }
-    //TODO: I think linphone is expecting a second c line witch this implementation of SDP parser does not support...
-    sdp.c.address = srflxAddr;
-    //TODO: we this should be removable
-    sdp.o.address = srflxAddr;
-    //TODO: see if need to update port in m as well because it may fail on NAT that change port mapping
-    /*
-
-    Asterisk sends:
-
-    v=0
-    o=- 947913108 947913108 IN IP4 192.168.0.20
-    s=Asterisk
-    c=IN IP4 192.168.0.20
-    t=0 0
-    m=audio 27802 RTP/AVP 8 0 101
-    a=ice-ufrag:733aedd91cdc7ff0001e4b0b6a9b0fcc
-    a=ice-pwd:4df63e726aeaeb030fdf2945787aba76
-    a=candidate:Hc0a80014 1 UDP 2130706431 192.168.0.20 27802 typ host
-    a=candidate:S5140886d 1 UDP 1694498815 81.64.136.109 27802 typ srflx raddr 192.168.0.20 rport 27802
-    a=candidate:Hc0a80014 2 UDP 2130706430 192.168.0.20 27803 typ host
-    a=candidate:S5140886d 2 UDP 1694498814 81.64.136.109 27803 typ srflx raddr 192.168.0.20 rport 27803
-    a=rtpmap:8 PCMA/8000
-    a=rtpmap:0 PCMU/8000
-    a=rtpmap:101 telephone-event/8000
-    a=fmtp:101 0-16
-    a=ptime:20
-    a=maxptime:150
-    a=sendrecv
-
-    Linphone sends:
-
-    v=0
-    o=358880032664586 1891 2518 IN IP4 192.168.0.16
-    s=Talk
-    c=IN IP4 192.168.0.16
-    b=AS:380
-    t=0 0
-    a=ice-pwd:9b07eb9ded44692c868621e7
-    a=ice-ufrag:27435913
-    m=audio 7076 RTP/AVP 8 0 101
-    c=IN IP4 81.64.136.109
-    a=rtpmap:101 telephone-event/8000
-    a=candidate:1 1 UDP 2130706431 192.168.0.16 7076 typ host
-    a=candidate:1 2 UDP 2130706430 192.168.0.16 7077 typ host
-    a=candidate:2 1 UDP 1694498815 81.64.136.109 7076 typ srflx raddr 192.168.0.16 rport 7076
-    a=candidate:2 2 UDP 1694498814 81.64.136.109 7077 typ srflx raddr 192.168.0.16 rport 7077
-    */
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    return exports.stringifySdp(sdp);
+    var e_1, _c;
 }
-exports.overwriteGlobalAndAudioAddrInSdpCandidates = overwriteGlobalAndAudioAddrInSdpCandidates;
+exports.filterSdpCandidates = filterSdpCandidates;
+function readSrflxAddrInSdp(sdp) {
+    try {
+        for (var _a = __values(exports.parseSdp(sdp).m), _b = _a.next(); !_b.done; _b = _a.next()) {
+            var m_i = _b.value;
+            if (m_i.media !== "audio")
+                continue;
+            try {
+                for (var _c = __values(m_i.a), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    var a_i = _d.value;
+                    var match = a_i.match(/^candidate(?:[^\s]+\s){4}((?:[0-9]{1,3}\.){3}[0-9]{1,3})\s(?:[^\s]+\s){2}srflx/);
+                    if (match)
+                        return match[1];
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (_d && !_d.done && (_e = _c.return)) _e.call(_c);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+        }
+    }
+    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+    finally {
+        try {
+            if (_b && !_b.done && (_f = _a.return)) _f.call(_a);
+        }
+        finally { if (e_3) throw e_3.error; }
+    }
+    return undefined;
+    var e_3, _f, e_2, _e;
+}
+exports.readSrflxAddrInSdp = readSrflxAddrInSdp;
 //TODO: only on gw remove ?
 function isPlainMessageRequest(sipRequest) {
     return (sipRequest.method === "MESSAGE" &&
@@ -128,6 +122,7 @@ var Socket = /** @class */ (function () {
     function Socket(connection, timeoutDelay) {
         var _this = this;
         this.connection = connection;
+        this.misc = {};
         this.evtPacket = new ts_events_extended_1.SyncEvent();
         this.evtResponse = new ts_events_extended_1.SyncEvent();
         this.evtRequest = new ts_events_extended_1.SyncEvent();
@@ -237,7 +232,6 @@ var Socket = /** @class */ (function () {
         this.evtResponse.detach();
         this.evtRequest.detach();
         */
-        //TODO: test, on destroy syncronously post close.
         this.connection.emit("close", false);
     };
     Object.defineProperty(Socket.prototype, "localPort", {

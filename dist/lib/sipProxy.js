@@ -1,4 +1,12 @@
 "use strict";
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -159,12 +167,6 @@ var asteriskSockets;
         var e_1, _c;
     }
     asteriskSockets.flush = flush;
-    //Parfois on a old contact et contact en même temps dans la db
-    //si on wakeUp un contact qui a ete overwrite ou est entrain de l'être
-    //alors le backend vas faire un qualify qui vas fail et enchainer avec une push
-    //ce qui vas forcer le ré enregistrement.
-    //Normalement quand on fait getContacts on a jamais un doublon pk delete contact est appeler avant
-    //syncronement avent que des trigers soit declancher pour le nvx contact.
     mapAstSockContact.set = function set(socket, contact) {
         var self = this;
         var boundTo = [];
@@ -205,7 +207,7 @@ function start() {
                     return [3 /*break*/, 5];
                 case 3:
                     _a = _h.sent();
-                    debug("No active interface IP sheduling retry...");
+                    debug("No active interface IP scheduling retry...");
                     return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 5000); })];
                 case 4:
                     _h.sent();
@@ -221,7 +223,7 @@ function start() {
                     backendSocket = new (_c.apply(_b, [void 0, _e.apply(_d, [(_f[_g] = (_h.sent())[0].name,
                                 _f["port"] = _constants_1.c.shared.gatewayPort,
                                 _f)])]))();
-                    //TODO: see if it really does it's job
+                    //TODO: see if it really does it's job ===> it does not!!! TODO implement it
                     backendSocket.setKeepAlive(true);
                     sipApi_1.startListening(backendSocket);
                     /*
@@ -230,30 +232,6 @@ function start() {
                     );
                     backendSocket.evtData.attach(chunk =>
                         console.log("From backend raw:\n", chunk.yellow, "\n\n")
-                    );
-                    */
-                    /*
-                    backendSocket.evtPacket.attachPrepend(
-                        ({ headers }) => headers["content-type"] === "application/sdp",
-                        sipPacket => {
-                
-                            let sdp = sipLibrary.parseSdp(sipPacket.content);
-                
-                            let arr = sdp.m[0].a;
-                
-                            for (let line of [...arr]) {
-                
-                                if (line.match(/^candidate/) && !line.match(/relay/)) {
-                                    arr.splice(arr.indexOf(line), 1);
-                                }
-                
-                            }
-                
-                            console.log(arr);
-                
-                            sipPacket.content = sipLibrary.stringifySdp(sdp);
-                
-                        }
                     );
                     */
                     backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
@@ -339,6 +317,7 @@ function start() {
                                     asteriskSocket = asteriskSockets.get(connectionId, imei);
                                     if (asteriskSocket === undefined) {
                                         asteriskSocket = createAsteriskSocket(connectionId, imei, backendSocket);
+                                        asteriskSocket.misc["received"] = headers.via[0].params["received"];
                                     }
                                     else if (asteriskSocket === null) {
                                         return [2 /*return*/];
@@ -449,9 +428,15 @@ function createAsteriskSocket(connectionId, imei, backendSocket) {
         var headers = _a.headers;
         return headers["content-type"] === "application/sdp";
     }, function (sipPacket) {
-        var sdp = sipLibrary.parseSdp(sipPacket.content);
-        sipLibrary.overwriteGlobalAndAudioAddrInSdpCandidates(sdp);
-        sipPacket.content = sipLibrary.stringifySdp(sdp);
+        var sdp = sipPacket.content;
+        var srflxAddr = sipLibrary.readSrflxAddrInSdp(sdp);
+        if (!srflxAddr ||
+            (!sipLibrary.matchRequest(sipPacket) &&
+                srflxAddr === asteriskSocket.misc["received"]))
+            return;
+        var parsedSdp = sipLibrary.parseSdp(sdp);
+        parsedSdp.m[0].c = __assign({}, parsedSdp.c, { "address": srflxAddr });
+        sipPacket.content = sipLibrary.stringifySdp(parsedSdp);
     });
     asteriskSocket.evtRequest.attach(function (sipRequest) {
         if (backendSocket.evtClose.postCount)

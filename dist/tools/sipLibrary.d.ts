@@ -6,11 +6,17 @@ export declare const regIdKey = "reg-id";
 export declare const instanceIdKey = "+sip.instance";
 export declare const parseSdp: (rawSdp: string) => any;
 export declare const stringifySdp: (sdp: any) => string;
-export declare function overwriteGlobalAndAudioAddrInSdpCandidates(sdp: any): void;
+export declare function filterSdpCandidates(keep: {
+    host: boolean;
+    srflx: boolean;
+    relay: boolean;
+}, sdp: string): string;
+export declare function readSrflxAddrInSdp(sdp: string): string | undefined;
 export declare function isPlainMessageRequest(sipRequest: sip.Request): boolean;
 export declare const makeStreamParser: (handler: (sipPacket: Packet) => void, onFlood: () => void, maxBytesHeaders: number, maxContentLength: number) => ((dataAsBinaryString: string) => void);
 export declare class Socket {
     private readonly connection;
+    misc: any;
     readonly evtPacket: SyncEvent<Packet>;
     readonly evtResponse: SyncEvent<Response>;
     readonly evtRequest: SyncEvent<Request>;

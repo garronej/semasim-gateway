@@ -14,88 +14,58 @@ export const instanceIdKey = "+sip.instance";
 export const parseSdp: (rawSdp: string) => any = _sdp_.parse;
 export const stringifySdp: (sdp: any) => string = _sdp_.stringify;
 
+export function filterSdpCandidates(
+    keep: { host: boolean; srflx: boolean; relay: boolean; },
+    sdp: string
+): string {
 
-//TODO Only on the gateway side, remove ?
-export function overwriteGlobalAndAudioAddrInSdpCandidates(sdp: any) {
+    let shouldKeepCandidate = (candidateLine: string): boolean => {
 
-    let getSrflxAddr = (): string => {
-
-        for (let m_i of sdp.m){
-
-            if( m_i.media !== "audio") continue;
-
-            for (let a_i of m_i.a) {
-
-                let match = a_i.match(
-                    /^candidate(?:[^\s]+\s){4}((?:[0-9]{1,3}\.){3}[0-9]{1,3})\s(?:[^\s]+\s){2}srflx/
-                );
-
-                if( match ) return match[1];
-
-            }
-        }
-
-        return "";
-        
+        return (
+            (keep.host && !!candidateLine.match(/host/)) ||
+            (keep.srflx && !!candidateLine.match(/srflx/)) ||
+            (keep.relay && !!candidateLine.match(/relay/))
+        );
 
     };
 
-    let srflxAddr= getSrflxAddr();
+    let parsedSdp = parseSdp(sdp);
 
-    if( !srflxAddr ){
-        console.log("No srflx candidate was present in the offer");
-        return;
+    let arr = parsedSdp.m[0].a;
+
+    for (let line of [...arr]) {
+
+        if (!line.match(/^candidate/)) continue;
+
+        if (!shouldKeepCandidate(line)) {
+            arr.splice(arr.indexOf(line), 1);
+        }
+
     }
 
-    //TODO: I think linphone is expecting a second c line witch this implementation of SDP parser does not support...
-    sdp.c.address= srflxAddr;
+    return stringifySdp(sdp);
 
-    //TODO: we this should be removable
-    sdp.o.address= srflxAddr;
 
-    //TODO: see if need to update port in m as well because it may fail on NAT that change port mapping
-    /*
+}
 
-    Asterisk sends: 
+export function readSrflxAddrInSdp(sdp: string): string | undefined {
 
-    v=0
-    o=- 947913108 947913108 IN IP4 192.168.0.20
-    s=Asterisk
-    c=IN IP4 192.168.0.20
-    t=0 0
-    m=audio 27802 RTP/AVP 8 0 101
-    a=ice-ufrag:733aedd91cdc7ff0001e4b0b6a9b0fcc
-    a=ice-pwd:4df63e726aeaeb030fdf2945787aba76
-    a=candidate:Hc0a80014 1 UDP 2130706431 192.168.0.20 27802 typ host
-    a=candidate:S5140886d 1 UDP 1694498815 81.64.136.109 27802 typ srflx raddr 192.168.0.20 rport 27802
-    a=candidate:Hc0a80014 2 UDP 2130706430 192.168.0.20 27803 typ host
-    a=candidate:S5140886d 2 UDP 1694498814 81.64.136.109 27803 typ srflx raddr 192.168.0.20 rport 27803
-    a=rtpmap:8 PCMA/8000
-    a=rtpmap:0 PCMU/8000
-    a=rtpmap:101 telephone-event/8000
-    a=fmtp:101 0-16
-    a=ptime:20
-    a=maxptime:150
-    a=sendrecv
+    for (let m_i of parseSdp(sdp).m) {
 
-    Linphone sends: 
+        if (m_i.media !== "audio") continue;
 
-    v=0
-    o=358880032664586 1891 2518 IN IP4 192.168.0.16
-    s=Talk
-    c=IN IP4 192.168.0.16
-    b=AS:380
-    t=0 0
-    a=ice-pwd:9b07eb9ded44692c868621e7
-    a=ice-ufrag:27435913
-    m=audio 7076 RTP/AVP 8 0 101
-    c=IN IP4 81.64.136.109
-    a=rtpmap:101 telephone-event/8000
-    a=candidate:1 1 UDP 2130706431 192.168.0.16 7076 typ host
-    a=candidate:1 2 UDP 2130706430 192.168.0.16 7077 typ host
-    a=candidate:2 1 UDP 1694498815 81.64.136.109 7076 typ srflx raddr 192.168.0.16 rport 7076
-    a=candidate:2 2 UDP 1694498814 81.64.136.109 7077 typ srflx raddr 192.168.0.16 rport 7077
-    */
+        for (let a_i of m_i.a) {
+
+            let match = a_i.match(
+                /^candidate(?:[^\s]+\s){4}((?:[0-9]{1,3}\.){3}[0-9]{1,3})\s(?:[^\s]+\s){2}srflx/
+            );
+
+            if (match) return match[1];
+
+        }
+    }
+
+    return undefined;
 
 }
 
@@ -110,14 +80,16 @@ export function isPlainMessageRequest(sipRequest: sip.Request): boolean {
 }
 
 export const makeStreamParser: (
-    handler: (sipPacket: Packet) => void, 
-    onFlood: ()=> void, 
-    maxBytesHeaders: number, 
+    handler: (sipPacket: Packet) => void,
+    onFlood: () => void,
+    maxBytesHeaders: number,
     maxContentLength: number
 ) => ((dataAsBinaryString: string) => void) = sip.makeStreamParser;
 
 //TODO: make a function to test if message are well formed: have from, to via ect.
 export class Socket {
+
+    public misc: any = {};
 
     public readonly evtPacket = new SyncEvent<Packet>();
     public readonly evtResponse = new SyncEvent<Response>();
@@ -131,8 +103,8 @@ export class Socket {
 
     public readonly evtData = new SyncEvent<string>();
 
-    private static readonly maxBytesHeaders= 7820;
-    private static readonly maxContentLength= 24624;
+    private static readonly maxBytesHeaders = 7820;
+    private static readonly maxContentLength = 24624;
 
     constructor(
         private readonly connection: net.Socket,
@@ -220,12 +192,12 @@ export class Socket {
     }
 
     public readonly setKeepAlive: net.Socket['setKeepAlive'] =
-    (...inputs) => this.connection.setKeepAlive.apply(this.connection, inputs);
+        (...inputs) => this.connection.setKeepAlive.apply(this.connection, inputs);
 
     /** Return true if sent successfully */
     public write(sipPacket: Packet): boolean | Promise<boolean> {
 
-        if (this.evtClose.postCount){ 
+        if (this.evtClose.postCount) {
 
             debug("The socket you try to write on is closed");
 
@@ -233,20 +205,20 @@ export class Socket {
 
         }
 
-        if( matchRequest(sipPacket) ){
+        if (matchRequest(sipPacket)) {
 
-            let maxForwards= parseInt(sipPacket.headers["max-forwards"]);
+            let maxForwards = parseInt(sipPacket.headers["max-forwards"]);
 
-            if( isNaN(maxForwards) ){
+            if (isNaN(maxForwards)) {
                 throw new Error("Write error, max-forwards header should be defined");
             }
 
-            if( maxForwards === 0 ){
+            if (maxForwards === 0) {
                 debug("Avoid writing, max forward reached");
                 return false;
             }
 
-            sipPacket.headers["max-forwards"]= `${maxForwards - 1}`;
+            sipPacket.headers["max-forwards"] = `${maxForwards - 1}`;
 
         }
 
@@ -255,11 +227,11 @@ export class Socket {
             return false;
         }
 
-        let flushed= this.connection.write(
+        let flushed = this.connection.write(
             new Buffer(stringify(sipPacket), "binary")
         );
 
-        if( flushed ){
+        if (flushed) {
 
             return true;
 
@@ -294,7 +266,6 @@ export class Socket {
         this.evtResponse.detach();
         this.evtRequest.detach();
         */
-        //TODO: test, on destroy syncronously post close.
         this.connection.emit("close", false);
 
     }
@@ -352,7 +323,7 @@ export class Socket {
 
             let via = sipRequest.headers.via;
 
-            return via.length?`z9hG4bK-${via[0].params["branch"]}`:generateBranch();
+            return via.length ? `z9hG4bK-${via[0].params["branch"]}` : generateBranch();
 
         })();
 
@@ -379,8 +350,8 @@ export class Socket {
         extraParams?: Record<string, string>
     ) {
 
-        if (!sipRegisterRequest.headers.path){
-             sipRegisterRequest.headers.path = [];
+        if (!sipRegisterRequest.headers.path) {
+            sipRegisterRequest.headers.path = [];
         }
 
         sipRegisterRequest.headers.path!.unshift(

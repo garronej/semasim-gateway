@@ -119,13 +119,6 @@ namespace asteriskSockets {
 
     }
 
-    //Parfois on a old contact et contact en même temps dans la db
-    //si on wakeUp un contact qui a ete overwrite ou est entrain de l'être
-    //alors le backend vas faire un qualify qui vas fail et enchainer avec une push
-    //ce qui vas forcer le ré enregistrement.
-    //Normalement quand on fait getContacts on a jamais un doublon pk delete contact est appeler avant
-    //syncronement avent que des trigers soit declancher pour le nvx contact.
-
     mapAstSockContact.set = function set(socket, contact) {
 
         let self: typeof mapAstSockContact = this;
@@ -181,7 +174,7 @@ export async function start() {
 
     }catch{
         
-        debug("No active interface IP sheduling retry...");
+        debug("No active interface IP scheduling retry...");
 
         await new Promise(resolve=> setTimeout(resolve,5000));
         start();
@@ -196,7 +189,7 @@ export async function start() {
         }) as any
     );
 
-    //TODO: see if it really does it's job
+    //TODO: see if it really does it's job ===> it does not!!! TODO implement it
     backendSocket.setKeepAlive(true);
 
     apiStartListening(backendSocket);
@@ -210,30 +203,6 @@ export async function start() {
     );
     */
 
-    /*
-    backendSocket.evtPacket.attachPrepend(
-        ({ headers }) => headers["content-type"] === "application/sdp",
-        sipPacket => {
-
-            let sdp = sipLibrary.parseSdp(sipPacket.content);
-
-            let arr = sdp.m[0].a;
-
-            for (let line of [...arr]) {
-
-                if (line.match(/^candidate/) && !line.match(/relay/)) {
-                    arr.splice(arr.indexOf(line), 1);
-                }
-
-            }
-
-            console.log(arr);
-
-            sipPacket.content = sipLibrary.stringifySdp(sdp);
-
-        }
-    );
-    */
 
     backendSocket.evtConnect.attachOnce(async () => {
 
@@ -282,6 +251,8 @@ export async function start() {
         if (asteriskSocket === undefined) {
 
             asteriskSocket = createAsteriskSocket(connectionId, imei, backendSocket);
+
+            asteriskSocket.misc["received"]= headers.via[0].params["received"];
 
         } else if (asteriskSocket === null) {
 
@@ -417,11 +388,23 @@ function createAsteriskSocket(
         ({ headers }) => headers["content-type"] === "application/sdp",
         sipPacket => {
 
-            let sdp = sipLibrary.parseSdp(sipPacket.content);
+            let sdp= sipPacket.content;
 
-            sipLibrary.overwriteGlobalAndAudioAddrInSdpCandidates(sdp);
+            let srflxAddr = sipLibrary.readSrflxAddrInSdp(sdp);
 
-            sipPacket.content = sipLibrary.stringifySdp(sdp);
+            if (
+                !srflxAddr || 
+                ( 
+                    !sipLibrary.matchRequest(sipPacket) && 
+                    srflxAddr === asteriskSocket.misc["received"]
+                )
+            ) return;
+
+            let parsedSdp = sipLibrary.parseSdp(sdp);
+
+            parsedSdp.m[0].c = { ...parsedSdp.c, "address": srflxAddr };
+
+            sipPacket.content= sipLibrary.stringifySdp(parsedSdp);
 
         }
     );
