@@ -5,7 +5,15 @@ export declare type ApiRequest = {
     params: any;
     sendResponse: (response: any) => void;
 };
-export declare function startListening(sipSocket: sip.Socket): SyncEvent<ApiRequest>;
+export declare type ApiEvent = {
+    name: string;
+    data: string;
+};
+export declare function startListening(sipSocket: sip.Socket): {
+    evtApiRequest: SyncEvent<ApiRequest>;
+    evtApiEvent: SyncEvent<ApiEvent>;
+};
+export declare function sendEvent(sipSocket: sip.Socket, name: string, data: any): Promise<void>;
 export declare const errorSendRequest: {
     "timeout": string;
     "writeFailed": string;

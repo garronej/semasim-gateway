@@ -34,43 +34,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
-var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var framework = require("../tools/sipApiFramework");
-var db = require("./db");
-var _ = require("./sipApiClient");
 var _debug = require("debug");
 var debug = _debug("_sipApi");
 function startListening(backendSocket) {
     var _this = this;
-    framework.startListening(backendSocket).attach(function (_a) {
+    var evtApiRequest = framework.startListening(backendSocket).evtApiRequest;
+    evtApiRequest.attach(function (_a) {
         var method = _a.method, params = _a.params, sendResponse = _a.sendResponse;
         return __awaiter(_this, void 0, void 0, function () {
             var response;
@@ -91,114 +62,97 @@ function startListening(backendSocket) {
 }
 exports.startListening = startListening;
 var handlers = {};
-(function () {
-    var methodName = _.isDongleConnected.methodName;
-    handlers[methodName] = function (params) { return __awaiter(_this, void 0, void 0, function () {
-        var imei, _a, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    imei = params.imei;
-                    if (!chan_dongle_extended_client_1.DongleController.getInstance().dongles.has(imei)) return [3 /*break*/, 1];
-                    return [2 /*return*/, { "isConnected": true }];
-                case 1:
-                    _a = {
-                        "isConnected": false
-                    };
-                    _b = "lastConnection";
-                    return [4 /*yield*/, db.semasim.getDonglesLastConnection()];
-                case 2: return [2 /*return*/, (_a[_b] = (_c.sent()).get(imei),
-                        _a)];
-            }
-        });
-    }); };
-})();
-(function () {
-    var methodName = _.unlockDongle.methodName;
-    function checkIfIccidMatch(iccid, last_four_digits_of_iccid) {
+/*
+(() => {
+
+    let methodName = _.unlockDongle.methodName;
+    type Params = _.unlockDongle.Params;
+    type Response = _.unlockDongle.Response;
+
+    function checkIfIccidMatch(iccid: string, last_four_digits_of_iccid: string) {
         return iccid.substring(iccid.length - 4) === last_four_digits_of_iccid;
     }
-    handlers[methodName] = function (params) { return __awaiter(_this, void 0, void 0, function () {
-        var imei, last_four_digits_of_iccid, pin_first_try, pin_second_try, dc, dongle, activeDongle, _a, _b, pin, unlockResult, _c, e_1_1, _d, dongle_1, _e, e_1, _f;
-        return __generator(this, function (_g) {
-            switch (_g.label) {
-                case 0:
-                    imei = params.imei, last_four_digits_of_iccid = params.last_four_digits_of_iccid, pin_first_try = params.pin_first_try, pin_second_try = params.pin_second_try;
-                    dc = chan_dongle_extended_client_1.DongleController.getInstance();
-                    dongle = dc.dongles.get(imei);
-                    if (!dongle) {
-                        return [2 /*return*/, { "status": "ERROR", "message": "Dongle is not connected" }];
-                    }
-                    if (dongle.sim.iccid && !checkIfIccidMatch(dongle.sim.iccid, last_four_digits_of_iccid)) {
-                        return [2 /*return*/, { "status": "ERROR", "message": "Sim ICCID mismatch" }];
-                    }
-                    if (!chan_dongle_extended_client_1.DongleController.ActiveDongle.match(dongle)) return [3 /*break*/, 1];
-                    activeDongle = dongle;
-                    return [3 /*break*/, 14];
-                case 1:
-                    _g.trys.push([1, 9, 10, 11]);
-                    _a = __values([pin_first_try, pin_second_try, undefined]), _b = _a.next();
-                    _g.label = 2;
-                case 2:
-                    if (!!_b.done) return [3 /*break*/, 8];
-                    pin = _b.value;
-                    if (dongle.sim.pinState !== "SIM PIN" || dongle.sim.tryLeft === 1 || !pin) {
-                        return [2 /*return*/, {
-                                "status": "STILL LOCKED",
-                                "pinState": dongle.sim.pinState,
-                                "tryLeft": dongle.sim.tryLeft
-                            }];
-                    }
-                    unlockResult = void 0;
-                    _g.label = 3;
-                case 3:
-                    _g.trys.push([3, 5, , 6]);
-                    debug({ pin: pin });
-                    return [4 /*yield*/, dc.unlock(dongle.imei, pin)];
-                case 4:
-                    unlockResult = _g.sent();
-                    debug({ unlockResult: unlockResult });
-                    return [3 /*break*/, 6];
-                case 5:
-                    _c = _g.sent();
-                    return [2 /*return*/, { "status": "ERROR", "message": "dongle disconnect while unlocking" }];
-                case 6:
-                    if (unlockResult.success)
-                        return [3 /*break*/, 8];
-                    _g.label = 7;
-                case 7:
-                    _b = _a.next();
-                    return [3 /*break*/, 2];
-                case 8: return [3 /*break*/, 11];
-                case 9:
-                    e_1_1 = _g.sent();
-                    e_1 = { error: e_1_1 };
-                    return [3 /*break*/, 11];
-                case 10:
-                    try {
-                        if (_b && !_b.done && (_f = _a.return)) _f.call(_a);
-                    }
-                    finally { if (e_1) throw e_1.error; }
-                    return [7 /*endfinally*/];
-                case 11:
-                    _g.trys.push([11, 13, , 14]);
-                    return [4 /*yield*/, dc.dongles.evtSet.waitFor(function (_a) {
-                            var _b = __read(_a, 1), dongle = _b[0];
-                            return chan_dongle_extended_client_1.DongleController.ActiveDongle.match(dongle) && dongle.imei === imei;
-                        }, 45000)];
-                case 12:
-                    _d = __read.apply(void 0, [_g.sent(), 1]), dongle_1 = _d[0];
-                    activeDongle = dongle_1;
-                    return [3 /*break*/, 14];
-                case 13:
-                    _e = _g.sent();
-                    return [2 /*return*/, { "status": "ERROR", "message": "Unlock success but dongle not found" }];
-                case 14:
-                    if (!checkIfIccidMatch(activeDongle.sim.iccid, last_four_digits_of_iccid)) {
-                        return [2 /*return*/, { "status": "ERROR", "message": "Sim have been unlocked but ICCID mismatch" }];
-                    }
-                    return [2 /*return*/, { "status": "SUCCESS", "dongle": activeDongle }];
+
+    handlers[methodName] = async (params: Params): Promise<Response> => {
+
+        let { imei, last_four_digits_of_iccid, pin_first_try, pin_second_try } = params;
+
+        let dc = Dc.getInstance();
+
+        let dongle = dc.dongles.get(imei);
+
+        if (!dongle) {
+            return { "status": "ERROR", "message": "Dongle is not connected" };
+        }
+
+        if (dongle.sim.iccid && !checkIfIccidMatch(dongle.sim.iccid, last_four_digits_of_iccid)) {
+            return { "status": "ERROR", "message": "Sim ICCID mismatch" };
+        }
+
+        let activeDongle: Dc.ActiveDongle;
+
+        if (Dc.ActiveDongle.match(dongle)) {
+
+            activeDongle = dongle;
+
+        } else {
+
+            for (let pin of [pin_first_try, pin_second_try, undefined]) {
+
+                if (dongle.sim.pinState !== "SIM PIN" || dongle.sim.tryLeft === 1 || !pin) {
+
+                    return {
+                        "status": "STILL LOCKED",
+                        "pinState": dongle.sim.pinState,
+                        "tryLeft": dongle.sim.tryLeft
+                    };
+
+                }
+
+                let unlockResult: Dc.UnlockResult;
+
+                try {
+
+                    debug({ pin });
+
+                    unlockResult = await dc.unlock(dongle.imei, pin);
+
+                    debug({ unlockResult });
+
+                } catch{
+
+                    return { "status": "ERROR", "message": "dongle disconnect while unlocking" };
+
+                }
+
+                if (unlockResult.success) break;
+
             }
-        });
-    }); };
+
+            try {
+
+                let [dongle] = await dc.dongles.evtSet.waitFor(
+                    ([dongle]) => Dc.ActiveDongle.match(dongle) && dongle.imei === imei,
+                    45000
+                );
+
+                activeDongle = dongle as Dc.ActiveDongle;
+
+            } catch {
+
+                return { "status": "ERROR", "message": "Unlock success but dongle not found" };
+
+            }
+
+        }
+
+        if ( !checkIfIccidMatch(activeDongle.sim.iccid, last_four_digits_of_iccid) ) {
+            return { "status": "ERROR", "message": "Sim have been unlocked but ICCID mismatch" };
+        }
+
+        return { "status": "SUCCESS", "dongle": activeDongle };
+
+    };
+
 })();
+*/

@@ -1,250 +1,233 @@
 
+require("rejection-tracker").main(__dirname, "..", "..");
+
 import { DongleController as Dc } from "chan-dongle-extended-client";
-import * as phone from "../tools/phoneNumberLibrary";
-import * as sipApiBackend from "./sipApiClientBackend";
 import * as db from "./db";
 import * as sipProxy from "./sipProxy";
 import * as sipMessage from "./sipMessage";
 import * as messageQueue from "./messageQueue";
 import * as voiceCallBridge from "./voiceCallBridge";
+import { Contact } from "./sipContact";
+
+import * as sipApiBackend from "./sipApiBackedClientImplementation";
+import * as sipApiServer from "./sipApiGatewayServerImplementation";
+
+import * as crypto from "crypto";
 
 import { c } from "./_constants";
 
 import * as _debug from "debug";
+import { DongleController } from "chan-dongle-extended-client/dist/lib/DongleController";
 let debug = _debug("_main");
 
 debug("Starting semasim gateway !");
 
-let dc = Dc.getInstance();
+(async function launch() {
 
-dc.dongles.evtSet.attachPrepend(
-    async ([dongle]) => {
+    try{
 
-        if (Dc.ActiveDongle.match(dongle)) {
+        await Dc.getInstance().initialization;
 
-            await handleActiveDongle(dongle);
+    }catch(error){
 
-        } else {
+        debug("dongle-extended not initialized yet, scheduling retry...");
 
-            await handleLockedDongle(dongle);
+        await new Promise(resolve=>setTimeout(resolve, 5000));
 
-        }
-
-        sipApiBackend.claimDongle.makeCall(dongle.imei);
+        launch();
 
     }
-);
 
-dc.evtMessage.attach(
-    async ({ dongle, message }) => {
+    debug("Launching...");
 
-        debug("FROM DONGLE MESSAGE", { message });
+    registerListeners();
 
-        let endpoint= { 
-            "dongle": { 
-                "imei": dongle.imei 
-            } , 
-            "sim": { 
-                "iccid": dongle.sim.iccid 
-            } 
-        };
+    await db.asterisk.startListeningPsContacts();
 
-        await db.semasim.MessageTowardSip.add(
-            message.number,
-            message.text,
-            message.date,
-            false,
-            {
-                "is": "ALL UA_ENDPOINT OF ENDPOINT",
-                endpoint
-            }
-        );
+    await sipMessage.startHandling();
 
-        messageQueue.notifyNewSipMessagesToSend(endpoint);
-
-    }
-);
-
-
-db.asterisk.getEvtNewContact().attach(
-    async contact => {
-
-        debug(`Contact registered`);
-
-        let { isNewUa, isFirstUaEndpointOfEndpoint } = await db.semasim.addUaEndpoint(contact.uaEndpoint);
-
-        if (isFirstUaEndpointOfEndpoint) {
-
-            debug("First ua of endpoint");
-
-            await (async function retrieveGsmMessageAlreadyReceived() {
-
-                let imei = contact.uaEndpoint.endpoint.dongle.imei;
-                let iccid = contact.uaEndpoint.endpoint.sim.iccid;
-
-                let messages = await dc.getMessages({ "flush": true, imei, iccid });
-
-                debug(`${messages[imei][iccid].length} messages to send`);
-
-                for (let message of messages[imei][iccid]) {
-
-                    debug(message);
-
-                    db.semasim.MessageTowardSip.add(
-                        message.number,
-                        message.text,
-                        message.date,
-                        false,
-                        {
-                            "is": "ALL UA_ENDPOINT OF ENDPOINT",
-                            "endpoint": { "dongle": { imei }, "sim": { iccid } }
-                        }
-                    );
-
-                }
-
-            })();
-
-        }
-
-        messageQueue.sendMessagesOfContact(contact);
-
-    }
-);
-
-sipMessage.getEvtMessage().attach(
-    async ({ fromContact, toNumber, text }) => {
-
-        debug("FROM SIP MESSAGE", { toNumber, text });
-
-        let { uaEndpoint }= fromContact;
-
-        await db.semasim.MessageTowardGsm.add(
-            toNumber, 
-            text, 
-            uaEndpoint
-        );
-
-        messageQueue.sendMessagesOfDongle(uaEndpoint.endpoint);
-
-    }
-);
-
-async function handleLockedDongle(dongle: Dc.LockedDongle) {
-
-    debug("handleLockedDongle: ", dongle);
-
-    await db.semasim.addDongle(dongle);
-
-}
-
-async function handleActiveDongle(dongle: Dc.ActiveDongle) {
-
-    debug("handleActiveDongle: ", dongle);
-
-    (function leveragePhoneNumberLib(dongle: Dc.ActiveDongle) {
-
-        let contacts: Dc.Contact[] = [];
-
-        for (let contact of dongle.sim.phonebook.contacts) {
-            if (!contact.name || !contact.number) continue;
-            contact.number = phone.toNationalNumber(contact.number, dongle.sim.imsi);
-            contacts.push(contact);
-        }
-
-        dongle.sim.phonebook.contacts = contacts;
-
-        if (dongle.sim.number) {
-            dongle.sim.number = phone.toNationalNumber(dongle.sim.number, dongle.sim.imsi);
-        }
-
-        let imsiInfos = phone.getImsiInfos(dongle.sim.imsi);
-
-        if (imsiInfos) {
-            dongle.sim.serviceProvider = imsiInfos.network_name;
-        }
-
-    })(dongle);
-
-    await db.semasim.addEndpoint(dongle);
-
-    let imei= dongle.imei;
-    let iccid= dongle.sim.iccid;
-
-    await db.asterisk.addEndpoint(imei, iccid);
-
-    messageQueue.sendMessagesOfDongle({ "dongle": { imei }, "sim": { iccid }});
-
-}
-
-(async function handleConnectedDonglesThenStartSipProxy() {
-
-    let tasks: Promise<void>[] = [];
-
-    tasks = [db.asterisk.flushContacts()];
-
-    tasks[tasks.length] = (async function retrieveGsmMessageReceivedWhileDown() {
-
-        let tasks: Promise<void>[] = [];
-
-        for (let endpoint of await db.semasim.getEndpoints()) {
-
-            tasks[tasks.length] = (async () => {
-
-                let fromDate = await db.semasim.lastGsmMessageReceived(endpoint);
-
-                if (!fromDate) return;
-
-                let imei = endpoint.dongle.imei;
-                let iccid = endpoint.sim.iccid;
-
-                let messages = await dc.getMessages({
-                    imei, iccid, fromDate, "flush": true
-                });
-
-                let tasks: Promise<void>[] = [];
-
-                for (let message of messages[imei][iccid]) {
-
-                    debug(`Message received while down: `, message);
-
-                    tasks[tasks.length] = db.semasim.MessageTowardSip.add(
-                        message.number,
-                        message.text,
-                        message.date,
-                        false,
-                        {
-                            "is": "ALL UA_ENDPOINT OF ENDPOINT",
-                            "endpoint": endpoint
-                        }
-                    );
-
-                }
-
-                await Promise.all(tasks);
-
-            })();
-
-        }
-
-        await Promise.all(tasks);
-
-    })();
-
-    for( let dongle of dc.dongles.values() ){
-
-        if( Dc.ActiveDongle.match(dongle) ){
-            tasks.push(handleActiveDongle(dongle));
-        }else{
-            tasks.push(handleLockedDongle(dongle));
-        }
-
-    }
-
-    await tasks;
+    voiceCallBridge.start();
 
     sipProxy.start();
 
+    processGsmMessageIoOccurredWhileOffline();
+
 })();
 
-voiceCallBridge.start();
+async function processGsmMessageIoOccurredWhileOffline(){
+
+    let dc= Dc.getInstance();
+
+    for (let dongle of dc.activeDongles.values()) {
+
+        messageQueue.sendMessagesOfDongle(dongle);
+
+    }
+
+    let lastMessageReceivedDateBySim = await db.semasim.lastMessageReceivedDateBySim();
+
+    for (let imsi in lastMessageReceivedDateBySim) {
+
+        //TODO: may throw
+        let messages = await dc.getMessagesOfSim({
+            imsi,
+            "fromDate": new Date(lastMessageReceivedDateBySim[imsi].getTime()+1),
+            "flush": true,
+        });
+
+        for (let { number, text, date } of messages) {
+
+            await db.semasim.MessageTowardSip.add(number, text, date, false, {
+                "target": "ALL UA REGISTERED TO SIM",
+                "imsi": imsi
+            });
+
+        }
+
+    }
+
+}
+
+function registerListeners() {
+
+    let dc = Dc.getInstance();
+
+    sipProxy.evtNewBackendSocketConnect.attach(
+        async backendSocket => {
+
+            sipApiServer.startListening(backendSocket);
+
+            sipApiBackend.init(backendSocket);
+
+            for (let dongle of dc.activeDongles.values()) {
+
+                sipApiBackend.notifySimOnline(dongle);
+
+            }
+
+        }
+    );
+
+    dc.dongles.evtSet.attach(
+        async ([dongle]) => {
+
+            if (!Dc.ActiveDongle.match(dongle)) return;
+
+            messageQueue.sendMessagesOfDongle(dongle);
+
+            sipApiBackend.notifySimOnline(dongle);
+
+        }
+    );
+
+    dc.dongles.evtDelete.attach(
+        async ([dongle]) => {
+
+            if (!Dc.ActiveDongle.match(dongle)) return;
+
+            sipApiBackend.notifySimOffline(dongle.sim.imsi);
+
+        }
+    );
+
+    dc.evtMessage.attach(
+        async ({ dongle, message }) => {
+
+            debug("FROM DONGLE MESSAGE", { message });
+
+            let isHandeled = await db.semasim.MessageTowardSip.add(
+                message.number,
+                message.text,
+                message.date,
+                false,
+                {
+                    "target": "ALL UA REGISTERED TO SIM",
+                    "imsi": dongle.sim.imsi
+                }
+            );
+
+            if (isHandeled) {
+
+                dc.getMessagesOfSim({
+                    "imsi": dongle.sim.imsi,
+                    "fromDate": message.date,
+                    "toDate": message.date,
+                    "flush": true
+                });
+
+            }
+
+            messageQueue.notifyNewSipMessagesToSend(dongle.sim.imsi);
+
+        }
+    );
+
+    db.asterisk.evtNewContact.attach(
+        async contact => {
+
+            debug(`Contact registered`);
+
+            let {
+                isUaCreatedOrUpdated,
+                isFirstUaForSim
+            } = await db.semasim.addUaSim(contact.uaSim);
+
+            if (isUaCreatedOrUpdated) {
+
+                sipApiBackend.notifyNewOrUpdatedUa(contact.uaSim.ua);
+
+            }
+
+            if (isFirstUaForSim) {
+
+                debug("First SIM UA");
+
+                let messages = await dc.getMessagesOfSim({
+                    "imsi": contact.uaSim.imsi,
+                    "flush": true
+                });
+
+                for (let { number, text, date } of messages) {
+
+                    db.semasim.MessageTowardSip.add(
+                        number, text, date, false,
+                        {
+                            "target": "ALL UA REGISTERED TO SIM",
+                            "imsi": contact.uaSim.imsi
+                        }
+                    );
+
+                }
+
+            }
+
+            messageQueue.sendMessagesOfContact(contact);
+
+        }
+    );
+
+    sipMessage.evtMessage.attach(
+        async ({ fromContact, toNumber, text }) => {
+
+            debug("FROM SIP MESSAGE", { toNumber, text });
+
+            let { uaSim } = fromContact;
+
+            await db.semasim.MessageTowardGsm.add(
+                toNumber,
+                text,
+                uaSim
+            );
+
+            let dongle = Array.from(dc.activeDongles.values()).find(
+                ({ sim }) => sim.imsi === fromContact.uaSim.imsi
+            );
+
+            if (!dongle) return;
+
+            messageQueue.sendMessagesOfDongle(dongle);
+
+        }
+    );
+
+}

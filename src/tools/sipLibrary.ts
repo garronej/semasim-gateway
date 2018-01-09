@@ -1,9 +1,7 @@
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
-import * as runExclusive from "run-exclusive";
 import * as net from "net";
 import * as sip from "sip";
 import * as _sdp_ from "sip/sdp";
-import { TrackableMap } from "trackable-map";
 
 import * as _debug from "debug";
 let debug = _debug("_tools/sipLibrary");
@@ -237,9 +235,10 @@ export class Socket {
 
         } else {
 
-            let boundTo = [];
 
-            debug("we have to whait for drain to confirg write...");
+            debug("we have to wait for drain to confirm write...");
+
+            let boundTo = [];
 
             return Promise.race([
                 new Promise<false>(

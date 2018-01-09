@@ -48,16 +48,11 @@ var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var sipProxy_1 = require("./sipProxy");
 var sipLibrary = require("../tools/sipLibrary");
 var _constants_1 = require("./_constants");
-var phone = require("../tools/phoneNumberLibrary");
 var _debug = require("debug");
 var debug = _debug("_sipMessage");
-var evtMessage = undefined;
-function getEvtMessage() {
-    var _this = this;
-    if (evtMessage)
-        return evtMessage;
-    evtMessage = new ts_events_extended_1.SyncEvent();
-    (function () { return __awaiter(_this, void 0, void 0, function () {
+exports.evtMessage = new ts_events_extended_1.SyncEvent();
+function startHandling() {
+    return __awaiter(this, void 0, void 0, function () {
         var ami, matchAllExt;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -76,31 +71,20 @@ function getEvtMessage() {
                         if (!isValidInput)
                             debug("Sip message content was not a valid UTF-8 string");
                         var toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user;
-                        evtMessage.post({ fromContact: fromContact, toNumber: toNumber, text: text });
+                        exports.evtMessage.post({ fromContact: fromContact, toNumber: toNumber, text: text });
                     });
                     return [2 /*return*/];
             }
         });
-    }); })();
-    return evtMessage;
+    });
 }
-exports.getEvtMessage = getEvtMessage;
-/*
-
-TODO: consider:
-
- Apply patch for overighting Content-Type in outgoing SIP message
-
-Patch ref: https://issues.asterisk.org/jira/browse/ASTERISK-26082
-
-
-*/
+exports.startHandling = startHandling;
 function sendMessage(contact, from_number, headers, text, from_number_sim_name) {
     return new Promise(function (resolve, reject) {
         var actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
         var uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
-        from_number = phone.toNationalNumber(from_number, contact.uaEndpoint.endpoint.sim.imsi);
-        chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend("pjsip:" + contact.uaEndpoint.endpoint.dongle.imei + "/" + uri, from_number, actionId).catch(function (amiError) { return reject(amiError); });
+        from_number = chan_dongle_extended_client_1.phoneNumberLibrary.toNationalNumber(from_number, contact.uaSim.imsi);
+        chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend("pjsip:" + contact.uaSim.imsi + "/" + uri, from_number, actionId).catch(function (amiError) { return reject(amiError); });
         sipProxy_1.evtOutgoingMessage.attachOnce(function (_a) {
             var sipRequest = _a.sipRequest;
             return sipRequest.content === actionId;

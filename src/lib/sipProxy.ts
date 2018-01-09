@@ -1,14 +1,12 @@
 import * as tls from "tls";
 import * as net from "net";
 import * as networkTools from "../tools/networkTools";
-import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
+import { SyncEvent } from "ts-events-extended";
 import * as sipLibrary from "../tools/sipLibrary";
-import * as sipApiBackend from "./sipApiClientBackend";
-import { startListening as apiStartListening } from "./sipApi";
 import { Contact, PsContact } from "./sipContact";
 import * as db from "./db";
 
-import { TrackableMap } from "trackable-map";
+import * as sipApiBackend from "./sipApiBackedClientImplementation";
 
 import { c } from "./_constants";
 
@@ -29,17 +27,32 @@ export const evtOutgoingMessage = new SyncEvent<{
 
 let backendSocket: sipLibrary.Socket;
 
-const evtNewBackendSocketConnect = new VoidSyncEvent();
+export const evtNewBackendSocketConnect = new SyncEvent<sipLibrary.Socket>();
 
-export async function getBackendSocket(): Promise<sipLibrary.Socket> {
+export function getBackendSocket(): sipLibrary.Socket | Promise<sipLibrary.Socket> {
 
     if (
         !backendSocket ||
         backendSocket.evtClose.postCount ||
         !backendSocket.evtConnect.postCount
-    ) await evtNewBackendSocketConnect.waitFor();
+    ){
 
-    return backendSocket;
+        return evtNewBackendSocketConnect.waitFor();
+
+    }else{
+
+        return backendSocket;
+
+    }
+
+
+}
+
+export function getContacts(
+    imsi?: string
+): Contact[] {
+
+    return asteriskSockets.getContacts(imsi);
 
 }
 
@@ -47,117 +60,127 @@ namespace asteriskSockets {
 
     const map = new Map<string, sipLibrary.Socket | null>();
 
-    const mapAstSockContact = new TrackableMap<sipLibrary.Socket, Contact>();
+    export function getContacts(
+        imsi?: string
+    ): Contact[] {
+
+        let match: (contact: Contact)=> boolean;
+
+        if( imsi ){
+            match= contact=> contact.uaSim.imsi === imsi;
+        }else{
+            match= ()=> true;
+        }
+
+        let contacts: Contact[]= [];
+
+        for (let socket of map.values()) {
+
+            if (socket === null) continue;
+
+            let contact = socket.misc["contact"];
+
+            if (!contact) continue;
+
+            if( !match(contact) ) continue;
+
+            contacts.push(contact);
+
+        }
+
+        return contacts;
+
+    }
 
     export function set(
         connectionId: number,
-        imei: string,
+        imsi: string,
         socket: sipLibrary.Socket
     ) {
 
-        let key = `${connectionId}${imei}`;
+        let key = `${connectionId}${imsi}`;
 
         socket.evtClose.attachOnce(() => map.set(key, null));
 
-        map.set(key, socket);
-
-        db.asterisk.getEvtNewContact().attachOncePrepend(
+        let prContact = db.asterisk.evtNewContact.attachOncePrepend(
             contact => (
                 contact.connectionId === connectionId &&
-                contact.uaEndpoint.endpoint.dongle.imei === imei
+                contact.uaSim.imsi === imsi
             ),
             6000,
-            contact => mapAstSockContact.set(socket, contact)
-        ).catch(() => socket.destroy());
+            contact => {
+
+                socket.evtClose.attachOnce(() => {
+                    db.asterisk.evtExpiredContact.detach(prContact);
+                    db.asterisk.deleteContact(contact);
+                });
+
+                db.asterisk.evtExpiredContact.attachOnce(
+                    expiredContact => expiredContact.id === contact.id,
+                    prContact,
+                    () => {
+                        debug("expired contact");
+                        socket.destroy();
+                        sipApiBackend.forceContactToRegister(contact);
+                    }
+                );
+
+
+                for( let socket_i of map.values() ){
+
+                    if( socket_i === null ) continue;
+
+                    let contact_i: Contact | undefined= socket_i.misc["contact"];
+
+                    if(! contact_i ) continue;
+
+                    if( Contact.UaSim.areSame(contact_i.uaSim, contact.uaSim) ){
+
+                        debug("ua re-register with an other connection");
+
+                        socket_i.destroy();
+
+                        break;
+
+                    }
+
+                }
+
+                socket.misc["contact"] = contact;
+
+
+            }
+        );
+
+        prContact.catch(() => socket.destroy());
+
+        socket.misc["prContact"] = prContact;
+
+        map.set(key, socket);
 
     }
 
     export function get(
         connectionId: number,
-        imei: string
+        imsi: string
     ): sipLibrary.Socket | null | undefined {
-        return map.get(`${connectionId}${imei}`);
+        return map.get(`${connectionId}${imsi}`);
     }
 
-    export async function getContact(
+    export function getContact(
         socket: sipLibrary.Socket
-    ): Promise<Contact> {
-
-        let contact = mapAstSockContact.get(socket);
-
-        if( contact ){
-
-            return contact;
-
-        }else{
-
-            let boundTo= [];
-
-            socket.evtClose.attachOnce(boundTo, ()=>
-                mapAstSockContact.evtSet.detach(boundTo)
-            );
-
-            let [ contact ] =await mapAstSockContact.evtSet.attachOnce(
-                ([_, s]) => s === socket,
-                boundTo, ()=>{}
-            );
-
-            socket.evtClose.detach(boundTo);
-
-            return contact;
-
-        }
-
+    ): Contact | Promise<Contact> {
+        return socket.misc["contact"] || socket.misc["prContact"];
     }
 
     export function flush() {
 
         for (let socket of map.values()) {
-            if (!socket) continue;
+            if (socket === null) continue;
             socket.destroy();
         }
 
     }
-
-    mapAstSockContact.set = function set(socket, contact) {
-
-        let self: typeof mapAstSockContact = this;
-
-        let boundTo = [];
-
-        socket.evtClose.attachOnce(() => {
-            db.asterisk.getEvtExpiredContact().detach(boundTo);
-            self.delete(socket);
-            db.asterisk.deleteContact(contact);
-        });
-
-        db.asterisk.getEvtExpiredContact().attachOnce(
-            expiredContact => expiredContact.id === contact.id,
-            boundTo,
-            () => {
-                debug("expired contact");
-                socket.destroy();
-                sipApiBackend.forceContactToReRegister.makeCall(contact);
-            }
-        );
-
-        let oldContact = self.find(
-            oldContact => Contact.UaEndpoint.areSame(
-                oldContact.uaEndpoint,
-                contact.uaEndpoint
-            )
-        );
-
-        if (oldContact) {
-            debug("ua re-register with an other connection");
-            let oldSocket = self.keyOf(oldContact)!;
-            oldSocket.destroy();
-        }
-
-        return TrackableMap.prototype.set.call(self, socket, contact);
-
-    };
-
 
 }
 
@@ -166,17 +189,17 @@ let localIp = "";
 
 export async function start() {
 
-    debug(`${localIp?"re-":""}Starting`);
+    debug(`${localIp ? "re-" : ""}Starting`);
 
-    try{
+    try {
 
         localIp = await networkTools.getActiveInterfaceIp();
 
-    }catch{
-        
+    } catch{
+
         debug("No active interface IP scheduling retry...");
 
-        await new Promise(resolve=> setTimeout(resolve,5000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
         start();
         return;
 
@@ -189,10 +212,7 @@ export async function start() {
         }) as any
     );
 
-    //TODO: see if it really does it's job ===> it does not!!! TODO implement it
     backendSocket.setKeepAlive(true);
-
-    apiStartListening(backendSocket);
 
     /*
     backendSocket.evtPacket.attach(sipPacket =>
@@ -203,56 +223,30 @@ export async function start() {
     );
     */
 
-
-    backendSocket.evtConnect.attachOnce(async () => {
-
-        debug("Connection established with backend");
-
-        evtNewBackendSocketConnect.post();
-
-        let handledUa = new Set<string>();
-
-        for (let [imei] of await db.semasim.getDonglesLastConnection()) {
-
-            sipApiBackend.claimDongle.makeCall(imei).then(
-                async isGranted => {
-
-                    if (!isGranted) return;
-
-                    let uas = await db.semasim.getUas(imei);
-
-                    for (let ua of uas) {
-
-                        if (handledUa.has(ua.instance)) continue;
-
-                        sipApiBackend.sendPushNotification.makeCall(ua);
-
-                        handledUa.add(ua.instance);
-
-                    }
-
-                }
-            );
-
-        }
-
-    });
+    backendSocket.evtConnect.attachOnce(async () => 
+        evtNewBackendSocketConnect.post(backendSocket)
+    );
 
     backendSocket.evtRequest.attach(async sipRequest => {
 
-        let { headers }= sipRequest;
+        let { headers } = sipRequest;
 
         let connectionId = parseInt(headers.via[0].params["connection_id"]!);
 
-        let imei = sipLibrary.parseUri(headers.from.uri).user!;
+        let imsi = sipLibrary.parseUri(headers.from.uri).user!;
 
-        let asteriskSocket = asteriskSockets.get(connectionId, imei);
+        let asteriskSocket = asteriskSockets.get(connectionId, imsi);
 
         if (asteriskSocket === undefined) {
 
-            asteriskSocket = createAsteriskSocket(connectionId, imei, backendSocket);
+            let uaPublicIp= headers.via[0].params["received"]!;
 
-            asteriskSocket.misc["received"]= headers.via[0].params["received"];
+            asteriskSocket = createAsteriskSocket(
+                connectionId, 
+                imsi, 
+                uaPublicIp,
+                backendSocket
+            );
 
         } else if (asteriskSocket === null) {
 
@@ -262,24 +256,31 @@ export async function start() {
 
         if (!asteriskSocket.evtConnect.postCount) await asteriskSocket.evtConnect.waitFor();
 
-        let contactAoR= headers.contact?headers.contact[0]:undefined;
+        let contactAoR = headers.contact ? headers.contact[0] : undefined;
 
         if (sipRequest.method === "REGISTER") {
 
+            let contactParams= sipLibrary.parseUri(contactAoR!.uri).params;
+
             headers["user-agent"] = PsContact.stringifyMisc({
                 "ua_instance": contactAoR!.params["+sip.instance"]!,
+                "ua_userEmail": contactParams["user_email"]!,
+                "ua_platform": (() => {
+
+                    switch (contactParams["pn-type"]) {
+                        case "google":
+                        case "firebase":
+                            return "android";
+                        case "apple":
+                            return "iOS";
+                        default:
+                            return "other";
+                    }
+
+                })(),
+                "ua_pushToken": contactParams["pn-tok"] || "",
                 "ua_software": headers["user-agent"],
-                connectionId,
-                "pushToken": (() => {
-
-                    let { params } = sipLibrary.parseUri(contactAoR!.uri);
-
-                    let type = params["pn-type"];
-                    let token = params["pn-tok"];
-
-                    return (type && token)?{ type, token }:undefined;
-
-                })()
+                connectionId
             });
 
             asteriskSocket.addPathHeader(sipRequest);
@@ -305,6 +306,7 @@ export async function start() {
         //TODO match with authentication
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
 
+            //TODO: why prepend => because via header is to be modified
             asteriskSocket.evtResponse.attachOncePrepend(
                 ({ headers }) => headers.via[0].params["branch"] === branch,
                 async sipResponse => {
@@ -329,9 +331,9 @@ export async function start() {
 
         let connectionId = parseInt(sipResponse.headers.via[0].params["connection_id"]!);
 
-        let imei = sipLibrary.parseUri(sipResponse.headers.to.uri).user!;
+        let imsi = sipLibrary.parseUri(sipResponse.headers.to.uri).user!;
 
-        let asteriskSocket = asteriskSockets.get(connectionId, imei);
+        let asteriskSocket = asteriskSockets.get(connectionId, imsi);
 
         if (!asteriskSocket) return;
 
@@ -367,13 +369,14 @@ export async function start() {
 
 function createAsteriskSocket(
     connectionId: number,
-    imei: string,
+    imsi: string,
+    uaPublicIp: string,
     backendSocket: sipLibrary.Socket
 ): sipLibrary.Socket {
 
     let asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
 
-    asteriskSockets.set(connectionId, imei, asteriskSocket);
+    asteriskSockets.set(connectionId, imsi, asteriskSocket);
 
     /*
     asteriskSocket.evtPacket.attach(sipPacket =>
@@ -384,27 +387,28 @@ function createAsteriskSocket(
     );
     */
 
+    /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     asteriskSocket.evtPacket.attachPrepend(
         ({ headers }) => headers["content-type"] === "application/sdp",
         sipPacket => {
 
-            let sdp= sipPacket.content;
+            let sdp = sipPacket.content;
 
-            let srflxAddr = sipLibrary.readSrflxAddrInSdp(sdp);
+            let gatewayPublicIp = sipLibrary.readSrflxAddrInSdp(sdp);
 
             if (
-                !srflxAddr || 
-                ( 
-                    !sipLibrary.matchRequest(sipPacket) && 
-                    srflxAddr === asteriskSocket.misc["received"]
+                !gatewayPublicIp ||
+                (
+                    !sipLibrary.matchRequest(sipPacket) &&
+                    gatewayPublicIp === uaPublicIp
                 )
             ) return;
 
             let parsedSdp = sipLibrary.parseSdp(sdp);
 
-            parsedSdp.m[0].c = { ...parsedSdp.c, "address": srflxAddr };
+            parsedSdp.m[0].c = { ...parsedSdp.c, "address": gatewayPublicIp };
 
-            sipPacket.content= sipLibrary.stringifySdp(parsedSdp);
+            sipPacket.content = sipLibrary.stringifySdp(parsedSdp);
 
         }
     );
@@ -420,6 +424,7 @@ function createAsteriskSocket(
 
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
 
+            //NOTE: we do not use waitFor because header via is modified when the response is handled
             let prSipResponse = backendSocket.evtResponse.attachOncePrepend(
                 ({ headers }) => headers.via[0].params["branch"] === branch,
                 5000,

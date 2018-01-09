@@ -1,9 +1,11 @@
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import * as db from "./db";
 import * as AsyncLock from "async-lock";
-import * as sipApiBackend from "./sipApiClientBackend";
 import { Contact } from "./sipContact";
 import * as sipMessage from "./sipMessage";
+import * as sipProxy from "./sipProxy";
+
+import * as sipApiBackend from "./sipApiBackedClientImplementation";
 
 import * as _debug from "debug";
 let debug = _debug("_messageQueue");
@@ -12,17 +14,16 @@ const checkMark = (new Buffer("e29c94", "hex")).toString("utf8");
 const crossMark = (new Buffer("e29d8c", "hex")).toString("utf8");
 
 const lockDongle = new AsyncLock();
-
 export function sendMessagesOfDongle(
-    endpoint: Contact.UaEndpoint.EndpointRef
+    dongle: Dc.ActiveDongle
 ) {
-    lockDongle.acquire(endpoint.dongle.imei, async () => {
+    lockDongle.acquire(dongle.imei, async () => {
 
         let dc = Dc.getInstance();
 
         for (
             let [message, { setSent, setStatusReport }]
-            of await db.semasim.MessageTowardGsm.getUnsent(endpoint)
+            of await db.semasim.MessageTowardGsm.getUnsent(dongle.sim.imsi)
         ) {
 
             let sendMessageResult: Dc.SendMessageResult;
@@ -30,8 +31,8 @@ export function sendMessagesOfDongle(
             try {
 
                 sendMessageResult = await dc.sendMessage(
-                    endpoint.dongle.imei,
-                    message.to_number,
+                    dongle.imei,
+                    message.toNumber,
                     message.text
                 );
 
@@ -41,11 +42,11 @@ export function sendMessagesOfDongle(
 
             if (!sendMessageResult.success) {
 
-                if (sendMessageResult.reason !== "DISCONNECT") {
+                if (sendMessageResult.reason === "DISCONNECT") {
+                    return;
+                }else{
                     await setSent(null);
                     continue;
-                }else{
-                    return;
                 }
 
             }
@@ -55,15 +56,15 @@ export function sendMessagesOfDongle(
             let prSetSent = setSent(sendDate);
 
             db.semasim.MessageTowardSip.add(
-                message.to_number,
+                message.toNumber,
                 checkMark,
                 sendDate,
                 true,
                 {
-                    "is": "UA_ENDPOINT",
-                    "uaEndpoint": message.uaEndpoint
+                    "target": "SPECIFIC UA REGISTERED TO SIM",
+                    "uaSim": message.uaSim
                 }
-            ).then(() => notifyNewSipMessagesToSend(message.uaEndpoint.endpoint));
+            ).then(() => notifyNewSipMessagesToSend(dongle.sim.imsi));
 
             dc.evtStatusReport.attachOnce(
                 ({ statusReport }) => statusReport.sendDate.getTime() === sendDate.getTime(),
@@ -81,44 +82,54 @@ export function sendMessagesOfDongle(
                         };
 
                         await db.semasim.MessageTowardSip.add(
-                            message.to_number,
+                            message.toNumber,
                             `${checkMark}${checkMark}`,
                             statusReport.dischargeDate,
                             true,
                             {
-                                "is": "UA_ENDPOINT",
-                                "uaEndpoint": message.uaEndpoint
+                                "target": "SPECIFIC UA REGISTERED TO SIM",
+                                "uaSim": message.uaSim
                             }
                         );
 
                         await db.semasim.MessageTowardSip.add(
-                            message.to_number,
-                            `you sent from ${message.uaEndpoint.ua.software}:\n${message.text}`,
+                            message.toNumber,
+                            `Me:\n${message.text}`,
                             sendDate,
                             true,
                             {
-                                "is": "ALL UA_ENDPOINT OF ENDPOINT EXCEPT UA",
-                                "endpoint": message.uaEndpoint.endpoint,
-                                "excludeUa": message.uaEndpoint.ua
+                                "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
+                                "uaSim": message.uaSim
+                            }
+                        );
+
+                        await db.semasim.MessageTowardSip.add(
+                            message.toNumber,
+                            `${message.uaSim.ua.userEmail}:\n${message.text}`,
+                            sendDate,
+                            true,
+                            {
+                                "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
+                                "uaSim": message.uaSim
                             }
                         );
 
                     } else {
 
                         await db.semasim.MessageTowardSip.add(
-                            message.to_number,
+                            message.toNumber,
                             crossMark,
                             statusReport.dischargeDate,
                             true,
                             {
-                                "is": "UA_ENDPOINT",
-                                "uaEndpoint": message.uaEndpoint
+                                "target": "SPECIFIC UA REGISTERED TO SIM",
+                                "uaSim": message.uaSim
                             }
                         );
 
                     }
 
-                    notifyNewSipMessagesToSend(message.uaEndpoint.endpoint);
+                    notifyNewSipMessagesToSend(dongle.sim.imsi);
 
                 }
             );
@@ -128,49 +139,42 @@ export function sendMessagesOfDongle(
     });
 }
 
-export function notifyNewSipMessagesToSend(
-    fromEndpoint: Contact.UaEndpoint.EndpointRef
+export async function notifyNewSipMessagesToSend(
+    imsi: string
 ) {
 
-    db.asterisk.getContacts(fromEndpoint).then(
-        contacts => contacts.forEach(
-            async contact => {
+    for( let contact of sipProxy.getContacts(imsi) ){
 
-                let unsentCount = await db.semasim.MessageTowardSip.unsentCount(contact.uaEndpoint);
+        if( !(await db.semasim.MessageTowardSip.unsentCount(contact.uaSim)) ){
+            continue;
+        }
 
-                if (!unsentCount) return;
+        if( (await sipApiBackend.wakeUpContact(contact)) === "REACHABLE" ){
+            sendMessagesOfContact(contact);
+        }
 
-                let status = await sipApiBackend.wakeUpContact.makeCall(contact);
+    }
 
-                if (status !== "REACHABLE") return;
-
-                sendMessagesOfContact(contact);
-
-            }
-        )
-    );
 }
 
 const lockUaEndpoint = new AsyncLock();
+/** Contact must be reachable */
 export function sendMessagesOfContact(contact: Contact) {
 
-    let { uaEndpoint } = contact;
-
     lockUaEndpoint.acquire(
-        Contact.UaEndpoint.id(uaEndpoint),
+        Contact.UaSim.id(contact.uaSim),
         async () => {
 
             for (
                 let [message, setReceived]
                 of
-                await db.semasim.MessageTowardSip.getUnsent(uaEndpoint)
+                await db.semasim.MessageTowardSip.getUnsent(contact.uaSim)
             ) {
 
-                debug(`sip sending: ${JSON.stringify(message.text)} from ${message.from_number}`);
                 try {
                     await sipMessage.sendMessage(
                         contact,
-                        message.from_number,
+                        message.fromNumber,
                         {},
                         message.text
                     );

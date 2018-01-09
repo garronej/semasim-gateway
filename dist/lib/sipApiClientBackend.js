@@ -49,7 +49,7 @@ function sendRequest(method, params) {
                     backendSocket = _a.sent();
                     _a.label = 2;
                 case 2:
-                    _a.trys.push([2, 4, , 5]);
+                    _a.trys.push([2, 4, , 6]);
                     debug(method + ": params: " + JSON.stringify(params).substring(0, 20) + "...");
                     return [4 /*yield*/, framework.sendRequest(backendSocket, method, params)];
                 case 3:
@@ -58,35 +58,73 @@ function sendRequest(method, params) {
                     return [2 /*return*/, response];
                 case 4:
                     error_1 = _a.sent();
-                    debug("Error sending request: " + error_1.message + ", retrying...");
-                    return [2 /*return*/, sendRequest(method, params)];
+                    debug("Error sending request: " + error_1.message + ", cancelling");
+                    return [4 /*yield*/, new Promise(function (resolve) { })];
+                case 5: return [2 /*return*/, _a.sent()];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
+function sendEvent(name, data) {
+    return __awaiter(this, void 0, void 0, function () {
+        var backendSocket, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, sipProxy_1.getBackendSocket()];
+                case 1:
+                    backendSocket = _a.sent();
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 3, , 5]);
+                    framework.sendEvent(backendSocket, name, data);
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_2 = _a.sent();
+                    debug("Error sending event:, cancelling");
+                    return [4 /*yield*/, new Promise(function (resolve) { })];
+                case 4: return [2 /*return*/, _a.sent()];
                 case 5: return [2 /*return*/];
             }
         });
     });
 }
-var claimDongle;
-(function (claimDongle) {
-    claimDongle.methodName = "claimDongle";
+var evtSimOnline;
+(function (evtSimOnline) {
+    evtSimOnline.name = "evtSimOnline";
     ;
-    ;
-    function makeCall(imei) {
+    function post(data) {
         return __awaiter(this, void 0, void 0, function () {
-            var params, isGranted;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        params = { imei: imei };
-                        return [4 /*yield*/, sendRequest(claimDongle.methodName, params)];
+                    case 0: return [4 /*yield*/, sendEvent(evtSimOnline.name, data)];
                     case 1:
-                        isGranted = (_a.sent()).isGranted;
-                        return [2 /*return*/, isGranted];
+                        _a.sent();
+                        return [2 /*return*/];
                 }
             });
         });
     }
-    claimDongle.makeCall = makeCall;
-})(claimDongle = exports.claimDongle || (exports.claimDongle = {}));
+    evtSimOnline.post = post;
+})(evtSimOnline = exports.evtSimOnline || (exports.evtSimOnline = {}));
+var evtSimOffline;
+(function (evtSimOffline) {
+    evtSimOffline.name = "evtSimOffline";
+    ;
+    function post(data) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, sendEvent(evtSimOffline.name, data)];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    }
+    evtSimOffline.post = post;
+})(evtSimOffline = exports.evtSimOffline || (exports.evtSimOffline = {}));
 var wakeUpContact;
 (function (wakeUpContact) {
     wakeUpContact.methodName = "wakeUpContact";

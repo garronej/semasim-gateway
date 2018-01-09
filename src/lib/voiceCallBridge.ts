@@ -1,7 +1,10 @@
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
-import { DongleController as Dc, Ami, agi } from "chan-dongle-extended-client";
-
-import * as phone from "../tools/phoneNumberLibrary";
+import { 
+    DongleController as Dc, 
+    Ami, 
+    agi,
+    phoneNumberLibrary as phone
+} from "chan-dongle-extended-client";
 
 import { Contact } from "./sipContact";
 import * as messageQueue from "./messageQueue";
@@ -9,7 +12,9 @@ import * as db from "./db";
 
 import { c } from "./_constants";
 
-import * as sipApiBackend from "./sipApiClientBackend";
+import * as sipApiBackend from "./sipApiBackedClientImplementation";
+
+import * as sipProxy from "./sipProxy";
 
 import * as _debug from "debug";
 let debug = _debug("_voiceCallBridge");
@@ -40,33 +45,42 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     debug("Call originated from dongle");
 
-    let imei = (await channel.relax.getVariable("DONGLEIMEI"))!;
+    let imsi = (await channel.relax.getVariable("DONGLEIMSI"))!;
 
-    let dongle = dc.activeDongles.get(imei);
+    let dongle = Array.from(dc.activeDongles.values()).find(
+        ({ sim })=> sim.imsi === imsi 
+    );
 
     if (!dongle) return;
 
-    let { imsi, iccid } = dongle.sim;
-
     let number = phone.toNationalNumber(channel.request.callerid, imsi);
-
-    let endpoint = { "dongle": { imei }, "sim": { iccid } };
 
     let evtReachableContact = new SyncEvent<Contact>();
 
-    db.asterisk.getEvtNewContact().attach(
-        ({ uaEndpoint }) => Contact.UaEndpoint.Endpoint.areSame(uaEndpoint.endpoint, endpoint),
+    //TODO: finish
+
+    db.asterisk.evtNewContact.attach(
+        ({ uaSim }) => uaSim.imsi === imsi,
         evtReachableContact,
         contact => evtReachableContact.post(contact)
     );
 
-    db.asterisk.getContacts(endpoint).then(
-        contacts => contacts.forEach(
-            contact => sipApiBackend.wakeUpContact.makeCall(contact).then(
-                status => (status === "REACHABLE") ? evtReachableContact.post(contact) : null
-            )
-        )
-    );
+    for( let contact of sipProxy.getContacts(imsi) ){
+
+        sipApiBackend.wakeUpContact(contact).then(
+            status=> {
+
+                if( status === "REACHABLE" ){
+
+                    evtReachableContact.post(contact);
+
+                }
+                
+            }
+        );
+
+    }
+
 
     let evtEstablishedOrEnded = new VoidSyncEvent();
 
@@ -78,16 +92,18 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         evtReachableContact.detach();
 
-        db.asterisk.getEvtNewContact().detach(evtReachableContact);
+        db.asterisk.evtNewContact.detach(evtReachableContact);
 
         debug({ ringingChannels });
 
-        ringingChannels.forEach(
-            channel => ami.postAction("hangup", {
-                channel,
+        for( let ringingChannel of ringingChannels ){
+
+            ami.postAction("hangup", {
+                "channel": ringingChannel,
                 "cause": "1"
-            }).catch(() => { })
-        );
+            }).catch(()=>{});
+
+        }
 
     });
 
@@ -102,7 +118,7 @@ async function fromDongle(channel: agi.AGIChannel) {
         let removeFromRinging: () => void;
 
         ami.postAction("Originate", {
-            "channel": `PJSIP/${contact.uaEndpoint.endpoint.dongle.imei}/${contact.uri}`,
+            "channel": `PJSIP/${contact.uaSim.imsi}/${contact.uri}`,
             "application": "Bridge",
             "data": dongleChannelName,
             "callerid": `"" <${number}>`,
@@ -166,16 +182,16 @@ async function fromDongle(channel: agi.AGIChannel) {
         //TODO: Format date for client country
         await db.semasim.MessageTowardSip.add(
             number,
-            c.strMissedCall,
+            "Missed call",
             new Date(),
             true,
             {
-                "is": "ALL UA_ENDPOINT OF ENDPOINT",
-                endpoint
+                "target": "ALL UA REGISTERED TO SIM",
+                "imsi": imsi
             }
         );
 
-        messageQueue.notifyNewSipMessagesToSend(endpoint);
+        messageQueue.notifyNewSipMessagesToSend(imsi);
 
     }
 
@@ -202,4 +218,3 @@ async function fromSip(channel: agi.AGIChannel) {
     debug("call terminated");
 
 }
-

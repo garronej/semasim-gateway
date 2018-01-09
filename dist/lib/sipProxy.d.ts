@@ -10,5 +10,7 @@ export declare const evtOutgoingMessage: SyncEvent<{
     sipRequest: sipLibrary.Request;
     prSipResponse: Promise<sipLibrary.Response>;
 }>;
-export declare function getBackendSocket(): Promise<sipLibrary.Socket>;
+export declare const evtNewBackendSocketConnect: SyncEvent<sipLibrary.Socket>;
+export declare function getBackendSocket(): sipLibrary.Socket | Promise<sipLibrary.Socket>;
+export declare function getContacts(imsi?: string): Contact[];
 export declare function start(): Promise<void>;

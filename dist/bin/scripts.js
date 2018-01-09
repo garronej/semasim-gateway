@@ -99,7 +99,7 @@ function installService() {
                         "After=network.target",
                         "",
                         "[Service]",
-                        "ExecStart=" + node_execpath + " " + modulePath + "/dist/bin/launcher",
+                        "ExecStart=" + node_execpath + " " + modulePath + "/dist/lib/main",
                         "PermissionsStartOnly=true",
                         "WorkingDirectory=" + modulePath,
                         "Restart=always",

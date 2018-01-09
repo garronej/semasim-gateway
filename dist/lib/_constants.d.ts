@@ -3,6 +3,7 @@ export declare class c {
         new (): {};
         readonly gatewayPort: 80;
         readonly domain: "semasim.com";
+        isValidEmail(email: string, mustBeLc?: "MUST BE LOWER CASE" | undefined): boolean;
     };
     static readonly serviceName: string;
     static readonly dbParamsGateway: {
@@ -12,10 +13,9 @@ export declare class c {
     };
     static readonly gain: string;
     static readonly jitterBuffer: {
-        type: string;
-        params: string;
+        "type": string;
+        "params": string;
     };
     static readonly sipCallContext: string;
     static readonly sipMessageContext: string;
-    static readonly strMissedCall: string;
 }

@@ -1,10 +1,9 @@
-
 -- phpMyAdmin SQL Dump
 -- version 4.2.12deb2+deb8u2
 -- http://www.phpmyadmin.net
 --
 -- Client :  localhost
--- Généré le :  Sam 21 Octobre 2017 à 17:44
+-- Généré le :  Mar 05 Décembre 2017 à 16:38
 -- Version du serveur :  5.5.55-0+deb8u1-log
 -- Version de PHP :  5.6.30-0+deb8u1
 
@@ -26,37 +25,13 @@ USE `semasim`;
 -- --------------------------------------------------------
 
 --
--- Structure de la table `dongle`
---
-
-CREATE TABLE IF NOT EXISTS `dongle` (
-  `imei` varchar(15) NOT NULL,
-  `last_connection_date` bigint(20) NOT NULL,
-  `is_voice_enabled` tinyint(1) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Structure de la table `endpoint`
---
-
-CREATE TABLE IF NOT EXISTS `endpoint` (
-`id_` int(11) NOT NULL,
-  `dongle_imei` varchar(15) NOT NULL,
-  `sim_iccid` varchar(22) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Structure de la table `message_toward_gsm`
 --
 
 CREATE TABLE IF NOT EXISTS `message_toward_gsm` (
 `id_` int(11) NOT NULL,
   `date` bigint(20) NOT NULL,
-  `ua_endpoint` int(11) NOT NULL,
+  `ua_sim` int(11) NOT NULL,
   `to_number` varchar(25) NOT NULL,
   `base64_text` text NOT NULL,
   `send_date` bigint(20) DEFAULT NULL
@@ -92,47 +67,39 @@ CREATE TABLE IF NOT EXISTS `message_toward_sip` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `sim`
---
-
-CREATE TABLE IF NOT EXISTS `sim` (
-  `iccid` varchar(22) NOT NULL,
-  `imsi` varchar(15) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Structure de la table `ua`
 --
 
 CREATE TABLE IF NOT EXISTS `ua` (
+`id_` int(11) NOT NULL,
   `instance` varchar(125) NOT NULL,
-  `push_token` varchar(1024) DEFAULT NULL,
+  `user_email` varchar(150) NOT NULL,
+  `platform` varchar(15) NOT NULL,
+  `push_token` varchar(1024) NOT NULL,
   `software` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `ua_endpoint`
+-- Structure de la table `ua_sim`
 --
 
-CREATE TABLE IF NOT EXISTS `ua_endpoint` (
+CREATE TABLE IF NOT EXISTS `ua_sim` (
 `id_` int(11) NOT NULL,
-  `ua_instance` varchar(125) NOT NULL,
-  `endpoint` int(11) NOT NULL
+  `ua` int(11) NOT NULL,
+  `imsi` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `ua_endpoint_message_toward_sip`
+-- Structure de la table `ua_sim_message_toward_sip`
 --
 
-CREATE TABLE IF NOT EXISTS `ua_endpoint_message_toward_sip` (
+CREATE TABLE IF NOT EXISTS `ua_sim_message_toward_sip` (
 `id_` int(11) NOT NULL,
-  `ua_endpoint` int(11) NOT NULL,
+  `ua_sim` int(11) NOT NULL,
   `message_toward_sip` int(11) NOT NULL,
   `delivered_date` bigint(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -142,22 +109,10 @@ CREATE TABLE IF NOT EXISTS `ua_endpoint_message_toward_sip` (
 --
 
 --
--- Index pour la table `dongle`
---
-ALTER TABLE `dongle`
- ADD PRIMARY KEY (`imei`);
-
---
--- Index pour la table `endpoint`
---
-ALTER TABLE `endpoint`
- ADD PRIMARY KEY (`id_`), ADD UNIQUE KEY `dongle_imei_2` (`dongle_imei`,`sim_iccid`), ADD KEY `dongle_imei` (`dongle_imei`), ADD KEY `sim_iccid` (`sim_iccid`);
-
---
 -- Index pour la table `message_toward_gsm`
 --
 ALTER TABLE `message_toward_gsm`
- ADD PRIMARY KEY (`id_`), ADD KEY `ua_endpoint` (`ua_endpoint`);
+ ADD PRIMARY KEY (`id_`), ADD KEY `ua_sim` (`ua_sim`);
 
 --
 -- Index pour la table `message_toward_gsm_status_report`
@@ -172,38 +127,27 @@ ALTER TABLE `message_toward_sip`
  ADD PRIMARY KEY (`id_`);
 
 --
--- Index pour la table `sim`
---
-ALTER TABLE `sim`
- ADD PRIMARY KEY (`iccid`), ADD UNIQUE KEY `imei` (`imsi`);
-
---
 -- Index pour la table `ua`
 --
 ALTER TABLE `ua`
- ADD PRIMARY KEY (`instance`);
+ ADD PRIMARY KEY (`id_`), ADD UNIQUE KEY `instance` (`instance`,`user_email`);
 
 --
--- Index pour la table `ua_endpoint`
+-- Index pour la table `ua_sim`
 --
-ALTER TABLE `ua_endpoint`
- ADD PRIMARY KEY (`id_`), ADD UNIQUE KEY `ua_instance_2` (`ua_instance`,`endpoint`), ADD KEY `ua_instance` (`ua_instance`), ADD KEY `endpoint` (`endpoint`);
+ALTER TABLE `ua_sim`
+ ADD PRIMARY KEY (`id_`), ADD UNIQUE KEY `ua_2` (`ua`,`imsi`), ADD KEY `ua` (`ua`);
 
 --
--- Index pour la table `ua_endpoint_message_toward_sip`
+-- Index pour la table `ua_sim_message_toward_sip`
 --
-ALTER TABLE `ua_endpoint_message_toward_sip`
- ADD PRIMARY KEY (`id_`), ADD UNIQUE KEY `ua_endpoint_2` (`ua_endpoint`,`message_toward_sip`), ADD KEY `message_toward_sip` (`message_toward_sip`), ADD KEY `ua_endpoint` (`ua_endpoint`);
+ALTER TABLE `ua_sim_message_toward_sip`
+ ADD PRIMARY KEY (`id_`), ADD UNIQUE KEY `ua_sim_2` (`ua_sim`,`message_toward_sip`), ADD KEY `ua_sim` (`ua_sim`), ADD KEY `message_toward_sip` (`message_toward_sip`);
 
 --
 -- AUTO_INCREMENT pour les tables exportées
 --
 
---
--- AUTO_INCREMENT pour la table `endpoint`
---
-ALTER TABLE `endpoint`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT pour la table `message_toward_gsm`
 --
@@ -215,31 +159,29 @@ MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `message_toward_sip`
 MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
--- AUTO_INCREMENT pour la table `ua_endpoint`
+-- AUTO_INCREMENT pour la table `ua`
 --
-ALTER TABLE `ua_endpoint`
+ALTER TABLE `ua`
 MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
--- AUTO_INCREMENT pour la table `ua_endpoint_message_toward_sip`
+-- AUTO_INCREMENT pour la table `ua_sim`
 --
-ALTER TABLE `ua_endpoint_message_toward_sip`
+ALTER TABLE `ua_sim`
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT pour la table `ua_sim_message_toward_sip`
+--
+ALTER TABLE `ua_sim_message_toward_sip`
 MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- Contraintes pour les tables exportées
 --
 
 --
--- Contraintes pour la table `endpoint`
---
-ALTER TABLE `endpoint`
-ADD CONSTRAINT `endpoint_ibfk_1` FOREIGN KEY (`sim_iccid`) REFERENCES `sim` (`iccid`) ON DELETE CASCADE ON UPDATE CASCADE,
-ADD CONSTRAINT `endpoint_ibfk_2` FOREIGN KEY (`dongle_imei`) REFERENCES `dongle` (`imei`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
 -- Contraintes pour la table `message_toward_gsm`
 --
 ALTER TABLE `message_toward_gsm`
-ADD CONSTRAINT `message_toward_gsm_ibfk_1` FOREIGN KEY (`ua_endpoint`) REFERENCES `ua_endpoint` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
+ADD CONSTRAINT `message_toward_gsm_ibfk_1` FOREIGN KEY (`ua_sim`) REFERENCES `ua_sim` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `message_toward_gsm_status_report`
@@ -248,18 +190,17 @@ ALTER TABLE `message_toward_gsm_status_report`
 ADD CONSTRAINT `message_toward_gsm_status_report_ibfk_1` FOREIGN KEY (`message_toward_gsm`) REFERENCES `message_toward_gsm` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Contraintes pour la table `ua_endpoint`
+-- Contraintes pour la table `ua_sim`
 --
-ALTER TABLE `ua_endpoint`
-ADD CONSTRAINT `ua_endpoint_ibfk_1` FOREIGN KEY (`ua_instance`) REFERENCES `ua` (`instance`) ON DELETE CASCADE ON UPDATE CASCADE,
-ADD CONSTRAINT `ua_endpoint_ibfk_2` FOREIGN KEY (`endpoint`) REFERENCES `endpoint` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `ua_sim`
+ADD CONSTRAINT `ua_sim_ibfk_1` FOREIGN KEY (`ua`) REFERENCES `ua` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Contraintes pour la table `ua_endpoint_message_toward_sip`
+-- Contraintes pour la table `ua_sim_message_toward_sip`
 --
-ALTER TABLE `ua_endpoint_message_toward_sip`
-ADD CONSTRAINT `ua_endpoint_message_toward_sip_ibfk_2` FOREIGN KEY (`message_toward_sip`) REFERENCES `message_toward_sip` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE,
-ADD CONSTRAINT `ua_endpoint_message_toward_sip_ibfk_3` FOREIGN KEY (`ua_endpoint`) REFERENCES `ua_endpoint` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `ua_sim_message_toward_sip`
+ADD CONSTRAINT `ua_sim_message_toward_sip_ibfk_1` FOREIGN KEY (`ua_sim`) REFERENCES `ua_sim` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE,
+ADD CONSTRAINT `ua_sim_message_toward_sip_ibfk_2` FOREIGN KEY (`message_toward_sip`) REFERENCES `message_toward_sip` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
@@ -267,9 +208,8 @@ ADD CONSTRAINT `ua_endpoint_message_toward_sip_ibfk_3` FOREIGN KEY (`ua_endpoint
 
 
 
-
 -- Password is semasim
-GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'semasim'@'localhost' IDENTIFIED BY PASSWORD '*06F17F404CC5FA440043FF7299795394C01AA1DA';
+GRANT REPLICATION SLAVE, REPLICATION CLIENT, SUPER ON *.* TO 'semasim'@'localhost' IDENTIFIED BY PASSWORD '*06F17F404CC5FA440043FF7299795394C01AA1DA';
 
 GRANT ALL PRIVILEGES ON `asterisk`.* TO 'semasim'@'localhost' WITH GRANT OPTION;
 

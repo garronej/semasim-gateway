@@ -1,75 +1,68 @@
 import { SyncEvent } from "ts-events-extended";
 import { Contact } from "./sipContact";
+import * as f from "../tools/mySqlFunctions";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 export declare namespace asterisk {
-    function initializeEvt(): Promise<void>;
-    const query: (sql: string, values?: (string | number | null)[] | undefined) => Promise<any>;
-    function getEvtNewContact(): SyncEvent<Contact>;
-    function getEvtExpiredContact(): SyncEvent<Contact>;
-    function getContacts(endpoint: Contact.UaEndpoint.EndpointRef): Promise<Contact[]>;
+    /** is exported only for tests */
+    const query: (sql: string, values?: f.TSql[] | undefined) => Promise<any>;
     /** for test purpose only */
     function flush(): Promise<void>;
-    function flushContacts(): Promise<void>;
+    const evtNewContact: SyncEvent<Contact>;
+    const evtExpiredContact: SyncEvent<Contact>;
+    function startListeningPsContacts(): Promise<void>;
     function deleteContact(contact: Contact): Promise<boolean>;
-    function addEndpoint(imei: string, iccid: string): Promise<void>;
-    function getIccidOfEndpoint(imei: string): Promise<string>;
+    function createEndpointIfNeededAndGetPassword(imsi: string, renewPassword?: "RENEW PASSWORD" | undefined): Promise<string>;
 }
 export declare namespace semasim {
-    const query: (sql: string, values?: (string | number | null)[] | undefined) => Promise<any>;
+    const query: (sql: string, values?: f.TSql[] | undefined) => Promise<any>;
     /** Only for test purpose */
     function flush(): Promise<void>;
-    function addDongle(dongle: Dc.LockedDongle): Promise<void>;
-    /** return set of imei => last_connection_date */
-    function getDonglesLastConnection(): Promise<Map<string, Date>>;
-    function addEndpoint(dongle: Dc.ActiveDongle): Promise<void>;
-    function getUas(imei: string): Promise<Contact.UaEndpoint.Ua[]>;
-    /** Used to join asterisk.ps_endpoint and semasim.endpoint, used when building contact */
-    function getEndpoint(endpointRef: Contact.UaEndpoint.EndpointRef): Promise<Contact.UaEndpoint.Endpoint>;
-    function getEndpoints(): Promise<Contact.UaEndpoint.Endpoint[]>;
-    type AddUaEndpointResult = {
-        isNewUa: false;
-        isFirstUaEndpointOfEndpoint: false;
-    } | {
-        isNewUa: true;
-        isFirstUaEndpointOfEndpoint: boolean;
-    };
-    /** Return true if ua_endpoint entry created */
-    function addUaEndpoint(uaEndpoint: Contact.UaEndpoint): Promise<AddUaEndpointResult>;
+    function addUaSim(uaSim: Contact.UaSim): Promise<{
+        isUaCreatedOrUpdated: boolean;
+        isFirstUaForSim: boolean;
+    }>;
+    function removeUaSim(imsi: string, uasToKeep?: Contact.UaSim.Ua[]): Promise<void>;
     interface MessageTowardGsm {
         date: Date;
-        uaEndpoint: Contact.UaEndpoint;
-        to_number: string;
+        uaSim: Contact.UaSim;
+        toNumber: string;
         text: string;
     }
     namespace MessageTowardGsm {
-        function add(to_number: string, text: string, uaEndpoint: Contact.UaEndpointRef): Promise<void>;
+        function add(toNumber: string, text: string, uaSim: Contact.UaSim): Promise<void>;
         type Confirm = {
             setSent(sentDate: Date | null): Promise<void>;
             setStatusReport(statusReport: Dc.StatusReport): Promise<void>;
         };
-        function getUnsent(endpoint: Contact.UaEndpoint.EndpointRef): Promise<[MessageTowardGsm, Confirm][]>;
+        function getUnsent(imsi: string): Promise<[MessageTowardGsm, Confirm][]>;
     }
-    function lastGsmMessageReceived(endpoint: Contact.UaEndpoint.EndpointRef): Promise<Date | undefined>;
+    function lastMessageReceivedDateBySim(): Promise<{
+        [imsi: string]: Date;
+    }>;
     interface MessageTowardSip {
         isReport: boolean;
         date: Date;
-        from_number: string;
+        fromNumber: string;
         text: string;
     }
     namespace MessageTowardSip {
-        type TargetUaEndpoint = {
-            is: "ALL UA_ENDPOINT OF ENDPOINT";
-            endpoint: Contact.UaEndpoint.EndpointRef;
+        type Target = {
+            target: "SPECIFIC UA REGISTERED TO SIM";
+            uaSim: Contact.UaSim;
         } | {
-            is: "UA_ENDPOINT";
-            uaEndpoint: Contact.UaEndpointRef;
+            target: "ALL UA REGISTERED TO SIM";
+            imsi: string;
         } | {
-            is: "ALL UA_ENDPOINT OF ENDPOINT EXCEPT UA";
-            endpoint: Contact.UaEndpoint.EndpointRef;
-            excludeUa: Contact.UaEndpoint.UaRef;
+            target: "ALL OTHER UA OF USER REGISTERED TO SIM";
+            uaSim: Contact.UaSim;
+        } | {
+            target: "ALL UA OF OTHER USERS REGISTERED TO SIM";
+            uaSim: Contact.UaSim;
         };
-        function add(from_number: string, text: string, date: Date, is_report: boolean, target: TargetUaEndpoint): Promise<void>;
-        function unsentCount(uaEndpoint: Contact.UaEndpointRef): Promise<number>;
-        function getUnsent(uaEndpoint: Contact.UaEndpointRef): Promise<[MessageTowardSip, () => Promise<void>][]>;
+        /** return true if message_toward_sip added */
+        function add(fromNumber: string, text: string, date: Date, isReport: boolean, target: Target): Promise<boolean>;
+        function unsentCount(uaSim: Contact.UaSim): Promise<number>;
+        /** Return array of [ MessageTowardSip, setDelivered ] */
+        function getUnsent(uaSim: Contact.UaSim): Promise<[MessageTowardSip, () => Promise<void>][]>;
     }
 }

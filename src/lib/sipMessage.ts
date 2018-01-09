@@ -1,68 +1,49 @@
 import { SyncEvent } from "ts-events-extended";
-import { DongleController as Dc, Ami } from "chan-dongle-extended-client";
+import {
+    DongleController as Dc,
+    Ami,
+    phoneNumberLibrary as phone
+} from "chan-dongle-extended-client";
 import { Contact } from "./sipContact";
 import { evtOutgoingMessage, evtIncomingMessage } from "./sipProxy";
 import * as sipLibrary from "../tools/sipLibrary";
 import { c } from "./_constants";
-import * as phone from "../tools/phoneNumberLibrary";
 
 import * as _debug from "debug";
 let debug = _debug("_sipMessage");
 
-let evtMessage: SyncEvent<{
+export const evtMessage = new SyncEvent<{
     fromContact: Contact;
     toNumber: string;
     text: string;
-}> | undefined = undefined;
+}>();
 
-export function getEvtMessage() {
+export async function startHandling() {
 
-    if (evtMessage) return evtMessage;
+    let ami = Dc.getInstance().ami;
 
-    evtMessage = new SyncEvent();
+    let matchAllExt = "_.";
 
-    (async () => {
+    await ami.dialplanExtensionRemove(matchAllExt, c.sipMessageContext);
 
-        let ami = Dc.getInstance().ami;
+    await ami.dialplanExtensionAdd(c.sipMessageContext, matchAllExt, 1, "Hangup");
 
-        let matchAllExt = "_.";
+    evtIncomingMessage.attach(
+        ({ fromContact, sipRequest }) => {
 
-        await ami.dialplanExtensionRemove(matchAllExt, c.sipMessageContext);
+            let { isValidInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
 
-        await ami.dialplanExtensionAdd(c.sipMessageContext, matchAllExt, 1, "Hangup");
+            if (!isValidInput)
+                debug("Sip message content was not a valid UTF-8 string");
 
-        evtIncomingMessage.attach(
-            ({ fromContact, sipRequest }) => {
+            let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
 
-                let { isValidInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
+            evtMessage.post({ fromContact, toNumber, text });
 
-                if (!isValidInput)
-                    debug("Sip message content was not a valid UTF-8 string");
-
-                let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
-
-                evtMessage!.post({ fromContact, toNumber, text });
-
-            }
-        );
-
-    })();
-
-    return evtMessage;
+        }
+    );
 
 }
-
-
-/*
-
-TODO: consider: 
-
- Apply patch for overighting Content-Type in outgoing SIP message 
-
-Patch ref: https://issues.asterisk.org/jira/browse/ASTERISK-26082
-
-
-*/
 
 export function sendMessage(
     contact: Contact,
@@ -77,10 +58,10 @@ export function sendMessage(
 
         let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
-        from_number = phone.toNationalNumber(from_number, contact.uaEndpoint.endpoint.sim.imsi);
+        from_number = phone.toNationalNumber(from_number, contact.uaSim.imsi);
 
         Dc.getInstance().ami.messageSend(
-            `pjsip:${contact.uaEndpoint.endpoint.dongle.imei}/${uri}`, from_number, actionId
+            `pjsip:${contact.uaSim.imsi}/${uri}`, from_number, actionId
         ).catch(amiError => reject(amiError));
 
         evtOutgoingMessage.attachOnce(

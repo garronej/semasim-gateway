@@ -64,17 +64,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var db = require("./db");
 var AsyncLock = require("async-lock");
-var sipApiBackend = require("./sipApiClientBackend");
 var sipContact_1 = require("./sipContact");
 var sipMessage = require("./sipMessage");
+var sipProxy = require("./sipProxy");
+var sipApiBackend = require("./sipApiBackedClientImplementation");
 var _debug = require("debug");
 var debug = _debug("_messageQueue");
 var checkMark = (new Buffer("e29c94", "hex")).toString("utf8");
 var crossMark = (new Buffer("e29d8c", "hex")).toString("utf8");
 var lockDongle = new AsyncLock();
-function sendMessagesOfDongle(endpoint) {
+function sendMessagesOfDongle(dongle) {
     var _this = this;
-    lockDongle.acquire(endpoint.dongle.imei, function () { return __awaiter(_this, void 0, void 0, function () {
+    lockDongle.acquire(dongle.imei, function () { return __awaiter(_this, void 0, void 0, function () {
         var _this = this;
         var dc, _loop_1, _a, _b, _c, message, _d, setSent, setStatusReport, state_1, e_1_1, e_1, _e;
         return __generator(this, function (_f) {
@@ -90,7 +91,7 @@ function sendMessagesOfDongle(endpoint) {
                                     _b.label = 1;
                                 case 1:
                                     _b.trys.push([1, 3, , 4]);
-                                    return [4 /*yield*/, dc.sendMessage(endpoint.dongle.imei, message.to_number, message.text)];
+                                    return [4 /*yield*/, dc.sendMessage(dongle.imei, message.toNumber, message.text)];
                                 case 2:
                                     sendMessageResult = _b.sent();
                                     return [3 /*break*/, 4];
@@ -99,60 +100,65 @@ function sendMessagesOfDongle(endpoint) {
                                     return [2 /*return*/, { value: void 0 }];
                                 case 4:
                                     if (!!sendMessageResult.success) return [3 /*break*/, 7];
-                                    if (!(sendMessageResult.reason !== "DISCONNECT")) return [3 /*break*/, 6];
-                                    return [4 /*yield*/, setSent(null)];
-                                case 5:
+                                    if (!(sendMessageResult.reason === "DISCONNECT")) return [3 /*break*/, 5];
+                                    return [2 /*return*/, { value: void 0 }];
+                                case 5: return [4 /*yield*/, setSent(null)];
+                                case 6:
                                     _b.sent();
                                     return [2 /*return*/, "continue"];
-                                case 6: return [2 /*return*/, { value: void 0 }];
                                 case 7:
                                     sendDate = sendMessageResult.sendDate;
                                     prSetSent = setSent(sendDate);
-                                    db.semasim.MessageTowardSip.add(message.to_number, checkMark, sendDate, true, {
-                                        "is": "UA_ENDPOINT",
-                                        "uaEndpoint": message.uaEndpoint
-                                    }).then(function () { return notifyNewSipMessagesToSend(message.uaEndpoint.endpoint); });
+                                    db.semasim.MessageTowardSip.add(message.toNumber, checkMark, sendDate, true, {
+                                        "target": "SPECIFIC UA REGISTERED TO SIM",
+                                        "uaSim": message.uaSim
+                                    }).then(function () { return notifyNewSipMessagesToSend(dongle.sim.imsi); });
                                     dc.evtStatusReport.attachOnce(function (_a) {
                                         var statusReport = _a.statusReport;
                                         return statusReport.sendDate.getTime() === sendDate.getTime();
                                     }, function (_a) {
                                         var statusReport = _a.statusReport;
                                         return __awaiter(_this, void 0, void 0, function () {
-                                            return __generator(this, function (_a) {
-                                                switch (_a.label) {
+                                            return __generator(this, function (_b) {
+                                                switch (_b.label) {
                                                     case 0: return [4 /*yield*/, prSetSent];
                                                     case 1:
-                                                        _a.sent();
+                                                        _b.sent();
                                                         setStatusReport(statusReport);
-                                                        if (!statusReport.isDelivered) return [3 /*break*/, 4];
+                                                        if (!statusReport.isDelivered) return [3 /*break*/, 5];
                                                         //TODO: may be useless...depend of operator I assume
                                                         if (isNaN(statusReport.dischargeDate.getTime())) {
                                                             statusReport.dischargeDate = new Date();
                                                         }
                                                         ;
-                                                        return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.to_number, "" + checkMark + checkMark, statusReport.dischargeDate, true, {
-                                                                "is": "UA_ENDPOINT",
-                                                                "uaEndpoint": message.uaEndpoint
+                                                        return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.toNumber, "" + checkMark + checkMark, statusReport.dischargeDate, true, {
+                                                                "target": "SPECIFIC UA REGISTERED TO SIM",
+                                                                "uaSim": message.uaSim
                                                             })];
                                                     case 2:
-                                                        _a.sent();
-                                                        return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.to_number, "you sent from " + message.uaEndpoint.ua.software + ":\n" + message.text, sendDate, true, {
-                                                                "is": "ALL UA_ENDPOINT OF ENDPOINT EXCEPT UA",
-                                                                "endpoint": message.uaEndpoint.endpoint,
-                                                                "excludeUa": message.uaEndpoint.ua
+                                                        _b.sent();
+                                                        return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.toNumber, "Me:\n" + message.text, sendDate, true, {
+                                                                "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
+                                                                "uaSim": message.uaSim
                                                             })];
                                                     case 3:
-                                                        _a.sent();
-                                                        return [3 /*break*/, 6];
-                                                    case 4: return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.to_number, crossMark, statusReport.dischargeDate, true, {
-                                                            "is": "UA_ENDPOINT",
-                                                            "uaEndpoint": message.uaEndpoint
+                                                        _b.sent();
+                                                        return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.toNumber, message.uaSim.ua.userEmail + ":\n" + message.text, sendDate, true, {
+                                                                "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
+                                                                "uaSim": message.uaSim
+                                                            })];
+                                                    case 4:
+                                                        _b.sent();
+                                                        return [3 /*break*/, 7];
+                                                    case 5: return [4 /*yield*/, db.semasim.MessageTowardSip.add(message.toNumber, crossMark, statusReport.dischargeDate, true, {
+                                                            "target": "SPECIFIC UA REGISTERED TO SIM",
+                                                            "uaSim": message.uaSim
                                                         })];
-                                                    case 5:
-                                                        _a.sent();
-                                                        _a.label = 6;
                                                     case 6:
-                                                        notifyNewSipMessagesToSend(message.uaEndpoint.endpoint);
+                                                        _b.sent();
+                                                        _b.label = 7;
+                                                    case 7:
+                                                        notifyNewSipMessagesToSend(dongle.sim.imsi);
                                                         return [2 /*return*/];
                                                 }
                                             });
@@ -165,7 +171,7 @@ function sendMessagesOfDongle(endpoint) {
                     _f.label = 1;
                 case 1:
                     _f.trys.push([1, 7, 8, 9]);
-                    return [4 /*yield*/, db.semasim.MessageTowardGsm.getUnsent(endpoint)];
+                    return [4 /*yield*/, db.semasim.MessageTowardGsm.getUnsent(dongle.sim.imsi)];
                 case 2:
                     _a = __values.apply(void 0, [_f.sent()]), _b = _a.next();
                     _f.label = 3;
@@ -198,51 +204,70 @@ function sendMessagesOfDongle(endpoint) {
     }); });
 }
 exports.sendMessagesOfDongle = sendMessagesOfDongle;
-function notifyNewSipMessagesToSend(fromEndpoint) {
-    var _this = this;
-    db.asterisk.getContacts(fromEndpoint).then(function (contacts) { return contacts.forEach(function (contact) { return __awaiter(_this, void 0, void 0, function () {
-        var unsentCount, status;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, db.semasim.MessageTowardSip.unsentCount(contact.uaEndpoint)];
+function notifyNewSipMessagesToSend(imsi) {
+    return __awaiter(this, void 0, void 0, function () {
+        var _a, _b, contact, e_2_1, e_2, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    _d.trys.push([0, 6, 7, 8]);
+                    _a = __values(sipProxy.getContacts(imsi)), _b = _a.next();
+                    _d.label = 1;
                 case 1:
-                    unsentCount = _a.sent();
-                    if (!unsentCount)
-                        return [2 /*return*/];
-                    return [4 /*yield*/, sipApiBackend.wakeUpContact.makeCall(contact)];
+                    if (!!_b.done) return [3 /*break*/, 5];
+                    contact = _b.value;
+                    return [4 /*yield*/, db.semasim.MessageTowardSip.unsentCount(contact.uaSim)];
                 case 2:
-                    status = _a.sent();
-                    if (status !== "REACHABLE")
-                        return [2 /*return*/];
-                    sendMessagesOfContact(contact);
-                    return [2 /*return*/];
+                    if (!(_d.sent())) {
+                        return [3 /*break*/, 4];
+                    }
+                    return [4 /*yield*/, sipApiBackend.wakeUpContact(contact)];
+                case 3:
+                    if ((_d.sent()) === "REACHABLE") {
+                        sendMessagesOfContact(contact);
+                    }
+                    _d.label = 4;
+                case 4:
+                    _b = _a.next();
+                    return [3 /*break*/, 1];
+                case 5: return [3 /*break*/, 8];
+                case 6:
+                    e_2_1 = _d.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 8];
+                case 7:
+                    try {
+                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                    return [7 /*endfinally*/];
+                case 8: return [2 /*return*/];
             }
         });
-    }); }); });
+    });
 }
 exports.notifyNewSipMessagesToSend = notifyNewSipMessagesToSend;
 var lockUaEndpoint = new AsyncLock();
+/** Contact must be reachable */
 function sendMessagesOfContact(contact) {
     var _this = this;
-    var uaEndpoint = contact.uaEndpoint;
-    lockUaEndpoint.acquire(sipContact_1.Contact.UaEndpoint.id(uaEndpoint), function () { return __awaiter(_this, void 0, void 0, function () {
-        var _a, _b, _c, message, setReceived, error_1, e_2_1, e_2, _d;
+    lockUaEndpoint.acquire(sipContact_1.Contact.UaSim.id(contact.uaSim), function () { return __awaiter(_this, void 0, void 0, function () {
+        var _a, _b, _c, message, setReceived, error_1, e_3_1, e_3, _d;
         return __generator(this, function (_e) {
             switch (_e.label) {
                 case 0:
                     _e.trys.push([0, 9, 10, 11]);
-                    return [4 /*yield*/, db.semasim.MessageTowardSip.getUnsent(uaEndpoint)];
+                    return [4 /*yield*/, db.semasim.MessageTowardSip.getUnsent(contact.uaSim)];
                 case 1:
                     _a = __values.apply(void 0, [_e.sent()]), _b = _a.next();
                     _e.label = 2;
                 case 2:
                     if (!!_b.done) return [3 /*break*/, 8];
                     _c = __read(_b.value, 2), message = _c[0], setReceived = _c[1];
-                    debug("sip sending: " + JSON.stringify(message.text) + " from " + message.from_number);
                     _e.label = 3;
                 case 3:
                     _e.trys.push([3, 5, , 6]);
-                    return [4 /*yield*/, sipMessage.sendMessage(contact, message.from_number, {}, message.text)];
+                    return [4 /*yield*/, sipMessage.sendMessage(contact, message.fromNumber, {}, message.text)];
                 case 4:
                     _e.sent();
                     return [3 /*break*/, 6];
@@ -258,14 +283,14 @@ function sendMessagesOfContact(contact) {
                     return [3 /*break*/, 2];
                 case 8: return [3 /*break*/, 11];
                 case 9:
-                    e_2_1 = _e.sent();
-                    e_2 = { error: e_2_1 };
+                    e_3_1 = _e.sent();
+                    e_3 = { error: e_3_1 };
                     return [3 /*break*/, 11];
                 case 10:
                     try {
                         if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
                     }
-                    finally { if (e_2) throw e_2.error; }
+                    finally { if (e_3) throw e_3.error; }
                     return [7 /*endfinally*/];
                 case 11: return [2 /*return*/];
             }

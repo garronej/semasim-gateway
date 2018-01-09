@@ -91,6 +91,30 @@ var ApiMessage;
         return JSON.parse(sipRequest.content);
     }
     ApiMessage.parsePayload = parsePayload;
+    var Event;
+    (function (Event) {
+        var eventKey = "event";
+        function buildSip(name, data) {
+            var sipRequest = ApiMessage.buildSip(0, data);
+            sipRequest.headers[eventKey] = name;
+            return sipRequest;
+        }
+        Event.buildSip = buildSip;
+        function matchSip(sipRequest) {
+            try {
+                return (ApiMessage.matchSip(sipRequest) &&
+                    sipRequest.headers[eventKey]);
+            }
+            catch (_a) {
+                return false;
+            }
+        }
+        Event.matchSip = matchSip;
+        function readName(sipRequest) {
+            return sipRequest.headers[eventKey];
+        }
+        Event.readName = readName;
+    })(Event = ApiMessage.Event || (ApiMessage.Event = {}));
     var Request;
     (function (Request) {
         var actionIdCounter = 0;
@@ -136,7 +160,24 @@ var ApiMessage;
     })(Response = ApiMessage.Response || (ApiMessage.Response = {}));
 })(ApiMessage || (ApiMessage = {}));
 function startListening(sipSocket) {
-    var evt = new ts_events_extended_1.SyncEvent();
+    var evtApiRequest = new ts_events_extended_1.SyncEvent();
+    var evtApiEvent = new ts_events_extended_1.SyncEvent();
+    sipSocket.evtRequest.attachExtract(function (sipRequest) { return ApiMessage.Event.matchSip(sipRequest); }, function (sipRequest) {
+        var name;
+        var data;
+        try {
+            name = ApiMessage.Event.readName(sipRequest);
+            data = ApiMessage.parsePayload(sipRequest);
+            if (typeof name !== "string") {
+                throw Error();
+            }
+        }
+        catch (_a) {
+            console.log("Remote api bad message");
+            return;
+        }
+        evtApiEvent.post({ name: name, data: data });
+    });
     sipSocket.evtRequest.attachExtract(function (sipRequest) { return ApiMessage.Request.matchSip(sipRequest); }, function (sipRequest) {
         var actionId;
         var method;
@@ -162,11 +203,25 @@ function startListening(sipSocket) {
             sipSocket.addViaHeader(sipRequest);
             sipSocket.write(sipRequest);
         };
-        evt.post({ method: method, params: params, sendResponse: sendResponse });
+        evtApiRequest.post({ method: method, params: params, sendResponse: sendResponse });
     });
-    return evt;
+    return { evtApiRequest: evtApiRequest, evtApiEvent: evtApiEvent };
 }
 exports.startListening = startListening;
+function sendEvent(sipSocket, name, data) {
+    return __awaiter(this, void 0, void 0, function () {
+        var sipRequest, success;
+        return __generator(this, function (_a) {
+            sipRequest = ApiMessage.Event.buildSip(name, data);
+            sipSocket.addViaHeader(sipRequest);
+            success = sipSocket.write(sipRequest);
+            if (!success)
+                throw new Error(exports.errorSendRequest.writeFailed);
+            return [2 /*return*/];
+        });
+    });
+}
+exports.sendEvent = sendEvent;
 exports.errorSendRequest = {
     "timeout": "Timeout, No response in allowed delay",
     "writeFailed": "Can't send request, write error",

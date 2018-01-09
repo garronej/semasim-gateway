@@ -3,11 +3,11 @@
   "description": "Semasim server for gateways (raspberry pi)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "version": "0.6.0",
+  "version": "0.8.0",
   "scripts": {
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
-    "start": "sudo systemctl stop semasim-gateway && DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/bin/launcher.js",
+    "start": "sudo systemctl stop semasim-gateway && DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/lib/main.js",
     "test": "node ./dist/test/db"
   },
   "repository": {
@@ -19,7 +19,6 @@
   "dependencies": {
     "async-lock": "^1.0.0",
     "awesome-phonenumber": "^2.1.0",
-    "body-parser": "^1.17.2",
     "chan-dongle-extended-client": "git+https://a30f7432b117d8320cc21cc03513817c3f08d4b6:x-oauth-basic@github.com/garronej/chan-dongle-extended-client.git",
     "colors": "^1.1.2",
     "commander": "^2.11.0",
@@ -28,10 +27,8 @@
     "mysql": "^2.13.0",
     "network": "^0.3.2",
     "rejection-tracker": "github:garronej/rejection-tracker",
-    "run-exclusive": "garronej/run-exclusive",
     "sip": "github:garronej/sip.js",
     "super-json": "^2.2.0",
-    "trackable-map": "github:garronej/trackable-map",
     "ts-events-extended": "garronej/ts-events-extended",
     "zongji": "^0.4.4"
   },
@@ -42,6 +39,6 @@
     "@types/mysql": "0.0.32",
     "@types/node": "^4.0.0",
     "nodemon": "^1.11.0",
-    "typescript": "^2.5.3"
+    "typescript": "^2.6.2"
   }
 }

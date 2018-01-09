@@ -1,13 +1,18 @@
 import { Contact } from "./sipContact";
-export declare namespace claimDongle {
-    const methodName = "claimDongle";
-    interface Params {
-        imei: string;
+export declare namespace evtSimOnline {
+    const name = "evtSimOnline";
+    interface Data {
+        imsi: string;
+        isVoiceEnabled: boolean | undefined;
     }
-    interface Response {
-        isGranted: boolean;
+    function post(data: Data): Promise<void>;
+}
+export declare namespace evtSimOffline {
+    const name = "evtSimOffline";
+    interface Data {
+        imsi: string;
     }
-    function makeCall(imei: string): Promise<boolean>;
+    function post(data: Data): Promise<void>;
 }
 export declare namespace wakeUpContact {
     const methodName = "wakeUpContact";

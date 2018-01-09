@@ -213,8 +213,8 @@ var Socket = /** @class */ (function () {
             return true;
         }
         else {
+            debug("we have to wait for drain to confirm write...");
             var boundTo_1 = [];
-            debug("we have to whait for drain to confirg write...");
             return Promise.race([
                 new Promise(function (resolve) { return _this.evtClose.attachOnce(boundTo_1, function () { return resolve(false); }); }),
                 new Promise(function (resolve) { return _this.connection.once("drain", function () {
