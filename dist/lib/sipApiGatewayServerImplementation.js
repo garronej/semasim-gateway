@@ -47,11 +47,9 @@ function startListening(backendSocket) {
 exports.startListening = startListening;
 (function () {
     var methodName = sipApi_1.gatewayDeclaration.getDongles.methodName;
-    handlers[methodName] = function (params, fromSocket) { return __awaiter(_this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, Array.from(chan_dongle_extended_client_1.DongleController.getInstance().dongles.values())];
-        });
-    }); };
+    handlers[methodName] = function (params, fromSocket) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+        return [2 /*return*/, Array.from(chan_dongle_extended_client_1.DongleController.getInstance().dongles.values())];
+    }); }); };
 })();
 (function () {
     var methodName = sipApi_1.gatewayDeclaration.unlockDongle.methodName;

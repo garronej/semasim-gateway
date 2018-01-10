@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client :  localhost
--- Généré le :  Mar 05 Décembre 2017 à 16:38
+-- Généré le :  Mer 10 Janvier 2018 à 19:23
 -- Version du serveur :  5.5.55-0+deb8u1-log
 -- Version de PHP :  5.6.30-0+deb8u1
 
@@ -22,6 +22,21 @@ SET time_zone = "+00:00";
 CREATE DATABASE IF NOT EXISTS `semasim` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 USE `semasim`;
 
+DELIMITER $$
+--
+-- Fonctions
+--
+CREATE DEFINER=`semasim`@`localhost` FUNCTION `_ASSERT`(bool INTEGER, message VARCHAR(256)) RETURNS int(11)
+    DETERMINISTIC
+BEGIN                                                          
+    IF bool IS NULL OR bool = 0 THEN                           
+        SIGNAL SQLSTATE 'ERR0R' SET MESSAGE_TEXT = message;    
+    END IF;                                                    
+    RETURN bool;                                               
+END$$
+
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -35,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `message_toward_gsm` (
   `to_number` varchar(25) NOT NULL,
   `base64_text` text NOT NULL,
   `send_date` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -62,7 +77,7 @@ CREATE TABLE IF NOT EXISTS `message_toward_sip` (
   `date` bigint(20) NOT NULL,
   `from_number` varchar(25) NOT NULL,
   `base64_text` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -77,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `ua` (
   `platform` varchar(15) NOT NULL,
   `push_token` varchar(1024) NOT NULL,
   `software` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -89,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `ua_sim` (
 `id_` int(11) NOT NULL,
   `ua` int(11) NOT NULL,
   `imsi` varchar(15) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -102,7 +117,7 @@ CREATE TABLE IF NOT EXISTS `ua_sim_message_toward_sip` (
   `ua_sim` int(11) NOT NULL,
   `message_toward_sip` int(11) NOT NULL,
   `delivered_date` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8;
 
 --
 -- Index pour les tables exportées
@@ -152,27 +167,27 @@ ALTER TABLE `ua_sim_message_toward_sip`
 -- AUTO_INCREMENT pour la table `message_toward_gsm`
 --
 ALTER TABLE `message_toward_gsm`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
 --
 -- AUTO_INCREMENT pour la table `message_toward_sip`
 --
 ALTER TABLE `message_toward_sip`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=29;
 --
 -- AUTO_INCREMENT pour la table `ua`
 --
 ALTER TABLE `ua`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=125;
 --
 -- AUTO_INCREMENT pour la table `ua_sim`
 --
 ALTER TABLE `ua_sim`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=125;
 --
 -- AUTO_INCREMENT pour la table `ua_sim_message_toward_sip`
 --
 ALTER TABLE `ua_sim_message_toward_sip`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=43;
 --
 -- Contraintes pour les tables exportées
 --
@@ -205,7 +220,6 @@ ADD CONSTRAINT `ua_sim_message_toward_sip_ibfk_2` FOREIGN KEY (`message_toward_s
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
 
 
 -- Password is semasim

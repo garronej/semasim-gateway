@@ -1,4 +1,3 @@
-
 require("rejection-tracker").main(__dirname, "..", "..");
 
 import { DongleController as Dc } from "chan-dongle-extended-client";
@@ -24,15 +23,15 @@ debug("Starting semasim gateway !");
 
 (async function launch() {
 
-    try{
+    try {
 
         await Dc.getInstance().initialization;
 
-    }catch(error){
+    } catch (error) {
 
         debug("dongle-extended not initialized yet, scheduling retry...");
 
-        await new Promise(resolve=>setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         launch();
 
@@ -52,11 +51,13 @@ debug("Starting semasim gateway !");
 
     processGsmMessageIoOccurredWhileOffline();
 
+    debug("...started");
+
 })();
 
-async function processGsmMessageIoOccurredWhileOffline(){
+async function processGsmMessageIoOccurredWhileOffline() {
 
-    let dc= Dc.getInstance();
+    let dc = Dc.getInstance();
 
     for (let dongle of dc.activeDongles.values()) {
 
@@ -71,7 +72,7 @@ async function processGsmMessageIoOccurredWhileOffline(){
         //TODO: may throw
         let messages = await dc.getMessagesOfSim({
             imsi,
-            "fromDate": new Date(lastMessageReceivedDateBySim[imsi].getTime()+1),
+            "fromDate": new Date(lastMessageReceivedDateBySim[imsi].getTime() + 1),
             "flush": true,
         });
 
@@ -94,6 +95,8 @@ function registerListeners() {
 
     sipProxy.evtNewBackendSocketConnect.attach(
         async backendSocket => {
+
+            debug("Connection established with backend");
 
             sipApiServer.startListening(backendSocket);
 
@@ -135,7 +138,7 @@ function registerListeners() {
 
             debug("FROM DONGLE MESSAGE", { message });
 
-            let isHandeled = await db.semasim.MessageTowardSip.add(
+            let isHandled = await db.semasim.MessageTowardSip.add(
                 message.number,
                 message.text,
                 message.date,
@@ -146,7 +149,7 @@ function registerListeners() {
                 }
             );
 
-            if (isHandeled) {
+            if (isHandled) {
 
                 dc.getMessagesOfSim({
                     "imsi": dongle.sim.imsi,

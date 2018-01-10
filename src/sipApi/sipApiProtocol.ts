@@ -180,6 +180,8 @@ export class Server {
                     return;
                 }
 
+                console.log("server", { methodName, params });
+
                 let handler = this.handlers[methodName];
 
                 if (!handler) {
@@ -196,11 +198,13 @@ export class Server {
 
                 }catch{
 
-                    console.log("Request made server throw error");
+                    console.log("Request made handler throw error");
                     socket.destroy();
                     return;
 
                 }
+
+                console.log("server", { response });
 
                 let sipRequestResp = ApiMessage.Response.buildSip(
                     ApiMessage.readActionId(sipRequest),
@@ -208,6 +212,7 @@ export class Server {
                 );
 
                 socket.addViaHeader(sipRequestResp);
+
 
                 socket.write(sipRequestResp);
 
@@ -269,6 +274,8 @@ export class Client {
         timeout = 5 * 60 * 1000
     ): Promise<any> {
 
+        console.log("client",{ methodName, params });
+
         let sipRequest = ApiMessage.Request.buildSip(methodName, params);
 
         let actionId = ApiMessage.readActionId(sipRequest);
@@ -313,6 +320,7 @@ export class Client {
 
             if (sendRequestError.cause === "REQUEST TIMEOUT") {
 
+                console.log("Request timeout");
                 this.socket.destroy();
 
             }
@@ -340,11 +348,14 @@ export class Client {
 
             sendRequestError.misc["sipRequestResponse"] = sipRequestResponse;
 
+            console.log("malformed response");
             this.socket.destroy();
 
             throw sendRequestError;
 
         }
+
+        console.log("client", { response });
 
         return response;
 

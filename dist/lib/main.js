@@ -104,6 +104,7 @@ debug("Starting semasim gateway !");
                     voiceCallBridge.start();
                     sipProxy.start();
                     processGsmMessageIoOccurredWhileOffline();
+                    debug("...started");
                     return [2 /*return*/];
             }
         });
@@ -190,6 +191,7 @@ function registerListeners() {
     sipProxy.evtNewBackendSocketConnect.attach(function (backendSocket) { return __awaiter(_this, void 0, void 0, function () {
         var _a, _b, dongle, e_3, _c;
         return __generator(this, function (_d) {
+            debug("Connection established with backend");
             sipApiServer.startListening(backendSocket);
             sipApiBackend.init(backendSocket);
             try {
@@ -234,7 +236,7 @@ function registerListeners() {
     dc.evtMessage.attach(function (_a) {
         var dongle = _a.dongle, message = _a.message;
         return __awaiter(_this, void 0, void 0, function () {
-            var isHandeled;
+            var isHandled;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -244,8 +246,8 @@ function registerListeners() {
                                 "imsi": dongle.sim.imsi
                             })];
                     case 1:
-                        isHandeled = _b.sent();
-                        if (isHandeled) {
+                        isHandled = _b.sent();
+                        if (isHandled) {
                             dc.getMessagesOfSim({
                                 "imsi": dongle.sim.imsi,
                                 "fromDate": message.date,

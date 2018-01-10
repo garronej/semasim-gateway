@@ -19,11 +19,8 @@ export function startListening(backendSocket: sipLibrary.Socket) {
     type Params = apiDeclaration.getDongles.Params;
     type Response = apiDeclaration.getDongles.Response;
 
-    handlers[methodName] = async (params: Params, fromSocket): Promise<Response> => {
-
-        return Array.from(Dc.getInstance().dongles.values());
-
-    };
+    handlers[methodName] = async (params: Params, fromSocket): Promise<Response> => 
+        Array.from(Dc.getInstance().dongles.values());
 
 })();
 

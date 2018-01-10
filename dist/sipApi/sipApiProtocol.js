@@ -163,6 +163,7 @@ var Server = /** @class */ (function () {
                             socket.destroy();
                             return [2 /*return*/];
                         }
+                        console.log("server", { methodName: methodName, params: params });
                         handler = this.handlers[methodName];
                         if (!handler) {
                             console.log("Method " + methodName + " not implemented");
@@ -178,10 +179,11 @@ var Server = /** @class */ (function () {
                         return [3 /*break*/, 4];
                     case 3:
                         _a = _b.sent();
-                        console.log("Request made server throw error");
+                        console.log("Request made handler throw error");
                         socket.destroy();
                         return [2 /*return*/];
                     case 4:
+                        console.log("server", { response: response });
                         sipRequestResp = ApiMessage.Response.buildSip(ApiMessage.readActionId(sipRequest), response);
                         socket.addViaHeader(sipRequestResp);
                         socket.write(sipRequestResp);
@@ -222,6 +224,7 @@ var Client = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        console.log("client", { methodName: methodName, params: params });
                         sipRequest = ApiMessage.Request.buildSip(methodName, params);
                         actionId = ApiMessage.readActionId(sipRequest);
                         this.socket.addViaHeader(sipRequest);
@@ -246,6 +249,7 @@ var Client = /** @class */ (function () {
                         sendRequestError = new Client.SendRequestError(methodName, params, (error_1.message === "CLOSE") ?
                             "SOCKET CLOSED BEFORE RECEIVING RESPONSE" : "REQUEST TIMEOUT");
                         if (sendRequestError.cause === "REQUEST TIMEOUT") {
+                            console.log("Request timeout");
                             this.socket.destroy();
                         }
                         throw sendRequestError;
@@ -256,9 +260,11 @@ var Client = /** @class */ (function () {
                         catch (_b) {
                             sendRequestError = new Client.SendRequestError(methodName, params, "MALFORMED RESPONSE");
                             sendRequestError.misc["sipRequestResponse"] = sipRequestResponse;
+                            console.log("malformed response");
                             this.socket.destroy();
                             throw sendRequestError;
                         }
+                        console.log("client", { response: response });
                         return [2 /*return*/, response];
                 }
             });
