@@ -35,6 +35,8 @@ debug("Starting semasim gateway !");
 
         launch();
 
+        return;
+
     }
 
     debug("Launching...");

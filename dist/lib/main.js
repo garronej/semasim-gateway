@@ -91,7 +91,7 @@ debug("Starting semasim gateway !");
                 case 3:
                     _a.sent();
                     launch();
-                    return [3 /*break*/, 4];
+                    return [2 /*return*/];
                 case 4:
                     debug("Launching...");
                     registerListeners();
