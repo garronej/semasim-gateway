@@ -227,17 +227,12 @@ function start() {
                                 _f["port"] = _constants_1.c.shared.gatewayPort,
                                 _f)])]))();
                     backendSocket.setKeepAlive(true);
-                    /*
-                    backendSocket.evtPacket.attach(sipPacket =>
-                        console.log("From backend:\n", sipLibrary.stringify(sipPacket).yellow, "\n\n")
-                    );
-                    backendSocket.evtData.attach(chunk =>
-                        console.log("From backend raw:\n", chunk.yellow, "\n\n")
-                    );
-                    */
-                    backendSocket.evtConnect.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
-                        return [2 /*return*/, exports.evtNewBackendSocketConnect.post(backendSocket)];
-                    }); }); });
+                    backendSocket.evtData.attach(function (chunk) {
+                        return console.log("From backend raw:\n", chunk.yellow, "\n\n");
+                    });
+                    backendSocket.evtConnect.attachOnce(function () {
+                        return exports.evtNewBackendSocketConnect.post(backendSocket);
+                    });
                     backendSocket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {
                         var _this = this;
                         var headers, connectionId, imsi, asteriskSocket, uaPublicIp, contactAoR, contactParams_1, parsedUri, branch;
@@ -266,7 +261,7 @@ function start() {
                                         contactParams_1 = sipLibrary.parseUri(contactAoR.uri).params;
                                         headers["user-agent"] = sipContact_1.PsContact.stringifyMisc({
                                             "ua_instance": contactAoR.params["+sip.instance"],
-                                            "ua_userEmail": contactParams_1["user_email"],
+                                            "ua_userEmail": (new Buffer(contactParams_1["email_as_hex"], "hex")).toString("utf8"),
                                             "ua_platform": (function () {
                                                 switch (contactParams_1["pn-type"]) {
                                                     case "google":
@@ -359,28 +354,29 @@ function createAsteriskSocket(connectionId, imsi, uaPublicIp, backendSocket) {
     var asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
     asteriskSockets.set(connectionId, imsi, asteriskSocket);
     /*
-    asteriskSocket.evtPacket.attach(sipPacket =>
-        console.log("From Asterisk:\n", sipLibrary.stringify(sipPacket).grey, "\n\n")
-    );
     asteriskSocket.evtData.attach(chunk =>
         console.log("From Asterisk raw:\n", chunk.grey, "\n\n")
     );
     */
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
-    asteriskSocket.evtPacket.attachPrepend(function (_a) {
-        var headers = _a.headers;
-        return headers["content-type"] === "application/sdp";
-    }, function (sipPacket) {
-        var sdp = sipPacket.content;
-        var gatewayPublicIp = sipLibrary.readSrflxAddrInSdp(sdp);
-        if (!gatewayPublicIp ||
-            (!sipLibrary.matchRequest(sipPacket) &&
-                gatewayPublicIp === uaPublicIp))
-            return;
-        var parsedSdp = sipLibrary.parseSdp(sdp);
-        parsedSdp.m[0].c = __assign({}, parsedSdp.c, { "address": gatewayPublicIp });
-        sipPacket.content = sipLibrary.stringifySdp(parsedSdp);
-    });
+    (function () {
+        var matcher = function (sipPacket) {
+            return sipPacket.headers["content-type"] === "application/sdp";
+        };
+        var handler = function (sipPacket) {
+            var sdp = sipPacket.content;
+            var gatewayPublicIp = sipLibrary.readSrflxAddrInSdp(sdp);
+            if (!gatewayPublicIp ||
+                (!sipLibrary.matchRequest(sipPacket) &&
+                    gatewayPublicIp === uaPublicIp))
+                return;
+            var parsedSdp = sipLibrary.parseSdp(sdp);
+            parsedSdp.m[0].c = __assign({}, parsedSdp.c, { "address": gatewayPublicIp });
+            sipPacket.content = sipLibrary.stringifySdp(parsedSdp);
+        };
+        asteriskSocket.evtRequest.attachPrepend(matcher, handler);
+        asteriskSocket.evtResponse.attachPrepend(matcher, handler);
+    })();
     asteriskSocket.evtRequest.attach(function (sipRequest) {
         if (backendSocket.evtClose.postCount)
             return;

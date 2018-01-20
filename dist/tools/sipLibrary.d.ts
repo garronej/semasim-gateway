@@ -1,7 +1,9 @@
 /// <reference types="node" />
+/// <reference types="ws" />
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import * as net from "net";
 import * as sip from "sip";
+import * as WebSocket from "ws";
 export declare const regIdKey = "reg-id";
 export declare const instanceIdKey = "+sip.instance";
 export declare const parseSdp: (rawSdp: string) => any;
@@ -15,9 +17,8 @@ export declare function readSrflxAddrInSdp(sdp: string): string | undefined;
 export declare function isPlainMessageRequest(sipRequest: sip.Request): boolean;
 export declare const makeStreamParser: (handler: (sipPacket: Packet) => void, onFlood: () => void, maxBytesHeaders: number, maxContentLength: number) => ((dataAsBinaryString: string) => void);
 export declare class Socket {
-    private readonly connection;
+    static matchWebSocket(socket: net.Socket | WebSocket): socket is WebSocket;
     misc: any;
-    readonly evtPacket: SyncEvent<Packet>;
     readonly evtResponse: SyncEvent<Response>;
     readonly evtRequest: SyncEvent<Request>;
     readonly evtClose: SyncEvent<boolean>;
@@ -27,22 +28,18 @@ export declare class Socket {
     readonly evtData: SyncEvent<string>;
     private static readonly maxBytesHeaders;
     private static readonly maxContentLength;
-    constructor(connection: net.Socket, timeoutDelay?: number);
-    private __localPort__;
-    private __remotePort__;
-    private __localAddress__;
-    private __remoteAddress__;
-    private fixPortAndAddr();
+    localPort: number;
+    remotePort: number;
+    localAddress: string;
+    remoteAddress: string;
+    private readonly connection;
+    constructor(webSocket: WebSocket, addrAndPorts: Socket.AddrAndPorts, timeoutDelay?: number);
+    constructor(socket: net.Socket, timeoutDelay?: number);
     readonly setKeepAlive: net.Socket['setKeepAlive'];
     /** Return true if sent successfully */
     write(sipPacket: Packet): boolean | Promise<boolean>;
     destroy(): void;
-    readonly localPort: number;
-    readonly localAddress: string;
-    readonly remotePort: number;
-    readonly remoteAddress: string;
-    readonly encrypted: boolean;
-    readonly protocol: "TCP" | "TLS";
+    readonly protocol: "TCP" | "TLS" | "WSS";
     addViaHeader(sipRequest: Request, extraParams?: Record<string, string>): string;
     addPathHeader(sipRegisterRequest: Request, host?: string, extraParams?: Record<string, string>): void;
     /**
@@ -84,6 +81,14 @@ export declare class Socket {
      *
      */
     pushRecordRoute(sipResponse: Response, isFirstHop: boolean, host?: string): void;
+}
+export declare namespace Socket {
+    type AddrAndPorts = {
+        localPort: number;
+        remotePort: number;
+        localAddress: string;
+        remoteAddress: string;
+    };
 }
 export declare const stringify: (sipPacket: Packet) => string;
 export declare const parseUri: (uri: string) => ParsedUri;

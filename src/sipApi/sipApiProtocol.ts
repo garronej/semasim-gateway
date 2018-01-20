@@ -274,7 +274,7 @@ export class Client {
         timeout = 5 * 60 * 1000
     ): Promise<any> {
 
-        console.log("client",{ methodName, params });
+        console.log("client", { methodName, params });
 
         let sipRequest = ApiMessage.Request.buildSip(methodName, params);
 

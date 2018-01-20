@@ -39,7 +39,7 @@ var sipApi_1 = require("../sipApi");
 var sipProxy_1 = require("./sipProxy");
 var db = require("./db");
 function init(backendSocket) {
-    new sipApi_1.protocol.Client(backendSocket, 3600 * 1000);
+    new sipApi_1.protocol.Client(backendSocket);
 }
 exports.init = init;
 function getClient() {

@@ -7,7 +7,7 @@ import { Contact } from "../lib/sipContact";
 
 export function init(backendSocket: sipLibrary.Socket){
 
-    new protocol.Client(backendSocket, 3600 * 1000);
+    new protocol.Client(backendSocket);
 
 }
 

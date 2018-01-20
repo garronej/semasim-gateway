@@ -214,16 +214,11 @@ export async function start() {
 
     backendSocket.setKeepAlive(true);
 
-    /*
-    backendSocket.evtPacket.attach(sipPacket =>
-        console.log("From backend:\n", sipLibrary.stringify(sipPacket).yellow, "\n\n")
-    );
     backendSocket.evtData.attach(chunk =>
         console.log("From backend raw:\n", chunk.yellow, "\n\n")
     );
-    */
 
-    backendSocket.evtConnect.attachOnce(async () => 
+    backendSocket.evtConnect.attachOnce(() => 
         evtNewBackendSocketConnect.post(backendSocket)
     );
 
@@ -264,7 +259,7 @@ export async function start() {
 
             headers["user-agent"] = PsContact.stringifyMisc({
                 "ua_instance": contactAoR!.params["+sip.instance"]!,
-                "ua_userEmail": contactParams["user_email"]!,
+                "ua_userEmail": (new Buffer(contactParams["email_as_hex"]!, "hex")).toString("utf8"),
                 "ua_platform": (() => {
 
                     switch (contactParams["pn-type"]) {
@@ -379,18 +374,18 @@ function createAsteriskSocket(
     asteriskSockets.set(connectionId, imsi, asteriskSocket);
 
     /*
-    asteriskSocket.evtPacket.attach(sipPacket =>
-        console.log("From Asterisk:\n", sipLibrary.stringify(sipPacket).grey, "\n\n")
-    );
     asteriskSocket.evtData.attach(chunk =>
         console.log("From Asterisk raw:\n", chunk.grey, "\n\n")
     );
     */
 
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
-    asteriskSocket.evtPacket.attachPrepend(
-        ({ headers }) => headers["content-type"] === "application/sdp",
-        sipPacket => {
+    (()=>{
+
+        let matcher = (sipPacket: sipLibrary.Packet) => 
+            sipPacket.headers["content-type"] === "application/sdp";
+
+        let handler = (sipPacket: sipLibrary.Packet): void => {
 
             let sdp = sipPacket.content;
 
@@ -410,9 +405,13 @@ function createAsteriskSocket(
 
             sipPacket.content = sipLibrary.stringifySdp(parsedSdp);
 
-        }
-    );
+        };
 
+        asteriskSocket.evtRequest.attachPrepend(matcher, handler);
+        asteriskSocket.evtResponse.attachPrepend(matcher, handler);
+
+
+    })();
 
     asteriskSocket.evtRequest.attach(sipRequest => {
 

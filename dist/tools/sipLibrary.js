@@ -119,53 +119,72 @@ exports.isPlainMessageRequest = isPlainMessageRequest;
 exports.makeStreamParser = sip.makeStreamParser;
 //TODO: make a function to test if message are well formed: have from, to via ect.
 var Socket = /** @class */ (function () {
-    function Socket(connection, timeoutDelay) {
+    function Socket() {
+        var inputs = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            inputs[_i] = arguments[_i];
+        }
         var _this = this;
-        this.connection = connection;
         this.misc = {};
-        this.evtPacket = new ts_events_extended_1.SyncEvent();
         this.evtResponse = new ts_events_extended_1.SyncEvent();
         this.evtRequest = new ts_events_extended_1.SyncEvent();
         this.evtClose = new ts_events_extended_1.SyncEvent();
         this.evtConnect = new ts_events_extended_1.VoidSyncEvent();
         this.evtTimeout = new ts_events_extended_1.VoidSyncEvent();
         this.evtData = new ts_events_extended_1.SyncEvent();
-        this.__localPort__ = NaN;
-        this.__remotePort__ = NaN;
-        this.__localAddress__ = undefined;
-        this.__remoteAddress__ = undefined;
+        this.localPort = NaN;
+        this.remotePort = NaN;
+        this.localAddress = "";
+        this.remoteAddress = "";
         this.setKeepAlive = function () {
             var inputs = [];
             for (var _i = 0; _i < arguments.length; _i++) {
                 inputs[_i] = arguments[_i];
             }
-            return _this.connection.setKeepAlive.apply(_this.connection, inputs);
+            return Socket.matchWebSocket(_this.connection) ?
+                undefined :
+                _this.connection.setKeepAlive.apply(_this.connection, inputs);
         };
-        var streamParser = exports.makeStreamParser(function (sipPacket) {
-            _this.evtPacket.post(sipPacket);
-            if (matchRequest(sipPacket))
-                _this.evtRequest.post(sipPacket);
-            else
-                _this.evtResponse.post(sipPacket);
-        }, function () { return _this.connection.emit("error", new Error("Flood")); }, Socket.maxBytesHeaders, Socket.maxContentLength);
-        connection
-            .setMaxListeners(Infinity)
-            .once("error", function (error) {
-            debug("Socket error", error);
-            _this.connection.emit("close", true);
-        })
+        this.connection = inputs[0];
+        var timeoutDelay;
+        var addrAndPorts;
+        if (Socket.matchWebSocket(this.connection)) {
+            addrAndPorts = inputs[1];
+            timeoutDelay = inputs[2];
+            debug({ addrAndPorts: addrAndPorts });
+        }
+        else {
+            addrAndPorts = undefined;
+            timeoutDelay = inputs[1];
+        }
+        var streamParser = exports.makeStreamParser(function (sipPacket) { return matchRequest(sipPacket) ?
+            _this.evtRequest.post(sipPacket) :
+            _this.evtResponse.post(sipPacket); }, function () { return _this.connection.emit("error", new Error("Flood")); }, Socket.maxBytesHeaders, Socket.maxContentLength);
+        this.connection
+            .once("error", function () { return _this.connection.emit("close", true); })
             .once("close", function (had_error) {
             if (timeoutDelay)
                 clearTimeout(_this.timer);
-            _this.connection.destroy();
-            _this.evtClose.post(had_error);
+            if (Socket.matchWebSocket(_this.connection)) {
+                _this.connection.terminate();
+            }
+            else {
+                _this.connection.destroy();
+            }
+            _this.evtClose.post(had_error === true);
         })
-            .on("data", function (data) {
+            .on(Socket.matchWebSocket(this.connection) ? "message" : "data", function (data) {
             if (timeoutDelay) {
                 clearTimeout(_this.timer);
                 _this.timer = setTimeout(function () { return _this.evtTimeout.post(); }, timeoutDelay);
             }
-            var dataAsBinaryString = data.toString("binary");
+            var dataAsBinaryString;
+            if (typeof data === "string") {
+                dataAsBinaryString = (new Buffer(data, "utf8")).toString("binary");
+            }
+            else {
+                dataAsBinaryString = data.toString("binary");
+            }
             _this.evtData.post(dataAsBinaryString);
             try {
                 streamParser(dataAsBinaryString);
@@ -175,17 +194,46 @@ var Socket = /** @class */ (function () {
                 _this.connection.emit("error", error);
             }
         });
-        connection.once(this.encrypted ? "secureConnect" : "connect", function () {
-            _this.fixPortAndAddr();
-            _this.evtConnect.post();
-        });
+        if (Socket.matchWebSocket(this.connection)) {
+            this.localPort = addrAndPorts.localPort;
+            this.remotePort = addrAndPorts.remotePort;
+            this.localAddress = addrAndPorts.localAddress;
+            this.remoteAddress = addrAndPorts.remoteAddress;
+            this.evtConnect.post(); //For post count
+        }
+        else {
+            this.connection.setMaxListeners(Infinity);
+            var setAddrAndPort_1 = (function (c) { return (function () {
+                _this.localPort = c.localPort;
+                _this.remotePort = c.remotePort;
+                _this.localAddress = c.remoteAddress;
+                _this.remoteAddress = c.remoteAddress;
+            }); })(this.connection);
+            setAddrAndPort_1();
+            /* Debug */
+            if (!this.connection.localPort ||
+                !this.connection.remotePort ||
+                !this.connection.localAddress ||
+                !this.connection.remoteAddress) {
+                var _a = this.connection, localPort = _a.localPort, remotePort = _a.remotePort, localAddress = _a.localAddress, remoteAddress = _a.remoteAddress;
+                console.log("debug sip socket where the connection is started locally", { localPort: localPort, remotePort: remotePort, localAddress: localAddress, remoteAddress: remoteAddress });
+            }
+            /* End Debug */
+            if (this.connection.localPort) {
+                this.evtConnect.post(); //For post count
+            }
+            else {
+                this.connection.once(this.connection["encrypted"] ? "secureConnect" : "connect", function () {
+                    setAddrAndPort_1();
+                    _this.evtConnect.post();
+                });
+            }
+        }
     }
-    Socket.prototype.fixPortAndAddr = function () {
-        this.__localPort__ = this.connection.localPort;
-        this.__remotePort__ = this.connection.remotePort;
-        this.__localAddress__ = this.connection.localAddress;
-        this.__remoteAddress__ = this.connection.remoteAddress;
+    Socket.matchWebSocket = function (socket) {
+        return socket.terminate !== undefined;
     };
+    ;
     /** Return true if sent successfully */
     Socket.prototype.write = function (sipPacket) {
         var _this = this;
@@ -208,21 +256,27 @@ var Socket = /** @class */ (function () {
             debug("Prevent sending packet without via header");
             return false;
         }
-        var flushed = this.connection.write(new Buffer(exports.stringify(sipPacket), "binary"));
-        if (flushed) {
-            return true;
+        //TODO: this can potentially throw, make sure it's ok
+        var data = new Buffer(exports.stringify(sipPacket), "binary");
+        if (Socket.matchWebSocket(this.connection)) {
+            return new Promise(function (resolve) { return _this.connection
+                .send(data, { "binary": true }, function (error) { return resolve(error ? true : false); }); });
         }
         else {
-            debug("we have to wait for drain to confirm write...");
-            var boundTo_1 = [];
-            return Promise.race([
-                new Promise(function (resolve) { return _this.evtClose.attachOnce(boundTo_1, function () { return resolve(false); }); }),
-                new Promise(function (resolve) { return _this.connection.once("drain", function () {
-                    debug("...drain");
-                    _this.evtClose.detach(boundTo_1);
-                    resolve(true);
-                }); })
-            ]);
+            var flushed = this.connection.write(data);
+            if (flushed) {
+                return true;
+            }
+            else {
+                var boundTo_1 = [];
+                return Promise.race([
+                    new Promise(function (resolve) { return _this.evtClose.attachOnce(boundTo_1, function () { return resolve(false); }); }),
+                    new Promise(function (resolve) { return _this.connection.once("drain", function () {
+                        _this.evtClose.detach(boundTo_1);
+                        resolve(true);
+                    }); })
+                ]);
+            }
         }
     };
     Socket.prototype.destroy = function () {
@@ -234,56 +288,14 @@ var Socket = /** @class */ (function () {
         */
         this.connection.emit("close", false);
     };
-    Object.defineProperty(Socket.prototype, "localPort", {
-        get: function () {
-            var localPort = this.__localPort__ || this.connection.localPort;
-            if (typeof localPort !== "number" || isNaN(localPort))
-                throw new Error("LocalPort not yet set");
-            return localPort;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Socket.prototype, "localAddress", {
-        get: function () {
-            var localAddress = this.__localAddress__ || this.connection.localAddress;
-            if (!localAddress)
-                throw new Error("LocalAddress not yet set");
-            return localAddress;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Socket.prototype, "remotePort", {
-        get: function () {
-            var remotePort = this.__remotePort__ || this.connection.remotePort;
-            if (typeof remotePort !== "number" || isNaN(remotePort))
-                throw new Error("Remote port not yet set");
-            return remotePort;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Socket.prototype, "remoteAddress", {
-        get: function () {
-            var remoteAddress = this.__remoteAddress__ || this.connection.remoteAddress;
-            if (!remoteAddress)
-                throw new Error("Remote address not yes set");
-            return remoteAddress;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Socket.prototype, "encrypted", {
-        get: function () {
-            return this.connection["encrypted"] ? true : false;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(Socket.prototype, "protocol", {
         get: function () {
-            return this.encrypted ? "TLS" : "TCP";
+            if (Socket.matchWebSocket(this.connection)) {
+                return "WSS";
+            }
+            else {
+                return this.connection["encrypted"] ? "TLS" : "TCP";
+            }
         },
         enumerable: true,
         configurable: true

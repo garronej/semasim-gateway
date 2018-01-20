@@ -30,6 +30,7 @@
     "sip": "github:garronej/sip.js",
     "super-json": "^2.2.0",
     "ts-events-extended": "garronej/ts-events-extended",
+    "ws": "^4.0.0",
     "zongji": "^0.4.4"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/debug": "0.0.29",
     "@types/mysql": "0.0.32",
     "@types/node": "^4.0.0",
+    "@types/ws": "^4.0.0",
     "nodemon": "^1.11.0",
     "typescript": "^2.6.2"
   }

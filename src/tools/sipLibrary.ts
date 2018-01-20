@@ -2,6 +2,7 @@ import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import * as net from "net";
 import * as sip from "sip";
 import * as _sdp_ from "sip/sdp";
+import * as WebSocket from "ws";
 
 import * as _debug from "debug";
 let debug = _debug("_tools/sipLibrary");
@@ -87,9 +88,12 @@ export const makeStreamParser: (
 //TODO: make a function to test if message are well formed: have from, to via ect.
 export class Socket {
 
+    public static matchWebSocket(socket: net.Socket | WebSocket): socket is WebSocket {
+        return (socket as WebSocket).terminate !== undefined;
+    }
+
     public misc: any = {};
 
-    public readonly evtPacket = new SyncEvent<Packet>();
     public readonly evtResponse = new SyncEvent<Response>();
     public readonly evtRequest = new SyncEvent<Request>();
 
@@ -104,39 +108,70 @@ export class Socket {
     private static readonly maxBytesHeaders = 7820;
     private static readonly maxContentLength = 24624;
 
+    public localPort = NaN;
+    public remotePort = NaN;
+    public localAddress = "";
+    public remoteAddress = "";
+
+    private readonly connection: net.Socket | WebSocket;
+
     constructor(
-        private readonly connection: net.Socket,
+        webSocket: WebSocket,
+        addrAndPorts: Socket.AddrAndPorts,
         timeoutDelay?: number
-    ) {
+    );
+    constructor(socket: net.Socket, timeoutDelay?: number);
+    constructor(...inputs: any[]) {
+
+        this.connection = inputs[0];
+
+
+        let timeoutDelay: number | undefined;
+
+        let addrAndPorts: Socket.AddrAndPorts | undefined;
+
+        if (Socket.matchWebSocket(this.connection)) {
+
+            addrAndPorts = inputs[1];
+            timeoutDelay = inputs[2];
+
+            debug({ addrAndPorts });
+
+        } else {
+
+            addrAndPorts = undefined;
+            timeoutDelay = inputs[1];
+
+        }
 
         let streamParser = makeStreamParser(
-            sipPacket => {
-
-                this.evtPacket.post(sipPacket);
-
-                if (matchRequest(sipPacket))
-                    this.evtRequest.post(sipPacket);
-                else
-                    this.evtResponse.post(sipPacket);
-
-            },
+            sipPacket => matchRequest(sipPacket) ?
+                this.evtRequest.post(sipPacket) :
+                this.evtResponse.post(sipPacket)
+            ,
             () => this.connection.emit("error", new Error("Flood")),
             Socket.maxBytesHeaders,
             Socket.maxContentLength
         );
 
-        connection
-            .setMaxListeners(Infinity)
-            .once("error", error => {
-                debug("Socket error", error);
-                this.connection.emit("close", true)
-            })
+        (this.connection as any)
+            .once("error", () => this.connection.emit("close", true))
             .once("close", had_error => {
+
                 if (timeoutDelay) clearTimeout(this.timer);
-                this.connection.destroy();
-                this.evtClose.post(had_error);
+
+                if (Socket.matchWebSocket(this.connection)) {
+                    this.connection.terminate();
+                } else {
+                    this.connection.destroy();
+                }
+
+                this.evtClose.post(had_error === true);
+
             })
-            .on("data", (data: Buffer) => {
+            .on(
+            Socket.matchWebSocket(this.connection) ? "message" : "data",
+            (data: Buffer | string) => {
 
                 if (timeoutDelay) {
 
@@ -146,7 +181,17 @@ export class Socket {
 
                 }
 
-                let dataAsBinaryString = data.toString("binary");
+                let dataAsBinaryString;
+
+                if (typeof data === "string") {
+
+                    dataAsBinaryString = (new Buffer(data, "utf8")).toString("binary");
+
+                } else {
+
+                    dataAsBinaryString = data.toString("binary");
+
+                }
 
                 this.evtData.post(dataAsBinaryString);
 
@@ -162,35 +207,79 @@ export class Socket {
 
                 }
 
-            });
 
-        connection.once(
-            this.encrypted ? "secureConnect" : "connect",
-            () => {
-                this.fixPortAndAddr();
-                this.evtConnect.post();
             }
         );
 
+        if (Socket.matchWebSocket(this.connection)) {
 
-    }
+            this.localPort = addrAndPorts!.localPort;
+            this.remotePort = addrAndPorts!.remotePort;
+            this.localAddress = addrAndPorts!.localAddress;
+            this.remoteAddress = addrAndPorts!.remoteAddress;
 
-    private __localPort__: number = NaN;
-    private __remotePort__: number = NaN;
-    private __localAddress__: string | undefined = undefined;
-    private __remoteAddress__: string | undefined = undefined;
+            this.evtConnect.post(); //For post count
 
-    private fixPortAndAddr() {
+        } else {
 
-        this.__localPort__ = this.connection.localPort;
-        this.__remotePort__ = this.connection.remotePort;
-        this.__localAddress__ = this.connection.localAddress;
-        this.__remoteAddress__ = this.connection.remoteAddress;
+            this.connection.setMaxListeners(Infinity)
+
+            let setAddrAndPort = ((c: net.Socket) => (() => {
+                this.localPort = c.localPort;
+                this.remotePort = c.remotePort;
+                this.localAddress = c.remoteAddress;
+                this.remoteAddress = c.remoteAddress;
+            }))(this.connection);
+
+            setAddrAndPort();
+
+            /* Debug */
+
+            if (
+                !this.connection.localPort ||
+                !this.connection.remotePort ||
+                !this.connection.localAddress ||
+                !this.connection.remoteAddress
+            ) {
+
+                let { localPort, remotePort, localAddress, remoteAddress } = this.connection;
+
+                console.log(
+                    "debug sip socket where the connection is started locally",
+                    { localPort, remotePort, localAddress, remoteAddress }
+                );
+
+            }
+
+            /* End Debug */
+
+            if (this.connection.localPort) {
+
+                this.evtConnect.post(); //For post count
+
+            } else {
+
+                this.connection.once(
+                    this.connection["encrypted"] ? "secureConnect" : "connect",
+                    () => {
+                        setAddrAndPort();
+                        this.evtConnect.post();
+                    }
+                );
+
+            }
+
+        }
 
     }
 
     public readonly setKeepAlive: net.Socket['setKeepAlive'] =
-        (...inputs) => this.connection.setKeepAlive.apply(this.connection, inputs);
+        (...inputs) =>
+            Socket.matchWebSocket(this.connection) ?
+                undefined :
+                this.connection.setKeepAlive.apply(this.connection, inputs);
+    ;
+
 
     /** Return true if sent successfully */
     public write(sipPacket: Packet): boolean | Promise<boolean> {
@@ -225,35 +314,44 @@ export class Socket {
             return false;
         }
 
-        let flushed = this.connection.write(
-            new Buffer(stringify(sipPacket), "binary")
-        );
+        //TODO: this can potentially throw, make sure it's ok
+        let data = new Buffer(stringify(sipPacket), "binary");
 
-        if (flushed) {
+        if (Socket.matchWebSocket(this.connection)) {
 
-            return true;
+            return new Promise<boolean>(
+                resolve => (this.connection as WebSocket)
+                    .send(data, { "binary": true }, error => resolve(error ? true : false))
+            );
 
         } else {
 
+            let flushed = this.connection.write(data);
 
-            debug("we have to wait for drain to confirm write...");
+            if (flushed) {
 
-            let boundTo = [];
+                return true;
 
-            return Promise.race([
-                new Promise<false>(
-                    resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))
-                ),
-                new Promise<true>(
-                    resolve => this.connection.once("drain", () => {
-                        debug("...drain");
-                        this.evtClose.detach(boundTo);
-                        resolve(true);
-                    })
-                )
-            ]);
+            } else {
+
+                let boundTo = [];
+
+                return Promise.race([
+                    new Promise<false>(
+                        resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))
+                    ),
+                    new Promise<true>(
+                        resolve => this.connection.once("drain", () => {
+                            this.evtClose.detach(boundTo);
+                            resolve(true);
+                        })
+                    )
+                ]);
+
+            }
 
         }
+
 
     }
 
@@ -265,52 +363,20 @@ export class Socket {
         this.evtResponse.detach();
         this.evtRequest.detach();
         */
+
         this.connection.emit("close", false);
 
     }
 
-    public get localPort(): number {
-        let localPort = this.__localPort__ || this.connection.localPort;
 
-        if (typeof localPort !== "number" || isNaN(localPort))
-            throw new Error("LocalPort not yet set");
+    public get protocol(): "TCP" | "TLS" | "WSS" {
 
-        return localPort;
-    }
+        if (Socket.matchWebSocket(this.connection)) {
+            return "WSS";
+        } else {
+            return this.connection["encrypted"] ? "TLS" : "TCP";
+        }
 
-    public get localAddress(): string {
-        let localAddress = this.__localAddress__ || this.connection.localAddress;
-
-        if (!localAddress) throw new Error("LocalAddress not yet set");
-
-        return localAddress;
-    }
-
-    public get remotePort(): number {
-        let remotePort = this.__remotePort__ || this.connection.remotePort;
-
-        if (typeof remotePort !== "number" || isNaN(remotePort))
-            throw new Error("Remote port not yet set");
-
-        return remotePort;
-
-    }
-
-    public get remoteAddress(): string {
-
-        let remoteAddress = this.__remoteAddress__ || this.connection.remoteAddress;
-
-        if (!remoteAddress) throw new Error("Remote address not yes set");
-
-        return remoteAddress;
-    }
-
-    public get encrypted(): boolean {
-        return this.connection["encrypted"] ? true : false;
-    }
-
-    public get protocol(): "TCP" | "TLS" {
-        return this.encrypted ? "TLS" : "TCP";
     }
 
     public addViaHeader(
@@ -443,6 +509,17 @@ export class Socket {
 
     }
 
+
+}
+
+export namespace Socket {
+
+    export type AddrAndPorts = {
+        localPort: number;
+        remotePort: number;
+        localAddress: string;
+        remoteAddress: string;
+    };
 
 }
 
