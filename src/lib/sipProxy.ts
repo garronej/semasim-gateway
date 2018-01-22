@@ -215,7 +215,7 @@ export async function start() {
     backendSocket.setKeepAlive(true);
 
     backendSocket.evtData.attach(chunk =>
-        console.log("From backend raw:\n", chunk.yellow, "\n\n")
+        console.log(`\nFrom backend:\n${chunk.yellow}\n\n`)
     );
 
     backendSocket.evtConnect.attachOnce(() => 
@@ -257,9 +257,10 @@ export async function start() {
 
             let contactParams= sipLibrary.parseUri(contactAoR!.uri).params;
 
+
             headers["user-agent"] = PsContact.stringifyMisc({
                 "ua_instance": contactAoR!.params["+sip.instance"]!,
-                "ua_userEmail": (new Buffer(contactParams["email_as_hex"]!, "hex")).toString("utf8"),
+                "ua_userEmail": (new Buffer(contactParams["base64_email"]!, "base64")).toString("utf8"),
                 "ua_platform": (() => {
 
                     switch (contactParams["pn-type"]) {
@@ -373,11 +374,9 @@ function createAsteriskSocket(
 
     asteriskSockets.set(connectionId, imsi, asteriskSocket);
 
-    /*
     asteriskSocket.evtData.attach(chunk =>
-        console.log("From Asterisk raw:\n", chunk.grey, "\n\n")
+        console.log(`\nFrom Asterisk:\n${chunk.grey}\n\n`)
     );
-    */
 
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     (()=>{

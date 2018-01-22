@@ -267,6 +267,7 @@ function registerListeners() {
             switch (_d.label) {
                 case 0:
                     debug("Contact registered");
+                    console.log(contact);
                     return [4 /*yield*/, db.semasim.addUaSim(contact.uaSim)];
                 case 1:
                     _a = _d.sent(), isUaCreatedOrUpdated = _a.isUaCreatedOrUpdated, isFirstUaForSim = _a.isFirstUaForSim;

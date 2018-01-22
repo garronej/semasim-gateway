@@ -228,7 +228,7 @@ function start() {
                                 _f)])]))();
                     backendSocket.setKeepAlive(true);
                     backendSocket.evtData.attach(function (chunk) {
-                        return console.log("From backend raw:\n", chunk.yellow, "\n\n");
+                        return console.log("\nFrom backend:\n" + chunk.yellow + "\n\n");
                     });
                     backendSocket.evtConnect.attachOnce(function () {
                         return exports.evtNewBackendSocketConnect.post(backendSocket);
@@ -261,7 +261,7 @@ function start() {
                                         contactParams_1 = sipLibrary.parseUri(contactAoR.uri).params;
                                         headers["user-agent"] = sipContact_1.PsContact.stringifyMisc({
                                             "ua_instance": contactAoR.params["+sip.instance"],
-                                            "ua_userEmail": (new Buffer(contactParams_1["email_as_hex"], "hex")).toString("utf8"),
+                                            "ua_userEmail": (new Buffer(contactParams_1["base64_email"], "base64")).toString("utf8"),
                                             "ua_platform": (function () {
                                                 switch (contactParams_1["pn-type"]) {
                                                     case "google":
@@ -353,11 +353,9 @@ exports.start = start;
 function createAsteriskSocket(connectionId, imsi, uaPublicIp, backendSocket) {
     var asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
     asteriskSockets.set(connectionId, imsi, asteriskSocket);
-    /*
-    asteriskSocket.evtData.attach(chunk =>
-        console.log("From Asterisk raw:\n", chunk.grey, "\n\n")
-    );
-    */
+    asteriskSocket.evtData.attach(function (chunk) {
+        return console.log("\nFrom Asterisk:\n" + chunk.grey + "\n\n");
+    });
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     (function () {
         var matcher = function (sipPacket) {

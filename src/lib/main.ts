@@ -172,6 +172,8 @@ function registerListeners() {
 
             debug(`Contact registered`);
 
+            console.log(contact);
+
             let {
                 isUaCreatedOrUpdated,
                 isFirstUaForSim

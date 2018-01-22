@@ -180,7 +180,7 @@ export class Server {
                     return;
                 }
 
-                console.log("server", { methodName, params });
+                //console.log("server", { methodName, params });
 
                 let handler = this.handlers[methodName];
 
@@ -204,7 +204,7 @@ export class Server {
 
                 }
 
-                console.log("server", { response });
+                //console.log("server", { response });
 
                 let sipRequestResp = ApiMessage.Response.buildSip(
                     ApiMessage.readActionId(sipRequest),
@@ -274,7 +274,7 @@ export class Client {
         timeout = 5 * 60 * 1000
     ): Promise<any> {
 
-        console.log("client", { methodName, params });
+        //console.log("client", { methodName, params });
 
         let sipRequest = ApiMessage.Request.buildSip(methodName, params);
 
@@ -355,7 +355,7 @@ export class Client {
 
         }
 
-        console.log("client", { response });
+        //console.log("client", { response });
 
         return response;
 
