@@ -3,7 +3,7 @@ import {
     DongleController as Dc, 
     Ami, 
     agi,
-    phoneNumberLibrary as phone
+    utils as dcUtils
 } from "chan-dongle-extended-client";
 
 import { Contact } from "./sipContact";
@@ -53,7 +53,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     if (!dongle) return;
 
-    let number = phone.toNationalNumber(channel.request.callerid, imsi);
+    let number = dcUtils.toNationalNumber(channel.request.callerid, imsi);
 
     let evtReachableContact = new SyncEvent<Contact>();
 

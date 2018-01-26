@@ -84,7 +84,7 @@ function fromDongle(channel) {
                     });
                     if (!dongle)
                         return [2 /*return*/];
-                    number = chan_dongle_extended_client_1.phoneNumberLibrary.toNationalNumber(channel.request.callerid, imsi);
+                    number = chan_dongle_extended_client_1.utils.toNationalNumber(channel.request.callerid, imsi);
                     evtReachableContact = new ts_events_extended_1.SyncEvent();
                     //TODO: finish
                     db.asterisk.evtNewContact.attach(function (_a) {

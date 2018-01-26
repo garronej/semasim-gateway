@@ -83,7 +83,7 @@ function sendMessage(contact, from_number, headers, text, from_number_sim_name) 
     return new Promise(function (resolve, reject) {
         var actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
         var uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
-        from_number = chan_dongle_extended_client_1.phoneNumberLibrary.toNationalNumber(from_number, contact.uaSim.imsi);
+        from_number = chan_dongle_extended_client_1.utils.toNationalNumber(from_number, contact.uaSim.imsi);
         chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend("pjsip:" + contact.uaSim.imsi + "/" + uri, from_number, actionId).catch(function (amiError) { return reject(amiError); });
         sipProxy_1.evtOutgoingMessage.attachOnce(function (_a) {
             var sipRequest = _a.sipRequest;

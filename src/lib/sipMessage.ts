@@ -2,7 +2,7 @@ import { SyncEvent } from "ts-events-extended";
 import {
     DongleController as Dc,
     Ami,
-    phoneNumberLibrary as phone
+    utils as dcUtils
 } from "chan-dongle-extended-client";
 import { Contact } from "./sipContact";
 import { evtOutgoingMessage, evtIncomingMessage } from "./sipProxy";
@@ -58,7 +58,7 @@ export function sendMessage(
 
         let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
-        from_number = phone.toNationalNumber(from_number, contact.uaSim.imsi);
+        from_number = dcUtils.toNationalNumber(from_number, contact.uaSim.imsi);
 
         Dc.getInstance().ami.messageSend(
             `pjsip:${contact.uaSim.imsi}/${uri}`, from_number, actionId
