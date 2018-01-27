@@ -91,13 +91,19 @@ function notifySimOnline(dongle) {
                     methodName = sipApi_1.backendDeclaration.notifySimOnline.methodName;
                     _a = {
                         "imsi": dongle.sim.imsi,
-                        "isVoiceEnabled": dongle.isVoiceEnabled,
                         "storageDigest": dongle.sim.storage.digest
                     };
                     _b = "password";
                     return [4 /*yield*/, db.asterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi)];
                 case 1:
                     params = (_a[_b] = _e.sent(),
+                        _a["simDongle"] = {
+                            "imei": dongle.imei,
+                            "isVoiceEnabled": dongle.isVoiceEnabled,
+                            "manufacturer": dongle.manufacturer,
+                            "model": dongle.model,
+                            "firmwareVersion": dongle.firmwareVersion
+                        },
                         _a);
                     _e.label = 2;
                 case 2:

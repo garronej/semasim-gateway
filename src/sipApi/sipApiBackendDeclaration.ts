@@ -3,13 +3,19 @@ import { Contact } from "../lib/sipContact";
 
 export namespace notifySimOnline {
 
-    export const methodName= "notifiySimOnline";
+    export const methodName= "notifySimOnline";
 
     export type Params = {
         imsi: string;
-        isVoiceEnabled: boolean | undefined;
         storageDigest: string;
         password: string;
+        simDongle: {
+            imei: string;
+            isVoiceEnabled: boolean | undefined;
+            manufacturer: string;
+            model: string;
+            firmwareVersion: string;
+        };
     };
 
     export type Response={

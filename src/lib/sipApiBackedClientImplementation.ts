@@ -61,11 +61,17 @@ export function notifySimOnline(
 
         let params: apiDeclaration.notifySimOnline.Params = {
             "imsi": dongle.sim.imsi,
-            "isVoiceEnabled": dongle.isVoiceEnabled,
             "storageDigest": dongle.sim.storage.digest,
             "password": await db.asterisk.createEndpointIfNeededAndGetPassword(
                 dongle.sim.imsi
-            )
+            ),
+            "simDongle": {
+                "imei": dongle.imei,
+                "isVoiceEnabled": dongle.isVoiceEnabled,
+                "manufacturer": dongle.manufacturer,
+                "model": dongle.model,
+                "firmwareVersion": dongle.firmwareVersion
+            }
         };
 
         let response: apiDeclaration.notifySimOnline.Response;

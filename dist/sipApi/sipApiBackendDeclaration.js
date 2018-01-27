@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var notifySimOnline;
 (function (notifySimOnline) {
-    notifySimOnline.methodName = "notifiySimOnline";
+    notifySimOnline.methodName = "notifySimOnline";
 })(notifySimOnline = exports.notifySimOnline || (exports.notifySimOnline = {}));
 var notifySimOffline;
 (function (notifySimOffline) {
