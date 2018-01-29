@@ -64,7 +64,7 @@ var asterisk;
 (function (asterisk) {
     var connectionConfig = __assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk" });
     /** is exported only for tests */
-    asterisk.query = f.buildQueryFunction(connectionConfig);
+    _a = f.getUtils(connectionConfig), asterisk.query = _a.query, asterisk.esc = _a.esc, asterisk.buildInsertQuery = _a.buildInsertQuery;
     /** for test purpose only */
     function flush() {
         return __awaiter(this, void 0, void 0, function () {
@@ -152,7 +152,7 @@ var asterisk;
                 var affectedRows, isDeleted;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-                        case 0: return [4 /*yield*/, asterisk.query("DELETE FROM ps_contacts WHERE id=" + f.esc(contact.id))];
+                        case 0: return [4 /*yield*/, asterisk.query("DELETE FROM ps_contacts WHERE id=" + asterisk.esc(contact.id))];
                         case 1:
                             affectedRows = (_a.sent()).affectedRows;
                             isDeleted = affectedRows ? true : false;
@@ -183,7 +183,7 @@ var asterisk;
                 switch (_a.label) {
                     case 0:
                         sql = "";
-                        sql += f.buildInsertQuery("ps_aors", {
+                        sql += asterisk.buildInsertQuery("ps_aors", {
                             "id": imsi,
                             "max_contacts": 12,
                             "qualify_frequency": 0,
@@ -191,13 +191,13 @@ var asterisk;
                         }, "IGNORE");
                         sql += [
                             "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
-                            "VALUES( " + f.esc(imsi) + ", 'userpass', " + f.esc(imsi) + ", MD5(RAND()), 'semasim' )",
+                            "VALUES( " + asterisk.esc(imsi) + ", 'userpass', " + asterisk.esc(imsi) + ", MD5(RAND()), 'semasim' )",
                             "ON DUPLICATE KEY UPDATE",
                             renewPassword ? "password= VALUES(password)" : "id=id",
                             ";",
                             ""
                         ].join("\n");
-                        sql += f.buildInsertQuery("ps_endpoints", {
+                        sql += asterisk.buildInsertQuery("ps_endpoints", {
                             "id": imsi,
                             "disallow": "all",
                             "allow": "alaw,ulaw",
@@ -217,7 +217,7 @@ var asterisk;
                             "transport": "transport-tcp",
                             "callerid_tag": null
                         }, "IGNORE");
-                        sql += "SELECT password FROM ps_auths WHERE id= " + f.esc(imsi);
+                        sql += "SELECT password FROM ps_auths WHERE id= " + asterisk.esc(imsi);
                         return [4 /*yield*/, asterisk.query(sql)];
                     case 1:
                         password = (_a.sent()).pop()[0].password;
@@ -227,10 +227,11 @@ var asterisk;
         });
     }
     asterisk.createEndpointIfNeededAndGetPassword = createEndpointIfNeededAndGetPassword;
+    var _a;
 })(asterisk = exports.asterisk || (exports.asterisk = {}));
 var semasim;
 (function (semasim) {
-    semasim.query = f.buildQueryFunction(__assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim" }));
+    _a = f.getUtils(__assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim" }), "HANDLE STRING ENCODING"), semasim.query = _a.query, semasim.esc = _a.esc, semasim.buildInsertQuery = _a.buildInsertQuery;
     /** Only for test purpose */
     function flush() {
         return __awaiter(this, void 0, void 0, function () {
@@ -259,7 +260,7 @@ var semasim;
                     case 0:
                         sql = "";
                         imsi = uaSim.imsi, ua = uaSim.ua;
-                        sql += f.buildInsertQuery("ua", {
+                        sql += semasim.buildInsertQuery("ua", {
                             "instance": ua.instance,
                             "user_email": ua.userEmail,
                             "platform": ua.platform,
@@ -269,18 +270,18 @@ var semasim;
                         sql += [
                             "SELECT @ua_ref:=ua.id_",
                             "FROM ua",
-                            "WHERE instance= " + f.esc(ua.instance) + " AND user_email= " + f.esc(ua.userEmail),
+                            "WHERE instance= " + semasim.esc(ua.instance) + " AND user_email= " + semasim.esc(ua.userEmail),
                             ";",
                             ""
                         ].join("\n");
-                        sql += f.buildInsertQuery("ua_sim", {
+                        sql += semasim.buildInsertQuery("ua_sim", {
                             "ua": { "@": "ua_ref" },
                             imsi: imsi
                         }, "IGNORE");
                         sql += [
                             "SELECT COUNT(*) as sim_ua_count",
                             "FROM ua_sim",
-                            "WHERE imsi= " + f.esc(imsi)
+                            "WHERE imsi= " + semasim.esc(imsi)
                         ].join("\n");
                         return [4 /*yield*/, semasim.query(sql)];
                     case 1:
@@ -305,14 +306,14 @@ var semasim;
                     case 0:
                         cond = uasToKeep.length ? [
                             " AND NOT ( ",
-                            uasToKeep.map(function (ua) { return "ua.instance= " + f.esc(ua.instance) + " AND ua.user_email= " + f.esc(ua.userEmail); }).join(" OR "),
+                            uasToKeep.map(function (ua) { return "ua.instance= " + semasim.esc(ua.instance) + " AND ua.user_email= " + semasim.esc(ua.userEmail); }).join(" OR "),
                             " )"
                         ].join("") : "";
                         return [4 /*yield*/, semasim.query([
                                 "DELETE ua_sim.*",
                                 "FROM ua_sim",
                                 "INNER JOIN ua ON ua.id_= ua_sim.ua",
-                                "WHERE ua_sim.imsi= " + f.esc(imsi) + cond
+                                "WHERE ua_sim.imsi= " + semasim.esc(imsi) + cond
                             ].join("\n"))];
                     case 1:
                         _a.sent();
@@ -338,18 +339,18 @@ var semasim;
                                 "INNER JOIN ua ON ua.id_= ua_sim.ua",
                                 "WHERE",
                                 [
-                                    "ua_sim.imsi= " + f.esc(uaSim.imsi),
-                                    "ua.instance = " + f.esc(uaSim.ua.instance),
-                                    "ua.user_email= " + f.esc(uaSim.ua.userEmail)
+                                    "ua_sim.imsi= " + semasim.esc(uaSim.imsi),
+                                    "ua.instance = " + semasim.esc(uaSim.ua.instance),
+                                    "ua.user_email= " + semasim.esc(uaSim.ua.userEmail)
                                 ].join(" AND "),
                                 ";",
                                 ""
                             ].join("\n");
-                            sql += f.buildInsertQuery("message_toward_gsm", {
+                            sql += semasim.buildInsertQuery("message_toward_gsm", {
                                 "date": Date.now(),
                                 "ua_sim": { "@": "ua_sim_ref" },
                                 "to_number": toNumber,
-                                "base64_text": f.b64.enc(text),
+                                "text": text,
                                 "send_date": null
                             }, "THROW ERROR");
                             return [4 /*yield*/, semasim.query(sql)];
@@ -372,7 +373,7 @@ var semasim;
                                 "message_toward_gsm.id_,",
                                 "message_toward_gsm.date,",
                                 "message_toward_gsm.to_number,",
-                                "message_toward_gsm.base64_text,",
+                                "message_toward_gsm.text,",
                                 "ua_sim.imsi,",
                                 "ua.instance,",
                                 "ua.user_email,",
@@ -382,7 +383,7 @@ var semasim;
                                 "FROM message_toward_gsm",
                                 "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
                                 "INNER JOIN ua ON ua.id_ = ua_sim.ua",
-                                "WHERE ua_sim.imsi=" + f.esc(imsi) + " AND message_toward_gsm.send_date IS NULL",
+                                "WHERE ua_sim.imsi=" + semasim.esc(imsi) + " AND message_toward_gsm.send_date IS NULL",
                                 "ORDER BY message_toward_gsm.date",
                                 ";"
                             ].join("\n"))];
@@ -403,14 +404,14 @@ var semasim;
                                         "imsi": row["imsi"]
                                     },
                                     "toNumber": row["to_number"],
-                                    "text": f.b64.dec(row["base64_text"])
+                                    "text": row["text"]
                                 };
                                 var message_toward_gsm_id_ = row["id_"];
                                 var confirm = {
                                     "setSent": function (sentDate) { return __awaiter(_this, void 0, void 0, function () {
                                         return __generator(this, function (_a) {
                                             switch (_a.label) {
-                                                case 0: return [4 /*yield*/, semasim.query(f.buildInsertQuery("message_toward_gsm", {
+                                                case 0: return [4 /*yield*/, semasim.query(semasim.buildInsertQuery("message_toward_gsm", {
                                                         "id_": message_toward_gsm_id_,
                                                         "send_date": sentDate ? sentDate.getTime() : -1
                                                     }, "UPDATE"))];
@@ -421,7 +422,7 @@ var semasim;
                                     "setStatusReport": function (statusReport) { return __awaiter(_this, void 0, void 0, function () {
                                         return __generator(this, function (_a) {
                                             switch (_a.label) {
-                                                case 0: return [4 /*yield*/, semasim.query(f.buildInsertQuery("message_toward_gsm_status_report", {
+                                                case 0: return [4 /*yield*/, semasim.query(semasim.buildInsertQuery("message_toward_gsm_status_report", {
                                                         "message_toward_gsm": message_toward_gsm_id_,
                                                         "is_delivered": statusReport.isDelivered ? 1 : 0,
                                                         "discharge_date": isNaN(statusReport.dischargeDate.getTime()) ?
@@ -509,36 +510,36 @@ var semasim;
                             switch (target.target) {
                                 case "SPECIFIC UA REGISTERED TO SIM":
                                     sqlSelectionUaSim += [
-                                        "" + f.esc(target.uaSim.imsi),
-                                        "ua.instance= " + f.esc(target.uaSim.ua.instance),
-                                        "ua.user_email= " + f.esc(target.uaSim.ua.userEmail)
+                                        "" + semasim.esc(target.uaSim.imsi),
+                                        "ua.instance= " + semasim.esc(target.uaSim.ua.instance),
+                                        "ua.user_email= " + semasim.esc(target.uaSim.ua.userEmail)
                                     ].join(" AND ");
                                     break;
                                 case "ALL UA REGISTERED TO SIM":
-                                    sqlSelectionUaSim += "" + f.esc(target.imsi);
+                                    sqlSelectionUaSim += "" + semasim.esc(target.imsi);
                                     break;
                                 case "ALL OTHER UA OF USER REGISTERED TO SIM":
                                     sqlSelectionUaSim += [
-                                        "" + f.esc(target.uaSim.imsi),
-                                        "ua.instance <> " + f.esc(target.uaSim.ua.instance),
-                                        "ua.user_email= " + f.esc(target.uaSim.ua.userEmail)
+                                        "" + semasim.esc(target.uaSim.imsi),
+                                        "ua.instance <> " + semasim.esc(target.uaSim.ua.instance),
+                                        "ua.user_email= " + semasim.esc(target.uaSim.ua.userEmail)
                                     ].join(" AND ");
                                     break;
                                 case "ALL UA OF OTHER USERS REGISTERED TO SIM":
                                     sqlSelectionUaSim += [
-                                        "" + f.esc(target.uaSim.imsi),
-                                        "ua.user_email<> " + f.esc(target.uaSim.ua.userEmail)
+                                        "" + semasim.esc(target.uaSim.imsi),
+                                        "ua.user_email<> " + semasim.esc(target.uaSim.ua.userEmail)
                                     ].join(" AND ");
                                     break;
                             }
                             return [4 /*yield*/, semasim.query([
-                                    "INSERT INTO message_toward_sip ( is_report, date, from_number, base64_text )",
+                                    "INSERT INTO message_toward_sip ( is_report, date, from_number, text )",
                                     "SELECT",
                                     [
-                                        f.esc(isReport ? 1 : 0),
-                                        f.esc(date.getTime()),
-                                        f.esc(fromNumber),
-                                        f.esc(f.b64.enc(text))
+                                        semasim.esc(isReport ? 1 : 0),
+                                        semasim.esc(date.getTime()),
+                                        semasim.esc(fromNumber),
+                                        semasim.esc(text)
                                     ].join(", "),
                                     sqlSelectionUaSim,
                                     "HAVING COUNT(*) <> 0",
@@ -571,9 +572,9 @@ var semasim;
                                 "WHERE",
                                 [
                                     "ua_sim_message_toward_sip.delivered_date IS NULL",
-                                    "ua_sim.imsi= " + f.esc(uaSim.imsi),
-                                    "ua.instance= " + f.esc(uaSim.ua.instance),
-                                    "ua.user_email= " + f.esc(uaSim.ua.userEmail)
+                                    "ua_sim.imsi= " + semasim.esc(uaSim.imsi),
+                                    "ua.instance= " + semasim.esc(uaSim.ua.instance),
+                                    "ua.user_email= " + semasim.esc(uaSim.ua.userEmail)
                                 ].join(" AND ")
                             ].join("\n");
                             return [4 /*yield*/, semasim.query(sql)];
@@ -596,7 +597,7 @@ var semasim;
                                 "message_toward_sip.is_report,",
                                 "message_toward_sip.date,",
                                 "message_toward_sip.from_number,",
-                                "message_toward_sip.base64_text,",
+                                "message_toward_sip.text,",
                                 "ua_sim_message_toward_sip.id_",
                                 "FROM message_toward_sip",
                                 "INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_",
@@ -605,9 +606,9 @@ var semasim;
                                 "WHERE",
                                 [
                                     "ua_sim_message_toward_sip.delivered_date IS NULL",
-                                    "ua_sim.imsi= " + f.esc(uaSim.imsi),
-                                    "ua.instance= " + f.esc(uaSim.ua.instance),
-                                    "ua.user_email= " + f.esc(uaSim.ua.userEmail)
+                                    "ua_sim.imsi= " + semasim.esc(uaSim.imsi),
+                                    "ua.instance= " + semasim.esc(uaSim.ua.instance),
+                                    "ua.user_email= " + semasim.esc(uaSim.ua.userEmail)
                                 ].join(" AND "),
                                 "ORDER BY message_toward_sip.date"
                             ].join("\n");
@@ -620,12 +621,12 @@ var semasim;
                                     "date": new Date(row["date"]),
                                     "fromNumber": row["from_number"],
                                     "isReport": row["is_report"] === 1,
-                                    "text": f.b64.dec(row["base64_text"])
+                                    "text": row["text"]
                                 };
                                 var setReceived = function () { return __awaiter(_this, void 0, void 0, function () {
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
-                                            case 0: return [4 /*yield*/, semasim.query(f.buildInsertQuery("ua_sim_message_toward_sip", {
+                                            case 0: return [4 /*yield*/, semasim.query(semasim.buildInsertQuery("ua_sim_message_toward_sip", {
                                                     "id_": row["id_"],
                                                     "delivered_date": Date.now()
                                                 }, "UPDATE"))];
@@ -655,4 +656,5 @@ var semasim;
         }
         MessageTowardSip.getUnsent = getUnsent;
     })(MessageTowardSip = semasim.MessageTowardSip || (semasim.MessageTowardSip = {}));
+    var _a;
 })(semasim = exports.semasim || (exports.semasim = {}));

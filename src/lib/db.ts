@@ -18,7 +18,7 @@ export namespace asterisk {
     };
 
     /** is exported only for tests */
-    export const query = f.buildQueryFunction(connectionConfig);
+    export const { query, esc, buildInsertQuery }=f.getUtils(connectionConfig);
 
     /** for test purpose only */
     export async function flush() {
@@ -97,7 +97,7 @@ export namespace asterisk {
             let queryPromise = (async () => {
 
                 let { affectedRows } = await query(
-                    `DELETE FROM ps_contacts WHERE id=${f.esc(contact.id)}`
+                    `DELETE FROM ps_contacts WHERE id=${esc(contact.id)}`
                 );
 
                 let isDeleted = affectedRows ? true : false;
@@ -129,7 +129,7 @@ export namespace asterisk {
 
         let sql = "";
 
-        sql += f.buildInsertQuery("ps_aors", {
+        sql += buildInsertQuery("ps_aors", {
             "id": imsi,
             "max_contacts": 12,
             "qualify_frequency": 0, //15000
@@ -138,14 +138,14 @@ export namespace asterisk {
 
         sql += [
             "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
-            `VALUES( ${f.esc(imsi)}, 'userpass', ${f.esc(imsi)}, MD5(RAND()), 'semasim' )`,
+            `VALUES( ${esc(imsi)}, 'userpass', ${esc(imsi)}, MD5(RAND()), 'semasim' )`,
             "ON DUPLICATE KEY UPDATE",
             renewPassword ? "password= VALUES(password)" : "id=id",
             ";",
             ""
         ].join("\n");
 
-        sql += f.buildInsertQuery("ps_endpoints", {
+        sql += buildInsertQuery("ps_endpoints", {
             "id": imsi,
             "disallow": "all",
             "allow": "alaw,ulaw",
@@ -166,7 +166,7 @@ export namespace asterisk {
             "callerid_tag": null
         }, "IGNORE");
 
-        sql += `SELECT password FROM ps_auths WHERE id= ${f.esc(imsi)}`;
+        sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
 
         let { password } = (await query(sql)).pop()[0];
 
@@ -178,10 +178,10 @@ export namespace asterisk {
 
 export namespace semasim {
 
-    export const query = f.buildQueryFunction({
+    export const { query, esc, buildInsertQuery }= f.getUtils({
         ...c.dbParamsGateway,
         "database": "semasim"
-    });
+    }, "HANDLE STRING ENCODING");
 
     /** Only for test purpose */
     export async function flush() {
@@ -206,7 +206,7 @@ export namespace semasim {
 
         let { imsi, ua } = uaSim;
 
-        sql += f.buildInsertQuery("ua", {
+        sql += buildInsertQuery("ua", {
             "instance": ua.instance,
             "user_email": ua.userEmail,
             "platform": ua.platform,
@@ -217,12 +217,12 @@ export namespace semasim {
         sql += [
             "SELECT @ua_ref:=ua.id_",
             "FROM ua",
-            `WHERE instance= ${f.esc(ua.instance)} AND user_email= ${f.esc(ua.userEmail)}`,
+            `WHERE instance= ${esc(ua.instance)} AND user_email= ${esc(ua.userEmail)}`,
             ";",
             ""
         ].join("\n");
 
-        sql += f.buildInsertQuery("ua_sim", {
+        sql += buildInsertQuery("ua_sim", {
             "ua": { "@": "ua_ref" },
             imsi
         }, "IGNORE");
@@ -230,7 +230,7 @@ export namespace semasim {
         sql += [
             `SELECT COUNT(*) as sim_ua_count`,
             "FROM ua_sim",
-            `WHERE imsi= ${f.esc(imsi)}`
+            `WHERE imsi= ${esc(imsi)}`
         ].join("\n");
 
         let queryResults = await query(sql);
@@ -254,7 +254,7 @@ export namespace semasim {
         let cond = uasToKeep.length ? [
             " AND NOT ( ",
             uasToKeep.map(
-                ua => `ua.instance= ${f.esc(ua.instance)} AND ua.user_email= ${f.esc(ua.userEmail)}`
+                ua => `ua.instance= ${esc(ua.instance)} AND ua.user_email= ${esc(ua.userEmail)}`
             ).join(" OR "),
             " )"
         ].join("") : "";
@@ -263,7 +263,7 @@ export namespace semasim {
             "DELETE ua_sim.*",
             "FROM ua_sim",
             "INNER JOIN ua ON ua.id_= ua_sim.ua",
-            `WHERE ua_sim.imsi= ${f.esc(imsi)}${cond}`
+            `WHERE ua_sim.imsi= ${esc(imsi)}${cond}`
         ].join("\n"));
     }
 
@@ -291,19 +291,19 @@ export namespace semasim {
                 "INNER JOIN ua ON ua.id_= ua_sim.ua",
                 "WHERE",
                 [
-                    `ua_sim.imsi= ${f.esc(uaSim.imsi)}`,
-                    `ua.instance = ${f.esc(uaSim.ua.instance)}`,
-                    `ua.user_email= ${f.esc(uaSim.ua.userEmail)}`
+                    `ua_sim.imsi= ${esc(uaSim.imsi)}`,
+                    `ua.instance = ${esc(uaSim.ua.instance)}`,
+                    `ua.user_email= ${esc(uaSim.ua.userEmail)}`
                 ].join(" AND "),
                 ";",
                 ""
             ].join("\n");
 
-            sql += f.buildInsertQuery("message_toward_gsm", {
+            sql += buildInsertQuery("message_toward_gsm", {
                 "date": Date.now(),
                 "ua_sim": { "@": "ua_sim_ref" },
                 "to_number": toNumber,
-                "base64_text": f.b64.enc(text),
+                "text": text,
                 "send_date": null
             }, "THROW ERROR");
 
@@ -326,7 +326,7 @@ export namespace semasim {
                     "message_toward_gsm.id_,",
                     "message_toward_gsm.date,",
                     "message_toward_gsm.to_number,",
-                    "message_toward_gsm.base64_text,",
+                    "message_toward_gsm.text,",
                     "ua_sim.imsi,",
                     "ua.instance,",
                     "ua.user_email,",
@@ -336,7 +336,7 @@ export namespace semasim {
                     "FROM message_toward_gsm",
                     "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
                     "INNER JOIN ua ON ua.id_ = ua_sim.ua",
-                    `WHERE ua_sim.imsi=${f.esc(imsi)} AND message_toward_gsm.send_date IS NULL`,
+                    `WHERE ua_sim.imsi=${esc(imsi)} AND message_toward_gsm.send_date IS NULL`,
                     "ORDER BY message_toward_gsm.date",
                     ";"
                 ].join("\n")
@@ -359,20 +359,20 @@ export namespace semasim {
                         "imsi": row["imsi"]
                     },
                     "toNumber": row["to_number"],
-                    "text": f.b64.dec(row["base64_text"])!
+                    "text": row["text"]
                 };
 
                 let message_toward_gsm_id_ = row["id_"];
 
                 let confirm: Confirm = {
                     "setSent": async sentDate => await query(
-                        f.buildInsertQuery("message_toward_gsm", {
+                        buildInsertQuery("message_toward_gsm", {
                             "id_": message_toward_gsm_id_,
                             "send_date": sentDate ? sentDate.getTime() : -1
                         }, "UPDATE")
                     ),
                     "setStatusReport": async statusReport => await query(
-                        f.buildInsertQuery("message_toward_gsm_status_report", {
+                        buildInsertQuery("message_toward_gsm_status_report", {
                             "message_toward_gsm": message_toward_gsm_id_,
                             "is_delivered": statusReport.isDelivered ? 1 : 0,
                             "discharge_date": isNaN(statusReport.dischargeDate.getTime()) ?
@@ -459,37 +459,37 @@ export namespace semasim {
             switch (target.target) {
                 case "SPECIFIC UA REGISTERED TO SIM":
                     sqlSelectionUaSim += [
-                        `${f.esc(target.uaSim.imsi)}`,
-                        `ua.instance= ${f.esc(target.uaSim.ua.instance)}`,
-                        `ua.user_email= ${f.esc(target.uaSim.ua.userEmail)}`
+                        `${esc(target.uaSim.imsi)}`,
+                        `ua.instance= ${esc(target.uaSim.ua.instance)}`,
+                        `ua.user_email= ${esc(target.uaSim.ua.userEmail)}`
                     ].join(" AND ");
                     break;
                 case "ALL UA REGISTERED TO SIM":
-                    sqlSelectionUaSim += `${f.esc(target.imsi)}`;
+                    sqlSelectionUaSim += `${esc(target.imsi)}`;
                     break;
                 case "ALL OTHER UA OF USER REGISTERED TO SIM":
                     sqlSelectionUaSim += [
-                        `${f.esc(target.uaSim.imsi)}`,
-                        `ua.instance <> ${f.esc(target.uaSim.ua.instance)}`,
-                        `ua.user_email= ${f.esc(target.uaSim.ua.userEmail)}`
+                        `${esc(target.uaSim.imsi)}`,
+                        `ua.instance <> ${esc(target.uaSim.ua.instance)}`,
+                        `ua.user_email= ${esc(target.uaSim.ua.userEmail)}`
                     ].join(" AND ");
                     break;
                 case "ALL UA OF OTHER USERS REGISTERED TO SIM":
                     sqlSelectionUaSim += [
-                        `${f.esc(target.uaSim.imsi)}`,
-                        `ua.user_email<> ${f.esc(target.uaSim.ua.userEmail)}`
+                        `${esc(target.uaSim.imsi)}`,
+                        `ua.user_email<> ${esc(target.uaSim.ua.userEmail)}`
                     ].join(" AND ");
                     break;
             }
 
             let queryResults= await query([
-                "INSERT INTO message_toward_sip ( is_report, date, from_number, base64_text )",
+                "INSERT INTO message_toward_sip ( is_report, date, from_number, text )",
                 "SELECT",
                 [
-                    f.esc(isReport ? 1 : 0),
-                    f.esc(date.getTime()),
-                    f.esc(fromNumber),
-                    f.esc( f.b64.enc(text))
+                    esc(isReport ? 1 : 0),
+                    esc(date.getTime()),
+                    esc(fromNumber),
+                    esc(text)
                 ].join(", "),
                 sqlSelectionUaSim,
                 "HAVING COUNT(*) <> 0",
@@ -517,9 +517,9 @@ export namespace semasim {
                 "WHERE",
                 [
                     "ua_sim_message_toward_sip.delivered_date IS NULL",
-                    `ua_sim.imsi= ${f.esc(uaSim.imsi)}`,
-                    `ua.instance= ${f.esc(uaSim.ua.instance)}`,
-                    `ua.user_email= ${f.esc(uaSim.ua.userEmail)}`
+                    `ua_sim.imsi= ${esc(uaSim.imsi)}`,
+                    `ua.instance= ${esc(uaSim.ua.instance)}`,
+                    `ua.user_email= ${esc(uaSim.ua.userEmail)}`
                 ].join(" AND ")
             ].join("\n");
 
@@ -537,7 +537,7 @@ export namespace semasim {
                 `message_toward_sip.is_report,`,
                 `message_toward_sip.date,`,
                 `message_toward_sip.from_number,`,
-                `message_toward_sip.base64_text,`,
+                `message_toward_sip.text,`,
                 `ua_sim_message_toward_sip.id_`,
                 `FROM message_toward_sip`,
                 `INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_`,
@@ -546,9 +546,9 @@ export namespace semasim {
                 "WHERE",
                 [
                     "ua_sim_message_toward_sip.delivered_date IS NULL",
-                    `ua_sim.imsi= ${f.esc(uaSim.imsi)}`,
-                    `ua.instance= ${f.esc(uaSim.ua.instance)}`,
-                    `ua.user_email= ${f.esc(uaSim.ua.userEmail)}`
+                    `ua_sim.imsi= ${esc(uaSim.imsi)}`,
+                    `ua.instance= ${esc(uaSim.ua.instance)}`,
+                    `ua.user_email= ${esc(uaSim.ua.userEmail)}`
                 ].join(" AND "),
                 `ORDER BY message_toward_sip.date`
             ].join("\n");
@@ -563,11 +563,11 @@ export namespace semasim {
                     "date": new Date(row["date"]),
                     "fromNumber": row["from_number"],
                     "isReport": row["is_report"] === 1,
-                    "text": f.b64.dec(row["base64_text"])!
+                    "text": row["text"]
                 };
 
                 let setReceived = async () => await query(
-                    f.buildInsertQuery("ua_sim_message_toward_sip", {
+                    buildInsertQuery("ua_sim_message_toward_sip", {
                         "id_": row["id_"],
                         "delivered_date": Date.now()
                     }, "UPDATE")

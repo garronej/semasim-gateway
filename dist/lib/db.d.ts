@@ -4,7 +4,9 @@ import * as f from "../tools/mySqlFunctions";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 export declare namespace asterisk {
     /** is exported only for tests */
-    const query: (sql: string, values?: f.TSql[] | undefined) => Promise<any>;
+    const query: (sql: string) => Promise<any>, esc: (value: f.TSql) => string, buildInsertQuery: (table: string, obj: Record<string, string | number | {
+        "@": string;
+    } | null>, onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR") => string;
     /** for test purpose only */
     function flush(): Promise<void>;
     const evtNewContact: SyncEvent<Contact>;
@@ -14,7 +16,9 @@ export declare namespace asterisk {
     function createEndpointIfNeededAndGetPassword(imsi: string, renewPassword?: "RENEW PASSWORD" | undefined): Promise<string>;
 }
 export declare namespace semasim {
-    const query: (sql: string, values?: f.TSql[] | undefined) => Promise<any>;
+    const query: (sql: string) => Promise<any>, esc: (value: f.TSql) => string, buildInsertQuery: (table: string, obj: Record<string, string | number | {
+        "@": string;
+    } | null>, onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR") => string;
     /** Only for test purpose */
     function flush(): Promise<void>;
     function addUaSim(uaSim: Contact.UaSim): Promise<{

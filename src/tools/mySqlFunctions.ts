@@ -1,26 +1,68 @@
 import * as mysql from "mysql";
 
 import * as _debug from "debug";
+import { IMySql } from "mysql";
 let debug = _debug("_dbInterface");
 
-export type TSql= string | number | null;
+export type TSql = string | number | null;
 
-export function esc(value: TSql): string{
-    return mysql.escape(value);
-}
 
-export function buildQueryFunction(connectionConfig: mysql.IConnectionConfig) {
+export function getUtils(
+    connectionConfig: mysql.IConnectionConfig,
+    handleStringEncoding?: "HANDLE STRING ENCODING"
+) {
 
     connectionConfig = {
         ...connectionConfig,
         "multipleStatements": true
     };
 
+    let esc = (value: TSql): string => {
+
+        if (handleStringEncoding && typeof value === "string") {
+
+            value = (new Buffer(value, "utf8")).toString("binary");
+
+        }
+
+        return mysql.escape(value);
+
+    };
+
+    let buildInsertQuery = function (
+        table: string,
+        obj: Record<string, TSql | { "@": string; }>,
+        onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR"
+    ): string {
+
+        let keys = Object.keys(obj);
+        let values = keys.map(key => obj[key]);
+
+        let backtickKeys = keys.map(key => "`" + key + "`");
+
+        let sqlLinesArray = [
+            `INSERT ${(onDuplicateKey === "IGNORE") ? "IGNORE " : ""}INTO \`${table}\` ( ${backtickKeys.join(", ")} )`,
+            `VALUES ( ${keys.map(key => (obj[key] instanceof Object) ? ("@`" + obj[key]!["@"] + "`") : esc(obj[key] as TSql)).join(", ")})`
+        ];
+
+        if (onDuplicateKey === "UPDATE") {
+            sqlLinesArray = [
+                ...sqlLinesArray,
+                "ON DUPLICATE KEY UPDATE",
+                backtickKeys.map(backtickKey => `${backtickKey} = VALUES(${backtickKey})`).join(", ")
+            ];
+        }
+
+        sqlLinesArray[sqlLinesArray.length] = ";\n";
+
+        return sqlLinesArray.join("\n");
+
+    }
+
     let connection: mysql.IConnection | undefined = undefined;
 
-    return function query(sql: string, values?: TSql[]) {
-
-        return new Promise<any>((resolve, reject) => {
+    let query = (sql: string) => new Promise<any>(
+        (resolve, reject) => {
 
             if (!connection) {
 
@@ -43,129 +85,89 @@ export function buildQueryFunction(connectionConfig: mysql.IConnectionConfig) {
 
             }
 
-            connection.query(sql, values || [],
-                (error, results) => {
+            connection.query(sql, (error, results) => {
 
-                    if (error) {
-                        reject(error);
-                        return;
+                if (error) {
+                    reject(error);
+                    return;
+                }
+
+                if (handleStringEncoding && (results instanceof Array) && results.length) {
+
+                    if (Object.getPrototypeOf(results[0]).constructor.name === "RowDataPacket") {
+
+                        getUtils.decodeOkPacketsStrings(results);
+
+                    } else {
+
+                        for (let result of results) {
+
+                            if (result instanceof Array) {
+
+                                getUtils.decodeOkPacketsStrings(result);
+
+                            }
+
+                        }
+
                     }
 
-                    resolve(results);
-
                 }
-            );
 
-        });
+                // [ OkPacket, OkPacket, [ RowDataPacket... ] ]
 
-    };
+                resolve(results);
+
+            });
+
+        }
+    );
+
+    return { query, esc, buildInsertQuery };
 
 }
 
-export function buildQueryFunctionSafe(
-    connectionConfig: mysql.IConnectionConfig
-) {
+export namespace getUtils {
 
-    let poolConfig: mysql.IPoolConfig = {
-        ...connectionConfig,
-        "connectionLimit": 1,
-        "multipleStatements": true
-    };
+    export function decodeOkPacketsStrings(rows: any[]) {
 
-    let pool: mysql.IPool | undefined = undefined;
+        for (let row of rows) {
 
-    return function query(
-        sql: string,
-        values?: TSql[]
-    ) {
+            for (let key in row) {
 
-        return new Promise<any>((resolve, reject) => {
+                if (typeof row[key] === "string") {
 
-            if (!pool) {
+                    row[key] = (new Buffer(row[key], "binary")).toString("utf8");
 
-                pool = mysql.createPool(poolConfig);
-
-                setInterval(() => query("SELECT 1"), 14400000);
+                }
 
             }
 
-            pool.getConnection(
-                (error, connection) => {
+        }
 
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-
-                    connection.query(sql, values || [],
-                        (error, results) => {
-
-                            if (error) {
-                                reject(error);
-                                return;
-                            }
-
-                            connection.release();
-
-                            resolve(results);
-
-                        }
-                    );
-
-                }
-            );
-
-        });
-
-    };
-
-}
-
-export function buildInsertQuery(
-    table: string,
-    obj: Record<string, TSql | { "@": string; }>,
-    onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR"
-): string {
-
-    let keys = Object.keys(obj);
-    let values = keys.map(key => obj[key]);
-
-    let backtickKeys = keys.map(key => "`" + key + "`");
-
-    let sqlLinesArray = [
-        `INSERT ${(onDuplicateKey === "IGNORE") ? "IGNORE " : ""}INTO \`${table}\` ( ${backtickKeys.join(", ")} )`,
-        `VALUES ( ${keys.map(key => (obj[key] instanceof Object) ? ("@`" + obj[key]!["@"] + "`") : esc(obj[key] as TSql)).join(", ")})`
-    ];
-
-    if (onDuplicateKey === "UPDATE") {
-        sqlLinesArray = [
-            ...sqlLinesArray,
-            "ON DUPLICATE KEY UPDATE",
-            backtickKeys.map(backtickKey => `${backtickKey} = VALUES(${backtickKey})`).join(", ")
-        ];
     }
 
-    sqlLinesArray[sqlLinesArray.length] = ";\n";
+}
 
-    return sqlLinesArray.join("\n");
+export namespace bool {
+
+    export function enc(b: boolean): 0 | 1;
+    export function enc(b: undefined): null;
+    export function enc(b: boolean | undefined): 0 | 1 | null;
+    export function enc(b: boolean | undefined): 0 | 1 | null {
+        return (b === undefined) ? null : (b ? 1 : 0);
+    }
+
+    export function dec(t: 0 | 1): boolean;
+    export function dec(t: null): undefined;
+    export function dec(t: 0 | 1 | null): boolean | undefined;
+    export function dec(t: 0 | 1 | null): boolean | undefined {
+        return (t === null) ? undefined : (t === 1);
+    }
 
 }
 
-export function smallIntOrNullToBooleanOrUndefined(v: 0 | 1 | null): boolean | undefined {
-    return (typeof v === "number") ? (v === 1) : undefined;
-}
 
-export function booleanOrUndefinedToSmallIntOrNull(v: boolean | undefined): 0 | 1 | null {
-    return (typeof v === "boolean") ? (v ? 1 : 0) : null;
-}
-
-//TODO: export in mySqlFunctions
-export const b64 = {
-    "dec": (b64Str: string | null): string | undefined =>
-        b64Str === null ? undefined : (new Buffer(b64Str, "base64")).toString("utf8"),
-    "enc": (str: string | undefined): string | null =>
-        str === undefined ? null : (new Buffer(str, "utf8")).toString("base64")
-};
 
 
 export function assertSame<T>(
@@ -173,8 +175,8 @@ export function assertSame<T>(
 ) {
 
     try {
-        assertSame_(o1, o2, true);
-    } catch(e){
+        assertSame.perform(o1, o2, true);
+    } catch (e) {
         let error = new Error(`${errorMessage} (${e.message})`);
         error["o1"] = o1;
         error["o2"] = o2;
@@ -183,76 +185,81 @@ export function assertSame<T>(
 
 }
 
-function assertSame_<T>( 
-    o1: T, 
-    o2: T, 
-    handleArrayAsSet: boolean = true
-) {
+export namespace assertSame {
 
-    if (o1 instanceof Object) {
+    export function perform<T>(
+        o1: T,
+        o2: T,
+        handleArrayAsSet: boolean = true
+    ) {
 
-        console.assert(o2 instanceof Object, "M1");
+        if (o1 instanceof Object) {
 
-        if (handleArrayAsSet && o1 instanceof Array) {
+            console.assert(o2 instanceof Object, "M1");
 
-            if( !(o2 instanceof Array)){
-                console.assert(false, "M2");
-                return;
-            }
+            if (handleArrayAsSet && o1 instanceof Array) {
 
-            console.assert(o1.length === o2.length, "M3");
+                if (!(o2 instanceof Array)) {
+                    console.assert(false, "M2");
+                    return;
+                }
 
-            let o2Set = new Set(o2);
+                console.assert(o1.length === o2.length, "M3");
 
-            for (let val1 of o1) {
+                let o2Set = new Set(o2);
 
-                let isFound = false;
+                for (let val1 of o1) {
 
-                for (let val2 of o2Set) {
+                    let isFound = false;
 
-                    try {
-                        assertSame_(val1, val2, handleArrayAsSet)
-                    } catch{
-                        continue;
+                    for (let val2 of o2Set) {
+
+                        try {
+                            perform(val1, val2, handleArrayAsSet)
+                        } catch{
+                            continue;
+                        }
+
+                        isFound = true;
+                        o2Set.delete(val2);
+                        break;
+
                     }
 
-                    isFound = true;
-                    o2Set.delete(val2);
-                    break;
+                    console.assert(isFound, "M4");
 
                 }
 
-                console.assert(isFound, "M4");
+            } else {
+
+                if (o1 instanceof Array) {
+
+                    if (!(o2 instanceof Array)) throw new Error();
+
+                    console.assert(o1.length === o2.length, "M5");
+
+                } else {
+
+                    perform(Object.keys(o1), Object.keys(o2));
+
+                }
+
+                for (let key in o1) {
+                    perform(o1[key], o2[key], handleArrayAsSet);
+                }
 
             }
 
         } else {
 
-            if (o1 instanceof Array) {
-
-                if (!(o2 instanceof Array)) throw new Error();
-
-                console.assert(o1.length === o2.length, "M5");
-
-            } else {
-
-                assertSame_(Object.keys(o1), Object.keys(o2));
-
-            }
-
-            for (let key in o1) {
-                assertSame_(o1[key], o2[key], handleArrayAsSet);
-            }
+            console.assert(o1 === o2, `M7, ${o1} !== ${o2}`);
 
         }
-
-    } else {
-
-        console.assert(o1 === o2, `M7, ${o1} !== ${o2}`);
 
     }
 
 }
+
 
 export const genDigits = (n: number): string =>
     (new Array(n))
@@ -267,18 +274,182 @@ export const genHexStr = (n: number) => (new Array(n))
     .join("")
     ;
 
-export const genUtf8Str = (max: number): string => {
 
-    let n = ~~(Math.random() * max);
+export function genUtf8Str(
+    length: number,
+    restrict?: "ONLY 4 BYTE CHAR" | "ONLY 1 BYTE CHAR"
+): string {
 
-    n = n ? n : n + 1;
+    let charGenerator: () => string;
 
-    let arrCode = (new Array(n)).fill(NaN).map(() => ~~(Math.random() * (65535 + 1)));
+    switch (restrict) {
+        case undefined: charGenerator = genUtf8Str.genUtf8Char; break;
+        case "ONLY 1 BYTE CHAR": charGenerator = genUtf8Str.genUtf8Char1B; break;
+        case "ONLY 4 BYTE CHAR": charGenerator = genUtf8Str.genUtf8Char4B; break;
+    }
 
-    let str = arrCode.map(code => String.fromCharCode(code)).join("");
+    return (new Array(length)).fill("").map(() => charGenerator()).join("");
 
-    str = (new Buffer(str, "utf8")).toString("utf8");
+}
 
-    return str;
+export namespace genUtf8Str {
 
-};
+    /** "11110000" => "f0" */
+    function bitStrToHexStr(bin: string): string {
+
+        let hexChars: string[] = [];
+
+        let i = 0;
+
+        while (bin[i] !== undefined) {
+
+            let fourBits = `${bin[i]}${bin[i + 1]}${bin[i + 2]}${bin[i + 3]}`;
+
+            let hexChar = parseInt(fourBits, 2).toString(16);
+
+            hexChars.push(hexChar)
+
+            i = i + 4;
+
+        }
+
+        return hexChars.join("");
+
+    };
+
+    /** 8 => "11010001"  */
+    function genBitStr(length: number): string {
+        return (new Array(length)).fill("").map(() => `${~~(Math.random() * 2)}`).join("");
+    }
+
+    /** throw error if hex does not represent a valid utf8 string */
+    function hexStrToUtf8Str(hex: string) {
+
+        let str = (new Buffer(hex, "hex")).toString("utf8");
+
+        if ((new Buffer(str, "utf8")).toString("hex") !== hex) {
+            throw new Error("Not valid UTF8 data");
+        }
+
+        return str;
+
+    }
+
+    /** return a random utf8 char that fit on one byte */
+    export function genUtf8Char1B(): string {
+
+        let bin = `0${genBitStr(7)}`;
+
+        let hex = bitStrToHexStr(bin);
+
+        try {
+
+            return hexStrToUtf8Str(hex);
+
+        } catch{
+
+            return genUtf8Char1B();
+
+        }
+
+    }
+
+
+    export const genUtf8Char2B = () => {
+
+        let bin = `110${genBitStr(5)}10${genBitStr(6)}`;
+
+        let hex = bitStrToHexStr(bin);
+
+        try {
+
+            return hexStrToUtf8Str(hex);
+
+        } catch{
+
+            return genUtf8Char2B();
+
+        }
+
+    }
+
+
+    export function genUtf8Char3B(rand?: number): string {
+
+        if (rand === undefined) {
+            rand = ~~(Math.random() * 8);
+        }
+
+        let bin;
+
+        switch (rand) {
+            case 0: bin = `11100000101${genBitStr(5)}10${genBitStr(6)}`; break;
+            case 1: bin = `1110000110${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 2: bin = `1110001${genBitStr(1)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 3: bin = `111001${genBitStr(2)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 4: bin = `111010${genBitStr(2)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 5: bin = `1110110010${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 6: bin = `11101101100${genBitStr(5)}10${genBitStr(6)}`; break;
+            case 7: bin = `1110111${genBitStr(1)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+        }
+
+        let hex = bitStrToHexStr(bin);
+
+        try {
+
+            return hexStrToUtf8Str(hex);
+
+        } catch{
+
+            return genUtf8Char3B();
+
+        }
+
+    };
+
+    export function genUtf8Char4B(rand?: number): string {
+
+        if (rand === undefined) {
+            rand = ~~(Math.random() * 5);
+        }
+
+        let bin;
+
+        switch (rand) {
+            case 0: bin = `111100001001${genBitStr(4)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 1: bin = `11110000101${genBitStr(5)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 2: bin = `1111000110${genBitStr(6)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 3: bin = `1111001${genBitStr(1)}10${genBitStr(6)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+            case 4: bin = `111101001000${genBitStr(4)}10${genBitStr(6)}10${genBitStr(6)}`; break;
+        }
+
+        let hex = bitStrToHexStr(bin);
+
+        try {
+
+            return hexStrToUtf8Str(hex);
+
+        } catch{
+
+            return genUtf8Char4B();
+
+        }
+
+
+    };
+
+    export function genUtf8Char(): string {
+
+        let rand = ~~(Math.random() * 4) as (0 | 1 | 2 | 3);
+
+        switch (rand) {
+            case 0: return genUtf8Char1B();
+            case 1: return genUtf8Char2B();
+            case 2: return genUtf8Char3B();
+            case 3: return genUtf8Char4B();
+        }
+
+    };
+
+
+}

@@ -13,7 +13,7 @@ import * as genSamples from "./genSamples";
     await testDbAsterisk();
     await testDbSemasim();
 
-    console.log("ALL TESTS PASSED");
+    console.log("ALL TESTS PASSED !");
 
     process.exit(0);
 
@@ -87,7 +87,7 @@ async function testDbAsterisk() {
 
     await db.asterisk.startListeningPsContacts();
 
-    db.asterisk.query( f.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
+    db.asterisk.query( db.asterisk.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
 
     let contact = await db.asterisk.evtNewContact.waitFor(1000);
 
@@ -109,8 +109,8 @@ async function testDbAsterisk() {
 
     }catch{}
 
-    db.asterisk.query( f.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
-    db.asterisk.query(`DELETE FROM ps_contacts WHERE id= ${f.esc(psContact.id)}`);
+    db.asterisk.query( db.asterisk.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
+    db.asterisk.query(`DELETE FROM ps_contacts WHERE id= ${db.asterisk.esc(psContact.id)}`);
 
     contact= await db.asterisk.evtExpiredContact.waitFor(1000);
 
@@ -124,17 +124,17 @@ async function testDbAsterisk() {
 
     let password= await db.asterisk.createEndpointIfNeededAndGetPassword(imsi);
     
-    let rows= await db.asterisk.query(`SELECT * FROM ps_aors WHERE id= ${f.esc(imsi)}`);
+    let rows= await db.asterisk.query(`SELECT * FROM ps_aors WHERE id= ${db.asterisk.esc(imsi)}`);
 
     console.assert(rows.length === 1);
     
-    rows= await db.asterisk.query(`SELECT * FROM ps_auths WHERE id= ${f.esc(imsi)}`);
+    rows= await db.asterisk.query(`SELECT * FROM ps_auths WHERE id= ${db.asterisk.esc(imsi)}`);
 
     console.assert(rows.length === 1);
     console.assert( rows[0]["username"] === imsi );
     console.assert( rows[0]["password"] === password );
 
-    rows= await db.asterisk.query(`SELECT * FROM ps_endpoints WHERE id= ${f.esc(imsi)}`);
+    rows= await db.asterisk.query(`SELECT * FROM ps_endpoints WHERE id= ${db.asterisk.esc(imsi)}`);
 
     console.assert(rows.length === 1);
 
@@ -227,7 +227,7 @@ async function testDbSemasim() {
     await (async () => {
 
         let toNumber = "0636786385";
-        let text = "foo bar";
+        let text = f.genUtf8Str(300);
 
         await db.semasim.MessageTowardGsm.add(toNumber, text, uaSim);
 
@@ -265,7 +265,7 @@ async function testDbSemasim() {
     await (async () => {
 
         let toNumber = "0636786385";
-        let text = "foo bar baz";
+        let text = f.genUtf8Str(500);
 
         await db.semasim.MessageTowardGsm.add(toNumber, text, uaSim);
 
@@ -343,7 +343,7 @@ async function testDbSemasim() {
     await (async () => {
 
         let fromNumber = "0636786385";
-        let text = "foo bar baz baz";
+        let text = f.genUtf8Str(150);
         let date = new Date();
 
         await db.semasim.MessageTowardSip.add(fromNumber, text, date, false, {
