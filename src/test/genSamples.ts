@@ -13,7 +13,7 @@ export function generateSim(
         "country": Date.now() % 2 === 0 ?
             undefined : ({
                 "name": "France",
-                "iso": "FR",
+                "iso": "fr",
                 "code": 33
             }),
         "serviceProvider": {
