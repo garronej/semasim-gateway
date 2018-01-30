@@ -75,32 +75,36 @@ var debug = _debug("_main");
 debug("Starting semasim gateway !");
 (function launch() {
     return __awaiter(this, void 0, void 0, function () {
-        var error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
-                    _a.trys.push([0, 2, , 4]);
+                    _b.trys.push([0, 2, , 4]);
                     return [4 /*yield*/, chan_dongle_extended_client_1.DongleController.getInstance().initialization];
                 case 1:
-                    _a.sent();
+                    _b.sent();
                     return [3 /*break*/, 4];
                 case 2:
-                    error_1 = _a.sent();
+                    _a = _b.sent();
                     debug("dongle-extended not initialized yet, scheduling retry...");
                     return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 5000); })];
                 case 3:
-                    _a.sent();
+                    _b.sent();
                     launch();
                     return [2 /*return*/];
                 case 4:
+                    chan_dongle_extended_client_1.DongleController.getInstance().evtDisconnect.attachOnce(function (error) {
+                        debug(error.message.red);
+                        process.exit(-1);
+                    });
                     debug("Launching...");
                     registerListeners();
                     return [4 /*yield*/, db.asterisk.startListeningPsContacts()];
                 case 5:
-                    _a.sent();
+                    _b.sent();
                     return [4 /*yield*/, sipMessage.startHandling()];
                 case 6:
-                    _a.sent();
+                    _b.sent();
                     voiceCallBridge.start();
                     sipProxy.start();
                     processGsmMessageIoOccurredWhileOffline();

@@ -70,16 +70,16 @@ export function getUtils(
 
                 query(
                     [
-                        "SET SESSION wait_timeout=31536000;                             ",
-                        "DROP FUNCTION IF EXISTS _ASSERT;                               ",
-                        "CREATE FUNCTION _ASSERT(bool INTEGER, message VARCHAR(256))    ",
-                        "   RETURNS INTEGER DETERMINISTIC                               ",
-                        "BEGIN                                                          ",
-                        "    IF bool IS NULL OR bool = 0 THEN                           ",
-                        "        SIGNAL SQLSTATE 'ERR0R' SET MESSAGE_TEXT = message;    ",
-                        "    END IF;                                                    ",
-                        "    RETURN bool;                                               ",
-                        "END;                                                           "
+                        "SET SESSION wait_timeout=31536000;",
+                        "DROP FUNCTION IF EXISTS _ASSERT;",
+                        "CREATE FUNCTION _ASSERT(bool INTEGER, message VARCHAR(256))",
+                        "   RETURNS INTEGER DETERMINISTIC",
+                        "BEGIN",
+                        "    IF bool IS NULL OR bool = 0 THEN",
+                        "        SIGNAL SQLSTATE 'ERR0R' SET MESSAGE_TEXT = message;",
+                        "    END IF;",
+                        "    RETURN bool;",
+                        "END;"
                     ].join("\n")
                 );
 

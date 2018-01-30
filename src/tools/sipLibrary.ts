@@ -233,26 +233,6 @@ export class Socket {
 
             setAddrAndPort();
 
-            /* Debug */
-
-            if (
-                !this.connection.localPort ||
-                !this.connection.remotePort ||
-                !this.connection.localAddress ||
-                !this.connection.remoteAddress
-            ) {
-
-                let { localPort, remotePort, localAddress, remoteAddress } = this.connection;
-
-                console.log(
-                    "debug sip socket where the connection is started locally",
-                    { localPort, remotePort, localAddress, remoteAddress }
-                );
-
-            }
-
-            /* End Debug */
-
             if (this.connection.localPort) {
 
                 this.evtConnect.post(); //For post count

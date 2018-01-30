@@ -27,7 +27,7 @@ debug("Starting semasim gateway !");
 
         await Dc.getInstance().initialization;
 
-    } catch (error) {
+    } catch {
 
         debug("dongle-extended not initialized yet, scheduling retry...");
 
@@ -38,6 +38,14 @@ debug("Starting semasim gateway !");
         return;
 
     }
+
+    Dc.getInstance().evtDisconnect.attachOnce( error=> {
+
+        debug(error!.message.red);
+
+        process.exit(-1);
+
+    });
 
     debug("Launching...");
 

@@ -210,15 +210,6 @@ var Socket = /** @class */ (function () {
                 _this.remoteAddress = c.remoteAddress;
             }); })(this.connection);
             setAddrAndPort_1();
-            /* Debug */
-            if (!this.connection.localPort ||
-                !this.connection.remotePort ||
-                !this.connection.localAddress ||
-                !this.connection.remoteAddress) {
-                var _a = this.connection, localPort = _a.localPort, remotePort = _a.remotePort, localAddress = _a.localAddress, remoteAddress = _a.remoteAddress;
-                console.log("debug sip socket where the connection is started locally", { localPort: localPort, remotePort: remotePort, localAddress: localAddress, remoteAddress: remoteAddress });
-            }
-            /* End Debug */
             if (this.connection.localPort) {
                 this.evtConnect.post(); //For post count
             }
