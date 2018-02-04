@@ -27,7 +27,7 @@
     "mysql": "^2.13.0",
     "network": "^0.3.2",
     "rejection-tracker": "github:garronej/rejection-tracker",
-    "sip": "github:garronej/sip.js",
+    "sip": "github:garronej/sip.js#no-websocket",
     "super-json": "^2.2.0",
     "ts-events-extended": "garronej/ts-events-extended",
     "ws": "^4.0.0",
