@@ -321,7 +321,7 @@ export class Socket {
                         resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))
                     ),
                     new Promise<true>(
-                        resolve => this.connection.once("drain", () => {
+                        resolve => (this.connection as net.Socket).once("drain", () => {
                             this.evtClose.detach(boundTo);
                             resolve(true);
                         })

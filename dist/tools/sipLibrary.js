@@ -1,113 +1,43 @@
 "use strict";
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __spread = (this && this.__spread) || function () {
-    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
-    return ar;
-};
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var ts_events_extended_1 = require("ts-events-extended");
-var sip = require("sip");
-var _sdp_ = require("sip/sdp");
-var _debug = require("debug");
-var debug = _debug("_tools/sipLibrary");
+const ts_events_extended_1 = require("ts-events-extended");
+const sip = require("sip");
+const _sdp_ = require("sip/sdp");
+const _debug = require("debug");
+let debug = _debug("_tools/sipLibrary");
 exports.regIdKey = "reg-id";
 exports.instanceIdKey = "+sip.instance";
 exports.parseSdp = _sdp_.parse;
 exports.stringifySdp = _sdp_.stringify;
 function filterSdpCandidates(keep, sdp) {
-    var shouldKeepCandidate = function (candidateLine) {
+    let shouldKeepCandidate = (candidateLine) => {
         return ((keep.host && !!candidateLine.match(/host/)) ||
             (keep.srflx && !!candidateLine.match(/srflx/)) ||
             (keep.relay && !!candidateLine.match(/relay/)));
     };
-    var parsedSdp = exports.parseSdp(sdp);
-    var arr = parsedSdp.m[0].a;
-    try {
-        for (var _a = __values(__spread(arr)), _b = _a.next(); !_b.done; _b = _a.next()) {
-            var line = _b.value;
-            if (!line.match(/^candidate/))
-                continue;
-            if (!shouldKeepCandidate(line)) {
-                arr.splice(arr.indexOf(line), 1);
-            }
+    let parsedSdp = exports.parseSdp(sdp);
+    let arr = parsedSdp.m[0].a;
+    for (let line of [...arr]) {
+        if (!line.match(/^candidate/))
+            continue;
+        if (!shouldKeepCandidate(line)) {
+            arr.splice(arr.indexOf(line), 1);
         }
-    }
-    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-    finally {
-        try {
-            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-        }
-        finally { if (e_1) throw e_1.error; }
     }
     return exports.stringifySdp(sdp);
-    var e_1, _c;
 }
 exports.filterSdpCandidates = filterSdpCandidates;
 function readSrflxAddrInSdp(sdp) {
-    try {
-        for (var _a = __values(exports.parseSdp(sdp).m), _b = _a.next(); !_b.done; _b = _a.next()) {
-            var m_i = _b.value;
-            if (m_i.media !== "audio")
-                continue;
-            try {
-                for (var _c = __values(m_i.a), _d = _c.next(); !_d.done; _d = _c.next()) {
-                    var a_i = _d.value;
-                    var match = a_i.match(/^candidate(?:[^\s]+\s){4}((?:[0-9]{1,3}\.){3}[0-9]{1,3})\s(?:[^\s]+\s){2}srflx/);
-                    if (match)
-                        return match[1];
-                }
-            }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (_d && !_d.done && (_e = _c.return)) _e.call(_c);
-                }
-                finally { if (e_2) throw e_2.error; }
-            }
+    for (let m_i of exports.parseSdp(sdp).m) {
+        if (m_i.media !== "audio")
+            continue;
+        for (let a_i of m_i.a) {
+            let match = a_i.match(/^candidate(?:[^\s]+\s){4}((?:[0-9]{1,3}\.){3}[0-9]{1,3})\s(?:[^\s]+\s){2}srflx/);
+            if (match)
+                return match[1];
         }
-    }
-    catch (e_3_1) { e_3 = { error: e_3_1 }; }
-    finally {
-        try {
-            if (_b && !_b.done && (_f = _a.return)) _f.call(_a);
-        }
-        finally { if (e_3) throw e_3.error; }
     }
     return undefined;
-    var e_3, _f, e_2, _e;
 }
 exports.readSrflxAddrInSdp = readSrflxAddrInSdp;
 //TODO: only on gw remove ?
@@ -118,13 +48,8 @@ function isPlainMessageRequest(sipRequest) {
 exports.isPlainMessageRequest = isPlainMessageRequest;
 exports.makeStreamParser = sip.makeStreamParser;
 //TODO: make a function to test if message are well formed: have from, to via ect.
-var Socket = /** @class */ (function () {
-    function Socket() {
-        var inputs = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            inputs[_i] = arguments[_i];
-        }
-        var _this = this;
+class Socket {
+    constructor(...inputs) {
         this.misc = {};
         this.evtResponse = new ts_events_extended_1.SyncEvent();
         this.evtRequest = new ts_events_extended_1.SyncEvent();
@@ -136,62 +61,56 @@ var Socket = /** @class */ (function () {
         this.remotePort = NaN;
         this.localAddress = "";
         this.remoteAddress = "";
-        this.setKeepAlive = function () {
-            var inputs = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                inputs[_i] = arguments[_i];
-            }
-            return Socket.matchWebSocket(_this.connection) ?
-                undefined :
-                _this.connection.setKeepAlive.apply(_this.connection, inputs);
-        };
+        this.setKeepAlive = (...inputs) => Socket.matchWebSocket(this.connection) ?
+            undefined :
+            this.connection.setKeepAlive.apply(this.connection, inputs);
         this.connection = inputs[0];
-        var timeoutDelay;
-        var addrAndPorts;
+        let timeoutDelay;
+        let addrAndPorts;
         if (Socket.matchWebSocket(this.connection)) {
             addrAndPorts = inputs[1];
             timeoutDelay = inputs[2];
-            debug({ addrAndPorts: addrAndPorts });
+            debug({ addrAndPorts });
         }
         else {
             addrAndPorts = undefined;
             timeoutDelay = inputs[1];
         }
-        var streamParser = exports.makeStreamParser(function (sipPacket) { return matchRequest(sipPacket) ?
-            _this.evtRequest.post(sipPacket) :
-            _this.evtResponse.post(sipPacket); }, function () { return _this.connection.emit("error", new Error("Flood")); }, Socket.maxBytesHeaders, Socket.maxContentLength);
+        let streamParser = exports.makeStreamParser(sipPacket => matchRequest(sipPacket) ?
+            this.evtRequest.post(sipPacket) :
+            this.evtResponse.post(sipPacket), () => this.connection.emit("error", new Error("Flood")), Socket.maxBytesHeaders, Socket.maxContentLength);
         this.connection
-            .once("error", function () { return _this.connection.emit("close", true); })
-            .once("close", function (had_error) {
+            .once("error", () => this.connection.emit("close", true))
+            .once("close", had_error => {
             if (timeoutDelay)
-                clearTimeout(_this.timer);
-            if (Socket.matchWebSocket(_this.connection)) {
-                _this.connection.terminate();
+                clearTimeout(this.timer);
+            if (Socket.matchWebSocket(this.connection)) {
+                this.connection.terminate();
             }
             else {
-                _this.connection.destroy();
+                this.connection.destroy();
             }
-            _this.evtClose.post(had_error === true);
+            this.evtClose.post(had_error === true);
         })
-            .on(Socket.matchWebSocket(this.connection) ? "message" : "data", function (data) {
+            .on(Socket.matchWebSocket(this.connection) ? "message" : "data", (data) => {
             if (timeoutDelay) {
-                clearTimeout(_this.timer);
-                _this.timer = setTimeout(function () { return _this.evtTimeout.post(); }, timeoutDelay);
+                clearTimeout(this.timer);
+                this.timer = setTimeout(() => this.evtTimeout.post(), timeoutDelay);
             }
-            var dataAsBinaryString;
+            let dataAsBinaryString;
             if (typeof data === "string") {
                 dataAsBinaryString = (new Buffer(data, "utf8")).toString("binary");
             }
             else {
                 dataAsBinaryString = data.toString("binary");
             }
-            _this.evtData.post(dataAsBinaryString);
+            this.evtData.post(dataAsBinaryString);
             try {
                 streamParser(dataAsBinaryString);
             }
             catch (error) {
                 debug("Stream parser error");
-                _this.connection.emit("error", error);
+                this.connection.emit("error", error);
             }
         });
         if (Socket.matchWebSocket(this.connection)) {
@@ -203,37 +122,36 @@ var Socket = /** @class */ (function () {
         }
         else {
             this.connection.setMaxListeners(Infinity);
-            var setAddrAndPort_1 = (function (c) { return (function () {
-                _this.localPort = c.localPort;
-                _this.remotePort = c.remotePort;
-                _this.localAddress = c.remoteAddress;
-                _this.remoteAddress = c.remoteAddress;
-            }); })(this.connection);
-            setAddrAndPort_1();
+            let setAddrAndPort = ((c) => (() => {
+                this.localPort = c.localPort;
+                this.remotePort = c.remotePort;
+                this.localAddress = c.remoteAddress;
+                this.remoteAddress = c.remoteAddress;
+            }))(this.connection);
+            setAddrAndPort();
             if (this.connection.localPort) {
                 this.evtConnect.post(); //For post count
             }
             else {
-                this.connection.once(this.connection["encrypted"] ? "secureConnect" : "connect", function () {
-                    setAddrAndPort_1();
-                    _this.evtConnect.post();
+                this.connection.once(this.connection["encrypted"] ? "secureConnect" : "connect", () => {
+                    setAddrAndPort();
+                    this.evtConnect.post();
                 });
             }
         }
     }
-    Socket.matchWebSocket = function (socket) {
+    static matchWebSocket(socket) {
         return socket.terminate !== undefined;
-    };
+    }
     ;
     /** Return true if sent successfully */
-    Socket.prototype.write = function (sipPacket) {
-        var _this = this;
+    write(sipPacket) {
         if (this.evtClose.postCount) {
             debug("The socket you try to write on is closed");
             return false;
         }
         if (matchRequest(sipPacket)) {
-            var maxForwards = parseInt(sipPacket.headers["max-forwards"]);
+            let maxForwards = parseInt(sipPacket.headers["max-forwards"]);
             if (isNaN(maxForwards)) {
                 throw new Error("Write error, max-forwards header should be defined");
             }
@@ -241,36 +159,36 @@ var Socket = /** @class */ (function () {
                 debug("Avoid writing, max forward reached");
                 return false;
             }
-            sipPacket.headers["max-forwards"] = "" + (maxForwards - 1);
+            sipPacket.headers["max-forwards"] = `${maxForwards - 1}`;
         }
         if (!sipPacket.headers.via.length) {
             debug("Prevent sending packet without via header");
             return false;
         }
         //TODO: this can potentially throw, make sure it's ok
-        var data = new Buffer(exports.stringify(sipPacket), "binary");
+        let data = new Buffer(exports.stringify(sipPacket), "binary");
         if (Socket.matchWebSocket(this.connection)) {
-            return new Promise(function (resolve) { return _this.connection
-                .send(data, { "binary": true }, function (error) { return resolve(error ? true : false); }); });
+            return new Promise(resolve => this.connection
+                .send(data, { "binary": true }, error => resolve(error ? true : false)));
         }
         else {
-            var flushed = this.connection.write(data);
+            let flushed = this.connection.write(data);
             if (flushed) {
                 return true;
             }
             else {
-                var boundTo_1 = [];
+                let boundTo = [];
                 return Promise.race([
-                    new Promise(function (resolve) { return _this.evtClose.attachOnce(boundTo_1, function () { return resolve(false); }); }),
-                    new Promise(function (resolve) { return _this.connection.once("drain", function () {
-                        _this.evtClose.detach(boundTo_1);
+                    new Promise(resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))),
+                    new Promise(resolve => this.connection.once("drain", () => {
+                        this.evtClose.detach(boundTo);
                         resolve(true);
-                    }); })
+                    }))
                 ]);
             }
         }
-    };
-    Socket.prototype.destroy = function () {
+    }
+    destroy() {
         /*
         this.evtData.detach();
         this.evtPacket.detach();
@@ -278,54 +196,47 @@ var Socket = /** @class */ (function () {
         this.evtRequest.detach();
         */
         this.connection.emit("close", false);
-    };
-    Object.defineProperty(Socket.prototype, "protocol", {
-        get: function () {
-            if (Socket.matchWebSocket(this.connection)) {
-                return "WSS";
-            }
-            else {
-                return this.connection["encrypted"] ? "TLS" : "TCP";
-            }
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Socket.prototype.addViaHeader = function (sipRequest, extraParams) {
-        if (extraParams === void 0) { extraParams = {}; }
-        var branch = (function () {
-            var via = sipRequest.headers.via;
-            return via.length ? "z9hG4bK-" + via[0].params["branch"] : exports.generateBranch();
+    }
+    get protocol() {
+        if (Socket.matchWebSocket(this.connection)) {
+            return "WSS";
+        }
+        else {
+            return this.connection["encrypted"] ? "TLS" : "TCP";
+        }
+    }
+    addViaHeader(sipRequest, extraParams = {}) {
+        let branch = (() => {
+            let via = sipRequest.headers.via;
+            return via.length ? `z9hG4bK-${via[0].params["branch"]}` : exports.generateBranch();
         })();
         sipRequest.headers.via.unshift({
             "version": "2.0",
             "protocol": this.protocol,
             "host": this.localAddress,
             "port": this.localPort,
-            "params": __assign({}, extraParams, { branch: branch, "rport": null })
+            "params": Object.assign({}, extraParams, { branch, "rport": null })
         });
         return branch;
-    };
-    Socket.prototype.addPathHeader = function (sipRegisterRequest, host, extraParams) {
+    }
+    addPathHeader(sipRegisterRequest, host, extraParams) {
         if (!sipRegisterRequest.headers.path) {
             sipRegisterRequest.headers.path = [];
         }
         sipRegisterRequest.headers.path.unshift(this.buildRoute(host, extraParams));
-    };
+    }
     /**
      *
      * Return stringified:
      * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
      *
      */
-    Socket.prototype.buildRoute = function (host, extraParams) {
-        if (host === void 0) { host = this.localAddress; }
-        if (extraParams === void 0) { extraParams = {}; }
+    buildRoute(host = this.localAddress, extraParams = {}) {
         return {
-            "uri": __assign({}, exports.parseUri("sip:" + host + ":" + this.localPort), { "params": __assign({}, extraParams, { "transport": this.protocol, "lr": null }) }),
+            "uri": Object.assign({}, exports.parseUri(`sip:${host}:${this.localPort}`), { "params": Object.assign({}, extraParams, { "transport": this.protocol, "lr": null }) }),
             "params": {}
         };
-    };
+    }
     /**
      *
      * Assert sipRequest is NOT register.
@@ -341,7 +252,7 @@ var Socket = /** @class */ (function () {
      * Record-Route: LOCAL_this, HOP_X
      *
      */
-    Socket.prototype.shiftRouteAndUnshiftRecordRoute = function (sipRequest, host) {
+    shiftRouteAndUnshiftRecordRoute(sipRequest, host) {
         if (sipRequest.headers.route)
             sipRequest.headers.route.shift();
         if (!sipRequest.headers.contact)
@@ -349,7 +260,7 @@ var Socket = /** @class */ (function () {
         if (!sipRequest.headers["record-route"])
             sipRequest.headers["record-route"] = [];
         sipRequest.headers["record-route"].unshift(this.buildRoute(host));
-    };
+    }
     /**
      *
      * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
@@ -365,17 +276,16 @@ var Socket = /** @class */ (function () {
      * this first hop of the response.
      *
      */
-    Socket.prototype.pushRecordRoute = function (sipResponse, isFirstHop, host) {
+    pushRecordRoute(sipResponse, isFirstHop, host) {
         if (!sipResponse.headers["record-route"])
             return;
         if (isFirstHop)
             sipResponse.headers["record-route"] = [];
         sipResponse.headers["record-route"].push(this.buildRoute(host));
-    };
-    Socket.maxBytesHeaders = 7820;
-    Socket.maxContentLength = 24624;
-    return Socket;
-}());
+    }
+}
+Socket.maxBytesHeaders = 7820;
+Socket.maxContentLength = 24624;
 exports.Socket = Socket;
 exports.stringify = sip.stringify;
 exports.parseUri = sip.parseUri;
@@ -383,9 +293,9 @@ exports.generateBranch = sip.generateBranch;
 exports.stringifyUri = sip.stringifyUri;
 exports.parse = sip.parse;
 function parsePath(path) {
-    var message = sip.parse([
-        "DUMMY _ SIP/2.0",
-        "Path: " + path,
+    const message = sip.parse([
+        `DUMMY _ SIP/2.0`,
+        `Path: ${path}`,
         "\r\n"
     ].join("\r\n"));
     return message.headers.path;
@@ -394,19 +304,19 @@ exports.parsePath = parsePath;
 function parseOptionTags(headerFieldValue) {
     if (!headerFieldValue)
         return [];
-    return headerFieldValue.split(",").map(function (optionTag) { return optionTag.replace(/\s/g, ""); });
+    return headerFieldValue.split(",").map(optionTag => optionTag.replace(/\s/g, ""));
 }
 exports.parseOptionTags = parseOptionTags;
 function hasOptionTag(headers, headerField, optionTag) {
-    var headerFieldValue = headers[headerField];
-    var optionTags = parseOptionTags(headerFieldValue);
+    let headerFieldValue = headers[headerField];
+    let optionTags = parseOptionTags(headerFieldValue);
     return optionTags.indexOf(optionTag) >= 0;
 }
 exports.hasOptionTag = hasOptionTag;
 function addOptionTag(headers, headerField, optionTag) {
     if (hasOptionTag(headers, headerField, optionTag))
         return;
-    var optionTags = parseOptionTags(headers[headerField]);
+    let optionTags = parseOptionTags(headers[headerField]);
     optionTags.push(optionTag);
     headers[headerField] = optionTags.join(", ");
 }

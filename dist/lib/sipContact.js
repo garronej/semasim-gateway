@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
-var _constants_1 = require("./_constants");
-var _debug = require("debug");
-var debug = _debug("_sipContact");
+const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
+const _constants_1 = require("./_constants");
+const _debug = require("debug");
+let debug = _debug("_sipContact");
 var PsContact;
 (function (PsContact) {
     function stringifyMisc(misc) {
-        var user_agent = (new Buffer(JSON.stringify(misc), "utf8")).toString("base64");
+        let user_agent = (new Buffer(JSON.stringify(misc), "utf8")).toString("base64");
         return user_agent;
     }
     PsContact.stringifyMisc = stringifyMisc;
@@ -16,13 +16,13 @@ var PsContact;
     }
     PsContact.parseMisc = parseMisc;
     function buildContact(psContact) {
-        var imsi = psContact.endpoint;
-        var _a = parseMisc(psContact.user_agent), ua_instance = _a.ua_instance, ua_userEmail = _a.ua_userEmail, ua_platform = _a.ua_platform, ua_pushToken = _a.ua_pushToken, ua_software = _a.ua_software, connectionId = _a.connectionId;
+        let imsi = psContact.endpoint;
+        let { ua_instance, ua_userEmail, ua_platform, ua_pushToken, ua_software, connectionId } = parseMisc(psContact.user_agent);
         return {
             "id": psContact.id,
             "uri": psContact.uri.replace(/\^3B/g, ";"),
             "path": psContact.path.replace(/\^3B/g, ";"),
-            connectionId: connectionId,
+            connectionId,
             "uaSim": {
                 "ua": {
                     "instance": ua_instance,
@@ -31,7 +31,7 @@ var PsContact;
                     "pushToken": ua_pushToken,
                     "software": ua_software
                 },
-                imsi: imsi
+                imsi
             }
         };
     }
@@ -48,7 +48,7 @@ var Contact;
             UaSim.sanityCheck(o.uaSim));
     }
     Contact.sanityCheck = sanityCheck;
-    var UaSim;
+    let UaSim;
     (function (UaSim) {
         function sanityCheck(o) {
             return (o instanceof Object &&
@@ -64,7 +64,7 @@ var Contact;
             return JSON.stringify([o.imsi, Ua.id(o.ua)]);
         }
         UaSim.id = id;
-        var Ua;
+        let Ua;
         (function (Ua) {
             function sanityCheck(o) {
                 return (o instanceof Object &&
@@ -75,7 +75,7 @@ var Contact;
                     typeof o.software === "string");
             }
             Ua.sanityCheck = sanityCheck;
-            var platform;
+            let platform;
             (function (platform) {
                 function sanityCheck(o) {
                     return (typeof o === "string" && (o === "android" ||

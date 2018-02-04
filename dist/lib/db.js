@@ -1,12 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -15,215 +7,118 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var ts_events_extended_1 = require("ts-events-extended");
-var sipContact_1 = require("./sipContact");
-var f = require("../tools/mySqlFunctions");
-var MySqlEvents_1 = require("../tools/MySqlEvents");
-var _constants_1 = require("./_constants");
-var _debug = require("debug");
-var debug = _debug("_db");
+const ts_events_extended_1 = require("ts-events-extended");
+const sipContact_1 = require("./sipContact");
+const f = require("../tools/mySqlFunctions");
+const MySqlEvents_1 = require("../tools/MySqlEvents");
+const _constants_1 = require("./_constants");
+const _debug = require("debug");
+let debug = _debug("_db");
 var asterisk;
 (function (asterisk) {
-    var connectionConfig = __assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk" });
+    const connectionConfig = Object.assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk" });
     /** is exported only for tests */
     _a = f.getUtils(connectionConfig), asterisk.query = _a.query, asterisk.esc = _a.esc, asterisk.buildInsertQuery = _a.buildInsertQuery;
     /** for test purpose only */
     function flush() {
-        return __awaiter(this, void 0, void 0, function () {
-            var sql;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        sql = [
-                            "DELETE FROM ps_aors;",
-                            "DELETE FROM ps_auths;",
-                            "DELETE FROM ps_contacts;",
-                            "DELETE FROM ps_endpoints;",
-                        ].join("\n");
-                        return [4 /*yield*/, asterisk.query(sql)];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            let sql = [
+                "DELETE FROM ps_aors;",
+                "DELETE FROM ps_auths;",
+                "DELETE FROM ps_contacts;",
+                "DELETE FROM ps_endpoints;",
+            ].join("\n");
+            yield asterisk.query(sql);
         });
     }
     asterisk.flush = flush;
     asterisk.evtNewContact = new ts_events_extended_1.SyncEvent();
     asterisk.evtExpiredContact = new ts_events_extended_1.SyncEvent();
     function startListeningPsContacts() {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, asterisk.query([
-                            "DELETE FROM ps_contacts",
-                            "WHERE endpoint LIKE '_______________'"
-                        ].join("\n"))];
-                    case 1:
-                        _a.sent();
-                        return [4 /*yield*/, MySqlEvents_1.MySqlEvents.initialize(connectionConfig)];
-                    case 2:
-                        _a.sent();
-                        MySqlEvents_1.MySqlEvents.instance.evtNewRow.attach(function (_a) {
-                            var database = _a.database, table = _a.table;
-                            return (database === connectionConfig.database &&
-                                table === "ps_contacts");
-                        }, function (_a) {
-                            var row = _a.row;
-                            return __awaiter(_this, void 0, void 0, function () {
-                                var id, endpoint, path, uri, user_agent, psContact, contact;
-                                return __generator(this, function (_b) {
-                                    id = row.id, endpoint = row.endpoint, path = row.path, uri = row.uri, user_agent = row.user_agent;
-                                    psContact = { id: id, endpoint: endpoint, path: path, uri: uri, user_agent: user_agent };
-                                    contact = sipContact_1.PsContact.buildContact(psContact);
-                                    asterisk.evtNewContact.post(contact);
-                                    return [2 /*return*/];
-                                });
-                            });
-                        });
-                        MySqlEvents_1.MySqlEvents.instance.evtDeleteRow.attach(function (_a) {
-                            var database = _a.database, table = _a.table;
-                            return (database === connectionConfig.database &&
-                                table === "ps_contacts");
-                        }, function (_a) {
-                            var row = _a.row;
-                            return __awaiter(_this, void 0, void 0, function () {
-                                var id, endpoint, path, uri, user_agent, psContact, contact;
-                                return __generator(this, function (_b) {
-                                    id = row.id, endpoint = row.endpoint, path = row.path, uri = row.uri, user_agent = row.user_agent;
-                                    psContact = { id: id, endpoint: endpoint, path: path, uri: uri, user_agent: user_agent };
-                                    contact = sipContact_1.PsContact.buildContact(psContact);
-                                    asterisk.evtExpiredContact.post(contact);
-                                    return [2 /*return*/];
-                                });
-                            });
-                        });
-                        return [2 /*return*/];
-                }
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            yield asterisk.query([
+                "DELETE FROM ps_contacts",
+                "WHERE endpoint LIKE '_______________'"
+            ].join("\n"));
+            yield MySqlEvents_1.MySqlEvents.initialize(connectionConfig);
+            MySqlEvents_1.MySqlEvents.instance.evtNewRow.attach(({ database, table }) => (database === connectionConfig.database &&
+                table === "ps_contacts"), ({ row }) => __awaiter(this, void 0, void 0, function* () {
+                let { id, endpoint, path, uri, user_agent } = row;
+                let psContact = { id, endpoint, path, uri, user_agent };
+                let contact = sipContact_1.PsContact.buildContact(psContact);
+                asterisk.evtNewContact.post(contact);
+            }));
+            MySqlEvents_1.MySqlEvents.instance.evtDeleteRow.attach(({ database, table }) => (database === connectionConfig.database &&
+                table === "ps_contacts"), ({ row }) => __awaiter(this, void 0, void 0, function* () {
+                let { id, endpoint, path, uri, user_agent } = row;
+                let psContact = { id, endpoint, path, uri, user_agent };
+                let contact = sipContact_1.PsContact.buildContact(psContact);
+                asterisk.evtExpiredContact.post(contact);
+            }));
         });
     }
     asterisk.startListeningPsContacts = startListeningPsContacts;
     function deleteContact(contact) {
-        var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
             //TODO: this crash some times for some reasons
-            var timerId = setTimeout(function () { return reject(new Error("Delete contact timeout error")); }, 3000);
-            var queryPromise = (function () { return __awaiter(_this, void 0, void 0, function () {
-                var affectedRows, isDeleted;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, asterisk.query("DELETE FROM ps_contacts WHERE id=" + asterisk.esc(contact.id))];
-                        case 1:
-                            affectedRows = (_a.sent()).affectedRows;
-                            isDeleted = affectedRows ? true : false;
-                            if (!isDeleted) {
-                                asterisk.evtExpiredContact.detach(timerId);
-                                clearTimeout(timerId);
-                                resolve(false);
-                            }
-                            return [2 /*return*/];
-                    }
-                });
-            }); })();
-            asterisk.evtExpiredContact.attachOnceExtract(function (_a) {
-                var id = _a.id;
-                return id === contact.id;
-            }, timerId, function (deletedContact) { return queryPromise.then(function () {
+            let timerId = setTimeout(() => reject(new Error(`Delete contact timeout error`)), 3000);
+            let queryPromise = (() => __awaiter(this, void 0, void 0, function* () {
+                let { affectedRows } = yield asterisk.query(`DELETE FROM ps_contacts WHERE id=${asterisk.esc(contact.id)}`);
+                let isDeleted = affectedRows ? true : false;
+                if (!isDeleted) {
+                    asterisk.evtExpiredContact.detach(timerId);
+                    clearTimeout(timerId);
+                    resolve(false);
+                }
+            }))();
+            asterisk.evtExpiredContact.attachOnceExtract(({ id }) => id === contact.id, timerId, deletedContact => queryPromise.then(() => {
                 clearTimeout(timerId);
                 resolve(true);
-            }); });
+            }));
         });
     }
     asterisk.deleteContact = deleteContact;
-    function createEndpointIfNeededAndGetPassword(imsi, renewPassword) {
-        if (renewPassword === void 0) { renewPassword = undefined; }
-        return __awaiter(this, void 0, void 0, function () {
-            var sql, password;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        sql = "";
-                        sql += asterisk.buildInsertQuery("ps_aors", {
-                            "id": imsi,
-                            "max_contacts": 12,
-                            "qualify_frequency": 0,
-                            "support_path": "yes"
-                        }, "IGNORE");
-                        sql += [
-                            "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
-                            "VALUES( " + asterisk.esc(imsi) + ", 'userpass', " + asterisk.esc(imsi) + ", MD5(RAND()), 'semasim' )",
-                            "ON DUPLICATE KEY UPDATE",
-                            renewPassword ? "password= VALUES(password)" : "id=id",
-                            ";",
-                            ""
-                        ].join("\n");
-                        sql += asterisk.buildInsertQuery("ps_endpoints", {
-                            "id": imsi,
-                            "disallow": "all",
-                            "allow": "alaw,ulaw",
-                            "context": _constants_1.c.sipCallContext,
-                            "message_context": _constants_1.c.sipMessageContext,
-                            "subscribe_context": null,
-                            "aors": imsi,
-                            "auth": imsi,
-                            "force_rport": null,
-                            "from_domain": _constants_1.c.shared.domain,
-                            "ice_support": "yes",
-                            "direct_media": null,
-                            "asymmetric_rtp_codec": null,
-                            "rtcp_mux": null,
-                            "direct_media_method": null,
-                            "connected_line_method": null,
-                            "transport": "transport-tcp",
-                            "callerid_tag": null
-                        }, "IGNORE");
-                        sql += "SELECT password FROM ps_auths WHERE id= " + asterisk.esc(imsi);
-                        return [4 /*yield*/, asterisk.query(sql)];
-                    case 1:
-                        password = (_a.sent()).pop()[0].password;
-                        return [2 /*return*/, password];
-                }
-            });
+    function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let sql = "";
+            sql += asterisk.buildInsertQuery("ps_aors", {
+                "id": imsi,
+                "max_contacts": 12,
+                "qualify_frequency": 0,
+                "support_path": "yes"
+            }, "IGNORE");
+            sql += [
+                "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
+                `VALUES( ${asterisk.esc(imsi)}, 'userpass', ${asterisk.esc(imsi)}, MD5(RAND()), 'semasim' )`,
+                "ON DUPLICATE KEY UPDATE",
+                renewPassword ? "password= VALUES(password)" : "id=id",
+                ";",
+                ""
+            ].join("\n");
+            sql += asterisk.buildInsertQuery("ps_endpoints", {
+                "id": imsi,
+                "disallow": "all",
+                "allow": "alaw,ulaw",
+                "context": _constants_1.c.sipCallContext,
+                "message_context": _constants_1.c.sipMessageContext,
+                "subscribe_context": null,
+                "aors": imsi,
+                "auth": imsi,
+                "force_rport": null,
+                "from_domain": _constants_1.c.shared.domain,
+                "ice_support": "yes",
+                "direct_media": null,
+                "asymmetric_rtp_codec": null,
+                "rtcp_mux": null,
+                "direct_media_method": null,
+                "connected_line_method": null,
+                "transport": "transport-tcp",
+                "callerid_tag": null
+            }, "IGNORE");
+            sql += `SELECT password FROM ps_auths WHERE id= ${asterisk.esc(imsi)}`;
+            let { password } = (yield asterisk.query(sql)).pop()[0];
+            return password;
         });
     }
     asterisk.createEndpointIfNeededAndGetPassword = createEndpointIfNeededAndGetPassword;
@@ -231,427 +126,301 @@ var asterisk;
 })(asterisk = exports.asterisk || (exports.asterisk = {}));
 var semasim;
 (function (semasim) {
-    _a = f.getUtils(__assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim" }), "HANDLE STRING ENCODING"), semasim.query = _a.query, semasim.esc = _a.esc, semasim.buildInsertQuery = _a.buildInsertQuery;
+    _a = f.getUtils(Object.assign({}, _constants_1.c.dbParamsGateway, { "database": "semasim" }), "HANDLE STRING ENCODING"), semasim.query = _a.query, semasim.esc = _a.esc, semasim.buildInsertQuery = _a.buildInsertQuery;
     /** Only for test purpose */
     function flush() {
-        return __awaiter(this, void 0, void 0, function () {
-            var sql;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        sql = [
-                            "DELETE FROM ua;",
-                            "DELETE FROM message_toward_sip;"
-                        ].join("\n");
-                        return [4 /*yield*/, semasim.query(sql)];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            let sql = [
+                "DELETE FROM ua;",
+                "DELETE FROM message_toward_sip;"
+            ].join("\n");
+            yield semasim.query(sql);
         });
     }
     semasim.flush = flush;
     function addUaSim(uaSim) {
-        return __awaiter(this, void 0, void 0, function () {
-            var sql, imsi, ua, queryResults;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        sql = "";
-                        imsi = uaSim.imsi, ua = uaSim.ua;
-                        sql += semasim.buildInsertQuery("ua", {
-                            "instance": ua.instance,
-                            "user_email": ua.userEmail,
-                            "platform": ua.platform,
-                            "push_token": ua.pushToken,
-                            "software": ua.software
-                        }, "UPDATE");
-                        sql += [
-                            "SELECT @ua_ref:=ua.id_",
-                            "FROM ua",
-                            "WHERE instance= " + semasim.esc(ua.instance) + " AND user_email= " + semasim.esc(ua.userEmail),
-                            ";",
-                            ""
-                        ].join("\n");
-                        sql += semasim.buildInsertQuery("ua_sim", {
-                            "ua": { "@": "ua_ref" },
-                            imsi: imsi
-                        }, "IGNORE");
-                        sql += [
-                            "SELECT COUNT(*) as sim_ua_count",
-                            "FROM ua_sim",
-                            "WHERE imsi= " + semasim.esc(imsi)
-                        ].join("\n");
-                        return [4 /*yield*/, semasim.query(sql)];
-                    case 1:
-                        queryResults = _a.sent();
-                        return [2 /*return*/, {
-                                "isUaCreatedOrUpdated": queryResults[0].insertId !== 0,
-                                "isFirstUaForSim": (queryResults[2].insertId !== 0 &&
-                                    queryResults[3][0]["sim_ua_count"] === 1)
-                            }];
-                }
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            let sql = "";
+            let { imsi, ua } = uaSim;
+            sql += semasim.buildInsertQuery("ua", {
+                "instance": ua.instance,
+                "user_email": ua.userEmail,
+                "platform": ua.platform,
+                "push_token": ua.pushToken,
+                "software": ua.software
+            }, "UPDATE");
+            sql += [
+                "SELECT @ua_ref:=ua.id_",
+                "FROM ua",
+                `WHERE instance= ${semasim.esc(ua.instance)} AND user_email= ${semasim.esc(ua.userEmail)}`,
+                ";",
+                ""
+            ].join("\n");
+            sql += semasim.buildInsertQuery("ua_sim", {
+                "ua": { "@": "ua_ref" },
+                imsi
+            }, "IGNORE");
+            sql += [
+                `SELECT COUNT(*) as sim_ua_count`,
+                "FROM ua_sim",
+                `WHERE imsi= ${semasim.esc(imsi)}`
+            ].join("\n");
+            let queryResults = yield semasim.query(sql);
+            return {
+                "isUaCreatedOrUpdated": queryResults[0].insertId !== 0,
+                "isFirstUaForSim": (queryResults[2].insertId !== 0 &&
+                    queryResults[3][0]["sim_ua_count"] === 1)
+            };
         });
     }
     semasim.addUaSim = addUaSim;
     //TODO: test!
-    function removeUaSim(imsi, uasToKeep) {
-        if (uasToKeep === void 0) { uasToKeep = []; }
-        return __awaiter(this, void 0, void 0, function () {
-            var cond;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        cond = uasToKeep.length ? [
-                            " AND NOT ( ",
-                            uasToKeep.map(function (ua) { return "ua.instance= " + semasim.esc(ua.instance) + " AND ua.user_email= " + semasim.esc(ua.userEmail); }).join(" OR "),
-                            " )"
-                        ].join("") : "";
-                        return [4 /*yield*/, semasim.query([
-                                "DELETE ua_sim.*",
-                                "FROM ua_sim",
-                                "INNER JOIN ua ON ua.id_= ua_sim.ua",
-                                "WHERE ua_sim.imsi= " + semasim.esc(imsi) + cond
-                            ].join("\n"))];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
+    function removeUaSim(imsi, uasToKeep = []) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let cond = uasToKeep.length ? [
+                " AND NOT ( ",
+                uasToKeep.map(ua => `ua.instance= ${semasim.esc(ua.instance)} AND ua.user_email= ${semasim.esc(ua.userEmail)}`).join(" OR "),
+                " )"
+            ].join("") : "";
+            yield semasim.query([
+                "DELETE ua_sim.*",
+                "FROM ua_sim",
+                "INNER JOIN ua ON ua.id_= ua_sim.ua",
+                `WHERE ua_sim.imsi= ${semasim.esc(imsi)}${cond}`
+            ].join("\n"));
         });
     }
     semasim.removeUaSim = removeUaSim;
     ;
-    var MessageTowardGsm;
+    let MessageTowardGsm;
     (function (MessageTowardGsm) {
         function add(toNumber, text, uaSim) {
-            return __awaiter(this, void 0, void 0, function () {
-                var sql;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sql = "";
-                            sql += [
-                                "SELECT @ua_sim_ref:= ua_sim.id_",
-                                "FROM ua_sim",
-                                "INNER JOIN ua ON ua.id_= ua_sim.ua",
-                                "WHERE",
-                                [
-                                    "ua_sim.imsi= " + semasim.esc(uaSim.imsi),
-                                    "ua.instance = " + semasim.esc(uaSim.ua.instance),
-                                    "ua.user_email= " + semasim.esc(uaSim.ua.userEmail)
-                                ].join(" AND "),
-                                ";",
-                                ""
-                            ].join("\n");
-                            sql += semasim.buildInsertQuery("message_toward_gsm", {
-                                "date": Date.now(),
-                                "ua_sim": { "@": "ua_sim_ref" },
-                                "to_number": toNumber,
-                                "text": text,
-                                "send_date": null
-                            }, "THROW ERROR");
-                            return [4 /*yield*/, semasim.query(sql)];
-                        case 1:
-                            _a.sent();
-                            return [2 /*return*/];
-                    }
-                });
+            return __awaiter(this, void 0, void 0, function* () {
+                let sql = "";
+                sql += [
+                    "SELECT @ua_sim_ref:= ua_sim.id_",
+                    "FROM ua_sim",
+                    "INNER JOIN ua ON ua.id_= ua_sim.ua",
+                    "WHERE",
+                    [
+                        `ua_sim.imsi= ${semasim.esc(uaSim.imsi)}`,
+                        `ua.instance = ${semasim.esc(uaSim.ua.instance)}`,
+                        `ua.user_email= ${semasim.esc(uaSim.ua.userEmail)}`
+                    ].join(" AND "),
+                    ";",
+                    ""
+                ].join("\n");
+                sql += semasim.buildInsertQuery("message_toward_gsm", {
+                    "date": Date.now(),
+                    "ua_sim": { "@": "ua_sim_ref" },
+                    "to_number": toNumber,
+                    "text": text,
+                    "send_date": null
+                }, "THROW ERROR");
+                yield semasim.query(sql);
             });
         }
         MessageTowardGsm.add = add;
         function getUnsent(imsi) {
-            return __awaiter(this, void 0, void 0, function () {
-                var _this = this;
-                var rows, out, _loop_1, rows_1, rows_1_1, row, e_1, _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0: return [4 /*yield*/, semasim.query([
-                                "SELECT",
-                                "message_toward_gsm.id_,",
-                                "message_toward_gsm.date,",
-                                "message_toward_gsm.to_number,",
-                                "message_toward_gsm.text,",
-                                "ua_sim.imsi,",
-                                "ua.instance,",
-                                "ua.user_email,",
-                                "ua.platform,",
-                                "ua.push_token,",
-                                "ua.software",
-                                "FROM message_toward_gsm",
-                                "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
-                                "INNER JOIN ua ON ua.id_ = ua_sim.ua",
-                                "WHERE ua_sim.imsi=" + semasim.esc(imsi) + " AND message_toward_gsm.send_date IS NULL",
-                                "ORDER BY message_toward_gsm.date",
-                                ";"
-                            ].join("\n"))];
-                        case 1:
-                            rows = _b.sent();
-                            out = [];
-                            _loop_1 = function (row) {
-                                var message = {
-                                    "date": new Date(row["date"]),
-                                    "uaSim": {
-                                        "ua": {
-                                            "instance": row["instance"],
-                                            "userEmail": row["user_email"],
-                                            "platform": row["platform"],
-                                            "pushToken": row["push_token"],
-                                            "software": row["software"]
-                                        },
-                                        "imsi": row["imsi"]
-                                    },
-                                    "toNumber": row["to_number"],
-                                    "text": row["text"]
-                                };
-                                var message_toward_gsm_id_ = row["id_"];
-                                var confirm = {
-                                    "setSent": function (sentDate) { return __awaiter(_this, void 0, void 0, function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0: return [4 /*yield*/, semasim.query(semasim.buildInsertQuery("message_toward_gsm", {
-                                                        "id_": message_toward_gsm_id_,
-                                                        "send_date": sentDate ? sentDate.getTime() : -1
-                                                    }, "UPDATE"))];
-                                                case 1: return [2 /*return*/, _a.sent()];
-                                            }
-                                        });
-                                    }); },
-                                    "setStatusReport": function (statusReport) { return __awaiter(_this, void 0, void 0, function () {
-                                        return __generator(this, function (_a) {
-                                            switch (_a.label) {
-                                                case 0: return [4 /*yield*/, semasim.query(semasim.buildInsertQuery("message_toward_gsm_status_report", {
-                                                        "message_toward_gsm": message_toward_gsm_id_,
-                                                        "is_delivered": statusReport.isDelivered ? 1 : 0,
-                                                        "discharge_date": isNaN(statusReport.dischargeDate.getTime()) ?
-                                                            null : statusReport.dischargeDate.getTime(),
-                                                        "status": statusReport.status
-                                                    }, "UPDATE"))];
-                                                case 1: return [2 /*return*/, _a.sent()];
-                                            }
-                                        });
-                                    }); }
-                                };
-                                out.push([message, confirm]);
-                            };
-                            try {
-                                for (rows_1 = __values(rows), rows_1_1 = rows_1.next(); !rows_1_1.done; rows_1_1 = rows_1.next()) {
-                                    row = rows_1_1.value;
-                                    _loop_1(row);
-                                }
-                            }
-                            catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                            finally {
-                                try {
-                                    if (rows_1_1 && !rows_1_1.done && (_a = rows_1.return)) _a.call(rows_1);
-                                }
-                                finally { if (e_1) throw e_1.error; }
-                            }
-                            return [2 /*return*/, out];
-                    }
-                });
+            return __awaiter(this, void 0, void 0, function* () {
+                let rows = yield semasim.query([
+                    "SELECT",
+                    "message_toward_gsm.id_,",
+                    "message_toward_gsm.date,",
+                    "message_toward_gsm.to_number,",
+                    "message_toward_gsm.text,",
+                    "ua_sim.imsi,",
+                    "ua.instance,",
+                    "ua.user_email,",
+                    "ua.platform,",
+                    "ua.push_token,",
+                    "ua.software",
+                    "FROM message_toward_gsm",
+                    "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
+                    "INNER JOIN ua ON ua.id_ = ua_sim.ua",
+                    `WHERE ua_sim.imsi=${semasim.esc(imsi)} AND message_toward_gsm.send_date IS NULL`,
+                    "ORDER BY message_toward_gsm.date",
+                    ";"
+                ].join("\n"));
+                let out = [];
+                for (let row of rows) {
+                    let message = {
+                        "date": new Date(row["date"]),
+                        "uaSim": {
+                            "ua": {
+                                "instance": row["instance"],
+                                "userEmail": row["user_email"],
+                                "platform": row["platform"],
+                                "pushToken": row["push_token"],
+                                "software": row["software"]
+                            },
+                            "imsi": row["imsi"]
+                        },
+                        "toNumber": row["to_number"],
+                        "text": row["text"]
+                    };
+                    let message_toward_gsm_id_ = row["id_"];
+                    let confirm = {
+                        "setSent": (sentDate) => __awaiter(this, void 0, void 0, function* () {
+                            return yield semasim.query(semasim.buildInsertQuery("message_toward_gsm", {
+                                "id_": message_toward_gsm_id_,
+                                "send_date": sentDate ? sentDate.getTime() : -1
+                            }, "UPDATE"));
+                        }),
+                        "setStatusReport": (statusReport) => __awaiter(this, void 0, void 0, function* () {
+                            return yield semasim.query(semasim.buildInsertQuery("message_toward_gsm_status_report", {
+                                "message_toward_gsm": message_toward_gsm_id_,
+                                "is_delivered": statusReport.isDelivered ? 1 : 0,
+                                "discharge_date": isNaN(statusReport.dischargeDate.getTime()) ?
+                                    null : statusReport.dischargeDate.getTime(),
+                                "status": statusReport.status
+                            }, "UPDATE"));
+                        })
+                    };
+                    out.push([message, confirm]);
+                }
+                return out;
             });
         }
         MessageTowardGsm.getUnsent = getUnsent;
     })(MessageTowardGsm = semasim.MessageTowardGsm || (semasim.MessageTowardGsm = {}));
     function lastMessageReceivedDateBySim() {
-        return __awaiter(this, void 0, void 0, function () {
-            var rows, result, rows_2, rows_2_1, _a, imsi, last_received, e_2, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
-                    case 0: return [4 /*yield*/, semasim.query([
-                            "SELECT",
-                            "ua_sim.imsi,",
-                            "MAX(message_toward_sip.date) AS last_received",
-                            "FROM ua_sim",
-                            "LEFT JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.ua_sim = ua_sim.id_",
-                            "LEFT JOIN message_toward_sip ON message_toward_sip.id_ = ua_sim_message_toward_sip.message_toward_sip",
-                            "WHERE (message_toward_sip.is_report=0 OR message_toward_sip.is_report IS NULL)",
-                            "GROUP BY imsi"
-                        ].join("\n"))];
-                    case 1:
-                        rows = _c.sent();
-                        result = {};
-                        try {
-                            for (rows_2 = __values(rows), rows_2_1 = rows_2.next(); !rows_2_1.done; rows_2_1 = rows_2.next()) {
-                                _a = rows_2_1.value, imsi = _a.imsi, last_received = _a.last_received;
-                                result[imsi] = new Date(last_received || 0);
-                            }
-                        }
-                        catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                        finally {
-                            try {
-                                if (rows_2_1 && !rows_2_1.done && (_b = rows_2.return)) _b.call(rows_2);
-                            }
-                            finally { if (e_2) throw e_2.error; }
-                        }
-                        return [2 /*return*/, result];
-                }
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            let rows = yield semasim.query([
+                "SELECT",
+                "ua_sim.imsi,",
+                "MAX(message_toward_sip.date) AS last_received",
+                "FROM ua_sim",
+                "LEFT JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.ua_sim = ua_sim.id_",
+                "LEFT JOIN message_toward_sip ON message_toward_sip.id_ = ua_sim_message_toward_sip.message_toward_sip",
+                "WHERE (message_toward_sip.is_report=0 OR message_toward_sip.is_report IS NULL)",
+                "GROUP BY imsi"
+            ].join("\n"));
+            let result = {};
+            for (let { imsi, last_received } of rows) {
+                result[imsi] = new Date(last_received || 0);
+            }
+            return result;
         });
     }
     semasim.lastMessageReceivedDateBySim = lastMessageReceivedDateBySim;
-    var MessageTowardSip;
+    let MessageTowardSip;
     (function (MessageTowardSip) {
         /** return true if message_toward_sip added */
         function add(fromNumber, text, date, isReport, target) {
-            return __awaiter(this, void 0, void 0, function () {
-                var sqlSelectionUaSim, queryResults;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sqlSelectionUaSim = [
-                                "FROM ua_sim",
-                                "INNER JOIN ua ON ua.id_= ua_sim.ua",
-                                "WHERE ua_sim.imsi= "
-                            ].join("\n");
-                            switch (target.target) {
-                                case "SPECIFIC UA REGISTERED TO SIM":
-                                    sqlSelectionUaSim += [
-                                        "" + semasim.esc(target.uaSim.imsi),
-                                        "ua.instance= " + semasim.esc(target.uaSim.ua.instance),
-                                        "ua.user_email= " + semasim.esc(target.uaSim.ua.userEmail)
-                                    ].join(" AND ");
-                                    break;
-                                case "ALL UA REGISTERED TO SIM":
-                                    sqlSelectionUaSim += "" + semasim.esc(target.imsi);
-                                    break;
-                                case "ALL OTHER UA OF USER REGISTERED TO SIM":
-                                    sqlSelectionUaSim += [
-                                        "" + semasim.esc(target.uaSim.imsi),
-                                        "ua.instance <> " + semasim.esc(target.uaSim.ua.instance),
-                                        "ua.user_email= " + semasim.esc(target.uaSim.ua.userEmail)
-                                    ].join(" AND ");
-                                    break;
-                                case "ALL UA OF OTHER USERS REGISTERED TO SIM":
-                                    sqlSelectionUaSim += [
-                                        "" + semasim.esc(target.uaSim.imsi),
-                                        "ua.user_email<> " + semasim.esc(target.uaSim.ua.userEmail)
-                                    ].join(" AND ");
-                                    break;
-                            }
-                            return [4 /*yield*/, semasim.query([
-                                    "INSERT INTO message_toward_sip ( is_report, date, from_number, text )",
-                                    "SELECT",
-                                    [
-                                        semasim.esc(isReport ? 1 : 0),
-                                        semasim.esc(date.getTime()),
-                                        semasim.esc(fromNumber),
-                                        semasim.esc(text)
-                                    ].join(", "),
-                                    sqlSelectionUaSim,
-                                    "HAVING COUNT(*) <> 0",
-                                    ";",
-                                    "INSERT INTO ua_sim_message_toward_sip",
-                                    "( ua_sim, message_toward_sip, delivered_date )",
-                                    "SELECT ua_sim.id_, LAST_INSERT_ID(), NULL",
-                                    sqlSelectionUaSim
-                                ].join("\n"))];
-                        case 1:
-                            queryResults = _a.sent();
-                            return [2 /*return*/, queryResults[0].insertId !== 0];
-                    }
-                });
+            return __awaiter(this, void 0, void 0, function* () {
+                let sqlSelectionUaSim = [
+                    "FROM ua_sim",
+                    "INNER JOIN ua ON ua.id_= ua_sim.ua",
+                    "WHERE ua_sim.imsi= "
+                ].join("\n");
+                switch (target.target) {
+                    case "SPECIFIC UA REGISTERED TO SIM":
+                        sqlSelectionUaSim += [
+                            `${semasim.esc(target.uaSim.imsi)}`,
+                            `ua.instance= ${semasim.esc(target.uaSim.ua.instance)}`,
+                            `ua.user_email= ${semasim.esc(target.uaSim.ua.userEmail)}`
+                        ].join(" AND ");
+                        break;
+                    case "ALL UA REGISTERED TO SIM":
+                        sqlSelectionUaSim += `${semasim.esc(target.imsi)}`;
+                        break;
+                    case "ALL OTHER UA OF USER REGISTERED TO SIM":
+                        sqlSelectionUaSim += [
+                            `${semasim.esc(target.uaSim.imsi)}`,
+                            `ua.instance <> ${semasim.esc(target.uaSim.ua.instance)}`,
+                            `ua.user_email= ${semasim.esc(target.uaSim.ua.userEmail)}`
+                        ].join(" AND ");
+                        break;
+                    case "ALL UA OF OTHER USERS REGISTERED TO SIM":
+                        sqlSelectionUaSim += [
+                            `${semasim.esc(target.uaSim.imsi)}`,
+                            `ua.user_email<> ${semasim.esc(target.uaSim.ua.userEmail)}`
+                        ].join(" AND ");
+                        break;
+                }
+                let queryResults = yield semasim.query([
+                    "INSERT INTO message_toward_sip ( is_report, date, from_number, text )",
+                    "SELECT",
+                    [
+                        semasim.esc(isReport ? 1 : 0),
+                        semasim.esc(date.getTime()),
+                        semasim.esc(fromNumber),
+                        semasim.esc(text)
+                    ].join(", "),
+                    sqlSelectionUaSim,
+                    "HAVING COUNT(*) <> 0",
+                    ";",
+                    "INSERT INTO ua_sim_message_toward_sip",
+                    "( ua_sim, message_toward_sip, delivered_date )",
+                    "SELECT ua_sim.id_, LAST_INSERT_ID(), NULL",
+                    sqlSelectionUaSim
+                ].join("\n"));
+                return queryResults[0].insertId !== 0;
             });
         }
         MessageTowardSip.add = add;
         function unsentCount(uaSim) {
-            return __awaiter(this, void 0, void 0, function () {
-                var sql;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            sql = [
-                                "SELECT COUNT(*) AS count",
-                                "FROM message_toward_sip",
-                                "INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_",
-                                "INNER JOIN ua_sim ON ua_sim.id_= ua_sim_message_toward_sip.ua_sim",
-                                "INNER JOIN ua ON ua.id_= ua_sim.ua",
-                                "WHERE",
-                                [
-                                    "ua_sim_message_toward_sip.delivered_date IS NULL",
-                                    "ua_sim.imsi= " + semasim.esc(uaSim.imsi),
-                                    "ua.instance= " + semasim.esc(uaSim.ua.instance),
-                                    "ua.user_email= " + semasim.esc(uaSim.ua.userEmail)
-                                ].join(" AND ")
-                            ].join("\n");
-                            return [4 /*yield*/, semasim.query(sql)];
-                        case 1: return [2 /*return*/, (_a.sent())[0]["count"]];
-                    }
-                });
+            return __awaiter(this, void 0, void 0, function* () {
+                let sql = [
+                    "SELECT COUNT(*) AS count",
+                    "FROM message_toward_sip",
+                    "INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_",
+                    "INNER JOIN ua_sim ON ua_sim.id_= ua_sim_message_toward_sip.ua_sim",
+                    "INNER JOIN ua ON ua.id_= ua_sim.ua",
+                    "WHERE",
+                    [
+                        "ua_sim_message_toward_sip.delivered_date IS NULL",
+                        `ua_sim.imsi= ${semasim.esc(uaSim.imsi)}`,
+                        `ua.instance= ${semasim.esc(uaSim.ua.instance)}`,
+                        `ua.user_email= ${semasim.esc(uaSim.ua.userEmail)}`
+                    ].join(" AND ")
+                ].join("\n");
+                return (yield semasim.query(sql))[0]["count"];
             });
         }
         MessageTowardSip.unsentCount = unsentCount;
         /** Return array of [ MessageTowardSip, setDelivered ] */
         function getUnsent(uaSim) {
-            return __awaiter(this, void 0, void 0, function () {
-                var _this = this;
-                var sql, rows, out, _loop_2, rows_3, rows_3_1, row, e_3, _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            sql = [
-                                "SELECT",
-                                "message_toward_sip.is_report,",
-                                "message_toward_sip.date,",
-                                "message_toward_sip.from_number,",
-                                "message_toward_sip.text,",
-                                "ua_sim_message_toward_sip.id_",
-                                "FROM message_toward_sip",
-                                "INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_",
-                                "INNER JOIN ua_sim ON ua_sim.id_= ua_sim_message_toward_sip.ua_sim",
-                                "INNER JOIN ua ON ua.id_= ua_sim.ua",
-                                "WHERE",
-                                [
-                                    "ua_sim_message_toward_sip.delivered_date IS NULL",
-                                    "ua_sim.imsi= " + semasim.esc(uaSim.imsi),
-                                    "ua.instance= " + semasim.esc(uaSim.ua.instance),
-                                    "ua.user_email= " + semasim.esc(uaSim.ua.userEmail)
-                                ].join(" AND "),
-                                "ORDER BY message_toward_sip.date"
-                            ].join("\n");
-                            return [4 /*yield*/, semasim.query(sql)];
-                        case 1:
-                            rows = _b.sent();
-                            out = new Array();
-                            _loop_2 = function (row) {
-                                var message = {
-                                    "date": new Date(row["date"]),
-                                    "fromNumber": row["from_number"],
-                                    "isReport": row["is_report"] === 1,
-                                    "text": row["text"]
-                                };
-                                var setReceived = function () { return __awaiter(_this, void 0, void 0, function () {
-                                    return __generator(this, function (_a) {
-                                        switch (_a.label) {
-                                            case 0: return [4 /*yield*/, semasim.query(semasim.buildInsertQuery("ua_sim_message_toward_sip", {
-                                                    "id_": row["id_"],
-                                                    "delivered_date": Date.now()
-                                                }, "UPDATE"))];
-                                            case 1: return [2 /*return*/, _a.sent()];
-                                        }
-                                    });
-                                }); };
-                                out.push([message, setReceived]);
-                            };
-                            try {
-                                for (rows_3 = __values(rows), rows_3_1 = rows_3.next(); !rows_3_1.done; rows_3_1 = rows_3.next()) {
-                                    row = rows_3_1.value;
-                                    _loop_2(row);
-                                }
-                            }
-                            catch (e_3_1) { e_3 = { error: e_3_1 }; }
-                            finally {
-                                try {
-                                    if (rows_3_1 && !rows_3_1.done && (_a = rows_3.return)) _a.call(rows_3);
-                                }
-                                finally { if (e_3) throw e_3.error; }
-                            }
-                            return [2 /*return*/, out];
-                    }
-                });
+            return __awaiter(this, void 0, void 0, function* () {
+                let sql = [
+                    `SELECT`,
+                    `message_toward_sip.is_report,`,
+                    `message_toward_sip.date,`,
+                    `message_toward_sip.from_number,`,
+                    `message_toward_sip.text,`,
+                    `ua_sim_message_toward_sip.id_`,
+                    `FROM message_toward_sip`,
+                    `INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_`,
+                    `INNER JOIN ua_sim ON ua_sim.id_= ua_sim_message_toward_sip.ua_sim`,
+                    `INNER JOIN ua ON ua.id_= ua_sim.ua`,
+                    "WHERE",
+                    [
+                        "ua_sim_message_toward_sip.delivered_date IS NULL",
+                        `ua_sim.imsi= ${semasim.esc(uaSim.imsi)}`,
+                        `ua.instance= ${semasim.esc(uaSim.ua.instance)}`,
+                        `ua.user_email= ${semasim.esc(uaSim.ua.userEmail)}`
+                    ].join(" AND "),
+                    `ORDER BY message_toward_sip.date`
+                ].join("\n");
+                let rows = yield semasim.query(sql);
+                let out = new Array();
+                for (let row of rows) {
+                    let message = {
+                        "date": new Date(row["date"]),
+                        "fromNumber": row["from_number"],
+                        "isReport": row["is_report"] === 1,
+                        "text": row["text"]
+                    };
+                    let setReceived = () => __awaiter(this, void 0, void 0, function* () {
+                        return yield semasim.query(semasim.buildInsertQuery("ua_sim_message_toward_sip", {
+                            "id_": row["id_"],
+                            "delivered_date": Date.now()
+                        }, "UPDATE"));
+                    });
+                    out.push([message, setReceived]);
+                }
+                return out;
             });
         }
         MessageTowardSip.getUnsent = getUnsent;

@@ -209,7 +209,7 @@ export async function start() {
         tls.connect({
             "host": (await networkTools.resolveSrv(`_sips._tcp.${c.shared.domain}`))[0].name,
             "port": c.shared.gatewayPort
-        }) as any
+        })
     );
 
     backendSocket.setKeepAlive(true);
