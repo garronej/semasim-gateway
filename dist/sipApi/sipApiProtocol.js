@@ -114,14 +114,14 @@ class Server {
                 params = ApiMessage.parsePayload(sipRequest, this.sanityChecks[methodName]);
             }
             catch (_a) {
-                console.log("Api request malformed");
+                console.log("Api request malformed".red);
                 socket.destroy();
                 return;
             }
             //console.log("server", { methodName, params });
             let handler = this.handlers[methodName];
             if (!handler) {
-                console.log(`Method ${methodName} not implemented`);
+                console.log(`Method ${methodName} not implemented`.red);
                 socket.destroy();
                 return;
             }
@@ -130,7 +130,7 @@ class Server {
                 response = yield handler(params, socket);
             }
             catch (_b) {
-                console.log("Request made handler throw error");
+                console.log("Request made handler throw error".red);
                 socket.destroy();
                 return;
             }
@@ -148,7 +148,7 @@ class Client {
         this.keepAliveInterval = keepAliveInterval;
         this.sanityChecks = sanityChecks;
         socket.misc["apiClient"] = this;
-        let timer = setInterval(() => this.sendRequest(keepAliveMethodName, "PING", 5 * 1000), keepAliveInterval);
+        let timer = setInterval(() => this.sendRequest(keepAliveMethodName, "PING", 5 * 1000).catch(() => { }), keepAliveInterval);
         this.socket.evtClose.attach(() => clearInterval(timer));
     }
     static getFromSocket(socket) {
@@ -179,7 +179,7 @@ class Client {
                 let sendRequestError = new Client.SendRequestError(methodName, params, (error.message === "CLOSE") ?
                     "SOCKET CLOSED BEFORE RECEIVING RESPONSE" : "REQUEST TIMEOUT");
                 if (sendRequestError.cause === "REQUEST TIMEOUT") {
-                    console.log("Request timeout");
+                    console.log("Request timeout".red);
                     this.socket.destroy();
                 }
                 throw sendRequestError;
@@ -191,7 +191,7 @@ class Client {
             catch (_a) {
                 let sendRequestError = new Client.SendRequestError(methodName, params, "MALFORMED RESPONSE");
                 sendRequestError.misc["sipRequestResponse"] = sipRequestResponse;
-                console.log("malformed response");
+                console.log("malformed response".red);
                 this.socket.destroy();
                 throw sendRequestError;
             }

@@ -175,7 +175,7 @@ export class Server {
                     params = ApiMessage.parsePayload(sipRequest, this.sanityChecks[methodName]);
 
                 }catch{
-                    console.log("Api request malformed");
+                    console.log("Api request malformed".red);
                     socket.destroy();
                     return;
                 }
@@ -185,7 +185,7 @@ export class Server {
                 let handler = this.handlers[methodName];
 
                 if (!handler) {
-                    console.log(`Method ${methodName} not implemented`);
+                    console.log(`Method ${methodName} not implemented`.red);
                     socket.destroy();
                     return;
                 }
@@ -198,7 +198,7 @@ export class Server {
 
                 }catch{
 
-                    console.log("Request made handler throw error");
+                    console.log("Request made handler throw error".red);
                     socket.destroy();
                     return;
 
@@ -259,8 +259,8 @@ export class Client {
 
         socket.misc["apiClient"] = this;
 
-        let timer = setInterval(() =>
-            this.sendRequest(keepAliveMethodName, "PING", 5 * 1000),
+        let timer = setInterval(() => 
+            this.sendRequest(keepAliveMethodName, "PING", 5 * 1000).catch(()=>{}),
             keepAliveInterval
         );
 
@@ -320,7 +320,7 @@ export class Client {
 
             if (sendRequestError.cause === "REQUEST TIMEOUT") {
 
-                console.log("Request timeout");
+                console.log("Request timeout".red);
                 this.socket.destroy();
 
             }
@@ -348,7 +348,7 @@ export class Client {
 
             sendRequestError.misc["sipRequestResponse"] = sipRequestResponse;
 
-            console.log("malformed response");
+            console.log("malformed response".red);
             this.socket.destroy();
 
             throw sendRequestError;
