@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const _constants_1 = require("./_constants");
-const _debug = require("debug");
-let debug = _debug("_sipContact");
 var PsContact;
 (function (PsContact) {
     function stringifyMisc(misc) {

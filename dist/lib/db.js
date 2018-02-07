@@ -13,8 +13,6 @@ const sipContact_1 = require("./sipContact");
 const f = require("../tools/mySqlFunctions");
 const MySqlEvents_1 = require("../tools/MySqlEvents");
 const _constants_1 = require("./_constants");
-const _debug = require("debug");
-let debug = _debug("_db");
 var asterisk;
 (function (asterisk) {
     const connectionConfig = Object.assign({}, _constants_1.c.dbParamsGateway, { "database": "asterisk" });

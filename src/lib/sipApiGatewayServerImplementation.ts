@@ -1,6 +1,4 @@
 import { DongleController as Dc } from "chan-dongle-extended-client";
-import * as db from "./db";
-import { evtNewBackendSocketConnect } from "./sipProxy";
 import { gatewayDeclaration as apiDeclaration, protocol } from "../sipApi";
 import * as sipLibrary from "../tools/sipLibrary";
 import * as sipApiBackend from "./sipApiBackedClientImplementation";

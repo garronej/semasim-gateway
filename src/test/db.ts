@@ -1,10 +1,8 @@
 require("rejection-tracker").main(__dirname, "..", "..");
 
-import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Contact, PsContact } from "../lib/sipContact";
 import * as db from "../lib/db";
 import * as f from "../tools/mySqlFunctions";
-import { MySqlEvents } from "../tools/MySqlEvents";
 import * as sipLibrary from "../tools/sipLibrary";
 import * as genSamples from "./genSamples";
 
@@ -283,8 +281,6 @@ async function testDbSemasim() {
         console.assert(Contact.UaSim.areSame(message.uaSim, uaSim));
 
         areSameUa(message.uaSim.ua, uaSim.ua);
-
-        let sendDate = new Date();
 
         await confirm.setSent(null);
 

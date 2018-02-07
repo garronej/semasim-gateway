@@ -85,6 +85,7 @@ export const makeStreamParser: (
     maxContentLength: number
 ) => ((dataAsBinaryString: string) => void) = sip.makeStreamParser;
 
+
 //TODO: make a function to test if message are well formed: have from, to via ect.
 export class Socket {
 
@@ -100,7 +101,7 @@ export class Socket {
     public readonly evtClose = new SyncEvent<boolean>();
     public readonly evtConnect = new VoidSyncEvent();
 
-    private timer: NodeJS.Timer;
+    private timer!: NodeJS.Timer;
     public readonly evtTimeout = new VoidSyncEvent();
 
     public readonly evtData = new SyncEvent<string>();
@@ -112,6 +113,8 @@ export class Socket {
     public remotePort = NaN;
     public localAddress = "";
     public remoteAddress = "";
+
+    public localAddressPublic: string | undefined= undefined;
 
     private readonly connection: net.Socket | WebSocket;
 
@@ -297,6 +300,8 @@ export class Socket {
         //TODO: this can potentially throw, make sure it's ok
         let data = new Buffer(stringify(sipPacket), "binary");
 
+        console.log("to utf8: ", data.toString("utf8"));
+
         if (Socket.matchWebSocket(this.connection)) {
 
             return new Promise<boolean>(
@@ -389,9 +394,9 @@ export class Socket {
     }
 
 
+
     public addPathHeader(
         sipRegisterRequest: Request,
-        host?: string,
         extraParams?: Record<string, string>
     ) {
 
@@ -400,7 +405,7 @@ export class Socket {
         }
 
         sipRegisterRequest.headers.path!.unshift(
-            this.buildRoute(host, extraParams)
+            this.buildRoute(extraParams)
         );
 
     }
@@ -412,9 +417,10 @@ export class Socket {
      * 
      */
     private buildRoute(
-        host: string = this.localAddress,
         extraParams: Record<string, string> = {}
     ): AoRWithParsedUri {
+
+        let host= this.localAddressPublic || this.localAddress;
 
         return {
             "uri": {
@@ -446,8 +452,7 @@ export class Socket {
      * 
      */
     public shiftRouteAndUnshiftRecordRoute(
-        sipRequest: Request,
-        host?: string
+        sipRequest: Request
     ) {
 
         if (sipRequest.headers.route) sipRequest.headers.route.shift();
@@ -456,7 +461,7 @@ export class Socket {
 
         if (!sipRequest.headers["record-route"]) sipRequest.headers["record-route"] = [];
 
-        sipRequest.headers["record-route"]!.unshift(this.buildRoute(host));
+        sipRequest.headers["record-route"]!.unshift(this.buildRoute());
 
     }
 
@@ -477,15 +482,14 @@ export class Socket {
      */
     public pushRecordRoute(
         sipResponse: Response,
-        isFirstHop: boolean,
-        host?: string
+        isFirstHop: boolean
     ) {
 
         if (!sipResponse.headers["record-route"]) return;
 
         if (isFirstHop) sipResponse.headers["record-route"] = [];
 
-        sipResponse.headers["record-route"]!.push(this.buildRoute(host));
+        sipResponse.headers["record-route"]!.push(this.buildRoute());
 
     }
 

@@ -61,6 +61,7 @@ class Socket {
         this.remotePort = NaN;
         this.localAddress = "";
         this.remoteAddress = "";
+        this.localAddressPublic = undefined;
         this.setKeepAlive = (...inputs) => Socket.matchWebSocket(this.connection) ?
             undefined :
             this.connection.setKeepAlive.apply(this.connection, inputs);
@@ -167,6 +168,7 @@ class Socket {
         }
         //TODO: this can potentially throw, make sure it's ok
         let data = new Buffer(exports.stringify(sipPacket), "binary");
+        console.log("to utf8: ", data.toString("utf8"));
         if (Socket.matchWebSocket(this.connection)) {
             return new Promise(resolve => this.connection
                 .send(data, { "binary": true }, error => resolve(error ? true : false)));
@@ -219,11 +221,11 @@ class Socket {
         });
         return branch;
     }
-    addPathHeader(sipRegisterRequest, host, extraParams) {
+    addPathHeader(sipRegisterRequest, extraParams) {
         if (!sipRegisterRequest.headers.path) {
             sipRegisterRequest.headers.path = [];
         }
-        sipRegisterRequest.headers.path.unshift(this.buildRoute(host, extraParams));
+        sipRegisterRequest.headers.path.unshift(this.buildRoute(extraParams));
     }
     /**
      *
@@ -231,7 +233,8 @@ class Socket {
      * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
      *
      */
-    buildRoute(host = this.localAddress, extraParams = {}) {
+    buildRoute(extraParams = {}) {
+        let host = this.localAddressPublic || this.localAddress;
         return {
             "uri": Object.assign({}, exports.parseUri(`sip:${host}:${this.localPort}`), { "params": Object.assign({}, extraParams, { "transport": this.protocol, "lr": null }) }),
             "params": {}
@@ -252,14 +255,14 @@ class Socket {
      * Record-Route: LOCAL_this, HOP_X
      *
      */
-    shiftRouteAndUnshiftRecordRoute(sipRequest, host) {
+    shiftRouteAndUnshiftRecordRoute(sipRequest) {
         if (sipRequest.headers.route)
             sipRequest.headers.route.shift();
         if (!sipRequest.headers.contact)
             return;
         if (!sipRequest.headers["record-route"])
             sipRequest.headers["record-route"] = [];
-        sipRequest.headers["record-route"].unshift(this.buildRoute(host));
+        sipRequest.headers["record-route"].unshift(this.buildRoute());
     }
     /**
      *
@@ -276,12 +279,12 @@ class Socket {
      * this first hop of the response.
      *
      */
-    pushRecordRoute(sipResponse, isFirstHop, host) {
+    pushRecordRoute(sipResponse, isFirstHop) {
         if (!sipResponse.headers["record-route"])
             return;
         if (isFirstHop)
             sipResponse.headers["record-route"] = [];
-        sipResponse.headers["record-route"].push(this.buildRoute(host));
+        sipResponse.headers["record-route"].push(this.buildRoute());
     }
 }
 Socket.maxBytesHeaders = 7820;

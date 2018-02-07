@@ -32,6 +32,7 @@ export declare class Socket {
     remotePort: number;
     localAddress: string;
     remoteAddress: string;
+    localAddressPublic: string | undefined;
     private readonly connection;
     constructor(webSocket: WebSocket, addrAndPorts: Socket.AddrAndPorts, timeoutDelay?: number);
     constructor(socket: net.Socket, timeoutDelay?: number);
@@ -41,14 +42,14 @@ export declare class Socket {
     destroy(): void;
     readonly protocol: "TCP" | "TLS" | "WSS";
     addViaHeader(sipRequest: Request, extraParams?: Record<string, string>): string;
-    addPathHeader(sipRegisterRequest: Request, host?: string, extraParams?: Record<string, string>): void;
+    addPathHeader(sipRegisterRequest: Request, extraParams?: Record<string, string>): void;
     /**
      *
      * Return stringified:
      * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
      *
      */
-    private buildRoute(host?, extraParams?);
+    private buildRoute(extraParams?);
     /**
      *
      * Assert sipRequest is NOT register.
@@ -64,7 +65,7 @@ export declare class Socket {
      * Record-Route: LOCAL_this, HOP_X
      *
      */
-    shiftRouteAndUnshiftRecordRoute(sipRequest: Request, host?: string): void;
+    shiftRouteAndUnshiftRecordRoute(sipRequest: Request): void;
     /**
      *
      * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
@@ -80,7 +81,7 @@ export declare class Socket {
      * this first hop of the response.
      *
      */
-    pushRecordRoute(sipResponse: Response, isFirstHop: boolean, host?: string): void;
+    pushRecordRoute(sipResponse: Response, isFirstHop: boolean): void;
 }
 export declare namespace Socket {
     type AddrAndPorts = {

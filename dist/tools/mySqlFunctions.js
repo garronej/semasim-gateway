@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mysql = require("mysql");
-const _debug = require("debug");
-let debug = _debug("_dbInterface");
 function getUtils(connectionConfig, handleStringEncoding) {
     connectionConfig = Object.assign({}, connectionConfig, { "multipleStatements": true });
     let esc = (value) => {
@@ -13,7 +11,6 @@ function getUtils(connectionConfig, handleStringEncoding) {
     };
     let buildInsertQuery = function (table, obj, onDuplicateKey) {
         let keys = Object.keys(obj);
-        let values = keys.map(key => obj[key]);
         let backtickKeys = keys.map(key => "`" + key + "`");
         let sqlLinesArray = [
             `INSERT ${(onDuplicateKey === "IGNORE") ? "IGNORE " : ""}INTO \`${table}\` ( ${backtickKeys.join(", ")} )`,

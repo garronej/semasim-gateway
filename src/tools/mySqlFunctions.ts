@@ -1,9 +1,5 @@
 import * as mysql from "mysql";
 
-import * as _debug from "debug";
-import { IMySql } from "mysql";
-let debug = _debug("_dbInterface");
-
 export type TSql = string | number | null;
 
 
@@ -36,7 +32,6 @@ export function getUtils(
     ): string {
 
         let keys = Object.keys(obj);
-        let values = keys.map(key => obj[key]);
 
         let backtickKeys = keys.map(key => "`" + key + "`");
 

@@ -6,17 +6,11 @@ import * as sipProxy from "./sipProxy";
 import * as sipMessage from "./sipMessage";
 import * as messageQueue from "./messageQueue";
 import * as voiceCallBridge from "./voiceCallBridge";
-import { Contact } from "./sipContact";
 
 import * as sipApiBackend from "./sipApiBackedClientImplementation";
 import * as sipApiServer from "./sipApiGatewayServerImplementation";
 
-import * as crypto from "crypto";
-
-import { c } from "./_constants";
-
 import * as _debug from "debug";
-import { DongleController } from "chan-dongle-extended-client/dist/lib/DongleController";
 let debug = _debug("_main");
 
 debug("Starting semasim gateway !");

@@ -7,9 +7,6 @@ import { MySqlEvents } from "../tools/MySqlEvents";
 import { c } from "./_constants"
 import { DongleController as Dc } from "chan-dongle-extended-client";
 
-import * as _debug from "debug";
-let debug = _debug("_db");
-
 export namespace asterisk {
 
     const connectionConfig: mysql.IConnectionConfig = {

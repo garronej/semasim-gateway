@@ -184,7 +184,6 @@ namespace asteriskSockets {
 
 }
 
-
 let localIp = "";
 
 export async function start() {

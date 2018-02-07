@@ -1,8 +1,5 @@
-import { SyncEvent } from "ts-events-extended";
 import * as sip from "../tools/sipLibrary";
 import * as superJson from "super-json";
-import { sendMessage } from "../lib/sipMessage";
-import { sipLibrary } from "../index";
 
 namespace JSON {
 

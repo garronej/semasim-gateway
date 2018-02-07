@@ -1,13 +1,6 @@
-import { SyncEvent } from "ts-events-extended";
 import { DongleController as Dc } from "chan-dongle-extended-client";
-import * as sipLibrary from "../tools/sipLibrary";
-import * as db from "./db";
 
 import { c } from "./_constants";
-
-import * as _debug from "debug";
-import { platform } from "os";
-let debug = _debug("_sipContact");
 
 export interface PsContact {
     id: string;

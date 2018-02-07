@@ -1,7 +1,7 @@
 
 import { exec } from "child_process";
 import * as readline from "readline";
-import { readFileSync, writeFile, existsSync } from "fs";
+import { writeFile } from "fs";
 
 export function run(command: string): Promise<string> {
 

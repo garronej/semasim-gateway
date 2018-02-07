@@ -1,7 +1,6 @@
 import * as ZongJi from "zongji";
 import * as mysql from "mysql";
 import { SyncEvent } from "ts-events-extended";
-import { c } from "../lib/_constants"
 
 
 export interface Row {

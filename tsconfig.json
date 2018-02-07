@@ -10,7 +10,11 @@
         "strictNullChecks": true,
         "sourceMap": false,
         "newLine": "LF",
-        "downlevelIteration": true
+        "downlevelIteration": false,
+        //"noUnusedLocals": true,
+        //"noUnusedParameters": false,
+        "strictPropertyInitialization": true,
+        "strictFunctionTypes": true
     },
     "filesGlob": [
         "./src/**/*.ts"
