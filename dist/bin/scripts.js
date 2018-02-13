@@ -9,10 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const _constants_1 = require("../lib/_constants");
+const c = require("../lib/_constants");
 const path = require("path");
 const modulePath = path.join(__dirname, "..", "..");
-const systemdServicePath = path.join("/etc", "systemd", "system", `${_constants_1.c.serviceName}.service`);
+const systemdServicePath = path.join("/etc", "systemd", "system", `${c.serviceName}.service`);
 require("rejection-tracker").main(modulePath);
 const program = require("commander");
 const _ = require("../tools/commanderFunctions");
@@ -71,17 +71,17 @@ function installService() {
             `Service successfully installed!`.green,
             `${systemdServicePath}: \n\n ${service}`,
             `To run the service:`.yellow,
-            `sudo systemctl start ${_constants_1.c.serviceName}`,
+            `sudo systemctl start ${c.serviceName}`,
             `To automatically start the service on boot:`.yellow,
-            `sudo systemctl enable ${_constants_1.c.serviceName}`,
+            `sudo systemctl enable ${c.serviceName}`,
         ].join("\n"));
     });
 }
 function removeService() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield _.run(`systemctl stop ${_constants_1.c.serviceName}.service`);
-            yield _.run(`systemctl disable ${_constants_1.c.serviceName}.service`);
+            yield _.run(`systemctl stop ${c.serviceName}.service`);
+            yield _.run(`systemctl disable ${c.serviceName}.service`);
         }
         catch (error) { }
         try {
@@ -89,6 +89,6 @@ function removeService() {
         }
         catch (error) { }
         yield _.run("systemctl daemon-reload");
-        console.log(`${_constants_1.c.serviceName}.service removed from systemd`.green);
+        console.log(`${c.serviceName}.service removed from systemd`.green);
     });
 }

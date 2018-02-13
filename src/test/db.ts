@@ -1,531 +1,476 @@
-require("rejection-tracker").main(__dirname, "..", "..");
-
-import { Contact, PsContact } from "../lib/sipContact";
 import * as db from "../lib/db";
-import * as f from "../tools/mySqlFunctions";
-import * as sipLibrary from "../tools/sipLibrary";
-import * as genSamples from "./genSamples";
+import * as types from "../lib/types";
+import { types as dcTypes } from "chan-dongle-extended-client";
 
-(async () => {
+import * as ttTesting from "transfer-tools/dist/lib/testing";
+import assertSame = ttTesting.assertSame;
 
-    await testDbAsterisk();
-    await testDbSemasim();
+const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`): types.Ua => ({
+    "instance": `"<urn:uuid:${ttTesting.genHexStr(30)}>"`,
+    "platform": Date.now() % 2 ? "android" : "iOS",
+    "pushToken": ttTesting.genHexStr(60),
+    "software": ttTesting.genHexStr(20),
+    "userEmail": email
+});
 
-    console.log("ALL TESTS PASSED !");
+export async  function testDbSemasim(){
 
-    process.exit(0);
+    await t1();
+    await t2();
+    await t3();
+    await t4();
+    await t5();
+    await t6();
 
-})();
+    await db.flush();
 
-async function testDbAsterisk() {
-
-    let imsi = "208150113995832";
-    let token = [
-        "f_l7SPs6o7A:APA91bF_c0VGlz3pQPwrgpFe9U0FRzc",
-        "VXlDmG97jt3DTzOlsjbUzsent-yeEz_QpQNhdO3Mbr-",
-        "4-XxcSmyKj_Hr-XY_-LefF3RhHsSekVsSeYN95PAtwR",
-        "Cpz-i1ytnc5DyMY8je4n69G"
-    ].join("");
-    let instance= "\"<urn:uuid:a98eef4a-5a6d-41ca-8918-e1ef1819fec0>\"";
-    let email = "joseph.garrone.gj@gmail.com";
-    let software= "LinphoneAndroid/3.2.8 (belle-sip/1.6.3)";
-
-    let psContact: PsContact = (() => {
-
-        let contactAoR: sipLibrary.AoR = {
-            "name": undefined,
-            "uri": [
-                `sip:${imsi}@192.168.1.15:35096;`,
-                "app-id=851039092461;",
-                "pn-type=firebase;",
-                `pn-tok=${token};`,
-                `user_email=${email};`,
-                "pn-silent=1;transport=tls"
-            ].join(""),
-            "params": {
-                "+sip.instance": instance
-            }
-        };
-
-        let contactParams = sipLibrary.parseUri(contactAoR.uri).params;
-
-        return {
-            "id": "__generated_by_asterisk__",
-            "uri": (() => {
-
-                let parsedUri = sipLibrary.parseUri(contactAoR.uri);
-
-                parsedUri.params = {};
-
-                return sipLibrary.stringifyUri(parsedUri);
-
-            })(),
-            "path": "<sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>",
-            "endpoint": imsi,
-            "user_agent": PsContact.stringifyMisc({
-                "ua_instance": contactAoR!.params["+sip.instance"]!,
-                "ua_userEmail": contactParams["user_email"]!,
-                "ua_platform": (() => {
-                    switch (contactParams["pn-type"]) {
-                        case "google":
-                        case "firebase": return "android";
-                        case "apple": return "iOS";
-                        default: return "other";
-                    }
-                })(),
-                "ua_pushToken": contactParams["pn-tok"] || "",
-                "ua_software": software,
-                "connectionId": 1513424614802
-            })
-        };
-
-    })();
-
-    await db.asterisk.flush();
-
-    await db.asterisk.startListeningPsContacts();
-
-    db.asterisk.query( db.asterisk.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
-
-    let contact = await db.asterisk.evtNewContact.waitFor(1000);
-
-    console.assert(Contact.sanityCheck(contact));
-    console.assert(contact.uaSim.imsi === imsi );
-    console.assert( contact.uaSim.ua.instance === instance );
-    console.assert( contact.uaSim.ua.platform === "android" );
-    console.assert( contact.uaSim.ua.pushToken === token );
-    console.assert( contact.uaSim.ua.userEmail === email );
-    console.assert( contact.uaSim.ua.software === software);
-
-    db.asterisk.deleteContact(contact);
-
-    try{
-
-        await db.asterisk.evtExpiredContact.waitFor(3000);
-
-        console.assert(false);
-
-    }catch{}
-
-    db.asterisk.query( db.asterisk.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
-    db.asterisk.query(`DELETE FROM ps_contacts WHERE id= ${db.asterisk.esc(psContact.id)}`);
-
-    contact= await db.asterisk.evtExpiredContact.waitFor(1000);
-
-    console.assert(Contact.sanityCheck(contact));
-    console.assert(contact.uaSim.imsi === imsi );
-    console.assert( contact.uaSim.ua.instance === instance );
-    console.assert( contact.uaSim.ua.platform === "android" );
-    console.assert( contact.uaSim.ua.pushToken === token );
-    console.assert( contact.uaSim.ua.userEmail === email );
-    console.assert( contact.uaSim.ua.software === software);
-
-    let password= await db.asterisk.createEndpointIfNeededAndGetPassword(imsi);
-    
-    let rows= await db.asterisk.query(`SELECT * FROM ps_aors WHERE id= ${db.asterisk.esc(imsi)}`);
-
-    console.assert(rows.length === 1);
-    
-    rows= await db.asterisk.query(`SELECT * FROM ps_auths WHERE id= ${db.asterisk.esc(imsi)}`);
-
-    console.assert(rows.length === 1);
-    console.assert( rows[0]["username"] === imsi );
-    console.assert( rows[0]["password"] === password );
-
-    rows= await db.asterisk.query(`SELECT * FROM ps_endpoints WHERE id= ${db.asterisk.esc(imsi)}`);
-
-    console.assert(rows.length === 1);
-
-    console.assert( await db.asterisk.createEndpointIfNeededAndGetPassword(imsi) === password );
-
-    console.assert( await db.asterisk.createEndpointIfNeededAndGetPassword(imsi, "RENEW PASSWORD") !== password );
-
-    await db.asterisk.flush();
-
-    console.log("PASS ASTERISK");
+    console.log("ALL TESTS DB SEMASIM PASSED");
 
 }
 
-async function testDbSemasim() {
+async function t1() {
 
-    await db.semasim.flush();
+    await db.flush();
 
-    console.assert(
-        Object.keys(
-            await db.semasim.lastMessageReceivedDateBySim()
-        ).length === 0
-    );
-
-    let uaSim: Contact.UaSim = {
-        "imsi": "208150113995832",
-        "ua": {
-            "instance": "\"<urn:uuid:a98eef4a-5a6d-41ca-8918-e1ef1819fec0>\"",
-            "platform": "android",
-            "pushToken": [
-                "f_l7SPs6o7A:APA91bF_c0VGlz3pQPwrgpFe9U0FRzc",
-                "VXlDmG97jt3DTzOlsjbUzsent-yeEz_QpQNhdO3Mbr-",
-                "4-XxcSmyKj_Hr-XY_-LefF3RhHsSekVsSeYN95PAtwR",
-                "Cpz-i1ytnc5DyMY8je4n69G"
-            ].join(""),
-            "software": "LinphoneAndroid/3.2.8 (belle-sip/1.6.3)",
-            "userEmail": "joseph.garrone.gj@gmail.com"
-        }
+    let uaSim: types.UaSim = {
+        "imsi": ttTesting.genDigits(15),
+        "ua": generateUa()
     };
 
-    console.assert(Contact.UaSim.sanityCheck(uaSim));
+    assertSame(
+        await db.lastMessageReceivedDateBySim(),
+        {}
+    );
 
-    let r = await db.semasim.addUaSim(uaSim);
+    assertSame(
+        await db.addUaSim(uaSim),
+        { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true }
+        
+    );
 
-    console.assert(r.isFirstUaForSim);
-    console.assert(r.isUaCreatedOrUpdated);
+    assertSame(
+        await db.addUaSim(uaSim),
+        { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false }
+    );
 
-    r = await db.semasim.addUaSim(uaSim);
+    uaSim.ua.software = "...";
 
-    console.assert(!r.isFirstUaForSim);
-    console.assert(!r.isUaCreatedOrUpdated);
-
-    (uaSim.ua.software as any) += "...";
-
-    r = await db.semasim.addUaSim(uaSim);
-
-    console.assert(!r.isFirstUaForSim);
-    console.assert(r.isUaCreatedOrUpdated);
+    assertSame(
+        await db.addUaSim(uaSim),
+        { "isFirstUaForSim": false, "isUaCreatedOrUpdated": true }
+    );
 
     let imsi2 = "123456789123456"
 
-    r = await db.semasim.addUaSim({
-        "imsi": imsi2,
-        "ua": uaSim.ua
-    });
-
-    console.assert(r.isFirstUaForSim);
-    console.assert(!r.isUaCreatedOrUpdated);
-
-    let mrByDate = await db.semasim.lastMessageReceivedDateBySim()
-
-    console.assert(Object.keys(mrByDate).length === 2);
-    console.assert(mrByDate[uaSim.imsi].getTime() === 0);
-    console.assert(mrByDate[imsi2].getTime() === 0);
-
-    console.assert(
-        !(await db.semasim.MessageTowardGsm.getUnsent(uaSim.imsi)).length
+    assertSame(
+        await db.addUaSim({
+            "imsi": imsi2,
+            "ua": uaSim.ua
+        }),
+        { "isFirstUaForSim": true, "isUaCreatedOrUpdated": false }
     );
 
+    assertSame(
+        await db.lastMessageReceivedDateBySim(),
+        {
+            [uaSim.imsi]: new Date(0),
+            [imsi2]: new Date(0)
+        }
+    );
 
-    function areSameUa(ua1: Contact.UaSim.Ua, ua2: Contact.UaSim.Ua) {
+    assertSame(
+        await db.getUnsentMessagesTowardGsm(uaSim.imsi),
+        []
+    );
 
-        console.assert(ua1.instance === ua2.instance);
-        console.assert(ua1.platform === ua2.platform);
-        console.assert(ua1.pushToken === ua2.pushToken);
-        console.assert(ua1.software === ua2.software);
-        console.assert(ua1.userEmail === ua2.userEmail);
+    console.log("ADD UA PASS");
+
+}
+
+async function t2() {
+
+    await db.flush();
+
+    let imsi = ttTesting.genDigits(15);
+    let email = `${ttTesting.genHexStr(10)}@foo.com`;
+
+    let messagesTowardGsm: types.MessageTowardGsm[] = [];
+
+    let uas: types.Ua[]= [];
+
+    for( let i=0; i<10; i++ ){
+
+        let ua= generateUa((i % 4 === 0) ? email : undefined);
+
+        assertSame(
+            await db.addUaSim({ imsi, ua }),
+            { "isFirstUaForSim": i === 0, "isUaCreatedOrUpdated": true }
+        );
+
+        uas.push(ua);
 
     }
 
-    await (async () => {
+    let sendingUa= uas[0];
 
-        let toNumber = "0636786385";
-        let text = f.genUtf8Str(300);
+    for (let i = 0; i < 5; i++) {
 
-        await db.semasim.MessageTowardGsm.add(toNumber, text, uaSim);
+        let message: types.MessageTowardGsm = {
+            "date": new Date(),
+            "text": ttTesting.genUtf8Str(300),
+            "toNumber": ttTesting.genDigits(10),
+            "uaSim": {
+                imsi,
+                "ua": sendingUa
+            }
+        };
 
-        let messages = await db.semasim.MessageTowardGsm.getUnsent(uaSim.imsi);
+        await db.onSipMessage(
+            message.toNumber,
+            message.text,
+            message.uaSim,
+            message.date
+        );
 
-        console.assert(messages.length === 1);
+        messagesTowardGsm.push(message);
 
-        let [[message, confirm]] = messages;
+    }
 
-        console.assert(message.text === text);
-        console.assert(message.toNumber === toNumber);
-
-        console.assert(Contact.UaSim.sanityCheck(message.uaSim));
-
-        console.assert(Contact.UaSim.areSame(message.uaSim, uaSim));
-
-        areSameUa(message.uaSim.ua, uaSim.ua);
-
-        let sendDate = new Date();
-
-        await confirm.setSent(sendDate);
-
-        confirm.setStatusReport({
-            "dischargeDate": new Date(sendDate.getTime() + 3000),
-            "isDelivered": true,
-            "recipient": null as any,
-            "sendDate": sendDate,
-            "status": "DELIVERED SUCCESS"
-        });
-
-        console.assert((await db.semasim.MessageTowardGsm.getUnsent(uaSim.imsi)).length === 0);
-
-    })();
-
-    await (async () => {
-
-        let toNumber = "0636786385";
-        let text = f.genUtf8Str(500);
-
-        await db.semasim.MessageTowardGsm.add(toNumber, text, uaSim);
-
-        let messages = await db.semasim.MessageTowardGsm.getUnsent(uaSim.imsi);
-
-        console.assert(messages.length === 1);
-
-        let [[message, confirm]] = messages;
-
-        console.assert(message.text === text);
-        console.assert(message.toNumber === toNumber);
-
-        console.assert(Contact.UaSim.sanityCheck(message.uaSim));
-
-        console.assert(Contact.UaSim.areSame(message.uaSim, uaSim));
-
-        areSameUa(message.uaSim.ua, uaSim.ua);
-
-        await confirm.setSent(null);
-
-        console.assert((await db.semasim.MessageTowardGsm.getUnsent(uaSim.imsi)).length === 0);
-
-    })();
-
-    console.assert(await db.semasim.MessageTowardSip.unsentCount(uaSim) === 0);
-
-    console.assert(
-        (await db.semasim.MessageTowardSip.getUnsent(uaSim)).length === 0
+    assertSame(
+        await db.lastMessageReceivedDateBySim(),
+        {
+            [imsi]: new Date(0)
+        }
     );
 
-    let uaSim2: Contact.UaSim = {
-        "imsi": uaSim.imsi,
-        "ua": {
-            "instance": "\"<urn:uuid:___2___>\"",
-            "platform": "iOS",
-            "pushToken": "____________2______________",
-            "software": "LinphoneIphone/3.2.8 (belle-sip/1.6.3)",
-            "userEmail": uaSim.ua.userEmail
-        }
-    };
+    const checkMark = Buffer.from("e29c94", "hex").toString("utf8");
+    const crossMark = Buffer.from("e29d8c", "hex").toString("utf8");
 
-    r = await db.semasim.addUaSim(uaSim2);
+    while ((await db.getUnsentMessagesTowardGsm(imsi)).length) {
 
-    console.assert(r.isUaCreatedOrUpdated === true);
-    console.assert(r.isFirstUaForSim === false);
-
-    let uaSim3: Contact.UaSim = {
-        "imsi": uaSim.imsi,
-        "ua": {
-            "instance": "\"<urn:uuid:___3___>\"",
-            "platform": "iOS",
-            "pushToken": "____________3______________",
-            "software": "LinphoneIphone/3.2.8 (belle-sip/1.6.3)",
-            "userEmail": "bob@hotmail.com"
-        }
-    };
-
-    r = await db.semasim.addUaSim(uaSim3);
-
-    console.assert(r.isUaCreatedOrUpdated === true);
-    console.assert(r.isFirstUaForSim === false);
-
-    let uaSim4: Contact.UaSim = {
-        "imsi": "123456789123450",
-        "ua": uaSim.ua
-    };
-
-    r = await db.semasim.addUaSim(uaSim4);
-
-    console.assert(r.isUaCreatedOrUpdated === false);
-    console.assert(r.isFirstUaForSim === true);
-
-    await (async () => {
-
-        let fromNumber = "0636786385";
-        let text = f.genUtf8Str(150);
-        let date = new Date();
-
-        await db.semasim.MessageTowardSip.add(fromNumber, text, date, false, {
-            "target": "SPECIFIC UA REGISTERED TO SIM", "uaSim": uaSim
-        });
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim)) === 1
+        assertSame(
+            (await db.getUnsentMessagesTowardGsm(imsi)).map(v => v[0]),
+            messagesTowardGsm
         );
 
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim2)) === 0
+        let [messageTowardGsm, { onSent, onStatusReport }] =
+            (await db.getUnsentMessagesTowardGsm(imsi))[0];
+
+        assertSame(
+            messageTowardGsm,
+            messagesTowardGsm[0]
         );
 
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim3)) === 0
-        );
+        let sendDate = ( messagesTowardGsm.length%3 === 0 )?null:new Date();
 
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim4)) === 0
-        );
+        await onSent(sendDate);
 
-        let [[message, setSent]] = await db.semasim.MessageTowardSip.getUnsent(uaSim);
+        messagesTowardGsm.shift();
 
-        console.assert(message.date.getTime() === date.getTime());
-        console.assert(message.fromNumber === fromNumber);
-        console.assert(message.isReport === false);
-        console.assert(message.text === text);
+        await (async () => {
 
-        await setSent();
+            let o= await db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
 
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim)) === 0
-        );
+            assertSame( o.length, 1 );
 
-    })();
+            let [[mts, setSent]] = o;
 
-    const checkMark = (new Buffer("e29c94", "hex")).toString("utf8");
-
-    await (async () => {
-
-        let fromNumber = "0636786385";
-        let text = `${checkMark}${checkMark}`;
-        let date = new Date();
-
-        await db.semasim.MessageTowardSip.add(fromNumber, text, date, true, {
-            "target": "ALL OTHER UA OF USER REGISTERED TO SIM", "uaSim": uaSim
-        });
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim)) === 0
-        );
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim2)) === 1
-        );
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim3)) === 0
-        );
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim4)) === 0
-        );
-
-
-        let [[message, setSent]] = await db.semasim.MessageTowardSip.getUnsent(uaSim2);
-
-        console.assert(message.date.getTime() === date.getTime());
-        console.assert(message.fromNumber === fromNumber);
-        console.assert(message.isReport === true);
-        console.assert(message.text === text);
-
-        await setSent();
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim2)) === 0
-        );
-
-    })();
-
-    await (async () => {
-
-        let fromNumber = "0636786385";
-        let text = `${checkMark}`;
-        let date = new Date();
-
-        await db.semasim.MessageTowardSip.add(fromNumber, text, date, true, {
-            "target": "ALL UA OF OTHER USERS REGISTERED TO SIM", "uaSim": uaSim
-        });
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim)) === 0
-        );
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim2)) === 0
-        );
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim3)) === 1
-        );
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim4)) === 0
-        );
-
-
-        let [[message, setSent]] = await db.semasim.MessageTowardSip.getUnsent(uaSim3);
-
-        console.assert(message.date.getTime() === date.getTime());
-        console.assert(message.fromNumber === fromNumber);
-        console.assert(message.isReport === true);
-        console.assert(message.text === text);
-
-        await setSent();
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim3)) === 0
-        );
-
-    })();
-
-    await (async () => {
-
-        let fromNumber = "0636786385";
-        let text = `${checkMark}`;
-        let date = new Date();
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.add(fromNumber, text, date, true, {
-                "target": "ALL UA REGISTERED TO SIM", "imsi": "123436454354565"
-            })) === false
-        );
-
-        let isHandled = await db.semasim.MessageTowardSip.add(fromNumber, text, date, true, {
-            "target": "ALL UA REGISTERED TO SIM", "imsi": uaSim.imsi
-        });
-
-        console.assert(isHandled === true);
-
-        for (let uaSimX of [uaSim, uaSim2, uaSim3]) {
-
-            console.assert(
-                (await db.semasim.MessageTowardSip.unsentCount(uaSimX)) === 1
+            assertSame<types.MessageTowardSip>(
+                mts,
+                {
+                    "fromNumber": messageTowardGsm.toNumber,
+                    "text": sendDate?checkMark:crossMark,
+                    "date": mts.date,
+                    "isFromDongle": false,
+                    "bundledData": {
+                        "type": "SEND REPORT",
+                        "messageTowardGsm": messageTowardGsm,
+                        "sendDate": sendDate
+                    }
+                }
             );
-
-        }
-
-        console.assert(
-            (await db.semasim.MessageTowardSip.unsentCount(uaSim4)) === 0
-        );
-
-        for (let uaSimX of [uaSim, uaSim2, uaSim3]) {
-
-            let [[message, setSent]] = await db.semasim.MessageTowardSip.getUnsent(uaSimX);
-
-            console.assert(message.date.getTime() === date.getTime());
-            console.assert(message.fromNumber === fromNumber);
-            console.assert(message.isReport === true);
-            console.assert(message.text === text);
 
             await setSent();
 
-            console.assert(
-                (await db.semasim.MessageTowardSip.unsentCount(uaSimX)) === 0
-            );
+        })();
+
+        if (!sendDate) {
+            continue;
+        }
+
+        let statusReport: dcTypes.StatusReport;
+
+        if (messagesTowardGsm.length % 3) {
+
+            statusReport = {
+                "dischargeDate": new Date(),
+                "isDelivered": false,
+                "recipient": messageTowardGsm.toNumber,
+                "sendDate": sendDate,
+                "status": "DELIVERED KO"
+            };
+
+        } else {
+
+            statusReport = {
+                "dischargeDate": new Date(),
+                "isDelivered": true,
+                "recipient": messageTowardGsm.toNumber,
+                "sendDate": sendDate,
+                "status": "DELIVERED OK"
+            };
 
         }
 
-    })();
 
-    let imsi = f.genDigits(15);
+        await onStatusReport(statusReport);
 
-    let allowedUas: Contact.UaSim.Ua[] = [];
+        let bundledData: types.BundledData.ServerToClient.StatusReport = {
+            "type": "STATUS REPORT",
+            messageTowardGsm,
+            statusReport
+        };
 
-    for (let _ of new Array(15)) {
+        await (async () => {
 
-        let ua = genSamples.generateUa();
+            let o = await db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
+
+            assertSame(o.length, 1);
+
+            let [[mts, setSent]] = o;
+
+            assertSame<types.MessageTowardSip>(
+                mts,
+                {
+                    "fromNumber": messageTowardGsm.toNumber,
+                    "text": statusReport.isDelivered ? `${checkMark}${checkMark}` : crossMark,
+                    "date": mts.date,
+                    "isFromDongle": false,
+                    "bundledData": bundledData
+                }
+            );
+
+            await setSent();
+
+        })();
+
+
+        if (!statusReport.isDelivered) {
+            continue;
+        }
+
+        let __in= false;
+
+        for (
+            let ua
+            of
+            uas.filter(ua => (
+                    ua.userEmail === messageTowardGsm.uaSim.ua.userEmail &&
+                    ua.instance !== messageTowardGsm.uaSim.ua.instance
+            ))
+        ) {
+
+            __in= true;
+
+            let o= await db.getUnsentMessagesTowardSip({ ua, imsi });
+
+            assertSame(o.length, 1 );
+
+            let [[mts, setSent ]]= o;
+
+            assertSame<types.MessageTowardSip>(
+                mts,
+                {
+                    "fromNumber": messageTowardGsm.toNumber,
+                    "text": `Me: ${messageTowardGsm.text}`,
+                    "date": mts.date,
+                    "isFromDongle": false,
+                    "bundledData": bundledData
+                }
+            );
+
+            await setSent();
+
+        }
+
+        console.assert(__in);
+
+        __in= false;
+
+        for (
+            let ua
+            of
+            uas.filter(ua => ua.userEmail !== messageTowardGsm.uaSim.ua.userEmail)
+        ) {
+
+            __in= true;
+
+            let o= await db.getUnsentMessagesTowardSip({ ua, imsi });
+
+            assertSame( o.length, 1);
+
+            let [[mts, setSent]]= o;
+
+            assertSame<types.MessageTowardSip>(
+                mts,
+                {
+                    "fromNumber": messageTowardGsm.toNumber,
+                    "text": `${messageTowardGsm.uaSim.ua.userEmail}: ${messageTowardGsm.text}`,
+                    "date": mts.date,
+                    "isFromDongle": false,
+                    "bundledData": bundledData
+                }
+            );
+
+            await setSent();
+
+        }
+
+        console.assert(__in);
+
+    }
+
+    console.log("SIP => DONGLE PASS");
+
+}
+
+async function t3() {
+
+    await db.flush();
+
+    assertSame(
+        await db.onDongleMessage(
+            ttTesting.genDigits(10),
+            ttTesting.genUtf8Str(100),
+            new Date(),
+            ttTesting.genDigits(15)
+        ),
+        false
+    );
+
+    let imsi = ttTesting.genDigits(15);
+    let email = `${ttTesting.genHexStr(10)}@foo.com`;
+
+    let uas: types.Ua[] = [];
+
+    for (let i = 0; i < 12; i++) {
+
+        let ua: types.Ua = generateUa((i % 4 === 0) ? email : undefined);
+
+        assertSame(
+            await db.addUaSim({ imsi, ua }),
+            {
+                "isFirstUaForSim": i === 0,
+                "isUaCreatedOrUpdated": true
+            }
+        );
+
+        uas.push(ua);
+
+    }
+
+    let messagesTowardSipSrc: types.MessageTowardSip[] = [];
+
+    for (let i = 0; i < 3; i++) {
+
+        let pduDate = new Date();
+
+        let messageTowardSip: types.MessageTowardSip = {
+            "bundledData": {
+                "type": "MESSAGE",
+                "pduDate": pduDate
+            },
+            "date": pduDate,
+            "fromNumber": ttTesting.genDigits(10),
+            "isFromDongle": true,
+            "text": ttTesting.genUtf8Str(400)
+        };
+
+        assertSame(
+            await db.onDongleMessage(
+                messageTowardSip.fromNumber,
+                messageTowardSip.text,
+                messageTowardSip.date,
+                imsi
+            ),
+            true
+        );
+
+        messagesTowardSipSrc.push(messageTowardSip);
+
+    }
+
+    assertSame(
+        await db.lastMessageReceivedDateBySim(),
+        {
+            [imsi]: messagesTowardSipSrc[messagesTowardSipSrc.length - 1].date
+        }
+    );
+
+    for (let ua of uas) {
+
+        let messagesTowardSip = [...messagesTowardSipSrc];
+
+        assertSame(
+            (await db.getUnsentMessagesTowardSip({ imsi, ua }))
+                .map(v => v[0]),
+            messagesTowardSip
+        );
+
+        while ((await db.getUnsentMessagesTowardSip({ imsi, ua })).length) {
+
+            let [[messageTowardSip, onSent]] =
+                await db.getUnsentMessagesTowardSip({ imsi, ua });
+
+            assertSame(
+                messageTowardSip,
+                messagesTowardSip[0]
+            );
+
+            await onSent();
+
+            messagesTowardSip.shift();
+
+        }
+
+
+    }
+
+    console.log("SIP <= DONGLE PASS");
+
+}
+
+async function t4() {
+
+    await db.flush();
+
+    let uaSimExt: types.UaSim = {
+        "imsi": ttTesting.genDigits(15),
+        "ua": generateUa()
+    };
+
+    assertSame(
+        await db.addUaSim(uaSimExt),
+        {
+            "isUaCreatedOrUpdated": true,
+            "isFirstUaForSim": true
+        }
+    );
+
+    let imsi = ttTesting.genDigits(15);
+
+    let allowedUas: types.Ua[] = [];
+
+    for (let i = 0; i < 15; i++) {
+
+        let ua = generateUa();
 
         if (allowedUas.length < 10) {
             allowedUas.push(ua);
         }
 
-        f.assertSame(
-            await db.semasim.addUaSim({ imsi, ua }),
+        assertSame(
+            await db.addUaSim({ imsi, ua }),
             {
                 "isUaCreatedOrUpdated": true,
                 "isFirstUaForSim": allowedUas.length === 1
@@ -534,12 +479,12 @@ async function testDbSemasim() {
 
     }
 
-    await db.semasim.removeUaSim(imsi, allowedUas);
+    await db.removeUaSim(imsi, allowedUas);
 
-    let remainingUas: Contact.UaSim.Ua[] = [];
-    let notAffectedUas: Contact.UaSim.Ua[] = [];
+    let remainingUas: types.Ua[] = [];
+    let notAffectedUas: types.Ua[] = [];
 
-    let rows = await db.semasim.query([
+    let rows = await db.query([
         "SELECT ua.*, ua_sim.imsi",
         "FROM ua",
         "INNER JOIN ua_sim ON ua_sim.ua= ua.id_",
@@ -567,18 +512,147 @@ async function testDbSemasim() {
 
     }
 
-    f.assertSame(
+    assertSame(
         remainingUas,
         allowedUas
     );
 
-    f.assertSame(
+    assertSame(
         notAffectedUas,
-        [uaSim.ua, uaSim2.ua, uaSim3.ua]
+        [uaSimExt.ua]
     );
 
-    await db.semasim.flush();
-
-    console.log("PASS SEMASIM");
+    console.log("REMOVING UAS PASS");
 
 }
+
+async function t5() {
+
+    await db.flush();
+
+    let imsi = ttTesting.genDigits(15);
+    let email = `${ttTesting.genHexStr(10)}@foo.com`;
+
+    let uas: types.Ua[] = [];
+
+    for (let i = 0; i < 12; i++) {
+
+        let ua: types.Ua = generateUa((i % 4 === 0) ? email : undefined);
+
+        assertSame(
+            await db.addUaSim({ imsi, ua }),
+            {
+                "isFirstUaForSim": i === 0,
+                "isUaCreatedOrUpdated": true
+            }
+        );
+
+        uas.push(ua);
+
+    }
+
+    let missedCallNumber = ttTesting.genDigits(10);
+
+    await db.onMissedCall(imsi, missedCallNumber);
+
+    for (let ua of uas) {
+
+        assertSame(
+            (await db.getUnsentMessagesTowardSip({ imsi, ua })).length,
+            1
+        )
+
+        let [[messagesTowardSip]] =
+            await db.getUnsentMessagesTowardSip({ imsi, ua });
+
+        assertSame<types.MessageTowardSip>(
+            messagesTowardSip,
+            {
+                "bundledData": {
+                    "type": "MISSED CALL",
+                    "date": messagesTowardSip.date
+                },
+                "date": messagesTowardSip.date,
+                "fromNumber": missedCallNumber,
+                "isFromDongle": false,
+                "text": "Missed call"
+            }
+        );
+
+    }
+
+    console.log("NOTIFICATIONS ON MISSED CALL PASS");
+
+}
+
+async function t6() {
+
+    await db.flush();
+
+    let imsi = ttTesting.genDigits(15);
+    let email = `${ttTesting.genHexStr(10)}@foo.com`;
+
+    let ringingUas: types.Ua[] = [];
+
+    for (let i = 0; i < 12; i++) {
+
+        let ua: types.Ua = generateUa((i % 4 === 0) ? email : undefined);
+
+        assertSame(
+            await db.addUaSim({ imsi, ua }),
+            {
+                "isFirstUaForSim": i === 0,
+                "isUaCreatedOrUpdated": true
+            }
+        );
+
+        ringingUas.push(ua);
+
+    }
+
+    let answeringUa = ringingUas.shift()!;
+
+    let number = ttTesting.genDigits(10);
+
+    await db.onCallAnswered(number, imsi, answeringUa, ringingUas);
+
+    for (
+        let ua
+        of
+        ringingUas.filter(
+            ({ userEmail }) => userEmail !== answeringUa.userEmail
+        )
+    ) {
+
+        assertSame(
+            (await db.getUnsentMessagesTowardSip({ imsi, ua })).length,
+            1
+        );
+
+        let [[messagesTowardSip]] =
+            await db.getUnsentMessagesTowardSip({ imsi, ua });
+
+        assertSame<types.MessageTowardSip>(
+            messagesTowardSip,
+            {
+                "bundledData": {
+                    "type": "CALL ANSWERED BY",
+                    "date": messagesTowardSip.date,
+                    "ua": answeringUa
+                },
+                "date": messagesTowardSip.date,
+                "fromNumber": number,
+                "text": `Call answered by ${answeringUa.userEmail}`,
+                "isFromDongle": false
+            }
+        );
+
+    }
+
+    console.log("ON CALL ANSWERED PASS");
+
+}
+
+
+
+

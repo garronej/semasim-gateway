@@ -1,4 +1,5 @@
 
+/*
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Contact } from "../lib/sipContact";
 import * as f from "../tools/mySqlFunctions";
@@ -73,3 +74,4 @@ export const generateUa = (email: string = `${f.genHexStr(10)}@foo.com`): Contac
     "software": f.genHexStr(20),
     "userEmail": email
 });
+*/

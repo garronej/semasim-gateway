@@ -11,8 +11,8 @@
         "sourceMap": false,
         "newLine": "LF",
         "downlevelIteration": false,
-        //"noUnusedLocals": true,
-        //"noUnusedParameters": false,
+        "noUnusedLocals": true, 
+        "noUnusedParameters": false, 
         "strictPropertyInitialization": true,
         "strictFunctionTypes": true
     },

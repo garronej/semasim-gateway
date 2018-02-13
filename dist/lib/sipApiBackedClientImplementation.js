@@ -8,9 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const sipApi_1 = require("../sipApi");
+const sipApi_1 = require("./sipApi");
 const sipProxy_1 = require("./sipProxy");
 const db = require("./db");
+const dbAsterisk = require("./dbAsterisk");
 function init(backendSocket) {
     new sipApi_1.protocol.Client(backendSocket);
 }
@@ -43,7 +44,7 @@ function notifySimOnline(dongle) {
         let params = {
             "imsi": dongle.sim.imsi,
             "storageDigest": dongle.sim.storage.digest,
-            "password": yield db.asterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi),
+            "password": yield dbAsterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi),
             "simDongle": {
                 "imei": dongle.imei,
                 "isVoiceEnabled": dongle.isVoiceEnabled,
@@ -60,12 +61,12 @@ function notifySimOnline(dongle) {
             return;
         }
         if (response.status === "NEED PASSWORD RENEWAL") {
-            db.semasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
-            params.password = yield db.asterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi, "RENEW PASSWORD");
+            db.removeUaSim(dongle.sim.imsi, response.allowedUas);
+            params.password = yield dbAsterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi, "RENEW PASSWORD");
             sendRequest(methodName, params).catch(() => { });
         }
         else if (response.status === "NOT REGISTERED") {
-            db.semasim.removeUaSim(dongle.sim.imsi);
+            db.removeUaSim(dongle.sim.imsi);
         }
     }))();
 }

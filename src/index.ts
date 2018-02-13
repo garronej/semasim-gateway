@@ -1,23 +1,12 @@
-import * as sipLibrary from "./tools/sipLibrary";
-import * as mySqlFunctions from "./tools/mySqlFunctions";
-import * as commanderFunctions from "./tools/commanderFunctions";
-import * as networkTools from "./tools/networkTools";
 
-import { Contact } from "./lib/sipContact";
+export const HOW_TO= `
+Import sub-modules manually!
 
-import { c as constants } from "./lib/_constants";
-export const c= constants.shared;
+example: 
 
-import * as sipApi from "./sipApi";
+import * as types from "semasim-gateway/dist/lib/types";
 
-import * as genSamples from "./test/genSamples";
+or ( to prevent typescript from checking all the module dep ):
 
-export { 
-    sipLibrary, 
-    mySqlFunctions, 
-    Contact,
-    commanderFunctions,
-    networkTools,
-    sipApi,
-    genSamples
-};
+import * as types from "../../node_modules/semasim-gateway/dist/lib/types";
+`;

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
-const sipApi_1 = require("../sipApi");
+const sipApi_1 = require("./sipApi");
 const sipApiBackend = require("./sipApiBackedClientImplementation");
 const handlers = {};
 const server = new sipApi_1.protocol.Server(handlers);
@@ -40,7 +40,7 @@ exports.startListening = startListening;
     handlers[methodName] = (params, fromSocket) => __awaiter(this, void 0, void 0, function* () {
         let { imsi } = params;
         let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-        let dongle = Array.from(dc.activeDongles.values())
+        let dongle = Array.from(dc.usableDongles.values())
             .find(({ sim }) => sim.imsi === imsi);
         if (dongle) {
             sipApiBackend.notifySimOnline(dongle);

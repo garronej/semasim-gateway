@@ -1,9 +1,10 @@
-import { backendDeclaration as apiDeclaration, protocol } from "../sipApi";
+import { backendDeclaration as apiDeclaration, protocol } from "./sipApi";
 import { getBackendSocket } from "./sipProxy";
 import * as sipLibrary from "../tools/sipLibrary";
 import * as db from "./db";
-import { DongleController as Dc } from "chan-dongle-extended-client";
-import { Contact } from "../lib/sipContact";
+import { types as dcTypes } from "chan-dongle-extended-client";
+import * as types  from "./types";
+import * as dbAsterisk from "./dbAsterisk";
 
 export function init(backendSocket: sipLibrary.Socket){
 
@@ -52,7 +53,7 @@ async function sendRequest(
 }
 
 export function notifySimOnline(
-    dongle: Dc.ActiveDongle
+    dongle: dcTypes.Dongle.Usable
 ) {
 
     (async () => {
@@ -62,7 +63,7 @@ export function notifySimOnline(
         let params: apiDeclaration.notifySimOnline.Params = {
             "imsi": dongle.sim.imsi,
             "storageDigest": dongle.sim.storage.digest,
-            "password": await db.asterisk.createEndpointIfNeededAndGetPassword(
+            "password": await dbAsterisk.createEndpointIfNeededAndGetPassword(
                 dongle.sim.imsi
             ),
             "simDongle": {
@@ -88,9 +89,9 @@ export function notifySimOnline(
 
         if (response.status === "NEED PASSWORD RENEWAL") {
 
-            db.semasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
+            db.removeUaSim(dongle.sim.imsi, response.allowedUas);
 
-            params.password = await db.asterisk.createEndpointIfNeededAndGetPassword(
+            params.password = await dbAsterisk.createEndpointIfNeededAndGetPassword(
                 dongle.sim.imsi, "RENEW PASSWORD"
             );
 
@@ -98,7 +99,7 @@ export function notifySimOnline(
 
         } else if (response.status === "NOT REGISTERED") {
 
-            db.semasim.removeUaSim(dongle.sim.imsi);
+            db.removeUaSim(dongle.sim.imsi);
 
         }
 
@@ -124,7 +125,7 @@ export function notifySimOffline(
 
 //TODO: to remove ua should be added on connection
 export function notifyNewOrUpdatedUa(
-    ua: Contact.UaSim.Ua
+    ua: types.Ua
 ) {
 
     let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
@@ -139,7 +140,7 @@ export function notifyNewOrUpdatedUa(
 }
 
 export function wakeUpContact(
-    contact: Contact
+    contact: types.Contact
 ): Promise<apiDeclaration.wakeUpContact.Response> {
 
     let methodName = apiDeclaration.wakeUpContact.methodName;
@@ -151,7 +152,7 @@ export function wakeUpContact(
 }
 
 export async function forceContactToRegister(
-    contact: Contact
+    contact: types.Contact
 ): Promise<apiDeclaration.forceContactToReRegister.Response> {
 
     let methodName = apiDeclaration.forceContactToReRegister.methodName;

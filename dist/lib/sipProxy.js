@@ -13,10 +13,10 @@ const net = require("net");
 const networkTools = require("../tools/networkTools");
 const ts_events_extended_1 = require("ts-events-extended");
 const sipLibrary = require("../tools/sipLibrary");
-const sipContact_1 = require("./sipContact");
-const db = require("./db");
+const dbAsterisk = require("./dbAsterisk");
+const types = require("./types");
 const sipApiBackend = require("./sipApiBackedClientImplementation");
-const _constants_1 = require("./_constants");
+const c = require("./_constants");
 require("colors");
 const _debug = require("debug");
 let debug = _debug("_sipProxy");
@@ -67,13 +67,13 @@ var asteriskSockets;
     function set(connectionId, imsi, socket) {
         let key = `${connectionId}${imsi}`;
         socket.evtClose.attachOnce(() => map.set(key, null));
-        let prContact = db.asterisk.evtNewContact.attachOncePrepend(contact => (contact.connectionId === connectionId &&
+        let prContact = dbAsterisk.evtNewContact.attachOncePrepend(contact => (contact.connectionId === connectionId &&
             contact.uaSim.imsi === imsi), 6000, contact => {
             socket.evtClose.attachOnce(() => {
-                db.asterisk.evtExpiredContact.detach(prContact);
-                db.asterisk.deleteContact(contact);
+                dbAsterisk.evtExpiredContact.detach(prContact);
+                dbAsterisk.deleteContact(contact);
             });
-            db.asterisk.evtExpiredContact.attachOnce(expiredContact => expiredContact.id === contact.id, prContact, () => {
+            dbAsterisk.evtExpiredContact.attachOnce(expiredContact => expiredContact.id === contact.id, prContact, () => {
                 debug("expired contact");
                 socket.destroy();
                 sipApiBackend.forceContactToRegister(contact);
@@ -84,7 +84,7 @@ var asteriskSockets;
                 let contact_i = socket_i.misc["contact"];
                 if (!contact_i)
                     continue;
-                if (sipContact_1.Contact.UaSim.areSame(contact_i.uaSim, contact.uaSim)) {
+                if (types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)) {
                     debug("ua re-register with an other connection");
                     socket_i.destroy();
                     break;
@@ -128,8 +128,8 @@ function start() {
             return;
         }
         backendSocket = new sipLibrary.Socket(tls.connect({
-            "host": (yield networkTools.resolveSrv(`_sips._tcp.${_constants_1.c.shared.domain}`))[0].name,
-            "port": _constants_1.c.shared.gatewayPort
+            "host": (yield networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name,
+            "port": c.gatewayPort
         }));
         backendSocket.setKeepAlive(true);
         backendSocket.evtData.attach(chunk => console.log(`\nFrom backend:\n${chunk.yellow}\n\n`));
@@ -151,9 +151,9 @@ function start() {
             let contactAoR = headers.contact ? headers.contact[0] : undefined;
             if (sipRequest.method === "REGISTER") {
                 let contactParams = sipLibrary.parseUri(contactAoR.uri).params;
-                headers["user-agent"] = sipContact_1.PsContact.stringifyMisc({
+                headers["user-agent"] = types.misc.smuggleMiscInPsContactUserAgent({
                     "ua_instance": contactAoR.params["+sip.instance"],
-                    "ua_userEmail": (new Buffer(contactParams["base64_email"], "base64")).toString("utf8"),
+                    "ua_userEmail": Buffer.from(contactParams["base64_email"], "base64").toString("utf8"),
                     "ua_platform": (() => {
                         switch (contactParams["pn-type"]) {
                             case "google":

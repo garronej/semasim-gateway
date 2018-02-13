@@ -1,9 +1,9 @@
 import { SyncEvent } from "ts-events-extended";
 import * as sipLibrary from "../tools/sipLibrary";
-import { Contact } from "./sipContact";
+import * as types from "./types";
 import "colors";
 export declare const evtIncomingMessage: SyncEvent<{
-    fromContact: Contact;
+    fromContact: types.Contact;
     sipRequest: sipLibrary.Request;
 }>;
 export declare const evtOutgoingMessage: SyncEvent<{
@@ -12,5 +12,5 @@ export declare const evtOutgoingMessage: SyncEvent<{
 }>;
 export declare const evtNewBackendSocketConnect: SyncEvent<sipLibrary.Socket>;
 export declare function getBackendSocket(): sipLibrary.Socket | Promise<sipLibrary.Socket>;
-export declare function getContacts(imsi?: string): Contact[];
+export declare function getContacts(imsi?: string): types.Contact[];
 export declare function start(): Promise<void>;

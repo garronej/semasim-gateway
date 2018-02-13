@@ -1,18 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const sipLibrary = require("./tools/sipLibrary");
-exports.sipLibrary = sipLibrary;
-const mySqlFunctions = require("./tools/mySqlFunctions");
-exports.mySqlFunctions = mySqlFunctions;
-const commanderFunctions = require("./tools/commanderFunctions");
-exports.commanderFunctions = commanderFunctions;
-const networkTools = require("./tools/networkTools");
-exports.networkTools = networkTools;
-const sipContact_1 = require("./lib/sipContact");
-exports.Contact = sipContact_1.Contact;
-const _constants_1 = require("./lib/_constants");
-exports.c = _constants_1.c.shared;
-const sipApi = require("./sipApi");
-exports.sipApi = sipApi;
-const genSamples = require("./test/genSamples");
-exports.genSamples = genSamples;
+exports.HOW_TO = `
+Import sub-modules manually!
+
+example: 
+
+import * as types from "semasim-gateway/dist/lib/types";
+
+or ( to prevent typescript from checking all the module dep ):
+
+import * as types from "../../node_modules/semasim-gateway/dist/lib/types";
+`;

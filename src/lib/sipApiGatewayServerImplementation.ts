@@ -1,5 +1,5 @@
 import { DongleController as Dc } from "chan-dongle-extended-client";
-import { gatewayDeclaration as apiDeclaration, protocol } from "../sipApi";
+import { gatewayDeclaration as apiDeclaration, protocol } from "./sipApi";
 import * as sipLibrary from "../tools/sipLibrary";
 import * as sipApiBackend from "./sipApiBackedClientImplementation";
 
@@ -62,7 +62,7 @@ export function startListening(backendSocket: sipLibrary.Socket) {
 
         let dc= Dc.getInstance();
 
-        let dongle = Array.from(dc.activeDongles.values())
+        let dongle = Array.from(dc.usableDongles.values())
             .find(({ sim }) => sim.imsi === imsi);
 
         if (dongle) {

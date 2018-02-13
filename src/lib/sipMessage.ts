@@ -1,22 +1,24 @@
 import { SyncEvent } from "ts-events-extended";
 import {
     DongleController as Dc,
-    Ami,
-    utils as dcUtils
+    Ami
 } from "chan-dongle-extended-client";
-import { Contact } from "./sipContact";
+import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 import { evtOutgoingMessage, evtIncomingMessage } from "./sipProxy";
 import * as sipLibrary from "../tools/sipLibrary";
-import { c } from "./_constants";
+import * as types from "./types";
 
 import * as _debug from "debug";
 let debug = _debug("_sipMessage");
 
 export const evtMessage = new SyncEvent<{
-    fromContact: Contact;
+    fromContact: types.Contact;
     toNumber: string;
     text: string;
+    exactSendDate: Date | undefined;
 }>();
+
+export const sipMessageContext = "from-sip-message";
 
 export async function startHandling() {
 
@@ -24,21 +26,44 @@ export async function startHandling() {
 
     let matchAllExt = "_.";
 
-    await ami.dialplanExtensionRemove(matchAllExt, c.sipMessageContext);
+    await ami.dialplanExtensionRemove(matchAllExt, sipMessageContext);
 
-    await ami.dialplanExtensionAdd(c.sipMessageContext, matchAllExt, 1, "Hangup");
+    await ami.dialplanExtensionAdd(sipMessageContext, matchAllExt, 1, "Hangup");
 
     evtIncomingMessage.attach(
         ({ fromContact, sipRequest }) => {
 
-            let { isValidInput, text } = utf8EncodedDataAsBinaryStringToString(sipRequest.content);
+            let content = sipLibrary.getPacketContent(sipRequest);
 
-            if (!isValidInput)
+            let text = content.toString("utf8");
+
+            if (!content.equals(Buffer.from(text, "utf8"))) {
                 debug("Sip message content was not a valid UTF-8 string");
+            }
 
             let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
 
-            evtMessage.post({ fromContact, toNumber, text });
+            let exactSendDate: Date | undefined;
+
+            try {
+
+                exactSendDate = (types.misc.extractBundledDataFromHeaders(
+                    sipRequest.headers
+                ) as types.BundledData.ClientToServer.Message).exactSendDate;
+
+            } catch{
+
+                exactSendDate = undefined;
+
+            }
+
+
+            evtMessage.post({
+                fromContact,
+                toNumber,
+                text,
+                exactSendDate
+            });
 
         }
     );
@@ -46,22 +71,37 @@ export async function startHandling() {
 }
 
 export function sendMessage(
-    contact: Contact,
-    from_number: string,
+    contact: types.Contact,
+    fromNumber: string,
     headers: Record<string, string>,
     text: string,
-    from_number_sim_name?: string
+    fromNumberSimName?: string
 ) {
     return new Promise<void>((resolve, reject) => {
 
         let actionId = Ami.generateUniqueActionId();
 
+        console.log("avant : ", contact.path);
+
+        try {
+
+            console.log(sipLibrary.parsePath(contact.path));
+
+        } catch{
+
+            console.log("path could not be parsed");
+
+        }
+
+        //TODO: Use parse path!
         let uri = contact.path.split(",")[0].match(/^<(.*)>$/)![1].replace(/;lr/, "");
 
-        from_number = dcUtils.toNationalNumber(from_number, contact.uaSim.imsi);
+        console.log("uri : ", uri);
+
+        fromNumber = dcMisc.toNationalNumber(fromNumber, contact.uaSim.imsi);
 
         Dc.getInstance().ami.messageSend(
-            `pjsip:${contact.uaSim.imsi}/${uri}`, from_number, actionId
+            `pjsip:${contact.uaSim.imsi}/${uri}`, fromNumber, actionId
         ).catch(amiError => reject(amiError));
 
         evtOutgoingMessage.attachOnce(
@@ -69,47 +109,29 @@ export function sendMessage(
             2000,
             ({ sipRequest, prSipResponse }) => {
 
-                if (from_number_sim_name) sipRequest.headers.from.name = `"${from_number_sim_name} (sim)"`;
+                if (fromNumberSimName) {
+                    sipRequest.headers.from.name = `"${fromNumberSimName} (sim)"`;
+                }
 
                 sipRequest.uri = contact.uri;
+
                 sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
 
                 delete sipRequest.headers.contact;
 
-                sipRequest.content = stringToUtf8EncodedDataAsBinaryString(text);
-
                 sipRequest.headers = { ...sipRequest.headers, ...headers };
+
+                sipLibrary.setPacketContent(sipRequest, text);
 
                 prSipResponse
                     .then(() => resolve())
-                    .catch(() => reject(new Error("Not received")));
+                    .catch(() => reject(new Error("Not received")))
+                    ;
 
 
             }
         ).catch(() => reject(new Error("Not intercepted")));
 
     });
-
-}
-
-
-
-function utf8EncodedDataAsBinaryStringToString(
-    utf8EncodedDataAsBinaryString: string
-): { isValidInput: boolean; text: string; } {
-
-    let uft8EncodedData = new Buffer(utf8EncodedDataAsBinaryString, "binary");
-
-    let text = uft8EncodedData.toString("utf8");
-
-    let isValidInput = uft8EncodedData.equals(new Buffer(text, "utf8"));
-
-    return { isValidInput, text };
-
-}
-
-function stringToUtf8EncodedDataAsBinaryString(text: string): string {
-
-    return (new Buffer(text, "utf8")).toString("binary");
 
 }

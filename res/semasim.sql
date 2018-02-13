@@ -1,9 +1,10 @@
+
 -- phpMyAdmin SQL Dump
 -- version 4.2.12deb2+deb8u2
 -- http://www.phpmyadmin.net
 --
 -- Client :  localhost
--- Généré le :  Mer 10 Janvier 2018 à 19:23
+-- Généré le :  Lun 12 Février 2018 à 23:09
 -- Version du serveur :  5.5.55-0+deb8u1-log
 -- Version de PHP :  5.6.30-0+deb8u1
 
@@ -28,11 +29,11 @@ DELIMITER $$
 --
 CREATE DEFINER=`semasim`@`localhost` FUNCTION `_ASSERT`(bool INTEGER, message VARCHAR(256)) RETURNS int(11)
     DETERMINISTIC
-BEGIN                                                          
-    IF bool IS NULL OR bool = 0 THEN                           
-        SIGNAL SQLSTATE 'ERR0R' SET MESSAGE_TEXT = message;    
-    END IF;                                                    
-    RETURN bool;                                               
+BEGIN
+    IF bool IS NULL OR bool = 0 THEN
+        SIGNAL SQLSTATE 'ERR0R' SET MESSAGE_TEXT = message;
+    END IF;
+    RETURN bool;
 END$$
 
 DELIMITER ;
@@ -48,21 +49,8 @@ CREATE TABLE IF NOT EXISTS `message_toward_gsm` (
   `date` bigint(20) NOT NULL,
   `ua_sim` int(11) NOT NULL,
   `to_number` varchar(25) NOT NULL,
-  `base64_text` text NOT NULL,
+  `text` text NOT NULL,
   `send_date` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Structure de la table `message_toward_gsm_status_report`
---
-
-CREATE TABLE IF NOT EXISTS `message_toward_gsm_status_report` (
-  `message_toward_gsm` int(11) NOT NULL,
-  `is_delivered` tinyint(1) NOT NULL,
-  `discharge_date` bigint(20) DEFAULT NULL,
-  `status` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -73,11 +61,12 @@ CREATE TABLE IF NOT EXISTS `message_toward_gsm_status_report` (
 
 CREATE TABLE IF NOT EXISTS `message_toward_sip` (
 `id_` int(11) NOT NULL,
-  `is_report` tinyint(1) NOT NULL,
+  `is_from_dongle` tinyint(1) NOT NULL,
+  `bundled_data` text NOT NULL,
   `date` bigint(20) NOT NULL,
   `from_number` varchar(25) NOT NULL,
-  `base64_text` text NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
+  `text` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -92,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `ua` (
   `platform` varchar(15) NOT NULL,
   `push_token` varchar(1024) NOT NULL,
   `software` varchar(255) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -104,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `ua_sim` (
 `id_` int(11) NOT NULL,
   `ua` int(11) NOT NULL,
   `imsi` varchar(15) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -117,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `ua_sim_message_toward_sip` (
   `ua_sim` int(11) NOT NULL,
   `message_toward_sip` int(11) NOT NULL,
   `delivered_date` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Index pour les tables exportées
@@ -128,12 +117,6 @@ CREATE TABLE IF NOT EXISTS `ua_sim_message_toward_sip` (
 --
 ALTER TABLE `message_toward_gsm`
  ADD PRIMARY KEY (`id_`), ADD KEY `ua_sim` (`ua_sim`);
-
---
--- Index pour la table `message_toward_gsm_status_report`
---
-ALTER TABLE `message_toward_gsm_status_report`
- ADD PRIMARY KEY (`message_toward_gsm`);
 
 --
 -- Index pour la table `message_toward_sip`
@@ -167,27 +150,27 @@ ALTER TABLE `ua_sim_message_toward_sip`
 -- AUTO_INCREMENT pour la table `message_toward_gsm`
 --
 ALTER TABLE `message_toward_gsm`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT pour la table `message_toward_sip`
 --
 ALTER TABLE `message_toward_sip`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=29;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT pour la table `ua`
 --
 ALTER TABLE `ua`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=125;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT pour la table `ua_sim`
 --
 ALTER TABLE `ua_sim`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=125;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT pour la table `ua_sim_message_toward_sip`
 --
 ALTER TABLE `ua_sim_message_toward_sip`
-MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=43;
+MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- Contraintes pour les tables exportées
 --
@@ -197,12 +180,6 @@ MODIFY `id_` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=43;
 --
 ALTER TABLE `message_toward_gsm`
 ADD CONSTRAINT `message_toward_gsm_ibfk_1` FOREIGN KEY (`ua_sim`) REFERENCES `ua_sim` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Contraintes pour la table `message_toward_gsm_status_report`
---
-ALTER TABLE `message_toward_gsm_status_report`
-ADD CONSTRAINT `message_toward_gsm_status_report_ibfk_1` FOREIGN KEY (`message_toward_gsm`) REFERENCES `message_toward_gsm` (`id_`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `ua_sim`
@@ -220,6 +197,7 @@ ADD CONSTRAINT `ua_sim_message_toward_sip_ibfk_2` FOREIGN KEY (`message_toward_s
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
 
 
 -- Password is semasim

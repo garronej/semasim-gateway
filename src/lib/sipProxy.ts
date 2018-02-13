@@ -3,12 +3,12 @@ import * as net from "net";
 import * as networkTools from "../tools/networkTools";
 import { SyncEvent } from "ts-events-extended";
 import * as sipLibrary from "../tools/sipLibrary";
-import { Contact, PsContact } from "./sipContact";
-import * as db from "./db";
+import * as dbAsterisk from "./dbAsterisk";
+import * as types from "./types";
 
 import * as sipApiBackend from "./sipApiBackedClientImplementation";
 
-import { c } from "./_constants";
+import * as c from "./_constants";
 
 import "colors";
 
@@ -16,7 +16,7 @@ import * as _debug from "debug";
 let debug = _debug("_sipProxy");
 
 export const evtIncomingMessage = new SyncEvent<{
-    fromContact: Contact;
+    fromContact: types.Contact;
     sipRequest: sipLibrary.Request;
 }>();
 
@@ -50,7 +50,7 @@ export function getBackendSocket(): sipLibrary.Socket | Promise<sipLibrary.Socke
 
 export function getContacts(
     imsi?: string
-): Contact[] {
+): types.Contact[] {
 
     return asteriskSockets.getContacts(imsi);
 
@@ -62,9 +62,9 @@ namespace asteriskSockets {
 
     export function getContacts(
         imsi?: string
-    ): Contact[] {
+    ): types.Contact[] {
 
-        let match: (contact: Contact)=> boolean;
+        let match: (contact: types.Contact)=> boolean;
 
         if( imsi ){
             match= contact=> contact.uaSim.imsi === imsi;
@@ -72,7 +72,7 @@ namespace asteriskSockets {
             match= ()=> true;
         }
 
-        let contacts: Contact[]= [];
+        let contacts: types.Contact[]= [];
 
         for (let socket of map.values()) {
 
@@ -102,7 +102,7 @@ namespace asteriskSockets {
 
         socket.evtClose.attachOnce(() => map.set(key, null));
 
-        let prContact = db.asterisk.evtNewContact.attachOncePrepend(
+        let prContact = dbAsterisk.evtNewContact.attachOncePrepend(
             contact => (
                 contact.connectionId === connectionId &&
                 contact.uaSim.imsi === imsi
@@ -111,11 +111,11 @@ namespace asteriskSockets {
             contact => {
 
                 socket.evtClose.attachOnce(() => {
-                    db.asterisk.evtExpiredContact.detach(prContact);
-                    db.asterisk.deleteContact(contact);
+                    dbAsterisk.evtExpiredContact.detach(prContact);
+                    dbAsterisk.deleteContact(contact);
                 });
 
-                db.asterisk.evtExpiredContact.attachOnce(
+                dbAsterisk.evtExpiredContact.attachOnce(
                     expiredContact => expiredContact.id === contact.id,
                     prContact,
                     () => {
@@ -125,16 +125,15 @@ namespace asteriskSockets {
                     }
                 );
 
+                for (let socket_i of map.values()) {
 
-                for( let socket_i of map.values() ){
+                    if (socket_i === null) continue;
 
-                    if( socket_i === null ) continue;
+                    let contact_i: types.Contact | undefined = socket_i.misc["contact"];
 
-                    let contact_i: Contact | undefined= socket_i.misc["contact"];
+                    if (!contact_i) continue;
 
-                    if(! contact_i ) continue;
-
-                    if( Contact.UaSim.areSame(contact_i.uaSim, contact.uaSim) ){
+                    if (types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)) {
 
                         debug("ua re-register with an other connection");
 
@@ -147,7 +146,6 @@ namespace asteriskSockets {
                 }
 
                 socket.misc["contact"] = contact;
-
 
             }
         );
@@ -169,7 +167,7 @@ namespace asteriskSockets {
 
     export function getContact(
         socket: sipLibrary.Socket
-    ): Contact | Promise<Contact> {
+    ): types.Contact | Promise<types.Contact> {
         return socket.misc["contact"] || socket.misc["prContact"];
     }
 
@@ -206,8 +204,8 @@ export async function start() {
 
     backendSocket = new sipLibrary.Socket(
         tls.connect({
-            "host": (await networkTools.resolveSrv(`_sips._tcp.${c.shared.domain}`))[0].name,
-            "port": c.shared.gatewayPort
+            "host": (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name,
+            "port": c.gatewayPort
         })
     );
 
@@ -217,7 +215,7 @@ export async function start() {
         console.log(`\nFrom backend:\n${chunk.yellow}\n\n`)
     );
 
-    backendSocket.evtConnect.attachOnce(() => 
+    backendSocket.evtConnect.attachOnce(() =>
         evtNewBackendSocketConnect.post(backendSocket)
     );
 
@@ -233,11 +231,11 @@ export async function start() {
 
         if (asteriskSocket === undefined) {
 
-            let uaPublicIp= headers.via[0].params["received"]!;
+            let uaPublicIp = headers.via[0].params["received"]!;
 
             asteriskSocket = createAsteriskSocket(
-                connectionId, 
-                imsi, 
+                connectionId,
+                imsi,
                 uaPublicIp,
                 backendSocket
             );
@@ -254,12 +252,11 @@ export async function start() {
 
         if (sipRequest.method === "REGISTER") {
 
-            let contactParams= sipLibrary.parseUri(contactAoR!.uri).params;
+            let contactParams = sipLibrary.parseUri(contactAoR!.uri).params;
 
-
-            headers["user-agent"] = PsContact.stringifyMisc({
+            headers["user-agent"] = types.misc.smuggleMiscInPsContactUserAgent({
                 "ua_instance": contactAoR!.params["+sip.instance"]!,
-                "ua_userEmail": (new Buffer(contactParams["base64_email"]!, "base64")).toString("utf8"),
+                "ua_userEmail": Buffer.from(contactParams["base64_email"]!, "base64").toString("utf8"),
                 "ua_platform": (() => {
 
                     switch (contactParams["pn-type"]) {
@@ -378,9 +375,9 @@ function createAsteriskSocket(
     );
 
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
-    (()=>{
+    (() => {
 
-        let matcher = (sipPacket: sipLibrary.Packet) => 
+        let matcher = (sipPacket: sipLibrary.Packet) =>
             sipPacket.headers["content-type"] === "application/sdp";
 
         let handler = (sipPacket: sipLibrary.Packet): void => {
@@ -449,4 +446,5 @@ function createAsteriskSocket(
     });
 
     return asteriskSocket;
+
 }

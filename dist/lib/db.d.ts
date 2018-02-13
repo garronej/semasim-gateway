@@ -1,72 +1,95 @@
-import { SyncEvent } from "ts-events-extended";
-import { Contact } from "./sipContact";
 import * as f from "../tools/mySqlFunctions";
-import { DongleController as Dc } from "chan-dongle-extended-client";
-export declare namespace asterisk {
-    /** is exported only for tests */
-    const query: (sql: string) => Promise<any>, esc: (value: f.TSql) => string, buildInsertQuery: (table: string, obj: Record<string, string | number | {
-        "@": string;
-    } | null>, onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR") => string;
-    /** for test purpose only */
-    function flush(): Promise<void>;
-    const evtNewContact: SyncEvent<Contact>;
-    const evtExpiredContact: SyncEvent<Contact>;
-    function startListeningPsContacts(): Promise<void>;
-    function deleteContact(contact: Contact): Promise<boolean>;
-    function createEndpointIfNeededAndGetPassword(imsi: string, renewPassword?: "RENEW PASSWORD" | undefined): Promise<string>;
+import * as types from "./types";
+import { types as dcTypes } from "chan-dongle-extended-client";
+export declare const query: (sql: string) => Promise<any>, esc: (value: f.TSql) => string, buildInsertQuery: (table: string, obj: Record<string, string | number | {
+    "@": string;
+} | null>, onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR") => string;
+/** Only for test purpose */
+export declare function flush(): Promise<void>;
+export declare function addUaSim(uaSim: types.UaSim): Promise<{
+    isUaCreatedOrUpdated: boolean;
+    isFirstUaForSim: boolean;
+}>;
+export declare function removeUaSim(imsi: string, uasToKeep?: types.Ua[]): Promise<void>;
+/**
+ *
+ * to call when sip message received.
+ *
+ * @param toNumber phone number to send to
+ * @param text
+ * @param uaSim uaSim that emitted the message
+ * @param date when the message was emitted by the user (provided only by web ua)
+ *
+ * NOTE: no new sip message added to the queue.
+ *
+ */
+export declare function onSipMessage(toNumber: string, text: string, uaSim: types.UaSim, date?: Date): Promise<void>;
+/**
+ * to call when a SMS is received by a dongle
+ *
+ * Return true if there is an ua registered to this SIM.
+ * If not the message is not stored in DB.
+ *
+ * @param fromNumber
+ * txt       => number of who sent the SMS
+ *
+ * @param text
+ * txt       => SMS
+ *
+ * @param date
+ * txt       => date the SMS have been sent read from PDU
+ *
+ * */
+export declare function onDongleMessage(fromNumber: string, text: string, date: Date, imsi: string): Promise<boolean>;
+/**
+ * to call when when a call have been missed
+ *
+ * will create the message toward sip to notify UAs about it.
+ *
+ * */
+export declare function onMissedCall(imsi: string, number: string): Promise<void>;
+/**
+ *
+ * to call when a call have been answered,
+ *
+ * will inform ua of other users that the call have been taken.
+ *
+*/
+export declare function onCallAnswered(number: string, imsi: any, answeredByUa: types.Ua, ringingUas: Iterable<types.Ua>): Promise<void>;
+/** Check if a ua registration have message pending */
+export declare function messageTowardSipUnsentCount(uaSim: types.UaSim): Promise<number>;
+/** Return array of tuples [ MessageTowardSip, <method to set the message as received> ] */
+export declare function getUnsentMessagesTowardSip(uaSim: types.UaSim): Promise<[types.MessageTowardSip, () => Promise<void>][]>;
+/**
+ *
+ * Provide the SMS that need to be send via Dongle.
+ *
+ * return an array of tuple [ MessageTowardGsm, <method to set the send date and status report> ]
+ *
+ * */
+export declare function getUnsentMessagesTowardGsm(imsi: string): Promise<[types.MessageTowardGsm, getUnsentMessagesTowardGsm.Confirm][]>;
+export declare namespace getUnsentMessagesTowardGsm {
+    type Confirm = {
+        onSent(sendDate: Date | null): Promise<void>;
+        onStatusReport(statusReport: dcTypes.StatusReport): Promise<void>;
+    };
+    /**
+     *
+     * Set message toward sip as received in the db and create Send report
+     *
+     * sendDate correspond to the exact time the message have been sent by dongle,
+     * null if send failed.
+     *
+    */
+    function onSent(messageTowardGsm_id: number, messageTowardGsm: types.MessageTowardGsm, sendDate: Date | null): Promise<void>;
+    function onStatusReport(messageTowardGsm_id: number, messageTowardGsm: types.MessageTowardGsm, statusReport: dcTypes.StatusReport): Promise<void>;
 }
-export declare namespace semasim {
-    const query: (sql: string) => Promise<any>, esc: (value: f.TSql) => string, buildInsertQuery: (table: string, obj: Record<string, string | number | {
-        "@": string;
-    } | null>, onDuplicateKey: "IGNORE" | "UPDATE" | "THROW ERROR") => string;
-    /** Only for test purpose */
-    function flush(): Promise<void>;
-    function addUaSim(uaSim: Contact.UaSim): Promise<{
-        isUaCreatedOrUpdated: boolean;
-        isFirstUaForSim: boolean;
-    }>;
-    function removeUaSim(imsi: string, uasToKeep?: Contact.UaSim.Ua[]): Promise<void>;
-    interface MessageTowardGsm {
-        date: Date;
-        uaSim: Contact.UaSim;
-        toNumber: string;
-        text: string;
-    }
-    namespace MessageTowardGsm {
-        function add(toNumber: string, text: string, uaSim: Contact.UaSim): Promise<void>;
-        type Confirm = {
-            setSent(sentDate: Date | null): Promise<void>;
-            setStatusReport(statusReport: Dc.StatusReport): Promise<void>;
-        };
-        function getUnsent(imsi: string): Promise<[MessageTowardGsm, Confirm][]>;
-    }
-    function lastMessageReceivedDateBySim(): Promise<{
-        [imsi: string]: Date;
-    }>;
-    interface MessageTowardSip {
-        isReport: boolean;
-        date: Date;
-        fromNumber: string;
-        text: string;
-    }
-    namespace MessageTowardSip {
-        type Target = {
-            target: "SPECIFIC UA REGISTERED TO SIM";
-            uaSim: Contact.UaSim;
-        } | {
-            target: "ALL UA REGISTERED TO SIM";
-            imsi: string;
-        } | {
-            target: "ALL OTHER UA OF USER REGISTERED TO SIM";
-            uaSim: Contact.UaSim;
-        } | {
-            target: "ALL UA OF OTHER USERS REGISTERED TO SIM";
-            uaSim: Contact.UaSim;
-        };
-        /** return true if message_toward_sip added */
-        function add(fromNumber: string, text: string, date: Date, isReport: boolean, target: Target): Promise<boolean>;
-        function unsentCount(uaSim: Contact.UaSim): Promise<number>;
-        /** Return array of [ MessageTowardSip, setDelivered ] */
-        function getUnsent(uaSim: Contact.UaSim): Promise<[MessageTowardSip, () => Promise<void>][]>;
-    }
-}
+/**
+ *
+ * Only used to recover after being down to know from when
+ * we have to pull the SMS of chan-dongle-extended
+ *
+ */
+export declare function lastMessageReceivedDateBySim(): Promise<{
+    [imsi: string]: Date;
+}>;

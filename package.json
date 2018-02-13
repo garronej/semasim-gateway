@@ -3,14 +3,14 @@
   "description": "Semasim server for gateways (raspberry pi)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "scripts": {
     "postinstall": "npm run remove-bold-color",
     "remove-bold-color": "sed -i '/bold: string;/d' ./node_modules/@types/colors/index.d.ts",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
     "start": "sudo systemctl stop semasim-gateway && DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/lib/main.js",
-    "test": "node ./dist/test/db"
+    "test": "node ./dist/test/index"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "async-lock": "^1.0.0",
-    "chan-dongle-extended-client": "git+https://a30f7432b117d8320cc21cc03513817c3f08d4b6:x-oauth-basic@github.com/garronej/chan-dongle-extended-client.git",
+    "chan-dongle-extended-client": "git+https://206e4c24cb9a1e4a8d42b7ac86e4a026b02cee42:x-oauth-basic@github.com/garronej/chan-dongle-extended-client.git",
     "colors": "^1.1.2",
     "commander": "^2.11.0",
     "debug": "^2.6.8",
@@ -28,7 +28,7 @@
     "network": "^0.3.2",
     "rejection-tracker": "github:garronej/rejection-tracker",
     "sip": "github:garronej/sip.js#no-websocket",
-    "super-json": "^2.2.0",
+    "transfer-tools": "garronej/transfer-tools",
     "ts-events-extended": "garronej/ts-events-extended",
     "ws": "^4.0.0",
     "zongji": "^0.4.4"
