@@ -1,5 +1,5 @@
 import { SyncEvent } from "ts-events-extended";
-import * as types from "./types";
+import * as types from "./../types";
 export declare const evtMessage: SyncEvent<{
     fromContact: types.Contact;
     toNumber: string;

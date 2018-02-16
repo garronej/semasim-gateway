@@ -13,7 +13,6 @@ const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const db = require("./db");
 const dbAsterisk = require("./dbAsterisk");
 const sipProxy = require("./sipProxy");
-const sipMessage = require("./sipMessage");
 const messagesDispatcher = require("./messagesDispatcher");
 const voiceCallBridge = require("./voiceCallBridge");
 const sipApiBackend = require("./sipApiBackedClientImplementation");
@@ -39,7 +38,6 @@ debug("Starting semasim gateway !");
         debug("Launching...");
         registerListeners();
         yield dbAsterisk.startListeningPsContacts();
-        yield sipMessage.startHandling();
         voiceCallBridge.start();
         sipProxy.start();
         processGsmMessageIoOccurredWhileOffline();
@@ -120,7 +118,7 @@ function registerListeners() {
         }
         messagesDispatcher.sendMessagesOfContact(contact);
     }));
-    sipMessage.evtMessage.attach(({ fromContact, toNumber, text, exactSendDate }) => __awaiter(this, void 0, void 0, function* () {
+    sipProxy.evtMessage.attach(({ fromContact, toNumber, text, exactSendDate }) => __awaiter(this, void 0, void 0, function* () {
         debug("FROM SIP MESSAGE", { toNumber, text });
         let { uaSim } = fromContact;
         yield db.onSipMessage(toNumber, text, uaSim, exactSendDate);

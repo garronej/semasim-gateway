@@ -11,11 +11,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
-const sipProxy_1 = require("./sipProxy");
-const sipLibrary = require("../tools/sipLibrary");
-const types = require("./types");
+const sipLibrary = require("../../tools/sipLibrary");
+const types = require("./../types");
+const route_1 = require("./route");
 const _debug = require("debug");
-let debug = _debug("_sipMessage");
+let debug = _debug("_sipProxy/messages");
 exports.evtMessage = new ts_events_extended_1.SyncEvent();
 exports.sipMessageContext = "from-sip-message";
 function startHandling() {
@@ -24,7 +24,7 @@ function startHandling() {
         let matchAllExt = "_.";
         yield ami.dialplanExtensionRemove(matchAllExt, exports.sipMessageContext);
         yield ami.dialplanExtensionAdd(exports.sipMessageContext, matchAllExt, 1, "Hangup");
-        sipProxy_1.evtIncomingMessage.attach(({ fromContact, sipRequest }) => {
+        route_1.evtIncomingMessage.attach(({ fromContact, sipRequest }) => {
             let content = sipLibrary.getPacketContent(sipRequest);
             let text = content.toString("utf8");
             if (!content.equals(Buffer.from(text, "utf8"))) {
@@ -51,19 +51,14 @@ exports.startHandling = startHandling;
 function sendMessage(contact, fromNumber, headers, text, fromNumberSimName) {
     return new Promise((resolve, reject) => {
         let actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
-        console.log("avant : ", contact.path);
-        try {
-            console.log(sipLibrary.parsePath(contact.path));
-        }
-        catch (_a) {
-            console.log("path could not be parsed");
-        }
-        //TODO: Use parse path!
-        let uri = contact.path.split(",")[0].match(/^<(.*)>$/)[1].replace(/;lr/, "");
-        console.log("uri : ", uri);
+        let uri = (() => {
+            let parsedUri = sipLibrary.parsePath(contact.path)[0].uri;
+            delete parsedUri.params["lr"];
+            return sipLibrary.stringifyUri(parsedUri);
+        })();
         fromNumber = dcMisc.toNationalNumber(fromNumber, contact.uaSim.imsi);
         chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend(`pjsip:${contact.uaSim.imsi}/${uri}`, fromNumber, actionId).catch(amiError => reject(amiError));
-        sipProxy_1.evtOutgoingMessage.attachOnce(({ sipRequest }) => sipRequest.content === actionId, 2000, ({ sipRequest, prSipResponse }) => {
+        route_1.evtOutgoingMessage.attachOnce(({ sipRequest }) => sipRequest.content === actionId, 2000, ({ sipRequest, prSipResponse }) => {
             if (fromNumberSimName) {
                 sipRequest.headers.from.name = `"${fromNumberSimName} (sim)"`;
             }

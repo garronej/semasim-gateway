@@ -11,7 +11,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const AsyncLock = require("async-lock");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const db = require("./db");
-const sipMessage = require("./sipMessage");
 const sipProxy = require("./sipProxy");
 const sipApiBackend = require("./sipApiBackedClientImplementation");
 const types = require("./types");
@@ -67,7 +66,7 @@ function sendMessagesOfContact(contact) {
     sendMessagesOfContact.lock.acquire(types.misc.generateUaSimId(contact.uaSim), () => __awaiter(this, void 0, void 0, function* () {
         for (let [message, onReceived] of yield db.getUnsentMessagesTowardSip(contact.uaSim)) {
             try {
-                yield sipMessage.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
+                yield sipProxy.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
             }
             catch (error) {
                 debug("sip Send Message error:", error.message);

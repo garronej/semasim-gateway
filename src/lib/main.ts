@@ -7,7 +7,6 @@ import {
 import * as db from "./db";
 import * as dbAsterisk from "./dbAsterisk";
 import * as sipProxy from "./sipProxy";
-import * as sipMessage from "./sipMessage";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 
@@ -50,8 +49,6 @@ debug("Starting semasim gateway !");
     registerListeners();
 
     await dbAsterisk.startListeningPsContacts();
-
-    await sipMessage.startHandling();
 
     voiceCallBridge.start();
 
@@ -210,7 +207,7 @@ function registerListeners() {
         }
     );
 
-    sipMessage.evtMessage.attach(
+    sipProxy.evtMessage.attach(
         async ({ fromContact, toNumber, text, exactSendDate }) => {
 
             debug("FROM SIP MESSAGE", { toNumber, text });

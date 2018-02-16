@@ -13,7 +13,7 @@ const types = require("./types");
 const f = require("../tools/mySqlFunctions");
 const MySqlEvents_1 = require("../tools/MySqlEvents");
 const voiceCallBridge_1 = require("./voiceCallBridge");
-const sipMessage_1 = require("./sipMessage");
+const sipProxy_1 = require("./sipProxy");
 const c = require("./_constants");
 const connectionConfig = Object.assign({}, c.dbParamsGateway, { "database": "asterisk" });
 /** is exported only for tests */
@@ -88,7 +88,7 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             "disallow": "all",
             "allow": "alaw,ulaw",
             "context": voiceCallBridge_1.sipCallContext,
-            "message_context": sipMessage_1.sipMessageContext,
+            "message_context": sipProxy_1.sipMessageContext,
             "subscribe_context": null,
             "aors": imsi,
             "auth": imsi,

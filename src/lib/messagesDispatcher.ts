@@ -6,7 +6,6 @@ import {
 } from "chan-dongle-extended-client";
 
 import * as db from "./db";
-import * as sipMessage from "./sipMessage";
 import * as sipProxy from "./sipProxy";
 
 import * as sipApiBackend from "./sipApiBackedClientImplementation";
@@ -103,7 +102,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
 
                 try {
 
-                    await sipMessage.sendMessage(
+                    await sipProxy.sendMessage(
                         contact,
                         message.fromNumber,
                         types.misc.smuggleBundledDataInHeaders(message.bundledData),

@@ -6,7 +6,7 @@ import * as f from "../tools/mySqlFunctions";
 import { MySqlEvents } from "../tools/MySqlEvents";
 
 import { sipCallContext } from "./voiceCallBridge";
-import { sipMessageContext } from "./sipMessage";
+import { sipMessageContext } from "./sipProxy";
 
 import * as c from "./_constants"
 
