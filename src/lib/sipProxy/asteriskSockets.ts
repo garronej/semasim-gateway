@@ -60,7 +60,7 @@ export namespace asteriskSockets {
                 contact.connectionId === connectionId &&
                 contact.uaSim.imsi === imsi
             ),
-            6000,
+            6001,
             contact => {
 
                 socket.evtClose.attachOnce(() => {
@@ -103,9 +103,11 @@ export namespace asteriskSockets {
             }
         );
 
-        prContact.catch(() => socket.destroy());
-
-        socket.misc["prContact"] = prContact;
+        socket.misc["prContact"] = new Promise<types.Contact>(
+            resolve => prContact
+                .then(contact => resolve(contact))
+                .catch(() => socket.destroy())
+        );
 
         map.set(key, socket);
 

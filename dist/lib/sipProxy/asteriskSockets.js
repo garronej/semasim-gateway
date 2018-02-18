@@ -35,7 +35,7 @@ var asteriskSockets;
         let key = `${connectionId}${imsi}`;
         socket.evtClose.attachOnce(() => map.set(key, null));
         let prContact = dbAsterisk.evtNewContact.attachOncePrepend(contact => (contact.connectionId === connectionId &&
-            contact.uaSim.imsi === imsi), 6000, contact => {
+            contact.uaSim.imsi === imsi), 6001, contact => {
             socket.evtClose.attachOnce(() => {
                 dbAsterisk.evtExpiredContact.detach(prContact);
                 dbAsterisk.deleteContact(contact);
@@ -59,8 +59,9 @@ var asteriskSockets;
             }
             socket.misc["contact"] = contact;
         });
-        prContact.catch(() => socket.destroy());
-        socket.misc["prContact"] = prContact;
+        socket.misc["prContact"] = new Promise(resolve => prContact
+            .then(contact => resolve(contact))
+            .catch(() => socket.destroy()));
         map.set(key, socket);
     }
     asteriskSockets.set = set;
