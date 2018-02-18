@@ -18,7 +18,8 @@ function extractBundledDataFromHeaders(headers) {
     let split = [];
     let i = 0;
     while (true) {
-        let part = headers[header(i++)];
+        let key = header(i++);
+        let part = headers[key] || headers[key.toLowerCase()];
         if (part) {
             split.push(part);
         }
