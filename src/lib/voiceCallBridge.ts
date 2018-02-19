@@ -5,7 +5,6 @@ import {
     agi
 } from "chan-dongle-extended-client";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
-import * as dbAsterisk from "./dbAsterisk";
 import * as sipApiBackend from "./sipApiBackedClientImplementation";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
@@ -60,7 +59,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     let evtReachableContact= new SyncEvent<types.Contact>();
 
-    dbAsterisk.evtNewContact.attach(
+    sipProxy.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
         evtReachableContact,
         contact => evtReachableContact.post(contact)
@@ -88,7 +87,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         evtReachableContact.detach();
 
-        dbAsterisk.evtNewContact.detach(evtReachableContact);
+        sipProxy.evtContactRegistration.detach(evtReachableContact);
 
         for (let channelName of ringingChannels.values()) {
 

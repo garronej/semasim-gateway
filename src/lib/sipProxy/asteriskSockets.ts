@@ -2,75 +2,50 @@ import * as sipLibrary from "../../tools/sipLibrary";
 import * as dbAsterisk from "../dbAsterisk";
 import * as types from "../types";
 import * as sipApiBackend from "./../sipApiBackedClientImplementation";
+import { SyncEvent } from "ts-events-extended";
 
 import "colors";
 
 import * as _debug from "debug";
 let debug = _debug("_sipProxy/asteriskSockets");
 
+export const evtContactRegistration = new SyncEvent<types.Contact>();
 
-export namespace asteriskSockets {
+/** map connectionId+imsi => asteriskSocket */
+const map = new Map<string, sipLibrary.Socket | null>();
 
-    const map = new Map<string, sipLibrary.Socket | null>();
+export function set(
+    connectionId: number,
+    imsi: string,
+    socket: sipLibrary.Socket
+) {
 
-    export function getContacts(
-        imsi?: string
-    ): types.Contact[] {
+    let key = `${connectionId}${imsi}`;
 
-        let match: (contact: types.Contact)=> boolean;
+    map.set(key, socket);
 
-        if( imsi ){
-            match= contact=> contact.uaSim.imsi === imsi;
-        }else{
-            match= ()=> true;
-        }
+    socket.evtClose.attachOnce(() => map.set(key, null));
 
-        let contacts: types.Contact[]= [];
+    socket.misc["prContact"] = new Promise<types.Contact>(
+        resolve =>
+            dbAsterisk.evtNewContact.waitFor(
+                contact => (
+                    contact.connectionId === connectionId &&
+                    contact.uaSim.imsi === imsi
+                ),
+                6001
+            ).then(contact => {
 
-        for (let socket of map.values()) {
-
-            if (socket === null) continue;
-
-            let contact = socket.misc["contact"];
-
-            if (!contact) continue;
-
-            if( !match(contact) ) continue;
-
-            contacts.push(contact);
-
-        }
-
-        return contacts;
-
-    }
-
-    export function set(
-        connectionId: number,
-        imsi: string,
-        socket: sipLibrary.Socket
-    ) {
-
-        let key = `${connectionId}${imsi}`;
-
-        socket.evtClose.attachOnce(() => map.set(key, null));
-
-        let prContact = dbAsterisk.evtNewContact.attachOncePrepend(
-            contact => (
-                contact.connectionId === connectionId &&
-                contact.uaSim.imsi === imsi
-            ),
-            6001,
-            contact => {
+                const boundTo = [];
 
                 socket.evtClose.attachOnce(() => {
-                    dbAsterisk.evtExpiredContact.detach(prContact);
+                    dbAsterisk.evtExpiredContact.detach(boundTo);
                     dbAsterisk.deleteContact(contact);
                 });
 
                 dbAsterisk.evtExpiredContact.attachOnce(
                     expiredContact => expiredContact.id === contact.id,
-                    prContact,
+                    boundTo,
                     () => {
                         debug("expired contact");
                         socket.destroy();
@@ -78,15 +53,9 @@ export namespace asteriskSockets {
                     }
                 );
 
-                for (let socket_i of map.values()) {
+                for( let [ socket_i, contact_i] of getContactMap() ){
 
-                    if (socket_i === null) continue;
-
-                    let contact_i: types.Contact | undefined = socket_i.misc["contact"];
-
-                    if (!contact_i) continue;
-
-                    if (types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)) {
+                    if( contact_i && types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)){
 
                         debug("ua re-register with an other connection");
 
@@ -94,45 +63,87 @@ export namespace asteriskSockets {
 
                         break;
 
+
                     }
 
                 }
 
                 socket.misc["contact"] = contact;
 
-            }
-        );
+                evtContactRegistration.post(contact);
 
-        socket.misc["prContact"] = new Promise<types.Contact>(
-            resolve => prContact
-                .then(contact => resolve(contact))
-                .catch(() => socket.destroy())
-        );
+                resolve(contact);
 
-        map.set(key, socket);
+            }).catch(() => socket.destroy())
+    );
+
+}
+
+export function get(
+    connectionId: number,
+    imsi: string
+): sipLibrary.Socket | null | undefined {
+    return map.get(`${connectionId}${imsi}`);
+}
+
+export function getSocketContact(
+    socket: sipLibrary.Socket
+): types.Contact | Promise<types.Contact> {
+    return socket.misc["contact"] || socket.misc["prContact"];
+}
+
+
+function getContactMap(): Map<sipLibrary.Socket, types.Contact | undefined> {
+
+    let out = new Map<sipLibrary.Socket, types.Contact | undefined>();
+
+    for (let socket of map.values()) {
+
+        if (socket === null) {
+            continue;
+        }
+
+        out.set(socket, (() => {
+
+            let contact = getSocketContact(socket);
+
+            return (contact instanceof Promise) ? undefined : contact;
+
+
+        })());
+
 
     }
 
-    export function get(
-        connectionId: number,
-        imsi: string
-    ): sipLibrary.Socket | null | undefined {
-        return map.get(`${connectionId}${imsi}`);
+    return out;
+
+}
+
+export function getContacts(imsi?: string): types.Contact[] {
+
+    let out: types.Contact[] = [];
+
+    for (let contact of getContactMap().values()) {
+
+        if (contact && (!imsi || contact.uaSim.imsi === imsi)) {
+            out.push(contact);
+        }
+
     }
 
-    export function getContact(
-        socket: sipLibrary.Socket
-    ): types.Contact | Promise<types.Contact> {
-        return socket.misc["contact"] || socket.misc["prContact"];
-    }
+    return out;
 
-    export function flush() {
+}
 
-        for (let socket of map.values()) {
-            if (socket === null) continue;
+export function flush(imsi?: string): void {
+
+    for (let [socket, contact] of getContactMap()) {
+
+        if (!imsi || !contact || contact.uaSim.imsi === imsi) {
             socket.destroy();
         }
 
     }
 
 }
+

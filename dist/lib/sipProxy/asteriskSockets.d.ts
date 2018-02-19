@@ -1,10 +1,10 @@
 import * as sipLibrary from "../../tools/sipLibrary";
 import * as types from "../types";
+import { SyncEvent } from "ts-events-extended";
 import "colors";
-export declare namespace asteriskSockets {
-    function getContacts(imsi?: string): types.Contact[];
-    function set(connectionId: number, imsi: string, socket: sipLibrary.Socket): void;
-    function get(connectionId: number, imsi: string): sipLibrary.Socket | null | undefined;
-    function getContact(socket: sipLibrary.Socket): types.Contact | Promise<types.Contact>;
-    function flush(): void;
-}
+export declare const evtContactRegistration: SyncEvent<types.Contact>;
+export declare function set(connectionId: number, imsi: string, socket: sipLibrary.Socket): void;
+export declare function get(connectionId: number, imsi: string): sipLibrary.Socket | null | undefined;
+export declare function getSocketContact(socket: sipLibrary.Socket): types.Contact | Promise<types.Contact>;
+export declare function getContacts(imsi?: string): types.Contact[];
+export declare function flush(imsi?: string): void;

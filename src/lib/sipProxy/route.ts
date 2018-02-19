@@ -4,7 +4,7 @@ import * as networkTools from "../../tools/networkTools";
 import { SyncEvent } from "ts-events-extended";
 import * as sipLibrary from "../../tools/sipLibrary";
 import * as types from "./../types";
-import { asteriskSockets } from "./asteriskSockets";
+import * as asteriskSockets from "./asteriskSockets";
 
 import * as c from "./../_constants";
 
@@ -156,7 +156,8 @@ export async function start() {
 
             let parsedUri = sipLibrary.parseUri(contactAoR.uri);
 
-            parsedUri.params = {};
+            /** We add connection id to contact params so that contact is uniq across uas */
+            parsedUri.params = { "connection_id": `${connectionId}` };
 
             contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
 
@@ -174,7 +175,7 @@ export async function start() {
 
                     if (sipResponse.status !== 202) return;
 
-                    let fromContact = await asteriskSockets.getContact(asteriskSocket!);
+                    let fromContact = await asteriskSockets.getSocketContact(asteriskSocket!);
 
                     evtIncomingMessage.post({ fromContact, sipRequest });
 

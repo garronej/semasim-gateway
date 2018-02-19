@@ -98,7 +98,7 @@ function registerListeners() {
             });
         }
     }));
-    dbAsterisk.evtNewContact.attach((contact) => __awaiter(this, void 0, void 0, function* () {
+    sipProxy.evtContactRegistration.attach((contact) => __awaiter(this, void 0, void 0, function* () {
         debug(`Contact registered`);
         let { isUaCreatedOrUpdated, isFirstUaForSim } = yield db.addUaSim(contact.uaSim);
         if (isUaCreatedOrUpdated) {

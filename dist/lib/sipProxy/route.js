@@ -14,7 +14,7 @@ const networkTools = require("../../tools/networkTools");
 const ts_events_extended_1 = require("ts-events-extended");
 const sipLibrary = require("../../tools/sipLibrary");
 const types = require("./../types");
-const asteriskSockets_1 = require("./asteriskSockets");
+const asteriskSockets = require("./asteriskSockets");
 const c = require("./../_constants");
 require("colors");
 const _debug = require("debug");
@@ -60,7 +60,7 @@ function start() {
             let { headers } = sipRequest;
             let connectionId = parseInt(headers.via[0].params["connection_id"]);
             let imsi = sipLibrary.parseUri(headers.from.uri).user;
-            let asteriskSocket = asteriskSockets_1.asteriskSockets.get(connectionId, imsi);
+            let asteriskSocket = asteriskSockets.get(connectionId, imsi);
             if (asteriskSocket === undefined) {
                 let uaPublicIp = headers.via[0].params["received"];
                 asteriskSocket = createAsteriskSocket(connectionId, imsi, uaPublicIp, backendSocket);
@@ -98,7 +98,8 @@ function start() {
             }
             if (contactAoR) {
                 let parsedUri = sipLibrary.parseUri(contactAoR.uri);
-                parsedUri.params = {};
+                /** We add connection id to contact params so that contact is uniq across uas */
+                parsedUri.params = { "connection_id": `${connectionId}` };
                 contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
             }
             let branch = asteriskSocket.addViaHeader(sipRequest);
@@ -108,7 +109,7 @@ function start() {
                 asteriskSocket.evtResponse.attachOncePrepend(({ headers }) => headers.via[0].params["branch"] === branch, (sipResponse) => __awaiter(this, void 0, void 0, function* () {
                     if (sipResponse.status !== 202)
                         return;
-                    let fromContact = yield asteriskSockets_1.asteriskSockets.getContact(asteriskSocket);
+                    let fromContact = yield asteriskSockets.getSocketContact(asteriskSocket);
                     exports.evtIncomingMessage.post({ fromContact, sipRequest });
                 }));
             }
@@ -117,7 +118,7 @@ function start() {
         backendSocket.evtResponse.attach(sipResponse => {
             let connectionId = parseInt(sipResponse.headers.via[0].params["connection_id"]);
             let imsi = sipLibrary.parseUri(sipResponse.headers.to.uri).user;
-            let asteriskSocket = asteriskSockets_1.asteriskSockets.get(connectionId, imsi);
+            let asteriskSocket = asteriskSockets.get(connectionId, imsi);
             if (!asteriskSocket)
                 return;
             asteriskSocket.pushRecordRoute(sipResponse, false);
@@ -126,7 +127,7 @@ function start() {
         });
         backendSocket.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
             debug("Backend socket closed, waiting and restarting");
-            asteriskSockets_1.asteriskSockets.flush();
+            asteriskSockets.flush();
             let delay = (function getRandomArbitrary(min, max) {
                 return Math.floor(Math.random() * (max - min) + min);
             })(3000, 5000);
@@ -139,7 +140,7 @@ function start() {
 exports.start = start;
 function createAsteriskSocket(connectionId, imsi, uaPublicIp, backendSocket) {
     let asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
-    asteriskSockets_1.asteriskSockets.set(connectionId, imsi, asteriskSocket);
+    asteriskSockets.set(connectionId, imsi, asteriskSocket);
     asteriskSocket.evtData.attach(chunk => console.log(`\nFrom Asterisk:\n${chunk.grey}\n\n`));
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     (() => {

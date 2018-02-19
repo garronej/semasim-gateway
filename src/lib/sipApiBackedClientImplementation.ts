@@ -5,6 +5,7 @@ import * as db from "./db";
 import { types as dcTypes } from "chan-dongle-extended-client";
 import * as types  from "./types";
 import * as dbAsterisk from "./dbAsterisk";
+import * as sipProxy from "./sipProxy";
 
 export function init(backendSocket: sipLibrary.Socket){
 
@@ -89,6 +90,8 @@ export function notifySimOnline(
 
         if (response.status === "NEED PASSWORD RENEWAL") {
 
+            sipProxy.flushRegistrations(dongle.sim.imsi);
+
             db.removeUaSim(dongle.sim.imsi, response.allowedUas);
 
             params.password = await dbAsterisk.createEndpointIfNeededAndGetPassword(
@@ -98,6 +101,8 @@ export function notifySimOnline(
             sendRequest(methodName, params).catch(() => { });
 
         } else if (response.status === "NOT REGISTERED") {
+
+            sipProxy.flushRegistrations(dongle.sim.imsi);
 
             db.removeUaSim(dongle.sim.imsi);
 
@@ -139,6 +144,17 @@ export function notifyNewOrUpdatedUa(
 
 }
 
+/**
+ * 
+ * To use when we want to send a message or make a call
+ * backend will try to reach the contact with a qualify
+ * if the contact does not respond a push notification
+ * will be sent.
+ * 
+ * TODO: add contextual infos about the call or the message
+ * in the notification so web notification can be displayed.
+ * 
+ */
 export function wakeUpContact(
     contact: types.Contact
 ): Promise<apiDeclaration.wakeUpContact.Response> {
@@ -151,6 +167,21 @@ export function wakeUpContact(
 
 }
 
+/**
+ * 
+ * To use when the contact has expired to make it re register
+ * with a new connection.
+ * No push notification will be sent to this ua until it re-register.
+ * 
+ * The contact has to expire or we will keep sending push notifications
+ * for ever to UA that can be no longer active ( e.g uninstalled app )
+ * 
+ * NOTE: Web UA should never expire as it may only have one ua
+ * by sim so we do not keep sending push notification 
+ * 
+ * NOTE: this push notification should not have any content
+ * 
+ */
 export async function forceContactToRegister(
     contact: types.Contact
 ): Promise<apiDeclaration.forceContactToReRegister.Response> {

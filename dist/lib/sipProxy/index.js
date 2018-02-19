@@ -15,11 +15,17 @@ exports.sipMessageContext = messages_1.sipMessageContext;
 const route_1 = require("./route");
 exports.evtNewBackendSocketConnect = route_1.evtNewBackendSocketConnect;
 exports.getBackendSocket = route_1.getBackendSocket;
-const asteriskSockets_1 = require("./asteriskSockets");
+const asteriskSockets = require("./asteriskSockets");
+var evtContactRegistration = asteriskSockets.evtContactRegistration;
+exports.evtContactRegistration = evtContactRegistration;
 function getContacts(imsi) {
-    return asteriskSockets_1.asteriskSockets.getContacts(imsi);
+    return asteriskSockets.getContacts(imsi);
 }
 exports.getContacts = getContacts;
+function flushRegistrations(imsi) {
+    asteriskSockets.flush(imsi);
+}
+exports.flushRegistrations = flushRegistrations;
 function start() {
     return __awaiter(this, void 0, void 0, function* () {
         yield messages_1.startHandling();

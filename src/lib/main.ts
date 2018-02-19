@@ -162,10 +162,8 @@ function registerListeners() {
 
         }
     );
-
     
-
-    dbAsterisk.evtNewContact.attach(
+    sipProxy.evtContactRegistration.attach(
         async contact => {
 
             debug(`Contact registered`);

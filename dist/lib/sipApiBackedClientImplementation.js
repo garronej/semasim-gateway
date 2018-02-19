@@ -12,6 +12,7 @@ const sipApi_1 = require("./sipApi");
 const sipProxy_1 = require("./sipProxy");
 const db = require("./db");
 const dbAsterisk = require("./dbAsterisk");
+const sipProxy = require("./sipProxy");
 function init(backendSocket) {
     new sipApi_1.protocol.Client(backendSocket);
 }
@@ -61,11 +62,13 @@ function notifySimOnline(dongle) {
             return;
         }
         if (response.status === "NEED PASSWORD RENEWAL") {
+            sipProxy.flushRegistrations(dongle.sim.imsi);
             db.removeUaSim(dongle.sim.imsi, response.allowedUas);
             params.password = yield dbAsterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi, "RENEW PASSWORD");
             sendRequest(methodName, params).catch(() => { });
         }
         else if (response.status === "NOT REGISTERED") {
+            sipProxy.flushRegistrations(dongle.sim.imsi);
             db.removeUaSim(dongle.sim.imsi);
         }
     }))();
@@ -84,12 +87,38 @@ function notifyNewOrUpdatedUa(ua) {
     sendRequest(methodName, params).catch(() => { });
 }
 exports.notifyNewOrUpdatedUa = notifyNewOrUpdatedUa;
+/**
+ *
+ * To use when we want to send a message or make a call
+ * backend will try to reach the contact with a qualify
+ * if the contact does not respond a push notification
+ * will be sent.
+ *
+ * TODO: add contextual infos about the call or the message
+ * in the notification so web notification can be displayed.
+ *
+ */
 function wakeUpContact(contact) {
     let methodName = sipApi_1.backendDeclaration.wakeUpContact.methodName;
     let params = { contact };
     return sendRequest(methodName, params, "RETRY");
 }
 exports.wakeUpContact = wakeUpContact;
+/**
+ *
+ * To use when the contact has expired to make it re register
+ * with a new connection.
+ * No push notification will be sent to this ua until it re-register.
+ *
+ * The contact has to expire or we will keep sending push notifications
+ * for ever to UA that can be no longer active ( e.g uninstalled app )
+ *
+ * NOTE: Web UA should never expire as it may only have one ua
+ * by sim so we do not keep sending push notification
+ *
+ * NOTE: this push notification should not have any content
+ *
+ */
 function forceContactToRegister(contact) {
     return __awaiter(this, void 0, void 0, function* () {
         let methodName = sipApi_1.backendDeclaration.forceContactToReRegister.methodName;

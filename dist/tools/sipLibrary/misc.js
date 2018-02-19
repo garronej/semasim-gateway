@@ -47,6 +47,15 @@ function parsePath(path) {
     return message.headers.path;
 }
 exports.parsePath = parsePath;
+function stringifyPath(parsedPath) {
+    const message = core.parse([
+        `DUMMY _ SIP/2.0`,
+        "\r\n"
+    ].join("\r\n"));
+    message.headers.path = parsedPath;
+    return core.stringify(message).match(/\r\nPath:\ +(.*)\r\n/)[1];
+}
+exports.stringifyPath = stringifyPath;
 function parseOptionTags(headerFieldValue) {
     if (!headerFieldValue)
         return [];

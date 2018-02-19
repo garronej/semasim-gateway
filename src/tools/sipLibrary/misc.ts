@@ -70,6 +70,19 @@ export function parsePath(path: string): types.AoRWithParsedUri[] {
 
 }
 
+export function stringifyPath(parsedPath: types.AoRWithParsedUri[]): string {
+
+    const message = core.parse([
+        `DUMMY _ SIP/2.0`,
+        "\r\n"
+    ].join("\r\n"));
+
+    message.headers.path= parsedPath;
+
+    return core.stringify(message).match(/\r\nPath:\ +(.*)\r\n/)![1];
+
+}
+
 export function parseOptionTags(headerFieldValue: string | undefined): string[] {
 
     if (!headerFieldValue) return [];

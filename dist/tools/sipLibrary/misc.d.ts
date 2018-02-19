@@ -8,6 +8,7 @@ export declare function getPacketContent(sipPacket: types.Packet): Buffer;
 export declare function readSrflxAddrInSdp(sdp: string): string | undefined;
 export declare function isPlainMessageRequest(sipRequest: types.Request): boolean;
 export declare function parsePath(path: string): types.AoRWithParsedUri[];
+export declare function stringifyPath(parsedPath: types.AoRWithParsedUri[]): string;
 export declare function parseOptionTags(headerFieldValue: string | undefined): string[];
 export declare function hasOptionTag(headers: types.Headers, headerField: string, optionTag: string): boolean;
 export declare function addOptionTag(headers: types.Headers, headerField: string, optionTag: string): void;
