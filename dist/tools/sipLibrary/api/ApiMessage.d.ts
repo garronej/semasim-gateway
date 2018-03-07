@@ -16,13 +16,6 @@ export declare namespace ApiMessage {
 }
 export declare namespace keepAlive {
     const methodName = "__keepAlive__";
-    const timeout: number;
     type Params = "PING";
-    namespace Params {
-        function sanityCheck(params: Params): boolean;
-    }
     type Response = "PONG";
-    namespace Response {
-        function sanityCheck(response: Response): boolean;
-    }
 }

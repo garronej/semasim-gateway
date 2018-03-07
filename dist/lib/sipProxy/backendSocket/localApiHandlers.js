@@ -12,13 +12,6 @@ const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const apiDeclaration = require("./../../sipApiDeclarations/semasimGateway/backendSocket");
 const remoteApi = require("./remoteApiCaller");
 exports.handlers = {};
-/*
-const server = new protocol.Server(handlers);
-
-export function startListening(backendSocket: sipLibrary.Socket) {
-    server.startListening(backendSocket);
-}
-*/
 (() => {
     const methodName = apiDeclaration.getDongles.methodName;
     let handler = {

@@ -1,10 +1,10 @@
 
-import * as messages from "./messages";
+import * as messages from "./messages/index_sipProxy";
 import * as router from "./router";
 
 export async function launch(){
 
-    await messages._protected.initDialplan();
+    await messages.initDialplan();
 
     router.launch();
 

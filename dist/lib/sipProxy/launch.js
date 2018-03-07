@@ -8,11 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const messages = require("./messages");
+const messages = require("./messages/index_sipProxy");
 const router = require("./router");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield messages._protected.initDialplan();
+        yield messages.initDialplan();
         router.launch();
     });
 }

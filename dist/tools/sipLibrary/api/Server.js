@@ -15,9 +15,8 @@ class Server {
         this.handlers = handlers;
         (() => {
             const methodName = ApiMessage_1.keepAlive.methodName;
-            const sanityCheck = ApiMessage_1.keepAlive.Params.sanityCheck;
             let handler = {
-                sanityCheck,
+                "sanityCheck": params => params === "PING",
                 "handler": () => __awaiter(this, void 0, void 0, function* () { return "PONG"; })
             };
             this.handlers[methodName] = handler;

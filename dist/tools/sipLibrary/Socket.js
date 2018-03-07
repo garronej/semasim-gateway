@@ -93,7 +93,8 @@ class Socket {
             throw new Error("Trying to write before socket connect");
         }
         if (this.evtClose.postCount) {
-            throw new Error("The socket you try to write on is closed");
+            debug("The socket you try to write on is closed");
+            return new Promise(resolve => { });
         }
         if (misc.matchRequest(sipPacket)) {
             let maxForwards = parseInt(sipPacket.headers["max-forwards"]);

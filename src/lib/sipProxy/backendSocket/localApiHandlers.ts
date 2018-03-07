@@ -5,14 +5,6 @@ import * as remoteApi from "./remoteApiCaller";
 
 export const handlers: sipLibrary.api.Server.Handlers = {};
 
-/*
-const server = new protocol.Server(handlers);
-
-export function startListening(backendSocket: sipLibrary.Socket) {
-    server.startListening(backendSocket);
-}
-*/
-
 (() => {
 
     const methodName = apiDeclaration.getDongles.methodName;

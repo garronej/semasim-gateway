@@ -13,10 +13,10 @@ const net = require("net");
 const networkTools = require("../../tools/networkTools");
 const sipLibrary = require("../../tools/sipLibrary");
 const types = require("./../types");
-const asteriskSockets = require("./asteriskSockets");
-const backendSocket = require("./backendSocket");
 const misc_1 = require("./misc");
-const messages = require("./messages");
+const messages = require("./messages/index_sipProxy");
+const backendSocket = require("./backendSocket/index_sipProxy");
+const asteriskSockets = require("./asteriskSockets/index_sipProxy");
 const c = require("./../_constants");
 require("colors");
 const _debug = require("debug");
@@ -28,6 +28,7 @@ function launch() {
         let host;
         try {
             localIp = yield networkTools.getActiveInterfaceIp();
+            /** sip.semasim.com */
             host = (yield networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
         }
         catch (error) {
@@ -40,8 +41,7 @@ function launch() {
             host,
             "port": c.gatewayPort
         }));
-        backendSocket._protected.set(backendSocketInst);
-        backendSocketInst.setKeepAlive(true);
+        backendSocket.set(backendSocketInst);
         backendSocketInst.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
             debug("Backend socket closed, waiting and restarting");
             asteriskSockets.flush();
@@ -56,13 +56,13 @@ function launch() {
         backendSocketInst.evtRequest.attach((sipRequestReceived) => __awaiter(this, void 0, void 0, function* () {
             let imsi = misc_1.readImsi(sipRequestReceived);
             let connectionId = misc_1.cid.read(sipRequestReceived);
-            let asteriskSocket = asteriskSockets._protected.get({ connectionId, imsi });
+            let asteriskSocket = asteriskSockets.get({ connectionId, imsi });
             if (!asteriskSocket) {
                 if (asteriskSocket === null) {
                     return;
                 }
                 asteriskSocket = createAsteriskSocket(connectionId, backendSocketInst, localIp);
-                asteriskSockets._protected.set({ connectionId, imsi }, asteriskSocket);
+                asteriskSockets.set({ connectionId, imsi }, asteriskSocket);
             }
             if (!asteriskSocket.evtConnect.postCount) {
                 yield asteriskSocket.evtConnect.waitFor();
@@ -103,7 +103,7 @@ function launch() {
                     if (status !== 202) {
                         return;
                     }
-                    messages._protected.onIncomingSipMessage(yield asteriskSockets._protected.getSocketContact(asteriskSocket), sipRequestReceived);
+                    messages.onIncomingSipMessage(yield asteriskSockets.getSocketContact(asteriskSocket), sipRequestReceived);
                 }));
             }
             asteriskSocket.write(sipRequest);
@@ -111,7 +111,7 @@ function launch() {
         backendSocketInst.evtResponse.attach(sipResponseReceived => {
             let imsi = misc_1.readImsi(sipResponseReceived);
             let connectionId = misc_1.cid.read(sipResponseReceived);
-            let asteriskSocket = asteriskSockets._protected.get({ connectionId, imsi });
+            let asteriskSocket = asteriskSockets.get({ connectionId, imsi });
             if (!asteriskSocket) {
                 return;
             }
@@ -147,7 +147,7 @@ function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
         misc_1.cid.set(sipRequest, connectionId);
         fixSdp(sipRequest);
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
-            messages._protected.onOutgoingSipMessage(sipRequest, backendSocketInst.evtResponse.waitFor(sipResponse => sipLibrary.isResponse(sipRequest, sipResponse), 5000));
+            messages.onOutgoingSipMessage(sipRequest, backendSocketInst.evtResponse.waitFor(sipResponse => sipLibrary.isResponse(sipRequest, sipResponse), 5000));
         }
         backendSocketInst.write(sipRequest);
     });

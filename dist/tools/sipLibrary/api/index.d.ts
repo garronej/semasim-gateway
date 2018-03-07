@@ -1,2 +1,3 @@
 export { Server } from "./Server";
-export { Client } from "./Client";
+import * as client from "./client";
+export { client };

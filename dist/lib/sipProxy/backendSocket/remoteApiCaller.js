@@ -35,13 +35,14 @@ function notifySimOnline(dongle) {
             return;
         }
         if (response.status === "NEED PASSWORD RENEWAL") {
-            asteriskSockets.flush(dongle.sim.imsi);
+            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
             db.semasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
             params.password = yield db.asterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi, "RENEW PASSWORD");
+            //This should enforce allowed ua to re-register
             sendRequest(methodName, params).catch(() => { });
         }
         else if (response.status === "NOT REGISTERED") {
-            asteriskSockets.flush(dongle.sim.imsi);
+            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
             db.semasim.removeUaSim(dongle.sim.imsi);
         }
     }))();
@@ -107,7 +108,7 @@ function sendRequest(methodName, params, retry) {
     return __awaiter(this, void 0, void 0, function* () {
         let response;
         try {
-            response = sipLibrary.api.Client.getFromSocket(yield backendSocket.get()).sendRequest(methodName, params, { "timeout": 5 * 1000 });
+            response = sipLibrary.api.client.sendRequest(yield backendSocket.get(), methodName, params, { "timeout": 5 * 1000 });
         }
         catch (error) {
             if (retry) {

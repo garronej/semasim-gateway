@@ -73,19 +73,4 @@ var ApiMessage;
 var keepAlive;
 (function (keepAlive) {
     keepAlive.methodName = "__keepAlive__";
-    keepAlive.timeout = 5 * 1000;
-    let Params;
-    (function (Params) {
-        function sanityCheck(params) {
-            return params === "PING";
-        }
-        Params.sanityCheck = sanityCheck;
-    })(Params = keepAlive.Params || (keepAlive.Params = {}));
-    let Response;
-    (function (Response) {
-        function sanityCheck(response) {
-            return response === "PONG";
-        }
-        Response.sanityCheck = sanityCheck;
-    })(Response = keepAlive.Response || (keepAlive.Response = {}));
 })(keepAlive = exports.keepAlive || (exports.keepAlive = {}));

@@ -1,10 +1,26 @@
 import * as sipLibrary from "../../../tools/sipLibrary";
-import { SyncEvent } from "ts-events-extended";
+import { VoidSyncEvent } from "ts-events-extended";
 import { handlers as localApiHandlers } from "./localApiHandlers";
 
 let currentBackendSocketInst: sipLibrary.Socket | undefined = undefined;
 
-export const evtNewSocketInstance = new SyncEvent<sipLibrary.Socket>();
+export const evtNewSocketInstance = new VoidSyncEvent();
+
+const server = new sipLibrary.api.Server(localApiHandlers);
+
+export function set(backendSocketInst: sipLibrary.Socket) {
+
+    server.startListening(backendSocketInst);
+
+    sipLibrary.api.client.enableKeepAlive(backendSocketInst);
+
+    backendSocketInst.evtConnect.attachOnce(() =>
+        evtNewSocketInstance.post()
+    );
+
+    currentBackendSocketInst = backendSocketInst;
+
+}
 
 export function get(): sipLibrary.Socket | Promise<sipLibrary.Socket> {
 
@@ -14,7 +30,11 @@ export function get(): sipLibrary.Socket | Promise<sipLibrary.Socket> {
         !currentBackendSocketInst.evtConnect.postCount
     ) {
 
-        return evtNewSocketInstance.waitFor();
+        return new Promise<sipLibrary.Socket>(
+            resolve => evtNewSocketInstance.attachOnce(
+                () => resolve(currentBackendSocketInst)
+            )
+        );
 
     } else {
 
@@ -24,24 +44,6 @@ export function get(): sipLibrary.Socket | Promise<sipLibrary.Socket> {
 
 }
 
-export namespace _protected {
 
-    const server = new sipLibrary.api.Server(localApiHandlers);
 
-    export function set(backendSocketInst: sipLibrary.Socket) {
 
-        server.startListening(backendSocketInst);
-
-        backendSocketInst.evtConnect.attachOnce(() => {
-
-            new sipLibrary.api.Client(backendSocketInst);
-
-            evtNewSocketInstance.post(backendSocketInst);
-
-        });
-
-        currentBackendSocketInst = backendSocketInst;
-
-    }
-
-}

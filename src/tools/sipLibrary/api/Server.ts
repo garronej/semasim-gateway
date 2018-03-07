@@ -15,10 +15,9 @@ export class Server {
             type Params = keepAlive.Params;
             type Response = keepAlive.Response;
 
-            const sanityCheck = keepAlive.Params.sanityCheck;
 
             let handler: Server.Handler<Params, Response>= {
-                sanityCheck, 
+                "sanityCheck": params => params === "PING", 
                 "handler": async ()=> "PONG"
             };
 

@@ -70,7 +70,7 @@ function init() {
 }
 function registerListeners() {
     let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-    sipProxy.backendSocket.evtNewSocketInstance.attach((backendSocket) => __awaiter(this, void 0, void 0, function* () {
+    sipProxy.backendSocket.evtNewSocketInstance.attach(() => __awaiter(this, void 0, void 0, function* () {
         debug("Connection established with backend");
         for (let dongle of dc.usableDongles.values()) {
             sipProxy.backendSocket.remoteApi.notifySimOnline(dongle);

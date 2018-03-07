@@ -3,10 +3,11 @@ import * as net from "net";
 import * as networkTools from "../../tools/networkTools";
 import * as sipLibrary from "../../tools/sipLibrary";
 import * as types from "./../types";
-import * as asteriskSockets from "./asteriskSockets";
-import * as backendSocket from "./backendSocket";
 import { readImsi, cid } from "./misc";
-import * as messages from "./messages";
+
+import * as messages from "./messages/index_sipProxy";
+import * as backendSocket from "./backendSocket/index_sipProxy";
+import * as asteriskSockets from "./asteriskSockets/index_sipProxy";
 
 import * as c from "./../_constants";
 
@@ -26,6 +27,7 @@ export async function launch() {
 
         localIp = await networkTools.getActiveInterfaceIp();
 
+        /** sip.semasim.com */
         host = (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
 
     } catch (error) {
@@ -45,9 +47,7 @@ export async function launch() {
         })
     );
 
-    backendSocket._protected.set(backendSocketInst);
-
-    backendSocketInst.setKeepAlive(true);
+    backendSocket.set(backendSocketInst);
 
     backendSocketInst.evtClose.attachOnce(async () => {
 
@@ -76,7 +76,7 @@ export async function launch() {
         let imsi = readImsi(sipRequestReceived);
         let connectionId= cid.read(sipRequestReceived);
 
-        let asteriskSocket = asteriskSockets._protected.get({ connectionId, imsi });
+        let asteriskSocket = asteriskSockets.get({ connectionId, imsi });
 
         if( !asteriskSocket ){
 
@@ -88,7 +88,7 @@ export async function launch() {
                 connectionId, backendSocketInst, localIp
             );
 
-            asteriskSockets._protected.set({ connectionId, imsi }, asteriskSocket);
+            asteriskSockets.set({ connectionId, imsi }, asteriskSocket);
 
         }
 
@@ -153,8 +153,8 @@ export async function launch() {
                         return;
                     }
 
-                    messages._protected.onIncomingSipMessage(
-                        await asteriskSockets._protected.getSocketContact(asteriskSocket!),
+                    messages.onIncomingSipMessage(
+                        await asteriskSockets.getSocketContact(asteriskSocket!),
                         sipRequestReceived
                     );
 
@@ -172,7 +172,7 @@ export async function launch() {
         let imsi = readImsi(sipResponseReceived);
         let connectionId = cid.read(sipResponseReceived);
 
-        let asteriskSocket = asteriskSockets._protected.get({ connectionId, imsi });
+        let asteriskSocket = asteriskSockets.get({ connectionId, imsi });
 
         if (!asteriskSocket) {
             return;
@@ -246,7 +246,7 @@ function createAsteriskSocket(
 
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
 
-            messages._protected.onOutgoingSipMessage(
+            messages.onOutgoingSipMessage(
                 sipRequest, 
                 backendSocketInst.evtResponse.waitFor(
                     sipResponse => sipLibrary.isResponse(sipRequest, sipResponse),

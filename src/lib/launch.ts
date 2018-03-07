@@ -100,7 +100,7 @@ function registerListeners() {
     let dc = Dc.getInstance();
 
     sipProxy.backendSocket.evtNewSocketInstance.attach(
-        async backendSocket => {
+        async () => {
 
             debug("Connection established with backend");
 

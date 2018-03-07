@@ -129,22 +129,8 @@ export namespace keepAlive {
 
     export const methodName= "__keepAlive__";
 
-    export const timeout= 5 * 1000;
-
     export type Params= "PING";
 
-    export namespace Params {
-        export function sanityCheck(params: Params){
-            return params === "PING";
-        }
-    }
-
     export type Response= "PONG";
-
-    export namespace Response {
-        export function sanityCheck(response: Response){
-            return response === "PONG";
-        }
-    }
 
 }

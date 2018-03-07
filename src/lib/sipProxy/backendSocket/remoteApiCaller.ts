@@ -45,7 +45,7 @@ export function notifySimOnline(
 
         if (response.status === "NEED PASSWORD RENEWAL") {
 
-            asteriskSockets.flush(dongle.sim.imsi);
+            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
 
             db.semasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
 
@@ -53,11 +53,12 @@ export function notifySimOnline(
                 dongle.sim.imsi, "RENEW PASSWORD"
             );
 
+            //This should enforce allowed ua to re-register
             sendRequest<Params, Response>(methodName, params).catch(() => { });
 
         } else if (response.status === "NOT REGISTERED") {
 
-            asteriskSockets.flush(dongle.sim.imsi);
+            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
 
             db.semasim.removeUaSim(dongle.sim.imsi);
 
@@ -171,9 +172,8 @@ async function sendRequest<Params, Response>(
 
     try {
 
-        response = sipLibrary.api.Client.getFromSocket(
-            await backendSocket.get()
-        ).sendRequest<Params, Response>(
+        response = sipLibrary.api.client.sendRequest<Params, Response>(
+            await backendSocket.get(),
             methodName,
             params,
             { "timeout": 5 * 1000 }

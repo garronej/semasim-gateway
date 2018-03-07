@@ -1,7 +1,5 @@
 import * as sipLibrary from "../../../tools/sipLibrary";
-import { SyncEvent } from "ts-events-extended";
-export declare const evtNewSocketInstance: SyncEvent<sipLibrary.Socket>;
+import { VoidSyncEvent } from "ts-events-extended";
+export declare const evtNewSocketInstance: VoidSyncEvent;
+export declare function set(backendSocketInst: sipLibrary.Socket): void;
 export declare function get(): sipLibrary.Socket | Promise<sipLibrary.Socket>;
-export declare namespace _protected {
-    function set(backendSocketInst: sipLibrary.Socket): void;
-}

@@ -172,7 +172,9 @@ export class Socket {
 
         if (this.evtClose.postCount) {
 
-            throw new Error("The socket you try to write on is closed");
+            debug("The socket you try to write on is closed");
+
+            return new Promise(resolve=> {});
 
         }
 
