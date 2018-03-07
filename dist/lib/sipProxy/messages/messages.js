@@ -11,8 +11,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
-const sipLibrary = require("../../tools/sipLibrary");
-const types = require("./../types");
+const sipLibrary = require("../../../tools/sipLibrary");
+const types = require("./../../types");
 const _debug = require("debug");
 let debug = _debug("_sipProxy/messages");
 exports.dialplanContext = "from-sip-message";
@@ -48,68 +48,66 @@ exports.sendMessage = sendMessage;
 (function (sendMessage) {
     sendMessage.evtOutgoingMessage = new ts_events_extended_1.SyncEvent();
 })(sendMessage = exports.sendMessage || (exports.sendMessage = {}));
-var _protected;
-(function (_protected) {
-    /**
-     * Must be called before the first connection to backend
-     * and after DongleController have been instantiated
-     * */
-    function initDialplan() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let ami = chan_dongle_extended_client_1.DongleController.getInstance().ami;
-            let matchAllExt = "_.";
-            yield ami.dialplanExtensionRemove(matchAllExt, exports.dialplanContext);
-            yield ami.dialplanExtensionAdd(exports.dialplanContext, matchAllExt, 1, "Hangup");
-        });
+//From here protected
+/**
+ * Must be called before the first connection to backend
+ * and after DongleController have been instantiated
+ * */
+function initDialplan() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let ami = chan_dongle_extended_client_1.DongleController.getInstance().ami;
+        let matchAllExt = "_.";
+        yield ami.dialplanExtensionRemove(matchAllExt, exports.dialplanContext);
+        yield ami.dialplanExtensionAdd(exports.dialplanContext, matchAllExt, 1, "Hangup");
+    });
+}
+exports.initDialplan = initDialplan;
+/**
+ * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
+ *
+ * @param sipRequestNextHop must be the packet that will be sent to the gateway to the backend.
+ * This calling this method will cause the message to be updated.
+ * @param prSipResponse promise that resolve if a response is received from UA or reject
+ * if no response have been received in a reasonable amount of time.
+ *
+ */
+function onOutgoingSipMessage(sipRequestNextHop, prSipResponse) {
+    sendMessage.evtOutgoingMessage.post({
+        "sipRequest": sipRequestNextHop,
+        prSipResponse
+    });
+}
+exports.onOutgoingSipMessage = onOutgoingSipMessage;
+/**
+ *
+ * Must be called by sipRouter when we received from backend an SIP MESSAGE.
+ * The sip message must have been accepted by asterisk and the content type
+ * must be text/plain
+ *
+ * @param fromContact the contact the message come from
+ * @param sipRequestReceived the sipRequest as received from the backend,
+ * the message will not be modified.
+ *
+ */
+function onIncomingSipMessage(fromContact, sipRequestReceived) {
+    let content = sipLibrary.getPacketContent(sipRequestReceived);
+    let text = content.toString("utf8");
+    if (!content.equals(Buffer.from(text, "utf8"))) {
+        debug("Sip message content was not a valid UTF-8 string");
     }
-    _protected.initDialplan = initDialplan;
-    /**
-     * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
-     *
-     * @param sipRequestNextHop must be the packet that will be sent to the gateway to the backend.
-     * This calling this method will cause the message to be updated.
-     * @param prSipResponse promise that resolve if a response is received from UA or reject
-     * if no response have been received in a reasonable amount of time.
-     *
-     */
-    function onOutgoingSipMessage(sipRequestNextHop, prSipResponse) {
-        sendMessage.evtOutgoingMessage.post({
-            "sipRequest": sipRequestNextHop,
-            prSipResponse
-        });
+    let toNumber = sipLibrary.parseUri(sipRequestReceived.headers.to.uri).user;
+    let exactSendDate;
+    try {
+        exactSendDate = types.misc.extractBundledDataFromHeaders(sipRequestReceived.headers).exactSendDate;
     }
-    _protected.onOutgoingSipMessage = onOutgoingSipMessage;
-    /**
-     *
-     * Must be called by sipRouter when we received from backend an SIP MESSAGE.
-     * The sip message must have been accepted by asterisk and the content type
-     * must be text/plain
-     *
-     * @param fromContact the contact the message come from
-     * @param sipRequestReceived the sipRequest as received from the backend,
-     * the message will not be modified.
-     *
-     */
-    function onIncomingSipMessage(fromContact, sipRequestReceived) {
-        let content = sipLibrary.getPacketContent(sipRequestReceived);
-        let text = content.toString("utf8");
-        if (!content.equals(Buffer.from(text, "utf8"))) {
-            debug("Sip message content was not a valid UTF-8 string");
-        }
-        let toNumber = sipLibrary.parseUri(sipRequestReceived.headers.to.uri).user;
-        let exactSendDate;
-        try {
-            exactSendDate = types.misc.extractBundledDataFromHeaders(sipRequestReceived.headers).exactSendDate;
-        }
-        catch (_a) {
-            exactSendDate = undefined;
-        }
-        exports.evtMessage.post({
-            fromContact,
-            toNumber,
-            text,
-            exactSendDate
-        });
+    catch (_a) {
+        exactSendDate = undefined;
     }
-    _protected.onIncomingSipMessage = onIncomingSipMessage;
-})(_protected = exports._protected || (exports._protected = {}));
+    exports.evtMessage.post({
+        fromContact,
+        toNumber,
+        text,
+        exactSendDate
+    });
+}
+exports.onIncomingSipMessage = onIncomingSipMessage;
