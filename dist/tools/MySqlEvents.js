@@ -22,7 +22,7 @@ class MySqlEvents {
             "includeEvents": ["rotate"]
         });
     }
-    static initialize(connectionConfig) {
+    static launch(connectionConfig) {
         return new Promise(resolve => {
             this._instance = new this(connectionConfig, () => resolve(this._instance));
         });

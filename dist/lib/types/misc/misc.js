@@ -29,6 +29,7 @@ function buildContactFromPsContact(psContact) {
 }
 exports.buildContactFromPsContact = buildContactFromPsContact;
 ;
+//TODO: rename sanityCheck.
 var sanityChecks;
 (function (sanityChecks) {
     function contact(o) {
@@ -36,7 +37,7 @@ var sanityChecks;
             typeof o.id === "string" &&
             typeof o.uri === "string" &&
             typeof o.path === "string" &&
-            typeof o.connectionId === "number" &&
+            typeof o.connectionId === "string" &&
             uaSim(o.uaSim));
     }
     sanityChecks.contact = contact;
@@ -62,18 +63,18 @@ var sanityChecks;
     }
     sanityChecks.platform = platform;
 })(sanityChecks = exports.sanityChecks || (exports.sanityChecks = {}));
-function areSameUaSims(o1, o2) {
-    return generateUaSimId(o1) === generateUaSimId(o2);
-}
-exports.areSameUaSims = areSameUaSims;
-function generateUaSimId(o) {
-    return JSON.stringify([o.imsi, generateUaId(o.ua)]);
-}
-exports.generateUaSimId = generateUaSimId;
 function generateUaId(o) {
     return JSON.stringify([o.instance, o.userEmail]);
 }
 exports.generateUaId = generateUaId;
+function generateUaSimId(o) {
+    return JSON.stringify([o.imsi, generateUaId(o.ua)]);
+}
+exports.generateUaSimId = generateUaSimId;
+function areSameUaSims(o1, o2) {
+    return generateUaSimId(o1) === generateUaSimId(o2);
+}
+exports.areSameUaSims = areSameUaSims;
 function isValidEmail(email, mustBeLc = undefined) {
     const regExpEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     const regExpLcEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-z\-0-9]+\.)+[a-z]{2,}))$/;

@@ -11,9 +11,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
-const sipApiBackend = require("./sipApiBackedClientImplementation");
 const sipProxy = require("./sipProxy");
-const db = require("./db");
+const db = require("./db/semasim");
 const messageDispatcher = require("./messagesDispatcher");
 const _debug = require("debug");
 const debug = _debug("_voiceCallBridge");
@@ -27,14 +26,14 @@ const jitterBuffer = {
     "params": "default"
 };
 exports.sipCallContext = "from-sip-call";
-function start() {
+function initAgi() {
     let dc = chan_dongle_extended_client_1.DongleController.getInstance();
     dc.ami.startAgi({
         [exports.sipCallContext]: { "_[+0-9].": fromSip },
         [dc.moduleConfiguration.defaults.context]: { "_[+0-9].": fromDongle }
     });
 }
-exports.start = start;
+exports.initAgi = initAgi;
 function fromDongle(channel) {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Call originated from dongle");
@@ -46,9 +45,9 @@ function fromDongle(channel) {
             return;
         let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
         let evtReachableContact = new ts_events_extended_1.SyncEvent();
-        sipProxy.evtContactRegistration.attach(({ uaSim }) => uaSim.imsi === imsi, evtReachableContact, contact => evtReachableContact.post(contact));
-        for (let contact of sipProxy.getContacts(imsi)) {
-            sipApiBackend
+        sipProxy.asteriskSockets.evtContactRegistration.attach(({ uaSim }) => uaSim.imsi === imsi, evtReachableContact, contact => evtReachableContact.post(contact));
+        for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
+            sipProxy.backendSocket.remoteApi
                 .wakeUpContact(contact)
                 .then(status => (status === "REACHABLE") ? evtReachableContact.post(contact) : null);
         }
@@ -57,7 +56,7 @@ function fromDongle(channel) {
         evtEstablishedOrEnded.attachOnce((contact) => __awaiter(this, void 0, void 0, function* () {
             debug("evtEstablishedOrEnded");
             evtReachableContact.detach();
-            sipProxy.evtContactRegistration.detach(evtReachableContact);
+            sipProxy.asteriskSockets.evtContactRegistration.detach(evtReachableContact);
             for (let channelName of ringingChannels.values()) {
                 ami.postAction("hangup", {
                     "channel": channelName,

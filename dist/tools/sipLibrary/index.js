@@ -6,3 +6,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./core"));
 __export(require("./Socket"));
 __export(require("./misc"));
+const api = require("./api");
+exports.api = api;

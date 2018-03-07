@@ -40,6 +40,7 @@ export function buildContactFromPsContact(psContact: types.PsContact): types.Con
 
 };
 
+//TODO: rename sanityCheck.
 export namespace sanityChecks {
 
     export function contact(o: types.Contact): boolean {
@@ -49,7 +50,7 @@ export namespace sanityChecks {
             typeof o.id === "string" &&
             typeof o.uri === "string" &&
             typeof o.path === "string" &&
-            typeof o.connectionId === "number" &&
+            typeof o.connectionId === "string" &&
             uaSim(o.uaSim)
         );
 
@@ -93,19 +94,20 @@ export namespace sanityChecks {
 
 }
 
-export function areSameUaSims(
-    o1: types.UaSim,
-    o2: types.UaSim
-): boolean {
-    return generateUaSimId(o1) === generateUaSimId(o2);
+
+export function generateUaId(o: types.Ua): string {
+    return JSON.stringify([o.instance, o.userEmail]);
 }
 
 export function generateUaSimId(o: types.UaSim): string {
     return JSON.stringify([o.imsi, generateUaId(o.ua)]);
 }
 
-export function generateUaId(o: types.Ua): string {
-    return JSON.stringify([o.instance, o.userEmail]);
+export function areSameUaSims(
+    o1: types.UaSim,
+    o2: types.UaSim
+): boolean {
+    return generateUaSimId(o1) === generateUaSimId(o2);
 }
 
 export function isValidEmail(

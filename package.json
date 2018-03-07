@@ -3,14 +3,14 @@
   "description": "Semasim server for gateways (raspberry pi)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "scripts": {
     "postinstall": "npm run remove-bold-color",
     "remove-bold-color": "sed -i '/bold: string;/d' ./node_modules/@types/colors/index.d.ts",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
-    "start": "sudo systemctl stop semasim-gateway && DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/lib/main.js",
-    "test": "node ./dist/test/index"
+    "start": "DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/bin/main.js",
+    "test": "node ./dist/test/main"
   },
   "repository": {
     "type": "git",

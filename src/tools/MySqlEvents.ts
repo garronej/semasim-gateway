@@ -13,7 +13,7 @@ export class MySqlEvents {
 
     private static _instance: MySqlEvents | undefined= undefined;
 
-    public static initialize(
+    public static launch(
         connectionConfig: mysql.IConnectionConfig
     ){
 

@@ -1,36 +1,7 @@
-import * as types from "../types";
+import * as asteriskSockets from "./asteriskSockets";
+import * as backendSocket from "./backendSocket";
+import * as messages from "./messages";
 
-import { evtMessage, sendMessage, sipMessageContext, startHandling as startHandlingMessages } from "./messages";
-import { start as startRoute, evtNewBackendSocketConnect, getBackendSocket } from "./route";
-import * as  asteriskSockets  from "./asteriskSockets";
-import evtContactRegistration= asteriskSockets.evtContactRegistration;
+import { launch } from "./launch";
 
-function getContacts( imsi?: string): types.Contact[] {
-    return asteriskSockets.getContacts(imsi);
-}
-
-function flushRegistrations(
-    imsi: string,
-): void {
-    asteriskSockets.flush(imsi);
-}
-
-async function start(){
-
-    await startHandlingMessages();
-
-    await startRoute();
-
-}
-
-export { 
-    evtMessage,
-    sendMessage,
-    sipMessageContext,
-    evtNewBackendSocketConnect,
-    getBackendSocket,
-    getContacts,
-    flushRegistrations,
-    evtContactRegistration,
-    start
-};
+export { asteriskSockets, backendSocket, messages, launch };

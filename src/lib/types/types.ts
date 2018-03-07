@@ -15,7 +15,7 @@ export namespace PsContact {
         ua_platform: Ua.Platform;
         ua_pushToken: string;
         ua_software: string;
-        connectionId: number;
+        connectionId: string;
     };
 
 }
@@ -24,7 +24,7 @@ export type Contact = {
     id: string;
     uri: string;
     path: string;
-    connectionId: number;
+    connectionId: string;
     uaSim: UaSim;
 };
 

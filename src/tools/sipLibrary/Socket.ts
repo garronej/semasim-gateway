@@ -23,58 +23,48 @@ export class Socket {
     public readonly evtClose = new SyncEvent<boolean>();
     public readonly evtConnect = new VoidSyncEvent();
 
-    private timer!: NodeJS.Timer;
     public readonly evtTimeout = new VoidSyncEvent();
 
-    public readonly evtData = new SyncEvent<string>();
+    public readonly evtData = new SyncEvent<Buffer>();
 
     private static readonly maxBytesHeaders = 7820;
     private static readonly maxContentLength = 24624;
 
-    public localPort = NaN;
-    public remotePort = NaN;
-    public localAddress = "";
-    public remoteAddress = "";
+    private __localPort__ = NaN;
+    private __remotePort__ = NaN;
+    private __localAddress__ = "";
+    private __remoteAddress__ = "";
 
-    public localAddressPublic: string | undefined= undefined;
+    public get localPort() {
+        return this.spoofedAddressAndPort.localPort || this.__localPort__;
+    }
 
-    private readonly connection: net.Socket | WebSocket;
+    public get remotePort() {
+        return this.spoofedAddressAndPort.remotePort || this.__remotePort__;
+    }
 
-    
+    public get localAddress() {
+        return this.spoofedAddressAndPort.localAddress || this.__localAddress__;
+    }
 
+    public get remoteAddress() {
+        return this.spoofedAddressAndPort.remoteAddress || this.__remoteAddress__;
+    }
 
     constructor(
         webSocket: WebSocket,
-        addrAndPorts: Socket.AddrAndPorts,
-        timeoutDelay?: number
+        addrAndPorts: Socket.AddrAndPorts
     );
-    constructor(socket: net.Socket, timeoutDelay?: number);
-    constructor(...inputs: any[]) {
+    constructor(
+        socket: net.Socket, 
+        spoofedAddrAndPorts?: Partial<Socket.AddrAndPorts>
+    );
+    constructor(
+        private readonly connection: WebSocket | net.Socket, 
+        private readonly spoofedAddressAndPort: Partial<Socket.AddrAndPorts>= {}
+    ) {
 
-        
-
-        this.connection = inputs[0];
-
-
-        let timeoutDelay: number | undefined;
-
-        let addrAndPorts: Socket.AddrAndPorts | undefined;
-
-        if (Socket.matchWebSocket(this.connection)) {
-
-            addrAndPorts = inputs[1];
-            timeoutDelay = inputs[2];
-
-            debug({ addrAndPorts });
-
-        } else {
-
-            addrAndPorts = undefined;
-            timeoutDelay = inputs[1];
-
-        }
-
-        let streamParser = core.makeStreamParser(
+        let streamParser = misc.makeBufferStreamParser(
             sipPacket => misc.matchRequest(sipPacket) ?
                 this.evtRequest.post(sipPacket) :
                 this.evtResponse.post(sipPacket)
@@ -88,7 +78,6 @@ export class Socket {
             .once("error", () => this.connection.emit("close", true))
             .once("close", had_error => {
 
-                if (timeoutDelay) clearTimeout(this.timer);
 
                 if (Socket.matchWebSocket(this.connection)) {
                     this.connection.terminate();
@@ -103,31 +92,17 @@ export class Socket {
             Socket.matchWebSocket(this.connection) ? "message" : "data",
             (data: Buffer | string) => {
 
-                if (timeoutDelay) {
-
-                    clearTimeout(this.timer);
-
-                    this.timer = setTimeout(() => this.evtTimeout.post(), timeoutDelay);
-
-                }
-
-                let dataAsBinaryString;
-
                 if (typeof data === "string") {
 
-                    dataAsBinaryString = (new Buffer(data, "utf8")).toString("binary");
-
-                } else {
-
-                    dataAsBinaryString = data.toString("binary");
+                    data= Buffer.from(data, "utf8");
 
                 }
 
-                this.evtData.post(dataAsBinaryString);
+                this.evtData.post(data);
 
                 try {
 
-                    streamParser(dataAsBinaryString);
+                    streamParser(data);
 
                 } catch (error) {
 
@@ -143,11 +118,6 @@ export class Socket {
 
         if (Socket.matchWebSocket(this.connection)) {
 
-            this.localPort = addrAndPorts!.localPort;
-            this.remotePort = addrAndPorts!.remotePort;
-            this.localAddress = addrAndPorts!.localAddress;
-            this.remoteAddress = addrAndPorts!.remoteAddress;
-
             this.evtConnect.post(); //For post count
 
         } else {
@@ -155,10 +125,10 @@ export class Socket {
             this.connection.setMaxListeners(Infinity)
 
             let setAddrAndPort = ((c: net.Socket) => (() => {
-                this.localPort = c.localPort;
-                this.remotePort = c.remotePort;
-                this.localAddress = c.remoteAddress;
-                this.remoteAddress = c.remoteAddress;
+                this.__localPort__ = c.localPort;
+                this.__remotePort__ = c.remotePort;
+                this.__localAddress__ = c.remoteAddress;
+                this.__remoteAddress__ = c.remoteAddress;
             }))(this.connection);
 
             setAddrAndPort();
@@ -194,11 +164,15 @@ export class Socket {
     /** Return true if sent successfully */
     public write(sipPacket: types.Packet): boolean | Promise<boolean> {
 
+        if( !this.evtConnect.postCount ){
+
+            throw new Error("Trying to write before socket connect");
+
+        }
+
         if (this.evtClose.postCount) {
 
-            debug("The socket you try to write on is closed");
-
-            return false;
+            throw new Error("The socket you try to write on is closed");
 
         }
 
@@ -206,19 +180,14 @@ export class Socket {
 
             let maxForwards = parseInt(sipPacket.headers["max-forwards"]);
 
-            if (isNaN(maxForwards)) {
-                throw new Error("Write error, max-forwards header should be defined");
-            }
-
-            if (maxForwards === 0) {
+            if (maxForwards < 0) {
                 debug("Avoid writing, max forward reached");
                 return false;
             }
 
-            sipPacket.headers["max-forwards"] = `${maxForwards - 1}`;
-
         }
 
+        //TODO: why do we bother to check?
         if (!sipPacket.headers.via.length) {
             debug("Prevent sending packet without via header");
             return false;
@@ -279,7 +248,6 @@ export class Socket {
 
     }
 
-
     public get protocol(): "TCP" | "TLS" | "WSS" {
 
         if (Socket.matchWebSocket(this.connection)) {
@@ -290,134 +258,21 @@ export class Socket {
 
     }
 
-    public addViaHeader(
-        sipRequest: types.Request,
-        extraParams: Record<string, string> = {}
-    ): string {
-
-        let branch = (() => {
-
-            let via = sipRequest.headers.via;
-
-            return via.length ? `z9hG4bK-${via[0].params["branch"]}` : core.generateBranch();
-
-        })();
-
-        sipRequest.headers.via.unshift({
-            "version": "2.0",
-            "protocol": this.protocol,
-            "host": this.localAddress,
-            "port": this.localPort,
-            "params": {
-                ...extraParams,
-                branch,
-                "rport": null
-            }
-        });
-
-        return branch;
-
-    }
-
-
-
-    public addPathHeader(
-        sipRegisterRequest: types.Request,
-        extraParams?: Record<string, string>
-    ) {
-
-        if (!sipRegisterRequest.headers.path) {
-            sipRegisterRequest.headers.path = [];
-        }
-
-        sipRegisterRequest.headers.path!.unshift(
-            this.buildRoute(extraParams)
-        );
-
-    }
-
-    /**
-     * 
-     * Return stringified:
-     * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
-     * 
-     */
-    private buildRoute(
-        extraParams: Record<string, string> = {}
-    ): types.AoRWithParsedUri {
-
-        let host= this.localAddressPublic || this.localAddress;
-
-        return {
-            "uri": {
-                ...core.parseUri(`sip:${host}:${this.localPort}`),
-                "params": {
-                    ...extraParams,
-                    "transport": this.protocol,
-                    "lr": null
-                }
-            },
-            "params": {}
-        };
-
-    }
-
-    /**
-     * 
-     * Assert sipRequest is NOT register.
-     * 
-     * HOP_X ] => [ LOCAL_X, LOCAL_this ] => [ HOP_Y
-     * 
-     * Before: 
-     * Route: LOCAL_X, HOP_Y
-     * Record-Route: HOP_X
-     * 
-     * After:
-     * Route: HOP_Y
-     * Record-Route: LOCAL_this, HOP_X
-     * 
-     */
-    public shiftRouteAndUnshiftRecordRoute(
+    /** Return a clone of the packet ready for next hop */
+    public buildNextHopPacket(
         sipRequest: types.Request
-    ) {
+    ): types.Request;
+    public buildNextHopPacket(
+        sipResponse: types.Response
+    ): types.Response;
+    public buildNextHopPacket(
+        sipPacket: any
+    ): any {
 
-        if (sipRequest.headers.route) sipRequest.headers.route.shift();
-
-        if (!sipRequest.headers.contact) return;
-
-        if (!sipRequest.headers["record-route"]) sipRequest.headers["record-route"] = [];
-
-        sipRequest.headers["record-route"]!.unshift(this.buildRoute());
-
-    }
-
-    /**
-     * 
-     * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
-     * 
-     * Before: 
-     * Record-Route: HOP_X, LOCAL_Y, HOP_Y
-     * 
-     * After:
-     * Record-Route: HOP_X, LOCAL_this, HOP_Y
-     *
-     * NOTE: We use a different implementation but end to end result is same.
-     * In consequence isFirst hop must be set to true if and only if this is 
-     * this first hop of the response.
-     *
-     */
-    public pushRecordRoute(
-        sipResponse: types.Response,
-        isFirstHop: boolean
-    ) {
-
-        if (!sipResponse.headers["record-route"]) return;
-
-        if (isFirstHop) sipResponse.headers["record-route"] = [];
-
-        sipResponse.headers["record-route"]!.push(this.buildRoute());
+        return misc.buildNextHopPacket(this, sipPacket);
 
     }
+
 
 }
 
@@ -430,7 +285,7 @@ export namespace Socket {
         remoteAddress: string;
     };
 
-    export  function matchWebSocket(socket: net.Socket | WebSocket): socket is WebSocket {
+    export function matchWebSocket(socket: net.Socket | WebSocket): socket is WebSocket {
         return (socket as WebSocket).terminate !== undefined;
     }
 

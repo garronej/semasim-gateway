@@ -9,7 +9,7 @@ const systemdServicePath = path.join("/etc", "systemd", "system", `${c.serviceNa
 require("rejection-tracker").main(modulePath);
 
 import * as program from "commander";
-import * as _ from "../tools/commanderFunctions";
+import * as _ from "../tools/scriptsTools";
 import { unlinkSync } from "fs";
 import "colors";
 
@@ -57,7 +57,7 @@ async function installService() {
         `After=network.target`,
         ``,
         `[Service]`,
-        `ExecStart=${node_execpath} ${modulePath}/dist/lib/main`,
+        `ExecStart=${node_execpath} ${modulePath}/dist/bin/main`,
         `PermissionsStartOnly=true`,
         `WorkingDirectory=${modulePath}`,
         `Restart=always`,

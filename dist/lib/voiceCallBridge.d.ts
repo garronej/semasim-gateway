@@ -1,2 +1,2 @@
 export declare const sipCallContext = "from-sip-call";
-export declare function start(): void;
+export declare function initAgi(): void;

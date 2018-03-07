@@ -8,10 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dbAsterisk = require("../lib/dbAsterisk");
+const db = require("../lib/db/asterisk");
 const sipLibrary = require("../tools/sipLibrary");
 const types = require("../lib/types");
 const testing_1 = require("transfer-tools/dist/lib/testing");
+const misc_1 = require("../lib/sipProxy/misc");
 const contact = (() => {
     let imsi = "208150113995832";
     let ua = {
@@ -37,7 +38,7 @@ const contact = (() => {
             "pn-silent=1;transport=tls"
         ].join(""),
         "path": "<sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>",
-        "connectionId": Date.now(),
+        "connectionId": misc_1.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
         "uaSim": { imsi, ua }
     };
 })();
@@ -84,32 +85,32 @@ const psContact = (() => {
 function testDbAsterisk() {
     return __awaiter(this, void 0, void 0, function* () {
         console.assert(types.misc.sanityChecks.contact(contact));
-        yield dbAsterisk.flush();
-        yield dbAsterisk.startListeningPsContacts();
-        dbAsterisk.query(dbAsterisk.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
-        testing_1.assertSame(yield dbAsterisk.evtNewContact.waitFor(10000), contact);
-        dbAsterisk.deleteContact(contact);
+        yield db.launch();
+        yield db.flush();
+        db.query(db.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
+        testing_1.assertSame(yield db.evtNewContact.waitFor(10000), contact);
+        db.deleteContact(contact);
         try {
             console.log("Last 3sec...");
-            yield dbAsterisk.evtExpiredContact.waitFor(3000);
+            yield db.evtExpiredContact.waitFor(3000);
             console.assert(false);
         }
         catch (_a) {
             console.log("...continue");
         }
-        yield dbAsterisk.query(dbAsterisk.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
-        dbAsterisk.query(`DELETE FROM ps_contacts WHERE id= ${dbAsterisk.esc(psContact.id)}`);
-        testing_1.assertSame(yield dbAsterisk.evtExpiredContact.waitFor(10000), contact);
-        let password = yield dbAsterisk.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi);
-        let rows = yield dbAsterisk.query(`SELECT * FROM ps_aors WHERE id= ${dbAsterisk.esc(contact.uaSim.imsi)}`);
+        yield db.query(db.buildInsertQuery("ps_contacts", psContact, "THROW ERROR"));
+        db.query(`DELETE FROM ps_contacts WHERE id= ${db.esc(psContact.id)}`);
+        testing_1.assertSame(yield db.evtExpiredContact.waitFor(10000), contact);
+        let password = yield db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi);
+        let rows = yield db.query(`SELECT * FROM ps_aors WHERE id= ${db.esc(contact.uaSim.imsi)}`);
         console.assert(rows.length === 1);
-        rows = yield dbAsterisk.query(`SELECT * FROM ps_auths WHERE id= ${dbAsterisk.esc(contact.uaSim.imsi)}`);
+        rows = yield db.query(`SELECT * FROM ps_auths WHERE id= ${db.esc(contact.uaSim.imsi)}`);
         console.assert(rows.length === 1);
         console.assert(rows[0]["username"] === contact.uaSim.imsi);
         console.assert(rows[0]["password"] === password);
-        console.assert((yield dbAsterisk.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi)) === password);
-        console.assert((yield dbAsterisk.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi, "RENEW PASSWORD")) !== password);
-        yield dbAsterisk.flush();
+        console.assert((yield db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi)) === password);
+        console.assert((yield db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi, "RENEW PASSWORD")) !== password);
+        yield db.flush();
         console.log("PASS ASTERISK");
     });
 }

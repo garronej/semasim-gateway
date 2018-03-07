@@ -15,7 +15,7 @@ const modulePath = path.join(__dirname, "..", "..");
 const systemdServicePath = path.join("/etc", "systemd", "system", `${c.serviceName}.service`);
 require("rejection-tracker").main(modulePath);
 const program = require("commander");
-const _ = require("../tools/commanderFunctions");
+const _ = require("../tools/scriptsTools");
 const fs_1 = require("fs");
 require("colors");
 program
@@ -49,7 +49,7 @@ function installService() {
             `After=network.target`,
             ``,
             `[Service]`,
-            `ExecStart=${node_execpath} ${modulePath}/dist/lib/main`,
+            `ExecStart=${node_execpath} ${modulePath}/dist/bin/main`,
             `PermissionsStartOnly=true`,
             `WorkingDirectory=${modulePath}`,
             `Restart=always`,

@@ -7,7 +7,7 @@ export interface Row {
 }
 export declare class MySqlEvents {
     private static _instance;
-    static initialize(connectionConfig: mysql.IConnectionConfig): Promise<MySqlEvents>;
+    static launch(connectionConfig: mysql.IConnectionConfig): Promise<MySqlEvents>;
     static readonly instance: MySqlEvents;
     private readonly zongji;
     readonly evtNewRow: SyncEvent<Row>;

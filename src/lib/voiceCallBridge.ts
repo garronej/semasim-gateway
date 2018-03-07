@@ -5,10 +5,9 @@ import {
     agi
 } from "chan-dongle-extended-client";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
-import * as sipApiBackend from "./sipApiBackedClientImplementation";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
-import * as db from "./db";
+import * as db from "./db/semasim";
 import * as messageDispatcher from "./messagesDispatcher";
 
 import * as _debug from "debug";
@@ -27,7 +26,7 @@ const jitterBuffer = {
 
 export const sipCallContext = "from-sip-call";
 
-export function start() {
+export function initAgi() {
 
     let dc = Dc.getInstance();
 
@@ -37,8 +36,6 @@ export function start() {
     });
 
 }
-
-
 
 async function fromDongle(channel: agi.AGIChannel) {
 
@@ -59,15 +56,15 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     let evtReachableContact= new SyncEvent<types.Contact>();
 
-    sipProxy.evtContactRegistration.attach(
+    sipProxy.asteriskSockets.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
         evtReachableContact,
         contact => evtReachableContact.post(contact)
     );
 
-    for (let contact of sipProxy.getContacts(imsi)) {
+    for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
 
-        sipApiBackend
+        sipProxy.backendSocket.remoteApi
             .wakeUpContact(contact)
             .then(status =>
                 (status === "REACHABLE") ? evtReachableContact.post(contact) : null
@@ -87,7 +84,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         evtReachableContact.detach();
 
-        sipProxy.evtContactRegistration.detach(evtReachableContact);
+        sipProxy.asteriskSockets.evtContactRegistration.detach(evtReachableContact);
 
         for (let channelName of ringingChannels.values()) {
 

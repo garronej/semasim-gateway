@@ -7,7 +7,9 @@ const _debug = require("debug");
 let debug = _debug("_tools/sipLibrary/Socket");
 //TODO: make a function to test if message are well formed: have from, to via ect.
 class Socket {
-    constructor(...inputs) {
+    constructor(connection, spoofedAddressAndPort = {}) {
+        this.connection = connection;
+        this.spoofedAddressAndPort = spoofedAddressAndPort;
         /** To store data contextually link to this socket */
         this.misc = {};
         this.evtResponse = new ts_events_extended_1.SyncEvent();
@@ -16,34 +18,19 @@ class Socket {
         this.evtConnect = new ts_events_extended_1.VoidSyncEvent();
         this.evtTimeout = new ts_events_extended_1.VoidSyncEvent();
         this.evtData = new ts_events_extended_1.SyncEvent();
-        this.localPort = NaN;
-        this.remotePort = NaN;
-        this.localAddress = "";
-        this.remoteAddress = "";
-        this.localAddressPublic = undefined;
+        this.__localPort__ = NaN;
+        this.__remotePort__ = NaN;
+        this.__localAddress__ = "";
+        this.__remoteAddress__ = "";
         this.setKeepAlive = (...inputs) => Socket.matchWebSocket(this.connection) ?
             undefined :
             this.connection.setKeepAlive.apply(this.connection, inputs);
-        this.connection = inputs[0];
-        let timeoutDelay;
-        let addrAndPorts;
-        if (Socket.matchWebSocket(this.connection)) {
-            addrAndPorts = inputs[1];
-            timeoutDelay = inputs[2];
-            debug({ addrAndPorts });
-        }
-        else {
-            addrAndPorts = undefined;
-            timeoutDelay = inputs[1];
-        }
-        let streamParser = core.makeStreamParser(sipPacket => misc.matchRequest(sipPacket) ?
+        let streamParser = misc.makeBufferStreamParser(sipPacket => misc.matchRequest(sipPacket) ?
             this.evtRequest.post(sipPacket) :
             this.evtResponse.post(sipPacket), () => this.connection.emit("error", new Error("Flood")), Socket.maxBytesHeaders, Socket.maxContentLength);
         this.connection
             .once("error", () => this.connection.emit("close", true))
             .once("close", had_error => {
-            if (timeoutDelay)
-                clearTimeout(this.timer);
             if (Socket.matchWebSocket(this.connection)) {
                 this.connection.terminate();
             }
@@ -53,20 +40,12 @@ class Socket {
             this.evtClose.post(had_error === true);
         })
             .on(Socket.matchWebSocket(this.connection) ? "message" : "data", (data) => {
-            if (timeoutDelay) {
-                clearTimeout(this.timer);
-                this.timer = setTimeout(() => this.evtTimeout.post(), timeoutDelay);
-            }
-            let dataAsBinaryString;
             if (typeof data === "string") {
-                dataAsBinaryString = (new Buffer(data, "utf8")).toString("binary");
+                data = Buffer.from(data, "utf8");
             }
-            else {
-                dataAsBinaryString = data.toString("binary");
-            }
-            this.evtData.post(dataAsBinaryString);
+            this.evtData.post(data);
             try {
-                streamParser(dataAsBinaryString);
+                streamParser(data);
             }
             catch (error) {
                 debug("Stream parser error");
@@ -74,19 +53,15 @@ class Socket {
             }
         });
         if (Socket.matchWebSocket(this.connection)) {
-            this.localPort = addrAndPorts.localPort;
-            this.remotePort = addrAndPorts.remotePort;
-            this.localAddress = addrAndPorts.localAddress;
-            this.remoteAddress = addrAndPorts.remoteAddress;
             this.evtConnect.post(); //For post count
         }
         else {
             this.connection.setMaxListeners(Infinity);
             let setAddrAndPort = ((c) => (() => {
-                this.localPort = c.localPort;
-                this.remotePort = c.remotePort;
-                this.localAddress = c.remoteAddress;
-                this.remoteAddress = c.remoteAddress;
+                this.__localPort__ = c.localPort;
+                this.__remotePort__ = c.remotePort;
+                this.__localAddress__ = c.remoteAddress;
+                this.__remoteAddress__ = c.remoteAddress;
             }))(this.connection);
             setAddrAndPort();
             if (this.connection.localPort) {
@@ -100,23 +75,34 @@ class Socket {
             }
         }
     }
+    get localPort() {
+        return this.spoofedAddressAndPort.localPort || this.__localPort__;
+    }
+    get remotePort() {
+        return this.spoofedAddressAndPort.remotePort || this.__remotePort__;
+    }
+    get localAddress() {
+        return this.spoofedAddressAndPort.localAddress || this.__localAddress__;
+    }
+    get remoteAddress() {
+        return this.spoofedAddressAndPort.remoteAddress || this.__remoteAddress__;
+    }
     /** Return true if sent successfully */
     write(sipPacket) {
+        if (!this.evtConnect.postCount) {
+            throw new Error("Trying to write before socket connect");
+        }
         if (this.evtClose.postCount) {
-            debug("The socket you try to write on is closed");
-            return false;
+            throw new Error("The socket you try to write on is closed");
         }
         if (misc.matchRequest(sipPacket)) {
             let maxForwards = parseInt(sipPacket.headers["max-forwards"]);
-            if (isNaN(maxForwards)) {
-                throw new Error("Write error, max-forwards header should be defined");
-            }
-            if (maxForwards === 0) {
+            if (maxForwards < 0) {
                 debug("Avoid writing, max forward reached");
                 return false;
             }
-            sipPacket.headers["max-forwards"] = `${maxForwards - 1}`;
         }
+        //TODO: why do we bother to check?
         if (!sipPacket.headers.via.length) {
             debug("Prevent sending packet without via header");
             return false;
@@ -161,84 +147,8 @@ class Socket {
             return this.connection["encrypted"] ? "TLS" : "TCP";
         }
     }
-    addViaHeader(sipRequest, extraParams = {}) {
-        let branch = (() => {
-            let via = sipRequest.headers.via;
-            return via.length ? `z9hG4bK-${via[0].params["branch"]}` : core.generateBranch();
-        })();
-        sipRequest.headers.via.unshift({
-            "version": "2.0",
-            "protocol": this.protocol,
-            "host": this.localAddress,
-            "port": this.localPort,
-            "params": Object.assign({}, extraParams, { branch, "rport": null })
-        });
-        return branch;
-    }
-    addPathHeader(sipRegisterRequest, extraParams) {
-        if (!sipRegisterRequest.headers.path) {
-            sipRegisterRequest.headers.path = [];
-        }
-        sipRegisterRequest.headers.path.unshift(this.buildRoute(extraParams));
-    }
-    /**
-     *
-     * Return stringified:
-     * <sip:${host||this.localAddress}:this.localPort;transport=this.protocol;lr>
-     *
-     */
-    buildRoute(extraParams = {}) {
-        let host = this.localAddressPublic || this.localAddress;
-        return {
-            "uri": Object.assign({}, core.parseUri(`sip:${host}:${this.localPort}`), { "params": Object.assign({}, extraParams, { "transport": this.protocol, "lr": null }) }),
-            "params": {}
-        };
-    }
-    /**
-     *
-     * Assert sipRequest is NOT register.
-     *
-     * HOP_X ] => [ LOCAL_X, LOCAL_this ] => [ HOP_Y
-     *
-     * Before:
-     * Route: LOCAL_X, HOP_Y
-     * Record-Route: HOP_X
-     *
-     * After:
-     * Route: HOP_Y
-     * Record-Route: LOCAL_this, HOP_X
-     *
-     */
-    shiftRouteAndUnshiftRecordRoute(sipRequest) {
-        if (sipRequest.headers.route)
-            sipRequest.headers.route.shift();
-        if (!sipRequest.headers.contact)
-            return;
-        if (!sipRequest.headers["record-route"])
-            sipRequest.headers["record-route"] = [];
-        sipRequest.headers["record-route"].unshift(this.buildRoute());
-    }
-    /**
-     *
-     * HOP_X <= [ LOCAL_this, LOCAL_Y ] <= HOP_Y
-     *
-     * Before:
-     * Record-Route: HOP_X, LOCAL_Y, HOP_Y
-     *
-     * After:
-     * Record-Route: HOP_X, LOCAL_this, HOP_Y
-     *
-     * NOTE: We use a different implementation but end to end result is same.
-     * In consequence isFirst hop must be set to true if and only if this is
-     * this first hop of the response.
-     *
-     */
-    pushRecordRoute(sipResponse, isFirstHop) {
-        if (!sipResponse.headers["record-route"])
-            return;
-        if (isFirstHop)
-            sipResponse.headers["record-route"] = [];
-        sipResponse.headers["record-route"].push(this.buildRoute());
+    buildNextHopPacket(sipPacket) {
+        return misc.buildNextHopPacket(this, sipPacket);
     }
 }
 Socket.maxBytesHeaders = 7820;

@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const AsyncLock = require("async-lock");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
-const db = require("./db");
+const db = require("./db/semasim");
 const sipProxy = require("./sipProxy");
-const sipApiBackend = require("./sipApiBackedClientImplementation");
 const types = require("./types");
 const _debug = require("debug");
 let debug = _debug("_messageDispatcher");
@@ -50,11 +49,13 @@ exports.sendMessagesOfDongle = sendMessagesOfDongle;
 })(sendMessagesOfDongle = exports.sendMessagesOfDongle || (exports.sendMessagesOfDongle = {}));
 function notifyNewSipMessagesToSend(imsi) {
     return __awaiter(this, void 0, void 0, function* () {
-        for (let contact of sipProxy.getContacts(imsi)) {
+        for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
             if (!(yield db.messageTowardSipUnsentCount(contact.uaSim))) {
                 continue;
             }
-            if ((yield sipApiBackend.wakeUpContact(contact)) === "REACHABLE") {
+            if ((yield sipProxy.backendSocket.remoteApi.wakeUpContact(contact))
+                ===
+                    "REACHABLE") {
                 sendMessagesOfContact(contact);
             }
         }
@@ -66,7 +67,7 @@ function sendMessagesOfContact(contact) {
     sendMessagesOfContact.lock.acquire(types.misc.generateUaSimId(contact.uaSim), () => __awaiter(this, void 0, void 0, function* () {
         for (let [message, onReceived] of yield db.getUnsentMessagesTowardSip(contact.uaSim)) {
             try {
-                yield sipProxy.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
+                yield sipProxy.messages.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
             }
             catch (error) {
                 debug("sip Send Message error:", error.message);

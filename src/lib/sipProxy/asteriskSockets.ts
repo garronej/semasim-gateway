@@ -1,7 +1,7 @@
 import * as sipLibrary from "../../tools/sipLibrary";
-import * as dbAsterisk from "../dbAsterisk";
+import * as dbAsterisk from "../db/asterisk";
 import * as types from "../types";
-import * as sipApiBackend from "./../sipApiBackedClientImplementation";
+import * as backendSocket from "./backendSocket";
 import { SyncEvent } from "ts-events-extended";
 
 import "colors";
@@ -14,83 +14,95 @@ export const evtContactRegistration = new SyncEvent<types.Contact>();
 /** map connectionId+imsi => asteriskSocket */
 const map = new Map<string, sipLibrary.Socket | null>();
 
-export function set(
-    connectionId: number,
-    imsi: string,
-    socket: sipLibrary.Socket
-) {
+export namespace _protected {
 
-    let key = `${connectionId}${imsi}`;
+    export type Key= { connectionId: string; imsi: string };
 
-    map.set(key, socket);
+    export namespace Key {
+        export function getId(key: Key): string {
+            return `${key.connectionId};${key.imsi}`;
+        }
+    }
 
-    socket.evtClose.attachOnce(() => map.set(key, null));
+    export function set(
+        key: Key,
+        socket: sipLibrary.Socket
+    ) {
 
-    socket.misc["prContact"] = new Promise<types.Contact>(
-        resolve =>
-            dbAsterisk.evtNewContact.waitFor(
-                contact => (
-                    contact.connectionId === connectionId &&
-                    contact.uaSim.imsi === imsi
-                ),
-                6001
-            ).then(contact => {
+        map.set(Key.getId(key), socket);
 
-                const boundTo = [];
+        socket.evtClose.attachOncePrepend(() => map.set(Key.getId(key), null));
 
-                socket.evtClose.attachOnce(() => {
-                    dbAsterisk.evtExpiredContact.detach(boundTo);
-                    dbAsterisk.deleteContact(contact);
-                });
+        let { connectionId, imsi }= key;
 
-                dbAsterisk.evtExpiredContact.attachOnce(
-                    expiredContact => expiredContact.id === contact.id,
-                    boundTo,
-                    () => {
-                        debug("expired contact");
-                        socket.destroy();
-                        sipApiBackend.forceContactToRegister(contact);
+        socket.misc["__prContact__"] = new Promise<types.Contact>(
+            resolve =>
+                dbAsterisk.evtNewContact.waitFor(
+                    contact => (
+                        contact.connectionId === connectionId &&
+                        contact.uaSim.imsi === imsi
+                    ),
+                    6001
+                ).then(contact => {
+
+                    const boundTo = [];
+
+                    socket.evtClose.attachOnce(() => {
+                        dbAsterisk.evtExpiredContact.detach(boundTo);
+                        dbAsterisk.deleteContact(contact);
+                    });
+
+                    dbAsterisk.evtExpiredContact.attachOnce(
+                        expiredContact => expiredContact.id === contact.id,
+                        boundTo,
+                        () => {
+                            debug("expired contact");
+                            socket.destroy();
+                            backendSocket.remoteApi.forceContactToRegister(contact);
+                        }
+                    );
+
+                    for (let [socket_i, contact_i] of getContactMap()) {
+
+                        if (contact_i && types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)) {
+
+                            debug("ua re-register with an other connection");
+
+                            socket_i.destroy();
+
+                            break;
+
+
+                        }
+
                     }
-                );
 
-                for( let [ socket_i, contact_i] of getContactMap() ){
+                    socket.misc["__contact__"] = contact;
 
-                    if( contact_i && types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)){
+                    evtContactRegistration.post(contact);
 
-                        debug("ua re-register with an other connection");
+                    resolve(contact);
 
-                        socket_i.destroy();
+                }).catch(() => socket.destroy())
+        );
 
-                        break;
+    }
 
+    /** null represent an expired connection */
+    export function get(
+        key: Key
+    ): sipLibrary.Socket | null | undefined {
+        return map.get(Key.getId(key));
+    }
 
-                    }
-
-                }
-
-                socket.misc["contact"] = contact;
-
-                evtContactRegistration.post(contact);
-
-                resolve(contact);
-
-            }).catch(() => socket.destroy())
-    );
+    export function getSocketContact(
+        socket: sipLibrary.Socket
+    ): types.Contact | Promise<types.Contact> {
+        return socket.misc["__contact__"] || socket.misc["__prContact__"];
+    }
 
 }
 
-export function get(
-    connectionId: number,
-    imsi: string
-): sipLibrary.Socket | null | undefined {
-    return map.get(`${connectionId}${imsi}`);
-}
-
-export function getSocketContact(
-    socket: sipLibrary.Socket
-): types.Contact | Promise<types.Contact> {
-    return socket.misc["contact"] || socket.misc["prContact"];
-}
 
 
 function getContactMap(): Map<sipLibrary.Socket, types.Contact | undefined> {
@@ -105,7 +117,7 @@ function getContactMap(): Map<sipLibrary.Socket, types.Contact | undefined> {
 
         out.set(socket, (() => {
 
-            let contact = getSocketContact(socket);
+            let contact = _protected.getSocketContact(socket);
 
             return (contact instanceof Promise) ? undefined : contact;
 

@@ -1,14 +1,10 @@
 import * as AsyncLock from "async-lock";
-
 import {
     DongleController as Dc,
     types as dcTypes
 } from "chan-dongle-extended-client";
-
-import * as db from "./db";
+import * as db from "./db/semasim";
 import * as sipProxy from "./sipProxy";
-
-import * as sipApiBackend from "./sipApiBackedClientImplementation";
 import * as types from "./types";
 
 import * as _debug from "debug";
@@ -74,13 +70,17 @@ export async function notifyNewSipMessagesToSend(
     imsi: string
 ) {
 
-    for (let contact of sipProxy.getContacts(imsi)) {
+    for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
 
         if (!(await db.messageTowardSipUnsentCount(contact.uaSim))) {
             continue;
         }
 
-        if ((await sipApiBackend.wakeUpContact(contact)) === "REACHABLE") {
+        if (
+            (await sipProxy.backendSocket.remoteApi.wakeUpContact(contact))
+            ===
+            "REACHABLE"
+        ) {
             sendMessagesOfContact(contact);
         }
 
@@ -102,7 +102,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
 
                 try {
 
-                    await sipProxy.sendMessage(
+                    await sipProxy.messages.sendMessage(
                         contact,
                         message.fromNumber,
                         types.misc.smuggleBundledDataInHeaders(message.bundledData),
