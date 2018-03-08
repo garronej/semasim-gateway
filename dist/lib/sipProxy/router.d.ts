@@ -1,2 +1,3 @@
+import * as sipLibrary from "../../tools/sipLibrary";
 import "colors";
-export declare function launch(): Promise<void>;
+export declare function createBackendSocket(): Promise<sipLibrary.Socket>;

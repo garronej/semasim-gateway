@@ -16,56 +16,41 @@ import "colors";
 import * as _debug from "debug";
 let debug = _debug("_sipProxy/router");
 
-export async function launch() {
+export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
     debug("Launch");
 
     let localIp: string;
     let host: string;
 
-    try {
+    while (true) {
 
-        localIp = await networkTools.getActiveInterfaceIp();
+        try {
 
-        /** sip.semasim.com */
-        host = (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
+            localIp = await networkTools.getActiveInterfaceIp();
 
-    } catch (error) {
+            /** sip.semasim.com */
+            host = (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
 
-        debug(`Sip proxy start error: ${error.message}`);
+            break;
 
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        launch();
-        return;
+        } catch (error) {
+
+            debug(`Sip proxy start error: ${error.message}`);
+
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+        }
 
     }
 
-    let backendSocketInst= new sipLibrary.Socket(
-        tls.connect({
-            host,
-            "port": c.gatewayPort
-        })
+    let backendSocketInst = new sipLibrary.Socket(
+        tls.connect({ host, "port": c.gatewayPort })
     );
 
     backendSocket.set(backendSocketInst);
 
-    backendSocketInst.evtClose.attachOnce(async () => {
-
-        debug("Backend socket closed, waiting and restarting");
-
-        asteriskSockets.flush();
-
-        let delay = (function getRandomArbitrary(min, max) {
-            return Math.floor(Math.random() * (max - min) + min);
-        })(3000, 5000);
-
-        debug(`Delay before restarting: ${delay}ms`);
-
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        launch();
-
-    });
+    backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush() );
 
     backendSocketInst.evtData.attach(data =>
         console.log(`\nFrom backend:\n${data.toString("binary").yellow}\n\n`)
@@ -74,13 +59,13 @@ export async function launch() {
     backendSocketInst.evtRequest.attach(async sipRequestReceived => {
 
         let imsi = readImsi(sipRequestReceived);
-        let connectionId= cid.read(sipRequestReceived);
+        let connectionId = cid.read(sipRequestReceived);
 
         let asteriskSocket = asteriskSockets.get({ connectionId, imsi });
 
-        if( !asteriskSocket ){
+        if (!asteriskSocket) {
 
-            if( asteriskSocket === null ){
+            if (asteriskSocket === null) {
                 return;
             }
 
@@ -184,6 +169,8 @@ export async function launch() {
 
     });
 
+    return backendSocketInst;
+
 }
 
 
@@ -247,7 +234,7 @@ function createAsteriskSocket(
         if (sipLibrary.isPlainMessageRequest(sipRequest)) {
 
             messages.onOutgoingSipMessage(
-                sipRequest, 
+                sipRequest,
                 backendSocketInst.evtResponse.waitFor(
                     sipResponse => sipLibrary.isResponse(sipRequest, sipResponse),
                     5000

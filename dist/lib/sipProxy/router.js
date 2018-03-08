@@ -21,37 +21,26 @@ const c = require("./../_constants");
 require("colors");
 const _debug = require("debug");
 let debug = _debug("_sipProxy/router");
-function launch() {
+function createBackendSocket() {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Launch");
         let localIp;
         let host;
-        try {
-            localIp = yield networkTools.getActiveInterfaceIp();
-            /** sip.semasim.com */
-            host = (yield networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
+        while (true) {
+            try {
+                localIp = yield networkTools.getActiveInterfaceIp();
+                /** sip.semasim.com */
+                host = (yield networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
+                break;
+            }
+            catch (error) {
+                debug(`Sip proxy start error: ${error.message}`);
+                yield new Promise(resolve => setTimeout(resolve, 5000));
+            }
         }
-        catch (error) {
-            debug(`Sip proxy start error: ${error.message}`);
-            yield new Promise(resolve => setTimeout(resolve, 5000));
-            launch();
-            return;
-        }
-        let backendSocketInst = new sipLibrary.Socket(tls.connect({
-            host,
-            "port": c.gatewayPort
-        }));
+        let backendSocketInst = new sipLibrary.Socket(tls.connect({ host, "port": c.gatewayPort }));
         backendSocket.set(backendSocketInst);
-        backendSocketInst.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
-            debug("Backend socket closed, waiting and restarting");
-            asteriskSockets.flush();
-            let delay = (function getRandomArbitrary(min, max) {
-                return Math.floor(Math.random() * (max - min) + min);
-            })(3000, 5000);
-            debug(`Delay before restarting: ${delay}ms`);
-            yield new Promise(resolve => setTimeout(resolve, delay));
-            launch();
-        }));
+        backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush());
         backendSocketInst.evtData.attach(data => console.log(`\nFrom backend:\n${data.toString("binary").yellow}\n\n`));
         backendSocketInst.evtRequest.attach((sipRequestReceived) => __awaiter(this, void 0, void 0, function* () {
             let imsi = misc_1.readImsi(sipRequestReceived);
@@ -117,9 +106,10 @@ function launch() {
             }
             asteriskSocket.write(asteriskSocket.buildNextHopPacket(sipResponseReceived));
         });
+        return backendSocketInst;
     });
 }
-exports.launch = launch;
+exports.createBackendSocket = createBackendSocket;
 function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
     let asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
     asteriskSocket.evtData.attach(data => console.log(`\nFrom Asterisk:\n${data.toString("binary").grey}\n\n`));

@@ -16,9 +16,9 @@ export async function launch() {
 
     debug("Launching...");
 
-    await launchDongleController(),
+    await launchDongleController();
 
-        await db.launch()
+    await db.launch();
 
     sipProxy.launch();
 

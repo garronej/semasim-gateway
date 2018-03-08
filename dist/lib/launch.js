@@ -19,8 +19,8 @@ debug("Starting semasim gateway !");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Launching...");
-        yield launchDongleController(),
-            yield db.launch();
+        yield launchDongleController();
+        yield db.launch();
         sipProxy.launch();
         voiceCallBridge.initAgi();
         registerListeners();
