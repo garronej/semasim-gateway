@@ -181,7 +181,10 @@ function createAsteriskSocket(
 ): sipLibrary.Socket {
 
     let asteriskSocket = new sipLibrary.Socket(
-        net.createConnection(5060, localIp)
+        net.connect({
+            "host": localIp,
+            "port": 5060
+        })
     );
 
     asteriskSocket.evtData.attach(data =>

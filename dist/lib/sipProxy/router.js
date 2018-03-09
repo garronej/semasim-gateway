@@ -111,7 +111,10 @@ function createBackendSocket() {
 }
 exports.createBackendSocket = createBackendSocket;
 function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
-    let asteriskSocket = new sipLibrary.Socket(net.createConnection(5060, localIp));
+    let asteriskSocket = new sipLibrary.Socket(net.connect({
+        "host": localIp,
+        "port": 5060
+    }));
     asteriskSocket.evtData.attach(data => console.log(`\nFrom Asterisk:\n${data.toString("binary").grey}\n\n`));
     //TODO: change for webRtc
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
