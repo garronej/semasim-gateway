@@ -11,6 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const apiDeclaration = require("./../../sipApiDeclarations/semasimGateway/backendSocket");
 const remoteApi = require("./remoteApiCaller");
+const db = require("../../db");
 exports.handlers = {};
 (() => {
     const methodName = apiDeclaration.getDongles.methodName;
@@ -20,10 +21,25 @@ exports.handlers = {};
     exports.handlers[methodName] = handler;
 })();
 (() => {
+    const methodName = apiDeclaration.getSipPasswordAndDongle.methodName;
+    let handler = {
+        "handler": ({ imsi }) => __awaiter(this, void 0, void 0, function* () {
+            let dc = chan_dongle_extended_client_1.DongleController.getInstance();
+            let dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+            if (!dongle) {
+                return undefined;
+            }
+            let sipPassword = yield db.asterisk.createEndpointIfNeededAndGetPassword(imsi);
+            return { dongle, sipPassword };
+        })
+    };
+    exports.handlers[methodName] = handler;
+})();
+(() => {
     const methodName = apiDeclaration.unlockDongle.methodName;
     let handler = {
-        "handler": (params) => __awaiter(this, void 0, void 0, function* () {
-            let { imei, pin } = params;
+        "handler": ({ imei, pin }) => __awaiter(this, void 0, void 0, function* () {
             try {
                 return yield chan_dongle_extended_client_1.DongleController.getInstance().unlock(imei, pin);
             }
@@ -37,8 +53,7 @@ exports.handlers = {};
 (() => {
     const methodName = apiDeclaration.reNotifySimOnline.methodName;
     let handler = {
-        "handler": (params) => __awaiter(this, void 0, void 0, function* () {
-            let { imsi } = params;
+        "handler": ({ imsi }) => __awaiter(this, void 0, void 0, function* () {
             let dc = chan_dongle_extended_client_1.DongleController.getInstance();
             let dongle = Array.from(dc.usableDongles.values())
                 .find(({ sim }) => sim.imsi === imsi);

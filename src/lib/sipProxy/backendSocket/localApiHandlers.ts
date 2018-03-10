@@ -2,6 +2,7 @@ import { DongleController as Dc } from "chan-dongle-extended-client";
 import * as apiDeclaration from "./../../sipApiDeclarations/semasimGateway/backendSocket";
 import * as sipLibrary from "../../../tools/sipLibrary";
 import * as remoteApi from "./remoteApiCaller";
+import * as db from "../../db";
 
 export const handlers: sipLibrary.api.Server.Handlers = {};
 
@@ -21,6 +22,36 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
 
 })();
 
+
+(() => {
+
+    const methodName = apiDeclaration.getSipPasswordAndDongle.methodName;
+    type Params = apiDeclaration.getSipPasswordAndDongle.Params;
+    type Response = apiDeclaration.getSipPasswordAndDongle.Response;
+
+    let handler: sipLibrary.api.Server.Handler<Params, Response>= {
+        "handler": async ({ imsi }) => {
+
+            let dc = Dc.getInstance();
+
+            let dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+            
+            if( !dongle ){
+                return undefined;
+            }
+
+            let sipPassword=await db.asterisk.createEndpointIfNeededAndGetPassword(imsi);
+
+            return { dongle, sipPassword };
+
+        }
+    };
+
+    handlers[methodName]= handler;
+
+})();
+
 (() => {
 
     const methodName = apiDeclaration.unlockDongle.methodName;
@@ -28,9 +59,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
     type Response = apiDeclaration.unlockDongle.Response;
 
     let handler: sipLibrary.api.Server.Handler<Params, Response> = {
-        "handler": async params => {
-
-            let { imei, pin } = params;
+        "handler": async ({ imei, pin }) => {
 
             try {
 
@@ -56,9 +85,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
     type Response = apiDeclaration.reNotifySimOnline.Response;
 
     let handler: sipLibrary.api.Server.Handler<Params, Response> = {
-        "handler": async params => {
-
-            let { imsi } = params;
+        "handler": async ({ imsi }) => {
 
             let dc = Dc.getInstance();
 

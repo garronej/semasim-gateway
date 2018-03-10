@@ -11,6 +11,19 @@ export namespace getDongles {
 
 }
 
+export namespace getSipPasswordAndDongle {
+
+    export const methodName= "getSipPasswordAndDongle";
+
+    export type Params= { imsi: string; };
+
+    export type Response= ({
+        dongle: dcTypes.Dongle.Usable;
+        sipPassword: string;
+    }) | undefined;
+
+}
+
 export namespace unlockDongle {
 
     export const methodName = "unlockDongle";

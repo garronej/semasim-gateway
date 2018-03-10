@@ -4,6 +4,16 @@ export declare namespace getDongles {
     type Params = undefined;
     type Response = dcTypes.Dongle[];
 }
+export declare namespace getSipPasswordAndDongle {
+    const methodName = "getSipPasswordAndDongle";
+    type Params = {
+        imsi: string;
+    };
+    type Response = ({
+        dongle: dcTypes.Dongle.Usable;
+        sipPassword: string;
+    }) | undefined;
+}
 export declare namespace unlockDongle {
     const methodName = "unlockDongle";
     type Params = {

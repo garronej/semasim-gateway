@@ -4,6 +4,10 @@ var getDongles;
 (function (getDongles) {
     getDongles.methodName = "getDongles";
 })(getDongles = exports.getDongles || (exports.getDongles = {}));
+var getSipPasswordAndDongle;
+(function (getSipPasswordAndDongle) {
+    getSipPasswordAndDongle.methodName = "getSipPasswordAndDongle";
+})(getSipPasswordAndDongle = exports.getSipPasswordAndDongle || (exports.getSipPasswordAndDongle = {}));
 var unlockDongle;
 (function (unlockDongle) {
     unlockDongle.methodName = "unlockDongle";
