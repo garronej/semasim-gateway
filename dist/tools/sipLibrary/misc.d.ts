@@ -25,6 +25,7 @@ export declare function isResponse(sipRequestNextHop: types.Request, sipResponse
 /** Return a clone of the packet ready for next hop */
 export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipRequest: types.Request): types.Request;
 export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipResponse: types.Response): types.Response;
+export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipPacket: types.Packet): types.Packet;
 /** pop and shift refer to stack operations */
 export declare namespace buildNextHopPacket {
     interface ISocket {

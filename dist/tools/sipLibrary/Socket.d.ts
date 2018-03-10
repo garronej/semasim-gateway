@@ -35,6 +35,7 @@ export declare class Socket {
     /** Return a clone of the packet ready for next hop */
     buildNextHopPacket(sipRequest: types.Request): types.Request;
     buildNextHopPacket(sipResponse: types.Response): types.Response;
+    buildNextHopPacket(sipPacket: types.Packet): types.Packet;
 }
 export declare namespace Socket {
     type AddrAndPorts = {

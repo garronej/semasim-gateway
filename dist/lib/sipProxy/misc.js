@@ -4,7 +4,7 @@ const stringTransform = require("transfer-tools/dist/lib/stringTransform");
 const sipLibrary = require("../../tools/sipLibrary");
 /**
  * Return true if it's a sipRequest originated of UA
- * or if it's a sipResponse or a request originated by UA.
+ * or if it's a sipResponse of a request originated by UA.
  * */
 function isRequestFromClient(sipPacket) {
     //TODO: make private

@@ -28,6 +28,7 @@ export function matchRequest(sipPacket: types.Packet): sipPacket is types.Reques
     return "method" in sipPacket;
 }
 
+//TODO: optimize
 export function clonePacket(sipPacket: types.Packet): types.Packet {
     return core.parse(core.stringify(sipPacket));
 }
@@ -223,6 +224,10 @@ export function buildNextHopPacket(
     socket: buildNextHopPacket.ISocket,
     sipResponse: types.Response
 ): types.Response;
+export function buildNextHopPacket(
+    socket: buildNextHopPacket.ISocket,
+    sipPacket: types.Packet
+): types.Packet;
 export function buildNextHopPacket(
     socket: buildNextHopPacket.ISocket,
     sipPacket: types.Packet

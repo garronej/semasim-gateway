@@ -12,6 +12,7 @@ function matchRequest(sipPacket) {
     return "method" in sipPacket;
 }
 exports.matchRequest = matchRequest;
+//TODO: optimize
 function clonePacket(sipPacket) {
     return core.parse(core.stringify(sipPacket));
 }

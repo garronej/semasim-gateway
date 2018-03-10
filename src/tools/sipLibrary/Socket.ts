@@ -268,11 +268,12 @@ export class Socket {
         sipResponse: types.Response
     ): types.Response;
     public buildNextHopPacket(
-        sipPacket: any
-    ): any {
-
+        sipPacket: types.Packet
+    ): types.Packet;
+    public buildNextHopPacket(
+        sipPacket: types.Packet
+    ): types.Packet {
         return misc.buildNextHopPacket(this, sipPacket);
-
     }
 
 

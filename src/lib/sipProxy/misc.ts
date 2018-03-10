@@ -3,7 +3,7 @@ import * as sipLibrary from "../../tools/sipLibrary";
 
 /** 
  * Return true if it's a sipRequest originated of UA 
- * or if it's a sipResponse or a request originated by UA. 
+ * or if it's a sipResponse of a request originated by UA. 
  * */
 function isRequestFromClient(sipPacket: sipLibrary.Packet): boolean {
 
