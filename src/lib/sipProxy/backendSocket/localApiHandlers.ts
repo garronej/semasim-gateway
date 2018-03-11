@@ -22,6 +22,38 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
 
 })();
 
+(() => {
+
+    const methodName = apiDeclaration.getUsableDongleHoldingSim.methodName;
+    type Params = apiDeclaration.getUsableDongleHoldingSim.Params;
+    type Response = apiDeclaration.getUsableDongleHoldingSim.Response;
+
+    let handler: sipLibrary.api.Server.Handler<Params, Response>= {
+        "handler": ({ imsi })=> Promise.resolve(
+            Array.from(Dc.getInstance().usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi)
+        )
+    };
+
+    handlers[methodName]= handler;
+
+})();
+
+(() => {
+
+    const methodName = apiDeclaration.whoHasLockedDongle.methodName;
+    type Params = apiDeclaration.whoHasLockedDongle.Params;
+    type Response = apiDeclaration.whoHasLockedDongle.Response;
+
+    let handler: sipLibrary.api.Server.Handler<Params, Response>= {
+        "handler": async ({ imei })=> 
+            !!Dc.getInstance().lockedDongles.get(imei)?"I":undefined
+    };
+
+    handlers[methodName]= handler;
+
+})();
+
 
 (() => {
 
