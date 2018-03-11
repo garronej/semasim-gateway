@@ -13,8 +13,6 @@ var ApiMessage;
             "Max-Forwards: 0",
             "\r\n"
         ].join("\r\n"));
-        //TODO: should be set to [] already :(
-        sipRequest.headers.via = [];
         sipRequest.headers[actionIdKey] = `${actionId++}`;
         misc.setPacketContent(sipRequest, JSON_CUSTOM.stringify(payload));
         return sipRequest;

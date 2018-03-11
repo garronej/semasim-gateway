@@ -9,4 +9,10 @@ exports.stringify = sip.stringify;
 exports.parseUri = sip.parseUri;
 exports.generateBranch = sip.generateBranch;
 exports.stringifyUri = sip.stringifyUri;
-exports.parse = sip.parse;
+exports.parse = rawSipPacket => {
+    let sipPacket = sip.parse(rawSipPacket);
+    if (!sipPacket.headers.via) {
+        sipPacket.headers.via = [];
+    }
+    return sipPacket;
+};

@@ -56,7 +56,6 @@ export function sendMessage(
                     sipRequest.headers.from.name = `"${fromNumberSimName} (sim)"`;
                 }
 
-                //TODO: add route headers ( even if not useful for now)
                 sipRequest.headers.route = sipLibrary.parsePath(contact.path);
 
                 sipRequest.uri = contact.uri;

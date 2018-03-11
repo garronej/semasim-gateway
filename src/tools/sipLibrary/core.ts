@@ -21,4 +21,14 @@ export const generateBranch: () => string = sip.generateBranch;
 
 export const stringifyUri: (parsedUri: types.ParsedUri) => string = sip.stringifyUri;
 
-export const parse: (rawSipPacket: string) => types.Packet = sip.parse;
+export const parse: (rawSipPacket: string) => types.Packet = rawSipPacket=> {
+
+    let sipPacket: types.Packet= sip.parse(rawSipPacket);
+
+    if( !sipPacket.headers.via ){
+        sipPacket.headers.via= [];
+    }
+
+    return sipPacket;
+
+};

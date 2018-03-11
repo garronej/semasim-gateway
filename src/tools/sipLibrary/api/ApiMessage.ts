@@ -21,9 +21,6 @@ export namespace ApiMessage {
             "\r\n"
         ].join("\r\n")) as types.Request;
 
-        //TODO: should be set to [] already :(
-        sipRequest.headers.via= [];
-
         sipRequest.headers[actionIdKey] = `${actionId++}`;
 
         misc.setPacketContent(
