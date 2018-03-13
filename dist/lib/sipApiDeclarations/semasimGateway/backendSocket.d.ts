@@ -4,13 +4,6 @@ export declare namespace getDongles {
     type Params = undefined;
     type Response = dcTypes.Dongle[];
 }
-export declare namespace getUsableDongleHoldingSim {
-    const methodName = "getUsableDongleHoldingSim";
-    type Params = {
-        imsi: string;
-    };
-    type Response = dcTypes.Dongle.Usable | undefined;
-}
 export declare namespace whoHasLockedDongle {
     const methodName = "whoHasLockedDongle";
     type Params = {

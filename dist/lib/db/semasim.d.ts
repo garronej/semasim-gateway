@@ -3,6 +3,8 @@ import * as types from "../types";
 import { types as dcTypes } from "chan-dongle-extended-client";
 /** exported only for tests */
 export declare let query: mysqlCustom.Api["query"];
+/** Must be called and awaited before use */
+export declare function launch(): Promise<void>;
 /** Only for test purpose */
 export declare function flush(): Promise<void>;
 export declare function addUaSim(uaSim: types.UaSim): Promise<{
@@ -92,5 +94,3 @@ export declare namespace getUnsentMessagesTowardGsm {
 export declare function lastMessageReceivedDateBySim(): Promise<{
     [imsi: string]: Date;
 }>;
-/** Must be called and awaited before use */
-export declare function launch(): Promise<void>;

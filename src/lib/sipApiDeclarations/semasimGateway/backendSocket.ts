@@ -11,16 +11,6 @@ export namespace getDongles {
 
 }
 
-export namespace getUsableDongleHoldingSim {
-
-    export const methodName = "getUsableDongleHoldingSim";
-
-    export type Params= { imsi: string; };
-
-    export type Response= dcTypes.Dongle.Usable | undefined;
-    
-}
-
 export namespace whoHasLockedDongle {
 
     export const methodName= "whoHasLockedDongle";

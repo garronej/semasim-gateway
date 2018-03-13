@@ -14,6 +14,8 @@ var ApiMessage;
             "\r\n"
         ].join("\r\n"));
         sipRequest.headers[actionIdKey] = `${actionId++}`;
+        console.assert(payload !== null, "null is not stringifiable");
+        console.assert(!(typeof payload === "number" && isNaN(payload)), "NaN is not stringifiable");
         misc.setPacketContent(sipRequest, JSON_CUSTOM.stringify(payload));
         return sipRequest;
     }

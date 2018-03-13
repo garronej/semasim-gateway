@@ -12,7 +12,10 @@ const asterisk_1 = require("./asterisk");
 const semasim_1 = require("./semasim");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield Promise.all([asterisk_1.launch, semasim_1.launch]);
+        yield Promise.all([
+            asterisk_1.launch(),
+            semasim_1.launch()
+        ]);
     });
 }
 exports.launch = launch;

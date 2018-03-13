@@ -21,14 +21,6 @@ exports.handlers = {};
     exports.handlers[methodName] = handler;
 })();
 (() => {
-    const methodName = apiDeclaration.getUsableDongleHoldingSim.methodName;
-    let handler = {
-        "handler": ({ imsi }) => Promise.resolve(Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
-            .find(({ sim }) => sim.imsi === imsi))
-    };
-    exports.handlers[methodName] = handler;
-})();
-(() => {
     const methodName = apiDeclaration.whoHasLockedDongle.methodName;
     let handler = {
         "handler": ({ imei }) => __awaiter(this, void 0, void 0, function* () { return !!chan_dongle_extended_client_1.DongleController.getInstance().lockedDongles.get(imei) ? "I" : undefined; })

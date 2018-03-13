@@ -6,13 +6,26 @@ let currentBackendSocketInst: sipLibrary.Socket | undefined = undefined;
 
 export const evtNewSocketInstance = new VoidSyncEvent();
 
-const server = new sipLibrary.api.Server(localApiHandlers);
+const idString= "backendSocket";
+
+const server = new sipLibrary.api.Server(
+    localApiHandlers, 
+    sipLibrary.api.Server.getDefaultLogger({
+        idString,
+        "hideKeepAlive": true
+    })
+);
 
 export function set(backendSocketInst: sipLibrary.Socket) {
 
     server.startListening(backendSocketInst);
 
     sipLibrary.api.client.enableKeepAlive(backendSocketInst);
+
+    sipLibrary.api.client.enableLogging(
+        backendSocketInst, 
+        sipLibrary.api.client.getDefaultLogger({ idString })
+    );
 
     backendSocketInst.evtConnect.attachOnce(() =>
         evtNewSocketInstance.post()

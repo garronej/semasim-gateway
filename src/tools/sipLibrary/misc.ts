@@ -34,9 +34,13 @@ export function clonePacket(sipPacket: types.Packet): types.Packet {
 }
 
 /** Safely set text based content (encoded in utf8 ) */
-export function setPacketContent(sipPacket: types.Packet, str: string) {
+export function setPacketContent(sipPacket: types.Packet, data: Buffer): void;
+export function setPacketContent(sipPacket: types.Packet, str: string): void;
+export function setPacketContent(sipPacket: types.Packet, data: Buffer | string ): void {
 
-    let data = Buffer.from(str, "utf8");
+    if( typeof data === "string" ){
+        data= Buffer.from(data, "utf8");
+    }
 
     sipPacket.headers["content-length"] = data.byteLength;
 

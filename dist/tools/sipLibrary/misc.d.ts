@@ -4,6 +4,7 @@ export declare function makeBufferStreamParser(handler: (sipPacket: types.Packet
 export declare function matchRequest(sipPacket: types.Packet): sipPacket is types.Request;
 export declare function clonePacket(sipPacket: types.Packet): types.Packet;
 /** Safely set text based content (encoded in utf8 ) */
+export declare function setPacketContent(sipPacket: types.Packet, data: Buffer): void;
 export declare function setPacketContent(sipPacket: types.Packet, str: string): void;
 /** Get the RAW content as buffer */
 export declare function getPacketContent(sipPacket: types.Packet): Buffer;

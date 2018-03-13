@@ -4,10 +4,6 @@ var getDongles;
 (function (getDongles) {
     getDongles.methodName = "getDongles";
 })(getDongles = exports.getDongles || (exports.getDongles = {}));
-var getUsableDongleHoldingSim;
-(function (getUsableDongleHoldingSim) {
-    getUsableDongleHoldingSim.methodName = "getUsableDongleHoldingSim";
-})(getUsableDongleHoldingSim = exports.getUsableDongleHoldingSim || (exports.getUsableDongleHoldingSim = {}));
 var whoHasLockedDongle;
 (function (whoHasLockedDongle) {
     whoHasLockedDongle.methodName = "whoHasLockedDongle";

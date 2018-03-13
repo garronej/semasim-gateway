@@ -11,6 +11,20 @@ export let query: mysqlCustom.Api["query"];
 let esc: mysqlCustom.Api["esc"];
 let buildInsertQuery: mysqlCustom.Api["buildInsertQuery"];
 
+/** Must be called and awaited before use */
+export async function launch(): Promise<void> {
+
+    let api = await mysqlCustom.connectAndGetApi({
+        ...c.dbParamsGateway,
+        "database": "semasim"
+    }, "HANDLE STRING ENCODING");
+
+    query= api.query;
+    esc= api.esc;
+    buildInsertQuery= api.buildInsertQuery;
+
+}
+
 /** Only for test purpose */
 export async function flush() {
 
@@ -710,17 +724,3 @@ namespace buildMessageTowardSipInsertQuery {
 
 }
 
-
-/** Must be called and awaited before use */
-export async function launch(): Promise<void> {
-
-    let api = await mysqlCustom.connectAndGetApi({
-        ...c.dbParamsGateway,
-        "database": "semasim"
-    }, "HANDLE STRING ENCODING");
-
-    query= api.query;
-    esc= api.esc;
-    buildInsertQuery= api.buildInsertQuery;
-
-}

@@ -41,7 +41,6 @@ function createBackendSocket() {
         let backendSocketInst = new sipLibrary.Socket(tls.connect({ host, "port": c.gatewayPort }));
         backendSocket.set(backendSocketInst);
         backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush());
-        backendSocketInst.evtData.attach(data => console.log(`\nFrom backend:\n${data.toString("binary").yellow}\n\n`));
         backendSocketInst.evtRequest.attach((sipRequestReceived) => __awaiter(this, void 0, void 0, function* () {
             let imsi = misc_1.readImsi(sipRequestReceived);
             let connectionId = misc_1.cid.read(sipRequestReceived);
@@ -115,7 +114,6 @@ function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
         "host": localIp,
         "port": 5060
     }));
-    asteriskSocket.evtData.attach(data => console.log(`\nFrom Asterisk:\n${data.toString("binary").grey}\n\n`));
     //TODO: change for webRtc
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     const fixSdp = (sipPacketNextHop) => {

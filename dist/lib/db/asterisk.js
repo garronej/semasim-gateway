@@ -16,6 +16,26 @@ const voiceCallBridge_1 = require("../voiceCallBridge");
 const sipProxy_1 = require("../sipProxy");
 var messages_dialplanContext = sipProxy_1.messages.dialplanContext;
 const c = require("../_constants");
+function launch() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const connectionConfig = Object.assign({}, c.dbParamsGateway, { "database": "asterisk" });
+        let api = yield mysqlCustom.connectAndGetApi(connectionConfig);
+        yield api.query([
+            "DELETE FROM ps_contacts",
+            "WHERE endpoint LIKE '_______________'"
+        ].join("\n"));
+        yield MySqlEvents_1.MySqlEvents.launch(connectionConfig);
+        let post = (row, evt) => evt.post(types.misc.buildContactFromPsContact(row));
+        exports.evtNewContact = new ts_events_extended_1.SyncEvent();
+        MySqlEvents_1.MySqlEvents.instance.evtNewRow.attach(({ table }) => table === "ps_contacts", ({ row }) => post(row, exports.evtNewContact));
+        exports.evtExpiredContact = new ts_events_extended_1.SyncEvent();
+        MySqlEvents_1.MySqlEvents.instance.evtDeleteRow.attach(({ table }) => table === "ps_contacts", ({ row }) => post(row, exports.evtExpiredContact));
+        exports.query = api.query;
+        exports.esc = api.esc;
+        exports.buildInsertQuery = api.buildInsertQuery;
+    });
+}
+exports.launch = launch;
 /** for test purpose only */
 function flush() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -92,23 +112,3 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
     });
 }
 exports.createEndpointIfNeededAndGetPassword = createEndpointIfNeededAndGetPassword;
-function launch() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const connectionConfig = Object.assign({}, c.dbParamsGateway, { "database": "asterisk" });
-        let api = yield mysqlCustom.connectAndGetApi(connectionConfig);
-        yield api.query([
-            "DELETE FROM ps_contacts",
-            "WHERE endpoint LIKE '_______________'"
-        ].join("\n"));
-        yield MySqlEvents_1.MySqlEvents.launch(connectionConfig);
-        let post = (row, evt) => evt.post(types.misc.buildContactFromPsContact(row));
-        exports.evtNewContact = new ts_events_extended_1.SyncEvent();
-        MySqlEvents_1.MySqlEvents.instance.evtNewRow.attach(({ table }) => table === "ps_contacts", ({ row }) => post(row, exports.evtNewContact));
-        exports.evtExpiredContact = new ts_events_extended_1.SyncEvent();
-        MySqlEvents_1.MySqlEvents.instance.evtDeleteRow.attach(({ table }) => table === "ps_contacts", ({ row }) => post(row, exports.evtExpiredContact));
-        exports.query = api.query;
-        exports.esc = api.esc;
-        exports.buildInsertQuery = api.buildInsertQuery;
-    });
-}
-exports.launch = launch;

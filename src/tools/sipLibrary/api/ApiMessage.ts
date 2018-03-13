@@ -3,12 +3,11 @@ import * as core from "../core";
 import * as misc from "../misc";
 import { JSON_CUSTOM as ttJC } from "transfer-tools";
 
-const JSON_CUSTOM= ttJC.get();
-
+const JSON_CUSTOM = ttJC.get();
 
 export namespace ApiMessage {
 
-    const actionIdKey= "api-action-id";
+    const actionIdKey = "api-action-id";
 
     export function buildSip(
         actionId: number,
@@ -23,8 +22,11 @@ export namespace ApiMessage {
 
         sipRequest.headers[actionIdKey] = `${actionId++}`;
 
+        console.assert(payload !== null, "null is not stringifiable");
+        console.assert(!(typeof payload === "number" && isNaN(payload)), "NaN is not stringifiable");
+
         misc.setPacketContent(
-            sipRequest, 
+            sipRequest,
             JSON_CUSTOM.stringify(payload)
         );
 
@@ -34,7 +36,7 @@ export namespace ApiMessage {
 
     export function matchSip(sipRequest: types.Request): boolean {
         return (
-            !!sipRequest.headers && 
+            !!sipRequest.headers &&
             !isNaN(parseInt(sipRequest.headers[actionIdKey]))
         );
     }
@@ -45,8 +47,8 @@ export namespace ApiMessage {
 
     export function parsePayload(
         sipRequest: types.Request,
-        sanityCheck?: (payload: any)=> boolean
-    ): any{
+        sanityCheck?: (payload: any) => boolean
+    ): any {
 
         let payload = JSON_CUSTOM.parse(
             misc.getPacketContent(sipRequest).toString("utf8")
@@ -71,7 +73,7 @@ export namespace ApiMessage {
 
             let sipRequest = ApiMessage.buildSip(actionIdCounter++, params);
 
-            sipRequest.headers[methodNameKey]= methodName;
+            sipRequest.headers[methodNameKey] = methodName;
 
             return sipRequest;
 
@@ -124,10 +126,10 @@ export namespace ApiMessage {
 
 export namespace keepAlive {
 
-    export const methodName= "__keepAlive__";
+    export const methodName = "__keepAlive__";
 
-    export type Params= "PING";
+    export type Params = "PING";
 
-    export type Response= "PONG";
+    export type Response = "PONG";
 
 }

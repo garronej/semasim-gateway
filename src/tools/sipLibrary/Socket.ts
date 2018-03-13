@@ -124,10 +124,10 @@ export class Socket {
 
             this.connection.setMaxListeners(Infinity)
 
-            let setAddrAndPort = ((c: net.Socket) => (() => {
+            const setAddrAndPort = ((c: net.Socket) => (() => {
                 this.__localPort__ = c.localPort;
                 this.__remotePort__ = c.remotePort;
-                this.__localAddress__ = c.remoteAddress;
+                this.__localAddress__ = c.localAddress;
                 this.__remoteAddress__ = c.remoteAddress;
             }))(this.connection);
 
@@ -178,24 +178,26 @@ export class Socket {
 
         }
 
+
         if (misc.matchRequest(sipPacket)) {
 
-            let maxForwards = parseInt(sipPacket.headers["max-forwards"]);
+            let maxForwardsHeaderValue = sipPacket.headers["max-forwards"];
 
-            if (maxForwards < 0) {
-                debug("Avoid writing, max forward reached");
-                return false;
+            if (maxForwardsHeaderValue !== undefined) {
+
+                let maxForwards = parseInt(maxForwardsHeaderValue);
+
+                if (maxForwards < 0) {
+                    debug("Avoid writing, max forward reached");
+                    return false;
+                }
+
             }
 
         }
 
-        //TODO: why do we bother to check?
-        if (!sipPacket.headers.via.length) {
-            debug("Prevent sending packet without via header");
-            return false;
-        }
-
-        //TODO: this can potentially throw, make sure it's ok
+        /*NOTE: this could throw but it would mean that it's an error
+        on our part as a packet that have been parsed should be stringifiable.*/
         let data = Buffer.from(core.stringify(sipPacket), "binary");
 
         if (Socket.matchWebSocket(this.connection)) {

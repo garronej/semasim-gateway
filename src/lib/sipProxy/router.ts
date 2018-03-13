@@ -52,10 +52,6 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
     backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush() );
 
-    backendSocketInst.evtData.attach(data =>
-        console.log(`\nFrom backend:\n${data.toString("binary").yellow}\n\n`)
-    );
-
     backendSocketInst.evtRequest.attach(async sipRequestReceived => {
 
         let imsi = readImsi(sipRequestReceived);
@@ -185,10 +181,6 @@ function createAsteriskSocket(
             "host": localIp,
             "port": 5060
         })
-    );
-
-    asteriskSocket.evtData.attach(data =>
-        console.log(`\nFrom Asterisk:\n${data.toString("binary").grey}\n\n`)
     );
 
     //TODO: change for webRtc

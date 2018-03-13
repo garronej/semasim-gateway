@@ -17,9 +17,10 @@ function clonePacket(sipPacket) {
     return core.parse(core.stringify(sipPacket));
 }
 exports.clonePacket = clonePacket;
-/** Safely set text based content (encoded in utf8 ) */
-function setPacketContent(sipPacket, str) {
-    let data = Buffer.from(str, "utf8");
+function setPacketContent(sipPacket, data) {
+    if (typeof data === "string") {
+        data = Buffer.from(data, "utf8");
+    }
     sipPacket.headers["content-length"] = data.byteLength;
     sipPacket.content = data.toString("binary");
 }

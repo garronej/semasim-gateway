@@ -14,6 +14,16 @@ const c = require("../_constants");
 const JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();
 let esc;
 let buildInsertQuery;
+/** Must be called and awaited before use */
+function launch() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let api = yield mysqlCustom.connectAndGetApi(Object.assign({}, c.dbParamsGateway, { "database": "semasim" }), "HANDLE STRING ENCODING");
+        exports.query = api.query;
+        esc = api.esc;
+        buildInsertQuery = api.buildInsertQuery;
+    });
+}
+exports.launch = launch;
 /** Only for test purpose */
 function flush() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -502,13 +512,3 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, text, date, 
     ].join("\n");
     return sql;
 }
-/** Must be called and awaited before use */
-function launch() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let api = yield mysqlCustom.connectAndGetApi(Object.assign({}, c.dbParamsGateway, { "database": "semasim" }), "HANDLE STRING ENCODING");
-        exports.query = api.query;
-        esc = api.esc;
-        buildInsertQuery = api.buildInsertQuery;
-    });
-}
-exports.launch = launch;

@@ -12,6 +12,7 @@ const misc = require("../misc");
 const ApiMessage_1 = require("./ApiMessage");
 function sendRequest(socket, methodName, params, extra = {}) {
     return __awaiter(this, void 0, void 0, function* () {
+        let logger = socket.misc[enableLogging.miscKey] || {};
         let sipRequest = ApiMessage_1.ApiMessage.Request.buildSip(methodName, params);
         misc.buildNextHopPacket.pushVia(socket, sipRequest);
         let actionId = ApiMessage_1.ApiMessage.readActionId(sipRequest);
@@ -20,9 +21,10 @@ function sendRequest(socket, methodName, params, extra = {}) {
             throw new SendRequestError(methodName, params, "CANNOT SEND REQUEST");
         }
         let sipRequestResponse;
+        let timeoutValue = extra.timeout || 5 * 60 * 1000;
         try {
             sipRequestResponse = yield Promise.race([
-                socket.evtRequest.attachOnceExtract(sipRequestResponse => ApiMessage_1.ApiMessage.Response.matchSip(sipRequestResponse, actionId), extra.timeout || 5 * 60 * 1000, () => { }),
+                socket.evtRequest.attachOnceExtract(sipRequestResponse => ApiMessage_1.ApiMessage.Response.matchSip(sipRequestResponse, actionId), timeoutValue, () => { }),
                 new Promise((_, reject) => socket.evtClose.attachOnce(sipRequest, () => reject(new Error("CLOSE"))))
             ]);
         }
@@ -30,8 +32,15 @@ function sendRequest(socket, methodName, params, extra = {}) {
             let sendRequestError = new SendRequestError(methodName, params, (error.message === "CLOSE") ?
                 "SOCKET CLOSED BEFORE RECEIVING RESPONSE" : "REQUEST TIMEOUT");
             if (sendRequestError.cause === "REQUEST TIMEOUT") {
-                console.log("Request timeout".red);
+                if (!!logger.onRequestTimeout) {
+                    logger.onRequestTimeout(methodName, params, timeoutValue, socket);
+                }
                 socket.destroy();
+            }
+            else {
+                if (!!logger.onClosedConnection) {
+                    logger.onClosedConnection(methodName, params, socket);
+                }
             }
             throw sendRequestError;
         }
@@ -42,7 +51,9 @@ function sendRequest(socket, methodName, params, extra = {}) {
         catch (_a) {
             let sendRequestError = new SendRequestError(methodName, params, "MALFORMED RESPONSE");
             sendRequestError.misc["sipRequestResponse"] = sipRequestResponse;
-            console.log("malformed response".red);
+            if (!!logger.onMalformedResponse) {
+                logger.onMalformedResponse(methodName, params, misc.getPacketContent(sipRequestResponse), socket);
+            }
             socket.destroy();
             throw sendRequestError;
         }
@@ -50,17 +61,13 @@ function sendRequest(socket, methodName, params, extra = {}) {
     });
 }
 exports.sendRequest = sendRequest;
-class SendRequestError extends Error {
-    constructor(methodName, params, cause) {
-        super(`Send request ${methodName} ${cause}`);
-        this.methodName = methodName;
-        this.params = params;
-        this.cause = cause;
-        this.misc = {};
-        Object.setPrototypeOf(this, new.target.prototype);
-    }
+function enableLogging(socket, logger) {
+    socket.misc[enableLogging.miscKey] = logger;
 }
-exports.SendRequestError = SendRequestError;
+exports.enableLogging = enableLogging;
+(function (enableLogging) {
+    enableLogging.miscKey = "__api_client_logger__";
+})(enableLogging = exports.enableLogging || (exports.enableLogging = {}));
 function enableKeepAlive(socket, interval = 120 * 1000) {
     const methodName = ApiMessage_1.keepAlive.methodName;
     (() => __awaiter(this, void 0, void 0, function* () {
@@ -86,3 +93,34 @@ function enableKeepAlive(socket, interval = 120 * 1000) {
     }))();
 }
 exports.enableKeepAlive = enableKeepAlive;
+class SendRequestError extends Error {
+    constructor(methodName, params, cause) {
+        super(`Send request ${methodName} ${cause}`);
+        this.methodName = methodName;
+        this.params = params;
+        this.cause = cause;
+        this.misc = {};
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
+exports.SendRequestError = SendRequestError;
+function getDefaultLogger(options) {
+    options = options || {};
+    let idString = options.idString || "";
+    let log = options.log || console.log;
+    const base = (socket, methodName, params) => [
+        `[ Sip API ${idString} call Error ]`.red,
+        `${socket.localAddress}:${socket.localPort} (local)`,
+        "=>",
+        `${socket.remoteAddress}:${socket.remotePort} (remote)`,
+        methodName,
+        "\n",
+        `params: ${JSON.stringify(params)}\n`,
+    ].join(" ");
+    return {
+        "onClosedConnection": (methodName, params, socket) => log(`${base(socket, methodName, params)}Remote connection lost`),
+        "onRequestTimeout": (methodName, params, timeoutValue, socket) => log(`${base(socket, methodName, params)}Request timeout after ${timeoutValue}ms`),
+        "onMalformedResponse": (methodName, params, rawResponse, socket) => log(`${base(socket, methodName, params)}Malformed response\nrawResponse: ${rawResponse}`)
+    };
+}
+exports.getDefaultLogger = getDefaultLogger;

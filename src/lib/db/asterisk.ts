@@ -16,6 +16,47 @@ export let query: mysqlCustom.Api["query"];
 export let esc: mysqlCustom.Api["esc"];
 export let buildInsertQuery: mysqlCustom.Api["buildInsertQuery"];
 
+export async function launch(): Promise<void> {
+
+    const connectionConfig: mysql.IConnectionConfig = {
+        ...c.dbParamsGateway,
+        "database": "asterisk"
+    };
+
+    let api = await mysqlCustom.connectAndGetApi(connectionConfig);
+
+    await api.query([
+        "DELETE FROM ps_contacts",
+        "WHERE endpoint LIKE '_______________'"
+    ].join("\n"));
+
+    await MySqlEvents.launch(connectionConfig);
+
+
+    let post = (row, evt: SyncEvent<types.Contact>) =>
+        evt.post(types.misc.buildContactFromPsContact(row))
+        ;
+
+    evtNewContact= new SyncEvent();
+
+    MySqlEvents.instance.evtNewRow.attach(
+        ({ table }) => table === "ps_contacts",
+        ({ row }) => post(row, evtNewContact)
+    );
+
+    evtExpiredContact= new SyncEvent();
+
+    MySqlEvents.instance.evtDeleteRow.attach(
+        ({ table }) => table === "ps_contacts",
+        ({ row }) => post(row, evtExpiredContact)
+    );
+
+    query= api.query;
+    esc= api.esc;
+    buildInsertQuery= api.buildInsertQuery;
+
+}
+
 export let evtNewContact: SyncEvent<types.Contact>;
 
 export let evtExpiredContact: SyncEvent<types.Contact>;
@@ -123,44 +164,3 @@ export async function createEndpointIfNeededAndGetPassword(
 
 }
 
-
-export async function launch(): Promise<void> {
-
-    const connectionConfig: mysql.IConnectionConfig = {
-        ...c.dbParamsGateway,
-        "database": "asterisk"
-    };
-
-    let api = await mysqlCustom.connectAndGetApi(connectionConfig);
-
-    await api.query([
-        "DELETE FROM ps_contacts",
-        "WHERE endpoint LIKE '_______________'"
-    ].join("\n"));
-
-    await MySqlEvents.launch(connectionConfig);
-
-
-    let post = (row, evt: SyncEvent<types.Contact>) =>
-        evt.post(types.misc.buildContactFromPsContact(row))
-        ;
-
-    evtNewContact= new SyncEvent();
-
-    MySqlEvents.instance.evtNewRow.attach(
-        ({ table }) => table === "ps_contacts",
-        ({ row }) => post(row, evtNewContact)
-    );
-
-    evtExpiredContact= new SyncEvent();
-
-    MySqlEvents.instance.evtDeleteRow.attach(
-        ({ table }) => table === "ps_contacts",
-        ({ row }) => post(row, evtExpiredContact)
-    );
-
-    query= api.query;
-    esc= api.esc;
-    buildInsertQuery= api.buildInsertQuery;
-
-}

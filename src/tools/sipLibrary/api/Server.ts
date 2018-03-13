@@ -1,12 +1,16 @@
 
 import { Socket } from "../Socket";
 import * as misc from "../misc";
+import * as types from "../types";
 import { ApiMessage, keepAlive } from "./ApiMessage";
+
+import "colors";
 
 export class Server {
 
     constructor(
-        public readonly handlers: Server.Handlers
+        public readonly handlers: Server.Handlers,
+        private readonly logger: Partial<Server.Logger>= {}
     ) {
 
         (()=>{
@@ -35,7 +39,6 @@ export class Server {
             async sipRequest => {
 
                 let methodName = ApiMessage.Request.readMethodName(sipRequest);
-                let params: any;
 
                 try{
 
@@ -43,11 +46,19 @@ export class Server {
 
                 }catch{
 
-                    console.log(`Method ${methodName} not implemented`.red);
+                    if( !!this.logger.onMethodNotImplemented ){
+
+                        this.logger.onMethodNotImplemented(methodName, socket);
+
+                    }
+
                     socket.destroy();
+
                     return;
 
                 }
+
+                let params: any;
 
                 try {
 
@@ -58,8 +69,16 @@ export class Server {
 
                 }catch{
 
-                    console.log("Api request malformed".red);
+                    if( !!this.logger.onRequestMalformed ){
+
+                        this.logger.onRequestMalformed(
+                            methodName, misc.getPacketContent(sipRequest), socket
+                        );
+
+                    }
+
                     socket.destroy();
+
                     return;
 
                 }
@@ -70,21 +89,55 @@ export class Server {
 
                     response = await handler(params, socket);
 
-                }catch{
+                } catch( error ){
 
-                    console.log("Request made handler throw error".red);
+                    if( !!this.logger.onHandlerThrowError ){
+
+                        this.logger.onHandlerThrowError(methodName, params, error, socket);
+
+                    }
+
                     socket.destroy();
+
                     return;
 
                 }
 
-                let sipRequestResp = ApiMessage.Response.buildSip(
-                    ApiMessage.readActionId(sipRequest),
-                    response
-                );
+                let sipRequestResp: types.Request;
+
+                try {
+
+                    sipRequestResp = ApiMessage.Response.buildSip(
+                        ApiMessage.readActionId(sipRequest),
+                        response
+                    );
+
+                } catch{
+
+                    if( !!this.logger.onHandlerReturnNonStringifiableResponse ){
+
+                        this.logger.onHandlerReturnNonStringifiableResponse(
+                            methodName, params, response, socket
+                        );
+
+                    }
+
+                    socket.destroy();
+
+                    return;
+
+                }
+
+                if( !!this.logger.onRequestSuccessfullyHandled ){
+
+                    this.logger.onRequestSuccessfullyHandled(
+                        methodName, params, response, socket
+                    );
+
+                }
 
                 misc.buildNextHopPacket.pushVia(
-                    socket, 
+                    socket,
                     sipRequestResp
                 );
 
@@ -107,5 +160,69 @@ export namespace Server {
     export type Handlers = {
         [methodName: string]: Handler<any, any>;
     };
+
+    export type Logger = {
+        onMethodNotImplemented(methodName: string, socket: Socket): void;
+        onRequestMalformed(methodName: string, rawParams: Buffer, socket: Socket): void;
+        onHandlerThrowError(methodName: string, params: any, error: Error, socket: Socket): void;
+        onHandlerReturnNonStringifiableResponse(methodName: string, params: any, response: any, socket: Socket): void;
+        onRequestSuccessfullyHandled(methodName: string, params: any, response: any, socket: Socket): void;
+    };
+
+    export function getDefaultLogger(
+        options?: Partial<{
+            idString: string;
+            log: typeof console.log;
+            displayOnlyErrors: boolean;
+            hideKeepAlive: boolean;
+        }>
+    ): Logger {
+
+        options= options || {};
+
+        let idString= options.idString || "";
+        let log= options.log || console.log;
+        let displayOnlyErrors= options.displayOnlyErrors || false;
+        let hideKeepAlive= options.hideKeepAlive || false;
+
+        const base= (socket: Socket, methodName: string, isError: boolean) => [
+            isError?`[ Sip API ${idString} Handler Error ]`.red:`[ Sip API ${idString} Handler ]`.green,
+            `${socket.localAddress}:${socket.localPort} (local)`,
+            "<=",
+            `${socket.remoteAddress}:${socket.remotePort} (remote)`,
+            methodName.yellow,
+            "\n"
+        ].join(" ");
+
+        return {
+            "onMethodNotImplemented": (methodName, socket) =>
+                log(`${base(socket, methodName, true)}Not implemented`),
+            "onRequestMalformed": (methodName, rawParams, socket) =>
+                log(`${base(socket, methodName, true)}Request malformed`, { "rawParams": `${rawParams}` }),
+            "onHandlerThrowError": (methodName, params, error, socket) =>
+                log(`${base(socket, methodName, true)}Handler throw error`, error),
+            "onHandlerReturnNonStringifiableResponse": (methodName, params, response, socket) =>
+                log(`${base(socket, methodName, true)}Non stringifiable resp`, { response }),
+            "onRequestSuccessfullyHandled":
+                (methodName, params, response, socket) => {
+
+                    if( displayOnlyErrors ){
+                        return;
+                    }
+
+                    if( hideKeepAlive && keepAlive.methodName === methodName ){
+                        return;
+                    }
+
+                    log([
+                        base(socket, methodName, false),
+                        `${"---Params:".blue}   ${JSON.stringify(params)}\n`,
+                        `${"---Response:".blue} ${JSON.stringify(response)}\n`,
+                    ].join(""));
+
+                }
+        };
+
+    }
 
 }
