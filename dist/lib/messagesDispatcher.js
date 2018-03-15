@@ -71,6 +71,7 @@ function sendMessagesOfContact(contact) {
             }
             catch (error) {
                 debug("sip Send Message error:", error.message);
+                console.log(error);
                 return;
             }
             onReceived();

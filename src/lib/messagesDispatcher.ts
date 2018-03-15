@@ -110,7 +110,10 @@ export function sendMessagesOfContact(contact: types.Contact) {
                     );
 
                 } catch (error) {
+
+
                     debug("sip Send Message error:", error.message);
+                    console.log(error);
                     return;
                 }
 

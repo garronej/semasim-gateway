@@ -4,8 +4,11 @@ import {
     Ami
 } from "chan-dongle-extended-client";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
+//TODO: Create issue on Typescript repository.
+dcMisc;
 import * as sipLibrary from "../../../tools/sipLibrary";
 import * as types from "./../../types";
+
 
 import * as _debug from "debug";
 let debug = _debug("_sipProxy/messages");
@@ -112,19 +115,22 @@ export async function initDialplan() {
 /** 
  * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
  * 
- * @param sipRequestNextHop must be the packet that will be sent to the gateway to the backend.
+ * @param sipRequestAsReceived Must be the sipRequest as sent by asterisk.
  * This calling this method will cause the message to be updated.
+ * Even if the received packet should never be altered by the sipProxy
+ * it is ok in this case as this module act as a middleware between Asterisk and 
+ * the semasim gateway.
  * @param prSipResponse promise that resolve if a response is received from UA or reject
  * if no response have been received in a reasonable amount of time.
  * 
  */
 export function onOutgoingSipMessage(
-    sipRequestNextHop: sipLibrary.Request,
+    sipRequestAsReceived: sipLibrary.Request,
     prSipResponse: Promise<any>
 ): void {
 
     sendMessage.evtOutgoingMessage.post({
-        "sipRequest": sipRequestNextHop,
+        "sipRequest": sipRequestAsReceived,
         prSipResponse
     });
 

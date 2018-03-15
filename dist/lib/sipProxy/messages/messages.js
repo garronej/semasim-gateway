@@ -11,6 +11,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
+//TODO: Create issue on Typescript repository.
+dcMisc;
 const sipLibrary = require("../../../tools/sipLibrary");
 const types = require("./../../types");
 const _debug = require("debug");
@@ -64,15 +66,18 @@ exports.initDialplan = initDialplan;
 /**
  * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
  *
- * @param sipRequestNextHop must be the packet that will be sent to the gateway to the backend.
+ * @param sipRequestAsReceived Must be the sipRequest as sent by asterisk.
  * This calling this method will cause the message to be updated.
+ * Even if the received packet should never be altered by the sipProxy
+ * it is ok in this case as this module act as a middleware between Asterisk and
+ * the semasim gateway.
  * @param prSipResponse promise that resolve if a response is received from UA or reject
  * if no response have been received in a reasonable amount of time.
  *
  */
-function onOutgoingSipMessage(sipRequestNextHop, prSipResponse) {
+function onOutgoingSipMessage(sipRequestAsReceived, prSipResponse) {
     sendMessage.evtOutgoingMessage.post({
-        "sipRequest": sipRequestNextHop,
+        "sipRequest": sipRequestAsReceived,
         prSipResponse
     });
 }

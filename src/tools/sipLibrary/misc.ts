@@ -245,7 +245,6 @@ export function buildNextHopPacket(
 
         buildNextHopPacket.popRoute(sipRequest);
 
-
         if (sipRequest.method === "REGISTER") {
 
             let sipRequestRegister = sipRequest;

@@ -1,5 +1,6 @@
 import * as tls from "tls";
 import * as net from "net";
+import { SyncEvent } from "ts-events-extended";
 import * as networkTools from "../../tools/networkTools";
 import * as sipLibrary from "../../tools/sipLibrary";
 import * as types from "./../types";
@@ -51,6 +52,8 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
     backendSocket.set(backendSocketInst);
 
     backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush() );
+
+    backendSocketInst.evtData.attach(data=> console.log("BK-GW=>GW\n", `${data.toString("utf8").yellow}`));
 
     backendSocketInst.evtRequest.attach(async sipRequestReceived => {
 
@@ -144,6 +147,8 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
         }
 
+        console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`)
+
         asteriskSocket.write(sipRequest);
 
     });
@@ -158,6 +163,8 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
         if (!asteriskSocket) {
             return;
         }
+
+        console.log("GW=>AST\n", `${sipLibrary.stringify(asteriskSocket.buildNextHopPacket(sipResponseReceived)).yellow}`)
 
         asteriskSocket.write(
             asteriskSocket.buildNextHopPacket(sipResponseReceived)
@@ -182,6 +189,9 @@ function createAsteriskSocket(
             "port": 5060
         })
     );
+
+
+    asteriskSocket.evtData.attach(data => console.log("GW<=AST\n", data.toString("utf8")));
 
     //TODO: change for webRtc
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
@@ -216,6 +226,25 @@ function createAsteriskSocket(
 
     asteriskSocket.evtRequest.attach(sipRequestReceived => {
 
+        let evtMessageResponseReceived: undefined | SyncEvent<sipLibrary.Response>;
+
+        if (sipLibrary.isPlainMessageRequest(sipRequestReceived)) {
+
+            messages.onOutgoingSipMessage(
+                sipRequestReceived,
+                new Promise<sipLibrary.Response>(
+                    (resolve, reject) =>
+                        (evtMessageResponseReceived = new SyncEvent())
+                            .waitFor(5000)
+                            .then(sipResponse => resolve(sipResponse))
+                            .catch(error => reject(error))
+                )
+            );
+
+            console.log("After interception\n", sipLibrary.stringify(sipRequestReceived));
+
+        }
+
         if (backendSocketInst.evtClose.postCount) {
             return;
         }
@@ -226,15 +255,15 @@ function createAsteriskSocket(
 
         fixSdp(sipRequest);
 
-        if (sipLibrary.isPlainMessageRequest(sipRequest)) {
+        if (!!evtMessageResponseReceived) {
 
-            messages.onOutgoingSipMessage(
-                sipRequest,
-                backendSocketInst.evtResponse.waitFor(
-                    sipResponse => sipLibrary.isResponse(sipRequest, sipResponse),
-                    5000
-                )
-            );
+            backendSocketInst.evtResponse.waitFor(
+                sipResponse => sipLibrary.isResponse(sipRequest, sipResponse),
+                evtMessageResponseReceived.getHandlers()[0].timeout!
+            )
+                .then(sipResponse => evtMessageResponseReceived!.post(sipResponse))
+                .catch(() => { })
+                ;
 
         }
 

@@ -38,6 +38,8 @@ export class Server {
             sipRequest => ApiMessage.Request.matchSip(sipRequest),
             async sipRequest => {
 
+                let rsvDate= new Date();
+
                 let methodName = ApiMessage.Request.readMethodName(sipRequest);
 
                 try{
@@ -131,7 +133,7 @@ export class Server {
                 if( !!this.logger.onRequestSuccessfullyHandled ){
 
                     this.logger.onRequestSuccessfullyHandled(
-                        methodName, params, response, socket
+                        methodName, params, response, socket, rsvDate
                     );
 
                 }
@@ -166,7 +168,7 @@ export namespace Server {
         onRequestMalformed(methodName: string, rawParams: Buffer, socket: Socket): void;
         onHandlerThrowError(methodName: string, params: any, error: Error, socket: Socket): void;
         onHandlerReturnNonStringifiableResponse(methodName: string, params: any, response: any, socket: Socket): void;
-        onRequestSuccessfullyHandled(methodName: string, params: any, response: any, socket: Socket): void;
+        onRequestSuccessfullyHandled(methodName: string, params: any, response: any, socket: Socket, rsvDate: Date): void;
     };
 
     export function getDefaultLogger(
@@ -185,7 +187,8 @@ export namespace Server {
         let displayOnlyErrors= options.displayOnlyErrors || false;
         let hideKeepAlive= options.hideKeepAlive || false;
 
-        const base= (socket: Socket, methodName: string, isError: boolean) => [
+        const base= (socket: Socket, methodName: string, isError: boolean, date= new Date()) => [
+            `${date.getHours()}h ${date.getMinutes()}m ${date.getSeconds()}s ${date.getMilliseconds()}ms`,
             isError?`[ Sip API ${idString} Handler Error ]`.red:`[ Sip API ${idString} Handler ]`.green,
             `${socket.localAddress}:${socket.localPort} (local)`,
             "<=",
@@ -204,7 +207,7 @@ export namespace Server {
             "onHandlerReturnNonStringifiableResponse": (methodName, params, response, socket) =>
                 log(`${base(socket, methodName, true)}Non stringifiable resp`, { response }),
             "onRequestSuccessfullyHandled":
-                (methodName, params, response, socket) => {
+                (methodName, params, response, socket, rsvDate) => {
 
                     if( displayOnlyErrors ){
                         return;
@@ -215,9 +218,10 @@ export namespace Server {
                     }
 
                     log([
-                        base(socket, methodName, false),
+                        base(socket, methodName, false, rsvDate),
                         `${"---Params:".blue}   ${JSON.stringify(params)}\n`,
                         `${"---Response:".blue} ${JSON.stringify(response)}\n`,
+                        `${"---Runtime:".yellow}  ${Date.now()-rsvDate.getTime()}ms\n`
                     ].join(""));
 
                 }

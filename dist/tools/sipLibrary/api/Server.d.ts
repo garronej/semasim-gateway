@@ -21,7 +21,7 @@ export declare namespace Server {
         onRequestMalformed(methodName: string, rawParams: Buffer, socket: Socket): void;
         onHandlerThrowError(methodName: string, params: any, error: Error, socket: Socket): void;
         onHandlerReturnNonStringifiableResponse(methodName: string, params: any, response: any, socket: Socket): void;
-        onRequestSuccessfullyHandled(methodName: string, params: any, response: any, socket: Socket): void;
+        onRequestSuccessfullyHandled(methodName: string, params: any, response: any, socket: Socket, rsvDate: Date): void;
     };
     function getDefaultLogger(options?: Partial<{
         idString: string;

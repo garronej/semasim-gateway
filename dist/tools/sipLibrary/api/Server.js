@@ -27,6 +27,7 @@ class Server {
     /** Can be called as soon as the socket is created ( no need to wait for connection ) */
     startListening(socket) {
         socket.evtRequest.attachExtract(sipRequest => ApiMessage_1.ApiMessage.Request.matchSip(sipRequest), (sipRequest) => __awaiter(this, void 0, void 0, function* () {
+            let rsvDate = new Date();
             let methodName = ApiMessage_1.ApiMessage.Request.readMethodName(sipRequest);
             try {
                 var { handler, sanityCheck } = this.handlers[methodName];
@@ -72,7 +73,7 @@ class Server {
                 return;
             }
             if (!!this.logger.onRequestSuccessfullyHandled) {
-                this.logger.onRequestSuccessfullyHandled(methodName, params, response, socket);
+                this.logger.onRequestSuccessfullyHandled(methodName, params, response, socket, rsvDate);
             }
             misc.buildNextHopPacket.pushVia(socket, sipRequestResp);
             socket.write(sipRequestResp);
@@ -87,7 +88,8 @@ exports.Server = Server;
         let log = options.log || console.log;
         let displayOnlyErrors = options.displayOnlyErrors || false;
         let hideKeepAlive = options.hideKeepAlive || false;
-        const base = (socket, methodName, isError) => [
+        const base = (socket, methodName, isError, date = new Date()) => [
+            `${date.getHours()}h ${date.getMinutes()}m ${date.getSeconds()}s ${date.getMilliseconds()}ms`,
             isError ? `[ Sip API ${idString} Handler Error ]`.red : `[ Sip API ${idString} Handler ]`.green,
             `${socket.localAddress}:${socket.localPort} (local)`,
             "<=",
@@ -100,7 +102,7 @@ exports.Server = Server;
             "onRequestMalformed": (methodName, rawParams, socket) => log(`${base(socket, methodName, true)}Request malformed`, { "rawParams": `${rawParams}` }),
             "onHandlerThrowError": (methodName, params, error, socket) => log(`${base(socket, methodName, true)}Handler throw error`, error),
             "onHandlerReturnNonStringifiableResponse": (methodName, params, response, socket) => log(`${base(socket, methodName, true)}Non stringifiable resp`, { response }),
-            "onRequestSuccessfullyHandled": (methodName, params, response, socket) => {
+            "onRequestSuccessfullyHandled": (methodName, params, response, socket, rsvDate) => {
                 if (displayOnlyErrors) {
                     return;
                 }
@@ -108,9 +110,10 @@ exports.Server = Server;
                     return;
                 }
                 log([
-                    base(socket, methodName, false),
+                    base(socket, methodName, false, rsvDate),
                     `${"---Params:".blue}   ${JSON.stringify(params)}\n`,
                     `${"---Response:".blue} ${JSON.stringify(response)}\n`,
+                    `${"---Runtime:".yellow}  ${Date.now() - rsvDate.getTime()}ms\n`
                 ].join(""));
             }
         };

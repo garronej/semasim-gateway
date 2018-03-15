@@ -23,13 +23,16 @@ export declare function initDialplan(): Promise<void>;
 /**
  * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
  *
- * @param sipRequestNextHop must be the packet that will be sent to the gateway to the backend.
+ * @param sipRequestAsReceived Must be the sipRequest as sent by asterisk.
  * This calling this method will cause the message to be updated.
+ * Even if the received packet should never be altered by the sipProxy
+ * it is ok in this case as this module act as a middleware between Asterisk and
+ * the semasim gateway.
  * @param prSipResponse promise that resolve if a response is received from UA or reject
  * if no response have been received in a reasonable amount of time.
  *
  */
-export declare function onOutgoingSipMessage(sipRequestNextHop: sipLibrary.Request, prSipResponse: Promise<any>): void;
+export declare function onOutgoingSipMessage(sipRequestAsReceived: sipLibrary.Request, prSipResponse: Promise<any>): void;
 /**
  *
  * Must be called by sipRouter when we received from backend an SIP MESSAGE.
