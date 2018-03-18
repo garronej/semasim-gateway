@@ -86,25 +86,35 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             ";",
             ""
         ].join("\n");
-        sql += exports.buildInsertQuery("ps_endpoints", {
-            "id": imsi,
-            "disallow": "all",
-            "allow": "alaw,ulaw",
-            "context": voiceCallBridge_1.sipCallContext,
-            "message_context": messages_dialplanContext,
+        /*
             "subscribe_context": null,
-            "aors": imsi,
-            "auth": imsi,
             "force_rport": null,
-            "from_domain": c.domain,
-            "ice_support": "yes",
             "direct_media": null,
             "asymmetric_rtp_codec": null,
             "rtcp_mux": null,
             "direct_media_method": null,
             "connected_line_method": null,
-            "transport": "transport-tcp",
             "callerid_tag": null
+        */
+        sql += exports.buildInsertQuery("ps_endpoints", {
+            "id": imsi,
+            "disallow": "all",
+            "allow": "opus,alaw,ulaw",
+            "use_avpf": "yes",
+            "media_encryption": "dtls",
+            "dtls_ca_file": "/etc/asterisk/keys/ca.crt",
+            "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem",
+            "dtls_verify": "fingerprint",
+            "dtls_setup": "actpass",
+            "media_use_received_transport": "yes",
+            "rtcp_mux": "yes",
+            "context": voiceCallBridge_1.sipCallContext,
+            "message_context": messages_dialplanContext,
+            "aors": imsi,
+            "auth": imsi,
+            "from_domain": c.domain,
+            "ice_support": "yes",
+            "transport": "transport-tcp"
         }, "IGNORE");
         sql += `SELECT password FROM ps_auths WHERE id= ${exports.esc(imsi)}`;
         let { password } = (yield exports.query(sql)).pop()[0];

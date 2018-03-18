@@ -60,9 +60,11 @@ function createBackendSocket() {
             let sipRequest = asteriskSocket.buildNextHopPacket(sipRequestReceived);
             if (sipRequest.method === "REGISTER") {
                 let { params } = sipLibrary.parseUri(sipLibrary.getContact(sipRequest).uri);
+                let paramsAoR = sipLibrary.getContact(sipRequest).params;
+                //TODO: Very important base64 is not safe for email as may contain =
                 sipRequest.headers["user-agent"] = types.misc.smuggleMiscInPsContactUserAgent({
-                    "ua_instance": sipLibrary.getContact(sipRequest).params["+sip.instance"],
-                    "ua_userEmail": Buffer.from(params["base64_email"], "base64").toString("utf8"),
+                    "ua_instance": paramsAoR["+sip.instance"],
+                    "ua_userEmail": Buffer.from((params["base64_email"] || paramsAoR["base64_email"]), "base64").toString("utf8"),
                     "ua_platform": (() => {
                         switch (params["pn-type"]) {
                             case "google":
@@ -88,6 +90,7 @@ function createBackendSocket() {
                     contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
                 }
             })();
+            console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`);
             if (sipLibrary.isPlainMessageRequest(sipRequest, "WITH AUTH")) {
                 asteriskSocket.evtResponse.attachOnce(sipResponse => sipLibrary.isResponse(sipRequest, sipResponse), ({ status }) => __awaiter(this, void 0, void 0, function* () {
                     if (status !== 202) {
@@ -96,7 +99,6 @@ function createBackendSocket() {
                     messages.onIncomingSipMessage(yield asteriskSockets.getSocketContact(asteriskSocket), sipRequestReceived);
                 }));
             }
-            console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`);
             asteriskSocket.write(sipRequest);
         }));
         backendSocketInst.evtResponse.attach(sipResponseReceived => {

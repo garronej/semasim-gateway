@@ -195,13 +195,27 @@ async function fromSip(channel: agi.AGIChannel) {
 
     debug("Call originated from sip");
 
-    let imei = channel.request.callerid;
+    let imsi = channel.request.callerid;
+
+    let usableDongle= Array.from(Dc.getInstance().usableDongles.values()).find(({ sim })=> sim.imsi === imsi );
+
+    if( !usableDongle ){
+
+        //TODO: Improve
+
+        console.log("DONGLE is not usable");
+
+        await _.hangup();
+
+        return;
+
+    }
 
     await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
 
     await _.setVariable("AGC(rx)", gain);
 
-    await _.exec("Dial", [`Dongle/i:${imei}/${channel.request.extension}`]);
+    await _.exec("Dial", [`Dongle/i:${usableDongle.imei}/${channel.request.extension}`]);
 
     //TODO: Increase volume on TX
 

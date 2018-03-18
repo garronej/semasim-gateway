@@ -109,10 +109,17 @@ function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function* () {
         let _ = channel.relax;
         debug("Call originated from sip");
-        let imei = channel.request.callerid;
+        let imsi = channel.request.callerid;
+        let usableDongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
+        if (!usableDongle) {
+            //TODO: Improve
+            console.log("DONGLE is not usable");
+            yield _.hangup();
+            return;
+        }
         yield _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
         yield _.setVariable("AGC(rx)", gain);
-        yield _.exec("Dial", [`Dongle/i:${imei}/${channel.request.extension}`]);
+        yield _.exec("Dial", [`Dongle/i:${usableDongle.imei}/${channel.request.extension}`]);
         //TODO: Increase volume on TX
         debug("call terminated");
     });

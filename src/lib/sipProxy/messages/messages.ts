@@ -138,7 +138,7 @@ export function onOutgoingSipMessage(
 
 /**
  * 
- * Must be called by sipRouter when we received from backend an SIP MESSAGE.
+ * Must be called by sipProxy router when we received from backend a SIP MESSAGE.
  * The sip message must have been accepted by asterisk and the content type
  * must be text/plain
  * 

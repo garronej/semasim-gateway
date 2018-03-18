@@ -87,9 +87,12 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
             let { params } = sipLibrary.parseUri(sipLibrary.getContact(sipRequest)!.uri);
 
+            let paramsAoR= sipLibrary.getContact(sipRequest)!.params;
+
+            //TODO: Very important base64 is not safe for email as may contain =
             sipRequest.headers["user-agent"] = types.misc.smuggleMiscInPsContactUserAgent({
-                "ua_instance": sipLibrary.getContact(sipRequest)!.params["+sip.instance"]!,
-                "ua_userEmail": Buffer.from(params["base64_email"]!, "base64").toString("utf8"),
+                "ua_instance": paramsAoR["+sip.instance"]!,
+                "ua_userEmail": Buffer.from((params["base64_email"] || paramsAoR["base64_email"])!, "base64").toString("utf8"),
                 "ua_platform": (() => {
 
                     switch (params["pn-type"]) {
@@ -127,6 +130,8 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
         })();
 
+        console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`)
+
         if (sipLibrary.isPlainMessageRequest(sipRequest, "WITH AUTH")) {
 
             asteriskSocket.evtResponse.attachOnce(
@@ -147,7 +152,6 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
         }
 
-        console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`)
 
         asteriskSocket.write(sipRequest);
 

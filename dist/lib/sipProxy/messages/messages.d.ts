@@ -35,7 +35,7 @@ export declare function initDialplan(): Promise<void>;
 export declare function onOutgoingSipMessage(sipRequestAsReceived: sipLibrary.Request, prSipResponse: Promise<any>): void;
 /**
  *
- * Must be called by sipRouter when we received from backend an SIP MESSAGE.
+ * Must be called by sipProxy router when we received from backend a SIP MESSAGE.
  * The sip message must have been accepted by asterisk and the content type
  * must be text/plain
  *
