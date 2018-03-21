@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import * as types from "./types";
-export declare function makeBufferStreamParser(handler: (sipPacket: types.Packet) => void, onFlood: () => void, maxBytesHeaders: number, maxContentLength: number): (data: Buffer) => void;
+/** For debug purpose only, assume sipPacket content is UTF-8 encoded text */
+export declare function stringify(sipPacket: types.Packet): string;
 export declare function matchRequest(sipPacket: types.Packet): sipPacket is types.Request;
 export declare function clonePacket(sipPacket: types.Packet): types.Packet;
 /** Safely set text based content (encoded in utf8 ) */

@@ -8,11 +8,11 @@ var ApiMessage;
 (function (ApiMessage) {
     const actionIdKey = "api-action-id";
     function buildSip(actionId, payload) {
-        let sipRequest = core.parse([
+        let sipRequest = core.parse(Buffer.from([
             `API _ SIP/2.0`,
             "Max-Forwards: 0",
             "\r\n"
-        ].join("\r\n"));
+        ].join("\r\n"), "utf8"));
         sipRequest.headers[actionIdKey] = `${actionId++}`;
         console.assert(payload !== null, "null is not stringifiable");
         console.assert(!(typeof payload === "number" && isNaN(payload)), "NaN is not stringifiable");

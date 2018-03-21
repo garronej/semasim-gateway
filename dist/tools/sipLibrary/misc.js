@@ -3,18 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = require("./core");
 //export const regIdKey = "reg-id";
 //export const instanceIdKey = "+sip.instance";
-function makeBufferStreamParser(handler, onFlood, maxBytesHeaders, maxContentLength) {
-    let streamParser = core.makeStreamParser(handler, onFlood, maxBytesHeaders, maxContentLength);
-    return data => streamParser(data.toString("binary"));
+/** For debug purpose only, assume sipPacket content is UTF-8 encoded text */
+function stringify(sipPacket) {
+    return core.toData(sipPacket).toString("utf8");
 }
-exports.makeBufferStreamParser = makeBufferStreamParser;
+exports.stringify = stringify;
 function matchRequest(sipPacket) {
     return "method" in sipPacket;
 }
 exports.matchRequest = matchRequest;
 //TODO: optimize
 function clonePacket(sipPacket) {
-    return core.parse(core.stringify(sipPacket));
+    return core.parse(core.toData(sipPacket));
 }
 exports.clonePacket = clonePacket;
 function setPacketContent(sipPacket, data) {
@@ -50,26 +50,27 @@ function isPlainMessageRequest(sipRequest, withAuth = undefined) {
 }
 exports.isPlainMessageRequest = isPlainMessageRequest;
 function parsePath(path) {
-    const message = core.parse([
+    const message = core.parse(Buffer.from([
         `DUMMY _ SIP/2.0`,
         `Path: ${path}`,
         "\r\n"
-    ].join("\r\n"));
+    ].join("\r\n"), "utf8"));
     return message.headers.path;
 }
 exports.parsePath = parsePath;
 function stringifyPath(parsedPath) {
-    const message = core.parse([
+    const message = core.parse(Buffer.from([
         `DUMMY _ SIP/2.0`,
         "\r\n"
-    ].join("\r\n"));
+    ].join("\r\n"), "utf8"));
     message.headers.path = parsedPath;
-    return core.stringify(message).match(/\r\nPath:\ +(.*)\r\n/)[1];
+    return core.toData(message).toString("utf8").match(/\r\nPath:\ +(.*)\r\n/)[1];
 }
 exports.stringifyPath = stringifyPath;
 function parseOptionTags(headerFieldValue) {
-    if (!headerFieldValue)
+    if (!headerFieldValue) {
         return [];
+    }
     return headerFieldValue.split(",").map(optionTag => optionTag.replace(/\s/g, ""));
 }
 exports.parseOptionTags = parseOptionTags;

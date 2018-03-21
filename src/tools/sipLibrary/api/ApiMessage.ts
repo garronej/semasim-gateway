@@ -14,11 +14,11 @@ export namespace ApiMessage {
         payload: any
     ): types.Request {
 
-        let sipRequest = core.parse([
+        let sipRequest = core.parse(Buffer.from([
             `API _ SIP/2.0`,
             "Max-Forwards: 0",
             "\r\n"
-        ].join("\r\n")) as types.Request;
+        ].join("\r\n"), "utf8")) as types.Request;
 
         sipRequest.headers[actionIdKey] = `${actionId++}`;
 

@@ -96,7 +96,9 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             "connected_line_method": null,
             "callerid_tag": null
         */
-        sql += exports.buildInsertQuery("ps_endpoints", {
+        /*
+        //For webRTC:
+        sql += buildInsertQuery("ps_endpoints", {
             "id": imsi,
             "disallow": "all",
             "allow": "opus,alaw,ulaw",
@@ -108,13 +110,35 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             "dtls_setup": "actpass",
             "media_use_received_transport": "yes",
             "rtcp_mux": "yes",
-            "context": voiceCallBridge_1.sipCallContext,
+            "context": sipCallContext,
             "message_context": messages_dialplanContext,
             "aors": imsi,
             "auth": imsi,
             "from_domain": c.domain,
             "ice_support": "yes",
             "transport": "transport-tcp"
+        }, "IGNORE");
+        */
+        //For Linphone:
+        sql += exports.buildInsertQuery("ps_endpoints", {
+            "id": imsi,
+            "disallow": "all",
+            //"allow": "alaw,ulaw",
+            "allow": "opus",
+            "use_avpf": null,
+            "media_encryption": null,
+            "dtls_ca_file": null,
+            "dtls_verify": null,
+            "dtls_setup": null,
+            "media_use_received_transport": null,
+            "rtcp_mux": null,
+            "context": voiceCallBridge_1.sipCallContext,
+            "message_context": messages_dialplanContext,
+            "aors": imsi,
+            "auth": imsi,
+            "from_domain": c.domain,
+            "ice_support": "yes",
+            "transport": "transport-tcp",
         }, "IGNORE");
         sql += `SELECT password FROM ps_auths WHERE id= ${exports.esc(imsi)}`;
         let { password } = (yield exports.query(sql)).pop()[0];

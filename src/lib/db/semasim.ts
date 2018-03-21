@@ -242,7 +242,7 @@ export async function onCallAnswered(
     imsi,
     answeredByUa: types.Ua,
     ringingUas: Iterable<types.Ua>
-) {
+): Promise<void> {
 
     let sql = "";
 
@@ -272,6 +272,10 @@ export async function onCallAnswered(
             }
         );
 
+    }
+
+    if( !sql ){
+        return;
     }
 
     await query(sql);

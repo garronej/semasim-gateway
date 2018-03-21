@@ -66,15 +66,21 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         sipProxy.backendSocket.remoteApi
             .wakeUpContact(contact)
-            .then(status =>
-                (status === "REACHABLE") ? evtReachableContact.post(contact) : null
-            )
+            .then(status => {
+
+                if (status === "REACHABLE") {
+
+                    evtReachableContact.post(contact);
+
+                }
+
+
+            })
             ;
 
     }
 
-
-    let ringingChannels= new Map<types.Contact, string>();
+    let ringingChannels = new Map<types.Contact, string>();
 
     let evtEstablishedOrEnded = new SyncEvent<types.Contact | undefined>();
 
@@ -95,16 +101,19 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         }
 
-        if (contact) {
+        if (!!contact) {
 
-            await db.onCallAnswered(
-                number, 
-                imsi, 
-                contact.uaSim.ua, 
-                Array.from(ringingChannels.keys()).map(contact => contact.uaSim.ua )
-            );
+            let ringingUas = Array.from(ringingChannels.keys())
+                .map(contact => contact.uaSim.ua);
 
-        }else{
+                await db.onCallAnswered(
+                    number,
+                    imsi,
+                    contact.uaSim.ua,
+                    ringingUas
+                );
+
+        } else {
 
             debug("Dongle channel hanged up but not answered");
 
@@ -159,8 +168,8 @@ async function fromDongle(channel: agi.AGIChannel) {
                 ringingChannels.set(contact, sipChannelName);
 
                 ami.setVar(
-                    "AGC(rx)", 
-                    gain, 
+                    "AGC(rx)",
+                    gain,
                     sipChannelName
                 );
 
@@ -197,9 +206,9 @@ async function fromSip(channel: agi.AGIChannel) {
 
     let imsi = channel.request.callerid;
 
-    let usableDongle= Array.from(Dc.getInstance().usableDongles.values()).find(({ sim })=> sim.imsi === imsi );
+    let usableDongle = Array.from(Dc.getInstance().usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
 
-    if( !usableDongle ){
+    if (!usableDongle) {
 
         //TODO: Improve
 

@@ -49,7 +49,11 @@ function fromDongle(channel) {
         for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
             sipProxy.backendSocket.remoteApi
                 .wakeUpContact(contact)
-                .then(status => (status === "REACHABLE") ? evtReachableContact.post(contact) : null);
+                .then(status => {
+                if (status === "REACHABLE") {
+                    evtReachableContact.post(contact);
+                }
+            });
         }
         let ringingChannels = new Map();
         let evtEstablishedOrEnded = new ts_events_extended_1.SyncEvent();
@@ -63,8 +67,10 @@ function fromDongle(channel) {
                     "cause": "1"
                 }).catch(() => { });
             }
-            if (contact) {
-                yield db.onCallAnswered(number, imsi, contact.uaSim.ua, Array.from(ringingChannels.keys()).map(contact => contact.uaSim.ua));
+            if (!!contact) {
+                let ringingUas = Array.from(ringingChannels.keys())
+                    .map(contact => contact.uaSim.ua);
+                yield db.onCallAnswered(number, imsi, contact.uaSim.ua, ringingUas);
             }
             else {
                 debug("Dongle channel hanged up but not answered");

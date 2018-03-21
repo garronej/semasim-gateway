@@ -34,7 +34,7 @@ testing_1.assertSame(misc_1.cid.parse(connectionId), {
     "clientSocketRemotePort": clientSocket.remotePort
 });
 function asteriskInitRequest() {
-    let sipRequest_A = sipLibrary.parse([
+    let sipRequest_A = sipLibrary.parse(Buffer.from([
         `INVITE sip:${imsi}@semasim.com;connection_id=${connectionId} SIP/2.0`,
         `Via: SIP/2.0/TCP ${asteriskSocket.localAddress}:5060;rport;branch=z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;alias`,
         "From:  <sip:0636786385@semasim.com>;tag=65142128-e2c1-4cfd-a6d7-ee4dcfe5d433",
@@ -48,7 +48,7 @@ function asteriskInitRequest() {
             `<sip:${gatewaySocket.localAddress}:${gatewaySocket.localPort};transport=${gatewaySocket.protocol};lr>`
         ].join(",  "),
         "\r\n",
-    ].join("\r\n"));
+    ].join("\r\n"), "utf8"));
     console.log("sipRequest_A:");
     console.log(sipLibrary.stringify(sipRequest_A));
     testing_1.assertSame(misc_1.readImsi(sipRequest_A), imsi);
@@ -56,7 +56,7 @@ function asteriskInitRequest() {
     misc_1.cid.set(sipRequest_B, connectionId);
     console.log("sipRequest_B:");
     console.log(sipLibrary.stringify(sipRequest_B));
-    testing_1.assertSame(sipRequest_B, sipLibrary.parse([
+    testing_1.assertSame(sipRequest_B, sipLibrary.parse(Buffer.from([
         "INVITE sip:208150113995832@semasim.com;connection_id=MTUxOTI5MjY1NTAyMzpfX2NsaWVudF9fOjMzMzM_ SIP/2.0",
         "Via: SIP/2.0/TLS __gateway__:2222;branch=z9hG4bK-z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;rport",
         "Via: SIP/2.0/TCP __gateway__:5060;rport;branch=z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;alias",
@@ -69,12 +69,12 @@ function asteriskInitRequest() {
         "Route:  <sip:__backend_2__:80;transport=TLS;lr>",
         "Record-Route:  <sip:__gateway__:2222;transport=TLS;lr>",
         "\r\n"
-    ].join("\r\n")));
+    ].join("\r\n"), "utf8")));
     testing_1.assertSame(misc_1.cid.read(sipRequest_B), connectionId);
     let sipRequest_C = sipLibrary.buildNextHopPacket(clientSocket, sipRequest_B);
     console.log("sipRequest_C:");
     console.log(sipLibrary.stringify(sipRequest_C));
-    testing_1.assertSame(sipRequest_C, sipLibrary.parse([
+    testing_1.assertSame(sipRequest_C, sipLibrary.parse(Buffer.from([
         "INVITE sip:208150113995832@semasim.com;connection_id=MTUxOTI5MjY1NTAyMzpfX2NsaWVudF9fOjMzMzM_ SIP/2.0",
         "Via: SIP/2.0/WSS __backend_1__:443;branch=z9hG4bK-z9hG4bK-z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;rport",
         "Via: SIP/2.0/TLS __gateway__:2222;branch=z9hG4bK-z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;rport",
@@ -85,13 +85,14 @@ function asteriskInitRequest() {
         "Call-ID: 9e3b5bf1-42ff-4755-81ba-2b3cd1266504",
         "Max-Forwards: 68",
         "Content-Length: 0",
-        "Record-Route:  <sip:__backend_1__:443;transport=WSS;lr>,  <sip:__gateway__:2222;transport=TLS;lr>",
+        "Record-Route: <sip:__backend_1__:443;transport=WSS;lr>",
+        "Record-Route: <sip:__gateway__:2222;transport=TLS;lr>",
         "\r\n"
-    ].join("\r\n")));
-    let sipResponse_d = sipLibrary.parse([
+    ].join("\r\n"), "utf8")));
+    let sipResponse_d = sipLibrary.parse(Buffer.from([
         "SIP/2.0 180 Ringing",
         "\r\n"
-    ].join("\r\n"));
+    ].join("\r\n"), "utf8"));
     sipResponse_d.headers = sipLibrary.clonePacket(sipRequest_C).headers;
     sipResponse_d.headers.to.params["tag"] = "8117gmpdpl";
     sipResponse_d.headers.contact[0].uri = `sip:${imsi}@semasim.com`;
@@ -102,7 +103,7 @@ function asteriskInitRequest() {
     let sipResponse_e = sipLibrary.buildNextHopPacket(gatewaySocket, sipResponse_d);
     console.log("sipResponse_e:");
     console.log(sipLibrary.stringify(sipResponse_e));
-    testing_1.assertSame(sipResponse_e, sipLibrary.parse([
+    testing_1.assertSame(sipResponse_e, sipLibrary.parse(Buffer.from([
         "SIP/2.0 180 Ringing",
         "Via: SIP/2.0/TLS __gateway__:2222;branch=z9hG4bK-z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;rport",
         "Via: SIP/2.0/TCP __gateway__:5060;rport;branch=z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;alias",
@@ -111,14 +112,15 @@ function asteriskInitRequest() {
         "Contact:  <sip:208150113995832@semasim.com>",
         "Call-ID: 9e3b5bf1-42ff-4755-81ba-2b3cd1266504",
         "Content-Length: 0",
-        "Record-Route:  <sip:__backend_2__:80;transport=TLS;lr>,  <sip:__gateway__:2222;transport=TLS;lr>",
+        "Record-Route: <sip:__backend_2__:80;transport=TLS;lr>",
+        "Record-Route: <sip:__gateway__:2222;transport=TLS;lr>",
         "\r\n"
-    ].join("\r\n")));
+    ].join("\r\n"), "utf8")));
     testing_1.assertSame([misc_1.readImsi, misc_1.cid.read].map(f => f(sipResponse_e)), [imsi, connectionId]);
     let sipResponse_f = sipLibrary.buildNextHopPacket(asteriskSocket, sipResponse_e);
     console.log("sipResponse_f:");
     console.log(sipLibrary.stringify(sipResponse_f));
-    testing_1.assertSame(sipResponse_f, sipLibrary.parse([
+    testing_1.assertSame(sipResponse_f, sipLibrary.parse(Buffer.from([
         "SIP/2.0 180 Ringing",
         "Via: SIP/2.0/TCP __gateway__:5060;rport;branch=z9hG4bKPj43df2c0d-b1ad-42d6-923d-93c9b65afb18;alias",
         "From:  <sip:0636786385@semasim.com>;tag=65142128-e2c1-4cfd-a6d7-ee4dcfe5d433",
@@ -126,9 +128,10 @@ function asteriskInitRequest() {
         "Contact:  <sip:208150113995832@semasim.com>",
         "Call-ID: 9e3b5bf1-42ff-4755-81ba-2b3cd1266504",
         "Content-Length: 0",
-        "Record-Route:  <sip:__backend_2__:80;transport=TLS;lr>,  <sip:__gateway__:1111;transport=TCP;lr>",
+        "Record-Route: <sip:__backend_2__:80;transport=TLS;lr>",
+        "Record-Route: <sip:__gateway__:1111;transport=TCP;lr>",
         "\r\n"
-    ].join("\r\n")));
+    ].join("\r\n"), "utf8")));
     console.assert(sipLibrary.isResponse(sipRequest_A, sipResponse_f));
     console.assert(sipLibrary.isResponse(sipRequest_B, sipResponse_e));
     console.assert(sipLibrary.isResponse(sipRequest_C, sipResponse_d));

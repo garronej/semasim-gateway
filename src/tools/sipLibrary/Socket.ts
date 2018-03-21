@@ -25,6 +25,7 @@ export class Socket {
 
     public readonly evtTimeout = new VoidSyncEvent();
 
+    /**Emit chunk of data as received by the underlying connection*/
     public readonly evtData = new SyncEvent<Buffer>();
 
     private static readonly maxBytesHeaders = 7820;
@@ -64,7 +65,7 @@ export class Socket {
         private readonly spoofedAddressAndPort: Partial<Socket.AddrAndPorts>= {}
     ) {
 
-        let streamParser = misc.makeBufferStreamParser(
+        let streamParser = core.makeStreamParser(
             sipPacket => misc.matchRequest(sipPacket) ?
                 this.evtRequest.post(sipPacket) :
                 this.evtResponse.post(sipPacket)
@@ -198,7 +199,7 @@ export class Socket {
 
         /*NOTE: this could throw but it would mean that it's an error
         on our part as a packet that have been parsed should be stringifiable.*/
-        let data = Buffer.from(core.stringify(sipPacket), "binary");
+        let data= core.toData(sipPacket);
 
         if (Socket.matchWebSocket(this.connection)) {
 

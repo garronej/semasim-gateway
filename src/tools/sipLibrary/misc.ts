@@ -4,25 +4,10 @@ import * as types from "./types";
 //export const regIdKey = "reg-id";
 //export const instanceIdKey = "+sip.instance";
 
-export function makeBufferStreamParser(
-    handler: (sipPacket: types.Packet) => void,
-    onFlood: () => void,
-    maxBytesHeaders: number,
-    maxContentLength: number
-): (data: Buffer) => void {
-
-    let streamParser= core.makeStreamParser(
-        handler, 
-        onFlood, 
-        maxBytesHeaders, 
-        maxContentLength
-    );
-
-    return data => streamParser(data.toString("binary"));
-
+/** For debug purpose only, assume sipPacket content is UTF-8 encoded text */
+export function stringify(sipPacket: types.Packet): string {
+    return core.toData(sipPacket).toString("utf8");
 }
-
-
 
 export function matchRequest(sipPacket: types.Packet): sipPacket is types.Request {
     return "method" in sipPacket;
@@ -30,7 +15,7 @@ export function matchRequest(sipPacket: types.Packet): sipPacket is types.Reques
 
 //TODO: optimize
 export function clonePacket(sipPacket: types.Packet): types.Packet {
-    return core.parse(core.stringify(sipPacket));
+    return core.parse(core.toData(sipPacket));
 }
 
 /** Safely set text based content (encoded in utf8 ) */
@@ -93,11 +78,11 @@ export function isPlainMessageRequest(
 
 export function parsePath(path: string): types.AoRWithParsedUri[] {
 
-    const message = core.parse([
+    const message = core.parse(Buffer.from([
         `DUMMY _ SIP/2.0`,
         `Path: ${path}`,
         "\r\n"
-    ].join("\r\n")) as types.Request;
+    ].join("\r\n"), "utf8")) as types.Request;
 
     return message.headers.path!;
 
@@ -105,20 +90,22 @@ export function parsePath(path: string): types.AoRWithParsedUri[] {
 
 export function stringifyPath(parsedPath: types.AoRWithParsedUri[]): string {
 
-    const message = core.parse([
+    const message = core.parse(Buffer.from([
         `DUMMY _ SIP/2.0`,
         "\r\n"
-    ].join("\r\n"));
+    ].join("\r\n"), "utf8"));
 
     message.headers.path = parsedPath;
 
-    return core.stringify(message).match(/\r\nPath:\ +(.*)\r\n/)![1];
+    return core.toData(message).toString("utf8").match(/\r\nPath:\ +(.*)\r\n/)![1];
 
 }
 
 export function parseOptionTags(headerFieldValue: string | undefined): string[] {
 
-    if (!headerFieldValue) return [];
+    if (!headerFieldValue){
+         return [];
+    }
 
     return headerFieldValue.split(",").map(optionTag => optionTag.replace(/\s/g, ""));
 

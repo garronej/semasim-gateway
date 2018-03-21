@@ -64,7 +64,15 @@ function createBackendSocket() {
                 //TODO: Very important base64 is not safe for email as may contain =
                 sipRequest.headers["user-agent"] = types.misc.smuggleMiscInPsContactUserAgent({
                     "ua_instance": paramsAoR["+sip.instance"],
-                    "ua_userEmail": Buffer.from((params["base64_email"] || paramsAoR["base64_email"]), "base64").toString("utf8"),
+                    "ua_userEmail": (() => {
+                        try {
+                            return Buffer.from((params["base64_email"] || paramsAoR["base64_email"]), "base64").toString("utf8");
+                        }
+                        catch (_a) {
+                            console.log("et bim :(");
+                            return "joseph.garrone.gj@gmail.com";
+                        }
+                    })(),
                     "ua_platform": (() => {
                         switch (params["pn-type"]) {
                             case "google":
@@ -81,12 +89,17 @@ function createBackendSocket() {
                     connectionId
                 });
             }
-            /** We add connection id to contact params so that contact is uniq across uas */
+            /**
+             * NOTE: Internally Asterisk use a small buffer of 64 bytes for contact uri variable
+             * In consequence we need to shorten the length of the contact uri by removing
+             * all the parameters ( app-ip, pn-tok ect ).
+             * Yet to ensure that the uri remain uniq we add a dummy timestamp param
+             */
             (() => {
                 let contactAoR = sipLibrary.getContact(sipRequest);
                 if (contactAoR) {
                     let parsedUri = sipLibrary.parseUri(contactAoR.uri);
-                    parsedUri.params = { "connection_id": connectionId };
+                    parsedUri.params = { "stamp": `${misc_1.cid.parse(connectionId).timestamp}` };
                     contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
                 }
             })();

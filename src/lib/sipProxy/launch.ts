@@ -16,6 +16,13 @@ export async function launch(){
 
     let backendSocketInst= await router.createBackendSocket();
 
+    //TODO: set a timeout
+    backendSocketInst.evtConnect.attachOnce(()=> {
+
+        console.log("Connected to backed");
+
+    });
+
     backendSocketInst.evtClose.attachOnce(async () => {
 
         console.log("Backend socket closed, waiting and restarting");

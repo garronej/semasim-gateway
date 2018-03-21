@@ -199,6 +199,9 @@ function onCallAnswered(number, imsi, answeredByUa, ringingUas) {
                 "uaSim": { ua, imsi }
             });
         }
+        if (!sql) {
+            return;
+        }
         yield exports.query(sql);
     });
 }

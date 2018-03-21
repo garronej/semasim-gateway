@@ -17,6 +17,7 @@ class Socket {
         this.evtClose = new ts_events_extended_1.SyncEvent();
         this.evtConnect = new ts_events_extended_1.VoidSyncEvent();
         this.evtTimeout = new ts_events_extended_1.VoidSyncEvent();
+        /**Emit chunk of data as received by the underlying connection*/
         this.evtData = new ts_events_extended_1.SyncEvent();
         this.__localPort__ = NaN;
         this.__remotePort__ = NaN;
@@ -25,7 +26,7 @@ class Socket {
         this.setKeepAlive = (...inputs) => Socket.matchWebSocket(this.connection) ?
             undefined :
             this.connection.setKeepAlive.apply(this.connection, inputs);
-        let streamParser = misc.makeBufferStreamParser(sipPacket => misc.matchRequest(sipPacket) ?
+        let streamParser = core.makeStreamParser(sipPacket => misc.matchRequest(sipPacket) ?
             this.evtRequest.post(sipPacket) :
             this.evtResponse.post(sipPacket), () => this.connection.emit("error", new Error("Flood")), Socket.maxBytesHeaders, Socket.maxContentLength);
         this.connection
@@ -108,7 +109,7 @@ class Socket {
         }
         /*NOTE: this could throw but it would mean that it's an error
         on our part as a packet that have been parsed should be stringifiable.*/
-        let data = Buffer.from(core.stringify(sipPacket), "binary");
+        let data = core.toData(sipPacket);
         if (Socket.matchWebSocket(this.connection)) {
             return new Promise(resolve => this.connection
                 .send(data, { "binary": true }, error => resolve(error ? true : false)));

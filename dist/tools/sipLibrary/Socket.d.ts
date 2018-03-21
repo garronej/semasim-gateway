@@ -14,6 +14,7 @@ export declare class Socket {
     readonly evtClose: SyncEvent<boolean>;
     readonly evtConnect: VoidSyncEvent;
     readonly evtTimeout: VoidSyncEvent;
+    /**Emit chunk of data as received by the underlying connection*/
     readonly evtData: SyncEvent<Buffer>;
     private static readonly maxBytesHeaders;
     private static readonly maxContentLength;

@@ -18,6 +18,10 @@ function launch() {
             yield messages.initDialplan();
         }
         let backendSocketInst = yield router.createBackendSocket();
+        //TODO: set a timeout
+        backendSocketInst.evtConnect.attachOnce(() => {
+            console.log("Connected to backed");
+        });
         backendSocketInst.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
             console.log("Backend socket closed, waiting and restarting");
             let delay = (function getRandomArbitrary(min, max) {

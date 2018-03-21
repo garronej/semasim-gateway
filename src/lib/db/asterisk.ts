@@ -146,6 +146,8 @@ export async function createEndpointIfNeededAndGetPassword(
         "callerid_tag": null
     */
 
+    /*
+    //For webRTC:
     sql += buildInsertQuery("ps_endpoints", {
         "id": imsi,
         "disallow": "all",
@@ -165,6 +167,29 @@ export async function createEndpointIfNeededAndGetPassword(
         "from_domain": c.domain,
         "ice_support": "yes",
         "transport": "transport-tcp"
+    }, "IGNORE");
+    */
+
+    //For Linphone:
+    sql += buildInsertQuery("ps_endpoints", {
+                "id": imsi,
+                "disallow": "all",
+                //"allow": "alaw,ulaw",
+                "allow": "opus",
+                "use_avpf": null,
+                "media_encryption": null,
+                "dtls_ca_file": null,
+                "dtls_verify": null,
+                "dtls_setup": null,
+                "media_use_received_transport": null,
+                "rtcp_mux": null,
+                "context": sipCallContext,
+                "message_context": messages_dialplanContext,
+                "aors": imsi,
+                "auth": imsi,
+                "from_domain": c.domain,
+                "ice_support": "yes",
+                "transport": "transport-tcp",
     }, "IGNORE");
 
     sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
