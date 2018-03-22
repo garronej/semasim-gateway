@@ -1,6 +1,8 @@
 
-import * as messages from "./messages/index_sipProxy";
+import * as messages from "./messages";
 import * as router from "./router";
+
+import "colors";
 
 let launchCount= 0;
 
@@ -10,16 +12,17 @@ export async function launch(){
 
     if( !launchCount ){
 
-        await messages.initDialplan();
+        await messages.init();
 
     }
 
     let backendSocketInst= await router.createBackendSocket();
 
-    //TODO: set a timeout
-    backendSocketInst.evtConnect.attachOnce(()=> {
+    backendSocketInst.evtConnect.waitFor(10000).catch(()=>{
 
-        console.log("Connected to backed");
+        console.log("WARN WARN WARN connection to backend took too much time".red);
+
+        backendSocketInst.destroy();
 
     });
 

@@ -10,14 +10,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const tls = require("tls");
 const net = require("net");
-const ts_events_extended_1 = require("ts-events-extended");
+//import { SyncEvent } from "ts-events-extended";
 const networkTools = require("../../tools/networkTools");
 const sipLibrary = require("../../tools/sipLibrary");
 const types = require("./../types");
 const misc_1 = require("./misc");
-const messages = require("./messages/index_sipProxy");
+//import * as messages from "./messages/index_sipProxy";
 const backendSocket = require("./backendSocket/index_sipProxy");
-const asteriskSockets = require("./asteriskSockets/index_sipProxy");
+const asteriskSockets = require("./asteriskSockets");
+const contactRegistrationMonitor = require("./contactsRegistrationMonitor");
+const messages = require("./messages");
 const c = require("./../_constants");
 require("colors");
 const _debug = require("debug");
@@ -52,7 +54,10 @@ function createBackendSocket() {
                     return;
                 }
                 asteriskSocket = createAsteriskSocket(connectionId, backendSocketInst, localIp);
-                asteriskSockets.set({ connectionId, imsi }, asteriskSocket);
+                let key = { connectionId, imsi };
+                asteriskSockets.set(key, asteriskSocket);
+                let prContact = contactRegistrationMonitor.onNewAsteriskSocket(asteriskSocket, key);
+                messages.onNewAsteriskSocket(asteriskSocket, prContact);
             }
             if (!asteriskSocket.evtConnect.postCount) {
                 yield asteriskSocket.evtConnect.waitFor();
@@ -69,6 +74,7 @@ function createBackendSocket() {
                             return Buffer.from((params["base64_email"] || paramsAoR["base64_email"]), "base64").toString("utf8");
                         }
                         catch (_a) {
+                            //TODO: fix ios does not add email
                             console.log("et bim :(");
                             return "joseph.garrone.gj@gmail.com";
                         }
@@ -104,14 +110,6 @@ function createBackendSocket() {
                 }
             })();
             console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`);
-            if (sipLibrary.isPlainMessageRequest(sipRequest, "WITH AUTH")) {
-                asteriskSocket.evtResponse.attachOnce(sipResponse => sipLibrary.isResponse(sipRequest, sipResponse), ({ status }) => __awaiter(this, void 0, void 0, function* () {
-                    if (status !== 202) {
-                        return;
-                    }
-                    messages.onIncomingSipMessage(yield asteriskSockets.getSocketContact(asteriskSocket), sipRequestReceived);
-                }));
-            }
             asteriskSocket.write(sipRequest);
         }));
         backendSocketInst.evtResponse.attach(sipResponseReceived => {
@@ -134,12 +132,9 @@ function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
         "port": 5060
     }));
     asteriskSocket.evtData.attach(data => console.log("GW<=AST\n", data.toString("utf8")));
-    //TODO: change for webRtc
+    //TODO: si if for webRtc it is desirable
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     const fixSdp = (sipPacketNextHop) => {
-        if (sipPacketNextHop.headers["content-type"] !== "application/sdp") {
-            return;
-        }
         let sdp = sipLibrary.getPacketContent(sipPacketNextHop).toString("utf8");
         let gatewaySocketRemoteAddress = sipLibrary.readSrflxAddrInSdp(sdp);
         if (!gatewaySocketRemoteAddress ||
@@ -150,35 +145,20 @@ function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
         parsedSdp.m[0].c = Object.assign({}, parsedSdp.c, { "address": gatewaySocketRemoteAddress });
         sipLibrary.setPacketContent(sipPacketNextHop, sipLibrary.stringifySdp(parsedSdp));
     };
-    asteriskSocket.evtRequest.attach(sipRequestReceived => {
-        let evtMessageResponseReceived;
-        if (sipLibrary.isPlainMessageRequest(sipRequestReceived)) {
-            messages.onOutgoingSipMessage(sipRequestReceived, new Promise((resolve, reject) => (evtMessageResponseReceived = new ts_events_extended_1.SyncEvent())
-                .waitFor(5000)
-                .then(sipResponse => resolve(sipResponse))
-                .catch(error => reject(error))));
-            console.log("After interception\n", sipLibrary.stringify(sipRequestReceived));
-        }
+    const onSipPacket = (sipPacketAsReceived) => {
         if (backendSocketInst.evtClose.postCount) {
             return;
         }
-        let sipRequest = backendSocketInst.buildNextHopPacket(sipRequestReceived);
-        misc_1.cid.set(sipRequest, connectionId);
-        fixSdp(sipRequest);
-        if (!!evtMessageResponseReceived) {
-            backendSocketInst.evtResponse.waitFor(sipResponse => sipLibrary.isResponse(sipRequest, sipResponse), evtMessageResponseReceived.getHandlers()[0].timeout)
-                .then(sipResponse => evtMessageResponseReceived.post(sipResponse))
-                .catch(() => { });
+        let sipPacket = backendSocketInst.buildNextHopPacket(sipPacketAsReceived);
+        if (sipLibrary.matchRequest(sipPacket)) {
+            misc_1.cid.set(sipPacket, connectionId);
         }
-        backendSocketInst.write(sipRequest);
-    });
-    asteriskSocket.evtResponse.attach(sipResponseReceived => {
-        if (backendSocketInst.evtClose.postCount) {
-            return;
+        if (sipPacket.headers["content-type"] === "application/sdp") {
+            fixSdp(sipPacket);
         }
-        let sipResponse = backendSocketInst.buildNextHopPacket(sipResponseReceived);
-        fixSdp(sipResponse);
-        backendSocketInst.write(sipResponse);
-    });
+        backendSocketInst.write(sipPacket);
+    };
+    asteriskSocket.evtRequest.attach(onSipPacket);
+    asteriskSocket.evtResponse.attach(onSipPacket);
     return asteriskSocket;
 }

@@ -4,7 +4,7 @@ import * as db from "../../db";
 import { types as dcTypes } from "chan-dongle-extended-client";
 import * as types from "../../types";
 import * as backendSocket from "./store";
-import * as asteriskSockets from "../asteriskSockets";
+import * as contactRegistrationMonitor from "../contactsRegistrationMonitor";
 
 export function notifySimOnline(
     dongle: dcTypes.Dongle.Usable
@@ -45,7 +45,7 @@ export function notifySimOnline(
 
         if (response.status === "NEED PASSWORD RENEWAL") {
 
-            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
+            contactRegistrationMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
 
             db.semasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
 
@@ -58,7 +58,7 @@ export function notifySimOnline(
 
         } else if (response.status === "NOT REGISTERED") {
 
-            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
+            contactRegistrationMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
 
             db.semasim.removeUaSim(dongle.sim.imsi);
 

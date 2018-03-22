@@ -49,7 +49,7 @@ exports.sendMessagesOfDongle = sendMessagesOfDongle;
 })(sendMessagesOfDongle = exports.sendMessagesOfDongle || (exports.sendMessagesOfDongle = {}));
 function notifyNewSipMessagesToSend(imsi) {
     return __awaiter(this, void 0, void 0, function* () {
-        for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
+        for (let contact of sipProxy.getContacts(imsi)) {
             if (!(yield db.messageTowardSipUnsentCount(contact.uaSim))) {
                 continue;
             }
@@ -67,7 +67,7 @@ function sendMessagesOfContact(contact) {
     sendMessagesOfContact.lock.acquire(types.misc.generateUaSimId(contact.uaSim), () => __awaiter(this, void 0, void 0, function* () {
         for (let [message, onReceived] of yield db.getUnsentMessagesTowardSip(contact.uaSim)) {
             try {
-                yield sipProxy.messages.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
+                yield sipProxy.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
             }
             catch (error) {
                 debug("sip Send Message error:", error.message);

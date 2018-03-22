@@ -205,64 +205,74 @@ export function isResponse(
         sipRequestNextHop.headers.via[0].params["branch"];
 }
 
+const asReceivedToNextHopWeakMap= new WeakMap<types.Packet, types.Packet>();
+
+export function getNextHop( sipRequestAsReceived: types.Request ): types.Request | undefined;
+export function getNextHop( sipResponseAsReceived: types.Response ): types.Response | undefined;
+export function getNextHop( sipPacketAdReceived: types.Packet) : types.Packet | undefined;
+export function getNextHop( sipPacketAdReceived: types.Packet) : types.Packet | undefined {
+    return asReceivedToNextHopWeakMap.get(sipPacketAdReceived);
+}
 
 /** Return a clone of the packet ready for next hop */
 export function buildNextHopPacket(
     socket: buildNextHopPacket.ISocket,
-    sipRequest: types.Request
+    sipRequestAsReceived: types.Request
 ): types.Request;
 export function buildNextHopPacket(
     socket: buildNextHopPacket.ISocket,
-    sipResponse: types.Response
+    sipResponseAsReceived: types.Response
 ): types.Response;
 export function buildNextHopPacket(
     socket: buildNextHopPacket.ISocket,
-    sipPacket: types.Packet
+    sipPacketAsReceived: types.Packet
 ): types.Packet;
 export function buildNextHopPacket(
     socket: buildNextHopPacket.ISocket,
-    sipPacket: types.Packet
+    sipPacketAsReceived: types.Packet
 ): types.Packet {
 
-    sipPacket = clonePacket(sipPacket);
+    let sipPacketNextHop= clonePacket(sipPacketAsReceived);
 
-    if (matchRequest(sipPacket)) {
+    asReceivedToNextHopWeakMap.set(sipPacketAsReceived, sipPacketNextHop);
 
-        let sipRequest = sipPacket;
+    if (matchRequest(sipPacketNextHop)) {
 
-        buildNextHopPacket.popRoute(sipRequest);
+        let sipRequestNextHop = sipPacketNextHop;
 
-        if (sipRequest.method === "REGISTER") {
+        buildNextHopPacket.popRoute(sipRequestNextHop);
 
-            let sipRequestRegister = sipRequest;
+        if (sipRequestNextHop.method === "REGISTER") {
+
+            let sipRequestRegister = sipRequestNextHop;
 
             buildNextHopPacket.pushPath(socket, sipRequestRegister);
 
         } else {
 
-            if ( getContact(sipRequest) ) {
+            if ( getContact(sipRequestNextHop) ) {
 
-                buildNextHopPacket.pushRecordRoute(socket, sipRequest);
+                buildNextHopPacket.pushRecordRoute(socket, sipRequestNextHop);
 
             }
 
         }
 
-        buildNextHopPacket.pushVia(socket, sipRequest);
+        buildNextHopPacket.pushVia(socket, sipRequestNextHop);
 
-        buildNextHopPacket.decrementMaxForward(sipRequest);
+        buildNextHopPacket.decrementMaxForward(sipRequestNextHop);
 
     } else {
 
-        let sipResponse = sipPacket;
+        let sipResponseNextHop = sipPacketNextHop;
 
-        buildNextHopPacket.rewriteRecordRoute(socket, sipResponse);
+        buildNextHopPacket.rewriteRecordRoute(socket, sipResponseNextHop);
 
-        buildNextHopPacket.popVia(sipResponse);
+        buildNextHopPacket.popVia(sipResponseNextHop);
 
     }
 
-    return sipPacket;
+    return sipPacketNextHop;
 
 }
 

@@ -1,5 +1,5 @@
-import * as asteriskSockets from "./asteriskSockets";
 import * as backendSocket from "./backendSocket";
-import * as messages from "./messages";
+import { evtContactRegistration, getContacts, discardContactsRegisteredToSim } from "./contactsRegistrationMonitor";
+import { dialplanContext as messagesDialplanContext, sendMessage, evtMessage } from "./messages";
 import { launch } from "./launch";
-export { asteriskSockets, backendSocket, messages, launch };
+export { backendSocket, evtContactRegistration, getContacts, messagesDialplanContext, sendMessage, evtMessage, discardContactsRegisteredToSim, launch };

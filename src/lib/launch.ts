@@ -1,3 +1,11 @@
+process.once("warning", error=> { 
+
+    console.log("WARNING WARNING WARNING");
+
+    console.log(error.stack);
+
+});
+
 import { 
     DongleController as Dc, 
     types as dcTypes 
@@ -99,7 +107,7 @@ function registerListeners() {
 
     let dc = Dc.getInstance();
 
-    sipProxy.backendSocket.evtNewSocketInstance.attach(
+    sipProxy.backendSocket.evtNewBackendConnection.attach(
         async () => {
 
             debug("Connection established with backend");
@@ -167,7 +175,7 @@ function registerListeners() {
         }
     );
 
-    sipProxy.asteriskSockets.evtContactRegistration.attach(
+    sipProxy.evtContactRegistration.attach(
         async contact => {
 
             debug(`Contact registered`);
@@ -213,7 +221,7 @@ function registerListeners() {
         }
     );
 
-    sipProxy.messages.evtMessage.attach(
+    sipProxy.evtMessage.attach(
         async ({ fromContact, toNumber, text, exactSendDate }) => {
 
             debug("FROM SIP MESSAGE", { toNumber, text });

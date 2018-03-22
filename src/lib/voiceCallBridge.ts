@@ -50,19 +50,21 @@ async function fromDongle(channel: agi.AGIChannel) {
         ({ sim }) => sim.imsi === imsi
     );
 
-    if (!dongle) return;
+    if (!dongle){
+        return;
+    }
 
     let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
 
     let evtReachableContact= new SyncEvent<types.Contact>();
 
-    sipProxy.asteriskSockets.evtContactRegistration.attach(
+    sipProxy.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
         evtReachableContact,
         contact => evtReachableContact.post(contact)
     );
 
-    for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
+    for (let contact of sipProxy.getContacts(imsi)) {
 
         sipProxy.backendSocket.remoteApi
             .wakeUpContact(contact)
@@ -73,7 +75,6 @@ async function fromDongle(channel: agi.AGIChannel) {
                     evtReachableContact.post(contact);
 
                 }
-
 
             })
             ;
@@ -90,7 +91,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         evtReachableContact.detach();
 
-        sipProxy.asteriskSockets.evtContactRegistration.detach(evtReachableContact);
+        sipProxy.evtContactRegistration.detach(evtReachableContact);
 
         for (let channelName of ringingChannels.values()) {
 

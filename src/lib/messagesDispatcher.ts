@@ -70,7 +70,7 @@ export async function notifyNewSipMessagesToSend(
     imsi: string
 ) {
 
-    for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
+    for (let contact of sipProxy.getContacts(imsi)) {
 
         if (!(await db.messageTowardSipUnsentCount(contact.uaSim))) {
             continue;
@@ -102,7 +102,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
 
                 try {
 
-                    await sipProxy.messages.sendMessage(
+                    await sipProxy.sendMessage(
                         contact,
                         message.fromNumber,
                         types.misc.smuggleBundledDataInHeaders(message.bundledData),

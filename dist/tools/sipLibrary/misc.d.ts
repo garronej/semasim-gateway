@@ -24,10 +24,13 @@ export declare function filterSdpCandidates(keep: {
 }, sdp: string): string;
 export declare function getContact(sipRequest: types.Request): types.AoR | undefined;
 export declare function isResponse(sipRequestNextHop: types.Request, sipResponse: types.Response): boolean;
+export declare function getNextHop(sipRequestAsReceived: types.Request): types.Request | undefined;
+export declare function getNextHop(sipResponseAsReceived: types.Response): types.Response | undefined;
+export declare function getNextHop(sipPacketAdReceived: types.Packet): types.Packet | undefined;
 /** Return a clone of the packet ready for next hop */
-export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipRequest: types.Request): types.Request;
-export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipResponse: types.Response): types.Response;
-export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipPacket: types.Packet): types.Packet;
+export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipRequestAsReceived: types.Request): types.Request;
+export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipResponseAsReceived: types.Response): types.Response;
+export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipPacketAsReceived: types.Packet): types.Packet;
 /** pop and shift refer to stack operations */
 export declare namespace buildNextHopPacket {
     interface ISocket {

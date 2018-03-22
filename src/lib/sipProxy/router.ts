@@ -1,14 +1,17 @@
 import * as tls from "tls";
 import * as net from "net";
-import { SyncEvent } from "ts-events-extended";
+//import { SyncEvent } from "ts-events-extended";
 import * as networkTools from "../../tools/networkTools";
 import * as sipLibrary from "../../tools/sipLibrary";
 import * as types from "./../types";
 import { readImsi, cid } from "./misc";
 
-import * as messages from "./messages/index_sipProxy";
+//import * as messages from "./messages/index_sipProxy";
 import * as backendSocket from "./backendSocket/index_sipProxy";
-import * as asteriskSockets from "./asteriskSockets/index_sipProxy";
+import * as asteriskSockets from "./asteriskSockets";
+import * as contactRegistrationMonitor from "./contactsRegistrationMonitor";
+import * as messages from "./messages";
+
 
 import * as c from "./../_constants";
 
@@ -72,7 +75,13 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
                 connectionId, backendSocketInst, localIp
             );
 
-            asteriskSockets.set({ connectionId, imsi }, asteriskSocket);
+            let key: asteriskSockets.Key= { connectionId, imsi };
+
+            asteriskSockets.set(key, asteriskSocket);
+
+            let prContact= contactRegistrationMonitor.onNewAsteriskSocket(asteriskSocket, key);
+
+            messages.onNewAsteriskSocket(asteriskSocket, prContact );
 
         }
 
@@ -100,6 +109,7 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
                     }catch{
 
+                        //TODO: fix ios does not add email
                         console.log("et bim :(");
 
                         return "joseph.garrone.gj@gmail.com";
@@ -151,27 +161,6 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
         console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`)
 
-        if (sipLibrary.isPlainMessageRequest(sipRequest, "WITH AUTH")) {
-
-            asteriskSocket.evtResponse.attachOnce(
-                sipResponse => sipLibrary.isResponse(sipRequest, sipResponse),
-                async ({ status }) => {
-
-                    if (status !== 202) {
-                        return;
-                    }
-
-                    messages.onIncomingSipMessage(
-                        await asteriskSockets.getSocketContact(asteriskSocket!),
-                        sipRequestReceived
-                    );
-
-                }
-            );
-
-        }
-
-
         asteriskSocket.write(sipRequest);
 
     });
@@ -213,16 +202,11 @@ function createAsteriskSocket(
         })
     );
 
-
     asteriskSocket.evtData.attach(data => console.log("GW<=AST\n", data.toString("utf8")));
 
-    //TODO: change for webRtc
+    //TODO: si if for webRtc it is desirable
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     const fixSdp = (sipPacketNextHop: sipLibrary.Packet): void => {
-
-        if (sipPacketNextHop.headers["content-type"] !== "application/sdp") {
-            return;
-        }
 
         let sdp = sipLibrary.getPacketContent(sipPacketNextHop).toString("utf8");
 
@@ -247,66 +231,32 @@ function createAsteriskSocket(
 
     };
 
-    asteriskSocket.evtRequest.attach(sipRequestReceived => {
-
-        let evtMessageResponseReceived: undefined | SyncEvent<sipLibrary.Response>;
-
-        if (sipLibrary.isPlainMessageRequest(sipRequestReceived)) {
-
-            messages.onOutgoingSipMessage(
-                sipRequestReceived,
-                new Promise<sipLibrary.Response>(
-                    (resolve, reject) =>
-                        (evtMessageResponseReceived = new SyncEvent())
-                            .waitFor(5000)
-                            .then(sipResponse => resolve(sipResponse))
-                            .catch(error => reject(error))
-                )
-            );
-
-            console.log("After interception\n", sipLibrary.stringify(sipRequestReceived));
-
-        }
+    const onSipPacket= (sipPacketAsReceived: sipLibrary.Packet): void => {
 
         if (backendSocketInst.evtClose.postCount) {
             return;
         }
 
-        let sipRequest = backendSocketInst.buildNextHopPacket(sipRequestReceived);
+        let sipPacket = backendSocketInst.buildNextHopPacket(sipPacketAsReceived);
 
-        cid.set(sipRequest, connectionId);
+        if( sipLibrary.matchRequest(sipPacket) ){
 
-        fixSdp(sipRequest);
-
-        if (!!evtMessageResponseReceived) {
-
-            backendSocketInst.evtResponse.waitFor(
-                sipResponse => sipLibrary.isResponse(sipRequest, sipResponse),
-                evtMessageResponseReceived.getHandlers()[0].timeout!
-            )
-                .then(sipResponse => evtMessageResponseReceived!.post(sipResponse))
-                .catch(() => { })
-                ;
+            cid.set(sipPacket, connectionId);
 
         }
 
-        backendSocketInst.write(sipRequest);
+        if (sipPacket.headers["content-type"] === "application/sdp") {
 
-    });
+            fixSdp(sipPacket);
 
-    asteriskSocket.evtResponse.attach(sipResponseReceived => {
-
-        if (backendSocketInst.evtClose.postCount) {
-            return;
         }
 
-        let sipResponse = backendSocketInst.buildNextHopPacket(sipResponseReceived);
+        backendSocketInst.write(sipPacket);
 
-        fixSdp(sipResponse);
+    };
 
-        backendSocketInst.write(sipResponse);
-
-    });
+    asteriskSocket.evtRequest.attach(onSipPacket);
+    asteriskSocket.evtResponse.attach(onSipPacket);
 
     return asteriskSocket;
 

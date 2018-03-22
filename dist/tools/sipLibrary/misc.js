@@ -120,29 +120,35 @@ function isResponse(sipRequestNextHop, sipResponse) {
         sipRequestNextHop.headers.via[0].params["branch"];
 }
 exports.isResponse = isResponse;
-function buildNextHopPacket(socket, sipPacket) {
-    sipPacket = clonePacket(sipPacket);
-    if (matchRequest(sipPacket)) {
-        let sipRequest = sipPacket;
-        buildNextHopPacket.popRoute(sipRequest);
-        if (sipRequest.method === "REGISTER") {
-            let sipRequestRegister = sipRequest;
+const asReceivedToNextHopWeakMap = new WeakMap();
+function getNextHop(sipPacketAdReceived) {
+    return asReceivedToNextHopWeakMap.get(sipPacketAdReceived);
+}
+exports.getNextHop = getNextHop;
+function buildNextHopPacket(socket, sipPacketAsReceived) {
+    let sipPacketNextHop = clonePacket(sipPacketAsReceived);
+    asReceivedToNextHopWeakMap.set(sipPacketAsReceived, sipPacketNextHop);
+    if (matchRequest(sipPacketNextHop)) {
+        let sipRequestNextHop = sipPacketNextHop;
+        buildNextHopPacket.popRoute(sipRequestNextHop);
+        if (sipRequestNextHop.method === "REGISTER") {
+            let sipRequestRegister = sipRequestNextHop;
             buildNextHopPacket.pushPath(socket, sipRequestRegister);
         }
         else {
-            if (getContact(sipRequest)) {
-                buildNextHopPacket.pushRecordRoute(socket, sipRequest);
+            if (getContact(sipRequestNextHop)) {
+                buildNextHopPacket.pushRecordRoute(socket, sipRequestNextHop);
             }
         }
-        buildNextHopPacket.pushVia(socket, sipRequest);
-        buildNextHopPacket.decrementMaxForward(sipRequest);
+        buildNextHopPacket.pushVia(socket, sipRequestNextHop);
+        buildNextHopPacket.decrementMaxForward(sipRequestNextHop);
     }
     else {
-        let sipResponse = sipPacket;
-        buildNextHopPacket.rewriteRecordRoute(socket, sipResponse);
-        buildNextHopPacket.popVia(sipResponse);
+        let sipResponseNextHop = sipPacketNextHop;
+        buildNextHopPacket.rewriteRecordRoute(socket, sipResponseNextHop);
+        buildNextHopPacket.popVia(sipResponseNextHop);
     }
-    return sipPacket;
+    return sipPacketNextHop;
 }
 exports.buildNextHopPacket = buildNextHopPacket;
 /** pop and shift refer to stack operations */

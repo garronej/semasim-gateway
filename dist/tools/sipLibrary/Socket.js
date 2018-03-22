@@ -19,6 +19,7 @@ class Socket {
         this.evtTimeout = new ts_events_extended_1.VoidSyncEvent();
         /**Emit chunk of data as received by the underlying connection*/
         this.evtData = new ts_events_extended_1.SyncEvent();
+        this.evtSentPacket = new ts_events_extended_1.SyncEvent();
         this.__localPort__ = NaN;
         this.__remotePort__ = NaN;
         this.__localAddress__ = "";
@@ -110,18 +111,19 @@ class Socket {
         /*NOTE: this could throw but it would mean that it's an error
         on our part as a packet that have been parsed should be stringifiable.*/
         let data = core.toData(sipPacket);
+        let out;
         if (Socket.matchWebSocket(this.connection)) {
-            return new Promise(resolve => this.connection
+            out = new Promise(resolve => this.connection
                 .send(data, { "binary": true }, error => resolve(error ? true : false)));
         }
         else {
             let flushed = this.connection.write(data);
             if (flushed) {
-                return true;
+                out = true;
             }
             else {
                 let boundTo = [];
-                return Promise.race([
+                out = Promise.race([
                     new Promise(resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))),
                     new Promise(resolve => this.connection.once("drain", () => {
                         this.evtClose.detach(boundTo);
@@ -130,6 +132,13 @@ class Socket {
                 ]);
             }
         }
+        ((out instanceof Promise) ? out : Promise.resolve(true))
+            .then(isSent => {
+            if (isSent) {
+                this.evtSentPacket.post(sipPacket);
+            }
+        });
+        return out;
     }
     destroy() {
         /*

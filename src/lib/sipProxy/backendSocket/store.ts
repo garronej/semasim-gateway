@@ -4,7 +4,7 @@ import { handlers as localApiHandlers } from "./localApiHandlers";
 
 let currentBackendSocketInst: sipLibrary.Socket | undefined = undefined;
 
-export const evtNewSocketInstance = new VoidSyncEvent();
+export const evtNewBackendConnection = new VoidSyncEvent();
 
 const idString= "backendSocket";
 
@@ -28,7 +28,7 @@ export function set(backendSocketInst: sipLibrary.Socket) {
     );
 
     backendSocketInst.evtConnect.attachOnce(() =>
-        evtNewSocketInstance.post()
+        evtNewBackendConnection.post()
     );
 
     currentBackendSocketInst = backendSocketInst;
@@ -44,7 +44,7 @@ export function get(): sipLibrary.Socket | Promise<sipLibrary.Socket> {
     ) {
 
         return new Promise<sipLibrary.Socket>(
-            resolve => evtNewSocketInstance.attachOnce(
+            resolve => evtNewBackendConnection.attachOnce(
                 () => resolve(currentBackendSocketInst)
             )
         );

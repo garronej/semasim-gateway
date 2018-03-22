@@ -12,7 +12,7 @@ const sipLibrary = require("../../../tools/sipLibrary");
 const apiDeclaration = require("../../sipApiDeclarations/semasimBackend/gatewaySide/gatewaySockets");
 const db = require("../../db");
 const backendSocket = require("./store");
-const asteriskSockets = require("../asteriskSockets");
+const contactRegistrationMonitor = require("../contactsRegistrationMonitor");
 function notifySimOnline(dongle) {
     (() => __awaiter(this, void 0, void 0, function* () {
         let methodName = apiDeclaration.notifySimOnline.methodName;
@@ -35,14 +35,14 @@ function notifySimOnline(dongle) {
             return;
         }
         if (response.status === "NEED PASSWORD RENEWAL") {
-            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
+            contactRegistrationMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
             db.semasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
             params.password = yield db.asterisk.createEndpointIfNeededAndGetPassword(dongle.sim.imsi, "RENEW PASSWORD");
             //This should enforce allowed ua to re-register
             sendRequest(methodName, params).catch(() => { });
         }
         else if (response.status === "NOT REGISTERED") {
-            asteriskSockets.discardContactsRegisteredToSim(dongle.sim.imsi);
+            contactRegistrationMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
             db.semasim.removeUaSim(dongle.sim.imsi);
         }
     }))();

@@ -14,7 +14,6 @@ const mysqlCustom = require("../../tools/mysqlCustom");
 const MySqlEvents_1 = require("../../tools/MySqlEvents");
 const voiceCallBridge_1 = require("../voiceCallBridge");
 const sipProxy_1 = require("../sipProxy");
-var messages_dialplanContext = sipProxy_1.messages.dialplanContext;
 const c = require("../_constants");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -123,8 +122,8 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
         sql += exports.buildInsertQuery("ps_endpoints", {
             "id": imsi,
             "disallow": "all",
-            //"allow": "alaw,ulaw",
-            "allow": "opus",
+            "allow": "alaw,ulaw",
+            //"allow": "opus",
             "use_avpf": null,
             "media_encryption": null,
             "dtls_ca_file": null,
@@ -133,7 +132,7 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             "media_use_received_transport": null,
             "rtcp_mux": null,
             "context": voiceCallBridge_1.sipCallContext,
-            "message_context": messages_dialplanContext,
+            "message_context": sipProxy_1.messagesDialplanContext,
             "aors": imsi,
             "auth": imsi,
             "from_domain": c.domain,

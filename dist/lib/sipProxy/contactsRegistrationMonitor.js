@@ -1,14 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const dbAsterisk = require("../../db/asterisk");
-const types = require("../../types");
-const backendSocket = require("./../backendSocket");
+const dbAsterisk = require("../db/asterisk");
+const types = require("../types");
+const backendSocket = require("./backendSocket");
 const ts_events_extended_1 = require("ts-events-extended");
-const store = require("./store");
+const asteriskSockets = require("./asteriskSockets");
 require("colors");
 const _debug = require("debug");
 let debug = _debug("_sipProxy/asteriskSockets/contactsRegistrationMonitor");
 exports.evtContactRegistration = new ts_events_extended_1.SyncEvent();
+/** Must be called by router when new asteriskSocket is created */
 function onNewAsteriskSocket(asteriskSocket, { connectionId, imsi }) {
     return new Promise(resolve => dbAsterisk.evtNewContact.waitFor(contact => (contact.connectionId === connectionId &&
         contact.uaSim.imsi === imsi), 6001).then(contact => {
@@ -49,10 +50,7 @@ var socketContact;
 })(socketContact || (socketContact = {}));
 function getContactMap() {
     let out = new Map();
-    for (let asteriskSocket of store.map.values()) {
-        if (asteriskSocket === null) {
-            continue;
-        }
+    for (let asteriskSocket of asteriskSockets.getAll()) {
         out.set(asteriskSocket, socketContact.get(asteriskSocket));
     }
     return out;

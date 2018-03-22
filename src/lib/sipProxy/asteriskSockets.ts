@@ -1,5 +1,4 @@
-import * as sipLibrary from "../../../tools/sipLibrary";
-import * as contactRegistrationMonitor from "./contactsRegistrationMonitor";
+import * as sipLibrary from "../../tools/sipLibrary";
 
 /** map connectionId+imsi => asteriskSocket
  * PROTECTED: only for contactsRegistrationMonitor.ts
@@ -31,8 +30,6 @@ export function set(
 
     });
 
-    contactRegistrationMonitor.onNewAsteriskSocket(asteriskSocket, key);
-
 }
 
 /** null represent an expired connection */
@@ -53,5 +50,12 @@ export function flush(){
         asteriskSocket.destroy();
 
     }
+
+}
+
+export function getAll(): sipLibrary.Socket[]{
+
+    return Array.from(map.values())
+        .filter(asteriskSocket => asteriskSocket !== null) as sipLibrary.Socket[];
 
 }

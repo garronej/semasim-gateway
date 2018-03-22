@@ -28,6 +28,8 @@ export class Socket {
     /**Emit chunk of data as received by the underlying connection*/
     public readonly evtData = new SyncEvent<Buffer>();
 
+    public readonly evtSentPacket= new SyncEvent<types.Packet>();
+
     private static readonly maxBytesHeaders = 7820;
     private static readonly maxContentLength = 24624;
 
@@ -201,9 +203,11 @@ export class Socket {
         on our part as a packet that have been parsed should be stringifiable.*/
         let data= core.toData(sipPacket);
 
+        let out: Promise<boolean> | true;
+
         if (Socket.matchWebSocket(this.connection)) {
 
-            return new Promise<boolean>(
+            out= new Promise<boolean>(
                 resolve => (this.connection as WebSocket)
                     .send(data, { "binary": true }, error => resolve(error ? true : false))
             );
@@ -214,13 +218,13 @@ export class Socket {
 
             if (flushed) {
 
-                return true;
+                out= true;
 
             } else {
 
                 let boundTo = [];
 
-                return Promise.race([
+                out= Promise.race([
                     new Promise<false>(
                         resolve => this.evtClose.attachOnce(boundTo, () => resolve(false))
                     ),
@@ -236,6 +240,19 @@ export class Socket {
 
         }
 
+        ((out instanceof Promise)?out:Promise.resolve(true))
+            .then(isSent => {
+
+                if( isSent ){
+
+                    this.evtSentPacket.post(sipPacket)
+
+                }
+
+            })
+            ;
+
+        return out;
 
     }
 

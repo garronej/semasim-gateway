@@ -6,9 +6,8 @@ import {
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 //TODO: Create issue on Typescript repository.
 dcMisc;
-import * as sipLibrary from "../../../tools/sipLibrary";
-import * as types from "./../../types";
-
+import * as sipLibrary from "../../tools/sipLibrary";
+import * as types from "../types";
 
 import * as _debug from "debug";
 let debug = _debug("_sipProxy/messages");
@@ -71,6 +70,8 @@ export function sendMessage(
 
                 sipLibrary.setPacketContent(sipRequest, text);
 
+                console.log("After interception\n", sipLibrary.stringify(sipRequest));
+
                 prSipResponse
                     .then(() => resolve())
                     .catch(() => reject(new Error("Not received")))
@@ -93,14 +94,16 @@ export namespace sendMessage {
 
 }
 
-
-//From here protected
+//From here functions are not exported outside sipProxy
 
 /** 
  * Must be called before the first connection to backend 
  * and after DongleController have been instantiated
+ * 
+ * not exported
+ * 
  * */
-export async function initDialplan() {
+export async function init() {
 
     let ami = Dc.getInstance().ami;
 
@@ -109,7 +112,40 @@ export async function initDialplan() {
     await ami.dialplanExtensionRemove(matchAllExt, dialplanContext);
 
     await ami.dialplanExtensionAdd(dialplanContext, matchAllExt, 1, "Hangup");
+}
 
+export function onNewAsteriskSocket(asteriskSocket: sipLibrary.Socket, prContact: Promise<types.Contact> ){
+
+            asteriskSocket.evtRequest.attachPrepend(
+                sipLibrary.isPlainMessageRequest,
+                sipRequestAsReceived =>
+                    onOutgoingSipMessage(
+                        sipRequestAsReceived,
+                        asteriskSocket.evtSentPacket.waitFor(
+                            sipPacketNextHop => (
+                                !sipLibrary.matchRequest(sipPacketNextHop) &&
+                                sipLibrary.isResponse(sipRequestAsReceived, sipPacketNextHop)
+                            ), 5000
+                        )
+                    )
+            );
+
+            asteriskSocket.evtSentPacket.attach(
+                (sipPacketNextHop): sipPacketNextHop is sipLibrary.Request => (
+                    sipLibrary.matchRequest(sipPacketNextHop) &&
+                    sipLibrary.isPlainMessageRequest(sipPacketNextHop, "WITH AUTH")
+                ),
+                sipRequestNextHop => asteriskSocket.evtResponse.attachOnce(
+                    sipResponse => sipLibrary.isResponse(sipRequestNextHop, sipResponse),
+                    async ({ status }) => {
+
+                        if (status !== 202) { return; }
+
+                        onIncomingSipMessage(await prContact, sipRequestNextHop);
+
+                    }
+                )
+            );
 }
 
 /** 
@@ -124,10 +160,13 @@ export async function initDialplan() {
  * if no response have been received in a reasonable amount of time.
  * 
  */
-export function onOutgoingSipMessage(
+//export function onOutgoingSipMessage(
+function onOutgoingSipMessage(
     sipRequestAsReceived: sipLibrary.Request,
     prSipResponse: Promise<any>
 ): void {
+
+    console.log("bim on outgoing!");
 
     sendMessage.evtOutgoingMessage.post({
         "sipRequest": sipRequestAsReceived,
@@ -143,16 +182,18 @@ export function onOutgoingSipMessage(
  * must be text/plain
  * 
  * @param fromContact the contact the message come from
- * @param sipRequestReceived the sipRequest as received from the backend,
+ * @param sipRequest the MESSAGE sipRequest 
  * the message will not be modified.
  * 
  */
-export function onIncomingSipMessage(
+function onIncomingSipMessage(
     fromContact: types.Contact,
-    sipRequestReceived: sipLibrary.Request
+    sipRequest: sipLibrary.Request
 ) {
 
-    let content = sipLibrary.getPacketContent(sipRequestReceived);
+    console.log("on incoming message yay! ");
+
+    let content = sipLibrary.getPacketContent(sipRequest);
 
     let text = content.toString("utf8");
 
@@ -160,14 +201,14 @@ export function onIncomingSipMessage(
         debug("Sip message content was not a valid UTF-8 string");
     }
 
-    let toNumber = sipLibrary.parseUri(sipRequestReceived.headers.to.uri).user!;
+    let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
 
     let exactSendDate: Date | undefined;
 
     try {
 
         exactSendDate = (types.misc.extractBundledDataFromHeaders(
-            sipRequestReceived.headers
+            sipRequest.headers
         ) as types.BundledData.ClientToServer.Message).exactSendDate;
 
     } catch{

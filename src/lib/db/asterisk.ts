@@ -6,8 +6,7 @@ import * as mysqlCustom from "../../tools/mysqlCustom";
 import { MySqlEvents } from "../../tools/MySqlEvents";
 
 import { sipCallContext } from "../voiceCallBridge";
-import { messages } from "../sipProxy";
-import messages_dialplanContext= messages.dialplanContext;
+import { messagesDialplanContext } from "../sipProxy";
 
 import * as c from "../_constants"
 
@@ -174,8 +173,8 @@ export async function createEndpointIfNeededAndGetPassword(
     sql += buildInsertQuery("ps_endpoints", {
                 "id": imsi,
                 "disallow": "all",
-                //"allow": "alaw,ulaw",
-                "allow": "opus",
+                "allow": "alaw,ulaw",
+                //"allow": "opus",
                 "use_avpf": null,
                 "media_encryption": null,
                 "dtls_ca_file": null,
@@ -184,7 +183,7 @@ export async function createEndpointIfNeededAndGetPassword(
                 "media_use_received_transport": null,
                 "rtcp_mux": null,
                 "context": sipCallContext,
-                "message_context": messages_dialplanContext,
+                "message_context": messagesDialplanContext,
                 "aors": imsi,
                 "auth": imsi,
                 "from_domain": c.domain,

@@ -1,8 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const contactRegistrationMonitor = require("./contactsRegistrationMonitor");
-const ts_events_extended_1 = require("ts-events-extended");
-exports.evtNewAsteriskSocket = new ts_events_extended_1.SyncEvent();
 /** map connectionId+imsi => asteriskSocket
  * PROTECTED: only for contactsRegistrationMonitor.ts
  */
@@ -21,8 +18,6 @@ function set(key, asteriskSocket) {
         exports.map.set(id, null);
         setTimeout(() => exports.map.delete(id), 60000).unref();
     });
-    let prContact = contactRegistrationMonitor.onNewAsteriskSocket(asteriskSocket, key);
-    exports.evtNewAsteriskSocket.post({ asteriskSocket, prContact });
 }
 exports.set = set;
 /** null represent an expired connection */
@@ -39,3 +34,8 @@ function flush() {
     }
 }
 exports.flush = flush;
+function getAll() {
+    return Array.from(exports.map.values())
+        .filter(asteriskSocket => asteriskSocket !== null);
+}
+exports.getAll = getAll;

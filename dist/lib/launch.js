@@ -8,6 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+process.once("warning", error => {
+    console.log("WARNING WARNING WARNING");
+    console.log(error.stack);
+});
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const db = require("./db");
 const sipProxy = require("./sipProxy");
@@ -70,7 +74,7 @@ function init() {
 }
 function registerListeners() {
     let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-    sipProxy.backendSocket.evtNewSocketInstance.attach(() => __awaiter(this, void 0, void 0, function* () {
+    sipProxy.backendSocket.evtNewBackendConnection.attach(() => __awaiter(this, void 0, void 0, function* () {
         debug("Connection established with backend");
         for (let dongle of dc.usableDongles.values()) {
             sipProxy.backendSocket.remoteApi.notifySimOnline(dongle);
@@ -102,7 +106,7 @@ function registerListeners() {
             });
         }
     }));
-    sipProxy.asteriskSockets.evtContactRegistration.attach((contact) => __awaiter(this, void 0, void 0, function* () {
+    sipProxy.evtContactRegistration.attach((contact) => __awaiter(this, void 0, void 0, function* () {
         debug(`Contact registered`);
         let { isUaCreatedOrUpdated, isFirstUaForSim } = yield db.semasim.addUaSim(contact.uaSim);
         if (isUaCreatedOrUpdated) {
@@ -122,7 +126,7 @@ function registerListeners() {
         }
         messagesDispatcher.sendMessagesOfContact(contact);
     }));
-    sipProxy.messages.evtMessage.attach(({ fromContact, toNumber, text, exactSendDate }) => __awaiter(this, void 0, void 0, function* () {
+    sipProxy.evtMessage.attach(({ fromContact, toNumber, text, exactSendDate }) => __awaiter(this, void 0, void 0, function* () {
         debug("FROM SIP MESSAGE", { toNumber, text });
         let { uaSim } = fromContact;
         yield db.semasim.onSipMessage(toNumber, text, uaSim, exactSendDate);

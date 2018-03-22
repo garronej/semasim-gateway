@@ -41,12 +41,13 @@ function fromDongle(channel) {
         let ami = dc.ami;
         let imsi = (yield channel.relax.getVariable("DONGLEIMSI"));
         let dongle = Array.from(dc.usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
-        if (!dongle)
+        if (!dongle) {
             return;
+        }
         let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
         let evtReachableContact = new ts_events_extended_1.SyncEvent();
-        sipProxy.asteriskSockets.evtContactRegistration.attach(({ uaSim }) => uaSim.imsi === imsi, evtReachableContact, contact => evtReachableContact.post(contact));
-        for (let contact of sipProxy.asteriskSockets.getContacts(imsi)) {
+        sipProxy.evtContactRegistration.attach(({ uaSim }) => uaSim.imsi === imsi, evtReachableContact, contact => evtReachableContact.post(contact));
+        for (let contact of sipProxy.getContacts(imsi)) {
             sipProxy.backendSocket.remoteApi
                 .wakeUpContact(contact)
                 .then(status => {
@@ -60,7 +61,7 @@ function fromDongle(channel) {
         evtEstablishedOrEnded.attachOnce((contact) => __awaiter(this, void 0, void 0, function* () {
             debug("evtEstablishedOrEnded");
             evtReachableContact.detach();
-            sipProxy.asteriskSockets.evtContactRegistration.detach(evtReachableContact);
+            sipProxy.evtContactRegistration.detach(evtReachableContact);
             for (let channelName of ringingChannels.values()) {
                 ami.postAction("hangup", {
                     "channel": channelName,

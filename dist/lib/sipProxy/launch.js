@@ -8,19 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const messages = require("./messages/index_sipProxy");
+const messages = require("./messages");
 const router = require("./router");
+require("colors");
 let launchCount = 0;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         console.log({ launchCount });
         if (!launchCount) {
-            yield messages.initDialplan();
+            yield messages.init();
         }
         let backendSocketInst = yield router.createBackendSocket();
-        //TODO: set a timeout
-        backendSocketInst.evtConnect.attachOnce(() => {
-            console.log("Connected to backed");
+        backendSocketInst.evtConnect.waitFor(10000).catch(() => {
+            console.log("WARN WARN WARN connection to backend took too much time".red);
+            backendSocketInst.destroy();
         });
         backendSocketInst.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
             console.log("Backend socket closed, waiting and restarting");

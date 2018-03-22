@@ -1,6 +1,6 @@
 import { SyncEvent } from "ts-events-extended";
-import * as sipLibrary from "../../../tools/sipLibrary";
-import * as types from "./../../types";
+import * as sipLibrary from "../../tools/sipLibrary";
+import * as types from "../types";
 export declare const dialplanContext = "from-sip-message";
 export declare const evtMessage: SyncEvent<{
     fromContact: types.Contact;
@@ -23,3 +23,4 @@ export declare namespace sendMessage {
  *
  * */
 export declare function init(): Promise<void>;
+export declare function onNewAsteriskSocket(asteriskSocket: sipLibrary.Socket, prContact: Promise<types.Contact>): void;

@@ -13,9 +13,8 @@ const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 //TODO: Create issue on Typescript repository.
 dcMisc;
-const sipLibrary = require("../../../tools/sipLibrary");
-const types = require("./../../types");
-const asteriskSockets = require("../asteriskSockets");
+const sipLibrary = require("../../tools/sipLibrary");
+const types = require("../types");
 const _debug = require("debug");
 let debug = _debug("_sipProxy/messages");
 exports.dialplanContext = "from-sip-message";
@@ -51,6 +50,7 @@ exports.sendMessage = sendMessage;
 (function (sendMessage) {
     sendMessage.evtOutgoingMessage = new ts_events_extended_1.SyncEvent();
 })(sendMessage = exports.sendMessage || (exports.sendMessage = {}));
+//From here functions are not exported outside sipProxy
 /**
  * Must be called before the first connection to backend
  * and after DongleController have been instantiated
@@ -64,20 +64,21 @@ function init() {
         let matchAllExt = "_.";
         yield ami.dialplanExtensionRemove(matchAllExt, exports.dialplanContext);
         yield ami.dialplanExtensionAdd(exports.dialplanContext, matchAllExt, 1, "Hangup");
-        asteriskSockets.evtContactRegistration.attach(({ contact, asteriskSocket }) => {
-            asteriskSocket.evtRequest.attachPrepend(sipLibrary.isPlainMessageRequest, sipRequestAsReceived => onOutgoingSipMessage(sipRequestAsReceived, asteriskSocket.evtSentPacket.waitFor(sipPacketNextHop => (!sipLibrary.matchRequest(sipPacketNextHop) &&
-                sipLibrary.isResponse(sipRequestAsReceived, sipPacketNextHop)), 5000)));
-            asteriskSocket.evtSentPacket.attach((sipPacketNextHop) => (sipLibrary.matchRequest(sipPacketNextHop) &&
-                sipLibrary.isPlainMessageRequest(sipPacketNextHop, "WITH AUTH")), sipRequestNextHop => asteriskSocket.evtResponse.attachOnce(sipResponse => sipLibrary.isResponse(sipRequestNextHop, sipResponse), ({ status }) => {
-                if (status !== 202) {
-                    return;
-                }
-                onIncomingSipMessage(contact, sipRequestNextHop);
-            }));
-        });
     });
 }
 exports.init = init;
+function onNewAsteriskSocket(asteriskSocket, prContact) {
+    asteriskSocket.evtRequest.attachPrepend(sipLibrary.isPlainMessageRequest, sipRequestAsReceived => onOutgoingSipMessage(sipRequestAsReceived, asteriskSocket.evtSentPacket.waitFor(sipPacketNextHop => (!sipLibrary.matchRequest(sipPacketNextHop) &&
+        sipLibrary.isResponse(sipRequestAsReceived, sipPacketNextHop)), 5000)));
+    asteriskSocket.evtSentPacket.attach((sipPacketNextHop) => (sipLibrary.matchRequest(sipPacketNextHop) &&
+        sipLibrary.isPlainMessageRequest(sipPacketNextHop, "WITH AUTH")), sipRequestNextHop => asteriskSocket.evtResponse.attachOnce(sipResponse => sipLibrary.isResponse(sipRequestNextHop, sipResponse), ({ status }) => __awaiter(this, void 0, void 0, function* () {
+        if (status !== 202) {
+            return;
+        }
+        onIncomingSipMessage(yield prContact, sipRequestNextHop);
+    })));
+}
+exports.onNewAsteriskSocket = onNewAsteriskSocket;
 /**
  * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
  *

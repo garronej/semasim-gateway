@@ -1,1 +1,1 @@
-export { initDialplan, onOutgoingSipMessage, onIncomingSipMessage } from "./messages";
+export { init } from "./messages";
