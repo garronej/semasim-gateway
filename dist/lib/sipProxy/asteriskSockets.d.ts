@@ -14,4 +14,3 @@ export declare function set(key: Key, asteriskSocket: sipLibrary.Socket): void;
 /** null represent an expired connection */
 export declare function get(key: Key): sipLibrary.Socket | null | undefined;
 export declare function flush(): void;
-export declare function getAll(): sipLibrary.Socket[];

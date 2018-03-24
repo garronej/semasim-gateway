@@ -1,9 +1,7 @@
-import { SyncEvent } from "ts-events-extended";
 import * as mysql from "mysql";
 import * as types from "../types";
 
 import * as mysqlCustom from "../../tools/mysqlCustom";
-import { MySqlEvents } from "../../tools/MySqlEvents";
 
 import { sipCallContext } from "../voiceCallBridge";
 import { messagesDialplanContext } from "../sipProxy";
@@ -29,36 +27,11 @@ export async function launch(): Promise<void> {
         "WHERE endpoint LIKE '_______________'"
     ].join("\n"));
 
-    await MySqlEvents.launch(connectionConfig);
-
-
-    let post = (row, evt: SyncEvent<types.Contact>) =>
-        evt.post(types.misc.buildContactFromPsContact(row))
-        ;
-
-    evtNewContact= new SyncEvent();
-
-    MySqlEvents.instance.evtNewRow.attach(
-        ({ table }) => table === "ps_contacts",
-        ({ row }) => post(row, evtNewContact)
-    );
-
-    evtExpiredContact= new SyncEvent();
-
-    MySqlEvents.instance.evtDeleteRow.attach(
-        ({ table }) => table === "ps_contacts",
-        ({ row }) => post(row, evtExpiredContact)
-    );
-
     query= api.query;
-    esc= api.esc;
-    buildInsertQuery= api.buildInsertQuery;
+    esc = api.esc;
+    buildInsertQuery = api.buildInsertQuery;
 
 }
-
-export let evtNewContact: SyncEvent<types.Contact>;
-
-export let evtExpiredContact: SyncEvent<types.Contact>;
 
 /** for test purpose only */
 export async function flush() {
@@ -74,41 +47,15 @@ export async function flush() {
 
 }
 
-export function deleteContact(contact: types.Contact) {
-    return new Promise<boolean>((resolve, reject) => {
+export async function deleteContact(contact: types.Contact) {
 
-        //TODO: this crash some times for some reasons
-        let timerId = setTimeout(
-            () => reject(new Error(`Delete contact timeout error`)),
-            3000
-        );
+    await query(
+        [
+            "DELETE FROM ps_contacts",
+            `WHERE uri=${esc(contact.uri.replace(/;/g, "^3B"))}`
+        ].join("\n")
+    );
 
-        let queryPromise = (async () => {
-
-            let { affectedRows } = await query(
-                `DELETE FROM ps_contacts WHERE id=${esc(contact.id)}`
-            );
-
-            let isDeleted = affectedRows ? true : false;
-
-            if (!isDeleted) {
-                evtExpiredContact.detach(timerId);
-                clearTimeout(timerId);
-                resolve(false);
-            }
-
-        })();
-
-        evtExpiredContact.attachOnceExtract(
-            ({ id }) => id === contact.id,
-            timerId,
-            deletedContact => queryPromise.then(() => {
-                clearTimeout(timerId);
-                resolve(true);
-            })
-        );
-
-    });
 }
 
 export async function createEndpointIfNeededAndGetPassword(
@@ -171,24 +118,24 @@ export async function createEndpointIfNeededAndGetPassword(
 
     //For Linphone:
     sql += buildInsertQuery("ps_endpoints", {
-                "id": imsi,
-                "disallow": "all",
-                "allow": "alaw,ulaw",
-                //"allow": "opus",
-                "use_avpf": null,
-                "media_encryption": null,
-                "dtls_ca_file": null,
-                "dtls_verify": null,
-                "dtls_setup": null,
-                "media_use_received_transport": null,
-                "rtcp_mux": null,
-                "context": sipCallContext,
-                "message_context": messagesDialplanContext,
-                "aors": imsi,
-                "auth": imsi,
-                "from_domain": c.domain,
-                "ice_support": "yes",
-                "transport": "transport-tcp",
+        "id": imsi,
+        "disallow": "all",
+        "allow": "alaw,ulaw",
+        //"allow": "opus",
+        "use_avpf": null,
+        "media_encryption": null,
+        "dtls_ca_file": null,
+        "dtls_verify": null,
+        "dtls_setup": null,
+        "media_use_received_transport": null,
+        "rtcp_mux": null,
+        "context": sipCallContext,
+        "message_context": messagesDialplanContext,
+        "aors": imsi,
+        "auth": imsi,
+        "from_domain": c.domain,
+        "ice_support": "yes",
+        "transport": "transport-tcp",
     }, "IGNORE");
 
     sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;

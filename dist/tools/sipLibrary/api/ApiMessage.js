@@ -4,12 +4,13 @@ const core = require("../core");
 const misc = require("../misc");
 const transfer_tools_1 = require("transfer-tools");
 const JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();
+exports.sipMethodName = "API";
 var ApiMessage;
 (function (ApiMessage) {
     const actionIdKey = "api-action-id";
     function buildSip(actionId, payload) {
         let sipRequest = core.parse(Buffer.from([
-            `API _ SIP/2.0`,
+            `${exports.sipMethodName} _ SIP/2.0`,
             "Max-Forwards: 0",
             "\r\n"
         ].join("\r\n"), "utf8"));

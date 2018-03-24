@@ -12,7 +12,6 @@ function matchRequest(sipPacket) {
     return "method" in sipPacket;
 }
 exports.matchRequest = matchRequest;
-//TODO: optimize
 function clonePacket(sipPacket) {
     return core.parse(core.toData(sipPacket));
 }
@@ -120,14 +119,8 @@ function isResponse(sipRequestNextHop, sipResponse) {
         sipRequestNextHop.headers.via[0].params["branch"];
 }
 exports.isResponse = isResponse;
-const asReceivedToNextHopWeakMap = new WeakMap();
-function getNextHop(sipPacketAdReceived) {
-    return asReceivedToNextHopWeakMap.get(sipPacketAdReceived);
-}
-exports.getNextHop = getNextHop;
 function buildNextHopPacket(socket, sipPacketAsReceived) {
     let sipPacketNextHop = clonePacket(sipPacketAsReceived);
-    asReceivedToNextHopWeakMap.set(sipPacketAsReceived, sipPacketNextHop);
     if (matchRequest(sipPacketNextHop)) {
         let sipRequestNextHop = sipPacketNextHop;
         buildNextHopPacket.popRoute(sipRequestNextHop);

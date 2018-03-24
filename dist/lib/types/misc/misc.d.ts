@@ -1,6 +1,4 @@
 import * as types from "../types";
-export declare function smuggleMiscInPsContactUserAgent(misc: types.PsContact.Misc): string;
-export declare function buildContactFromPsContact(psContact: types.PsContact): types.Contact;
 export declare namespace sanityChecks {
     function contact(o: types.Contact): boolean;
     function uaSim(o: types.UaSim): boolean;

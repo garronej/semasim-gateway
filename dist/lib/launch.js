@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-process.once("warning", error => {
+process.on("warning", error => {
     console.log("WARNING WARNING WARNING");
     console.log(error.stack);
 });
@@ -17,12 +17,13 @@ const db = require("./db");
 const sipProxy = require("./sipProxy");
 const messagesDispatcher = require("./messagesDispatcher");
 const voiceCallBridge = require("./voiceCallBridge");
+require("colors");
 const _debug = require("debug");
-let debug = _debug("_main");
+let debug = _debug("_launch");
 debug("Starting semasim gateway !");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        debug("Launching...");
+        debug("Launching!...");
         yield launchDongleController();
         yield db.launch();
         sipProxy.launch();
@@ -132,6 +133,7 @@ function registerListeners() {
         yield db.semasim.onSipMessage(toNumber, text, uaSim, exactSendDate);
         let dongle = Array.from(dc.usableDongles.values()).find(({ sim }) => sim.imsi === fromContact.uaSim.imsi);
         if (!dongle) {
+            debug("Target dongle not usable".red);
             return;
         }
         messagesDispatcher.sendMessagesOfDongle(dongle);

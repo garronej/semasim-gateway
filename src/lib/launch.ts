@@ -1,4 +1,4 @@
-process.once("warning", error=> { 
+process.on("warning", error=> { 
 
     console.log("WARNING WARNING WARNING");
 
@@ -15,14 +15,16 @@ import * as sipProxy from "./sipProxy";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 
+import "colors";
+
 import * as _debug from "debug";
-let debug = _debug("_main");
+let debug = _debug("_launch");
 
 debug("Starting semasim gateway !");
 
 export async function launch() {
 
-    debug("Launching...");
+    debug("Launching!...");
 
     await launchDongleController();
 
@@ -237,6 +239,9 @@ function registerListeners() {
             );
 
             if (!dongle) {
+
+                debug("Target dongle not usable".red);
+
                 return;
             }
 

@@ -26,18 +26,18 @@ function sendMessagesOfDongle(dongle) {
             catch (_a) {
                 return;
             }
+            let sendDate = sendMessageResult.success ?
+                sendMessageResult.sendDate : null;
+            onSent(sendDate).then(() => notifyNewSipMessagesToSend(dongle.sim.imsi));
             if (!sendMessageResult.success) {
+                debug("Dongle send error".red, { sendMessageResult });
                 if (sendMessageResult.reason === "DISCONNECT") {
                     return;
                 }
                 else {
-                    yield onSent(null);
                     continue;
                 }
             }
-            let { sendDate } = sendMessageResult;
-            onSent(sendDate)
-                .then(() => notifyNewSipMessagesToSend(dongle.sim.imsi));
             dc.evtStatusReport.attachOnce(({ statusReport }) => statusReport.sendDate.getTime() === sendDate.getTime(), ({ statusReport }) => onStatusReport(statusReport)
                 .then(() => notifyNewSipMessagesToSend(dongle.sim.imsi)));
         }

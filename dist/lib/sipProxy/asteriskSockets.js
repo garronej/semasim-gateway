@@ -34,8 +34,11 @@ function flush() {
     }
 }
 exports.flush = flush;
-function getAll() {
-    return Array.from(exports.map.values())
-        .filter(asteriskSocket => asteriskSocket !== null);
+/*
+export function getAll(): sipLibrary.Socket[]{
+
+    return Array.from(map.values())
+        .filter(asteriskSocket => asteriskSocket !== null) as sipLibrary.Socket[];
+
 }
-exports.getAll = getAll;
+*/

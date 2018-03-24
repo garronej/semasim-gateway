@@ -8,10 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ts_events_extended_1 = require("ts-events-extended");
-const types = require("../types");
 const mysqlCustom = require("../../tools/mysqlCustom");
-const MySqlEvents_1 = require("../../tools/MySqlEvents");
 const voiceCallBridge_1 = require("../voiceCallBridge");
 const sipProxy_1 = require("../sipProxy");
 const c = require("../_constants");
@@ -23,12 +20,6 @@ function launch() {
             "DELETE FROM ps_contacts",
             "WHERE endpoint LIKE '_______________'"
         ].join("\n"));
-        yield MySqlEvents_1.MySqlEvents.launch(connectionConfig);
-        let post = (row, evt) => evt.post(types.misc.buildContactFromPsContact(row));
-        exports.evtNewContact = new ts_events_extended_1.SyncEvent();
-        MySqlEvents_1.MySqlEvents.instance.evtNewRow.attach(({ table }) => table === "ps_contacts", ({ row }) => post(row, exports.evtNewContact));
-        exports.evtExpiredContact = new ts_events_extended_1.SyncEvent();
-        MySqlEvents_1.MySqlEvents.instance.evtDeleteRow.attach(({ table }) => table === "ps_contacts", ({ row }) => post(row, exports.evtExpiredContact));
         exports.query = api.query;
         exports.esc = api.esc;
         exports.buildInsertQuery = api.buildInsertQuery;
@@ -49,22 +40,11 @@ function flush() {
 }
 exports.flush = flush;
 function deleteContact(contact) {
-    return new Promise((resolve, reject) => {
-        //TODO: this crash some times for some reasons
-        let timerId = setTimeout(() => reject(new Error(`Delete contact timeout error`)), 3000);
-        let queryPromise = (() => __awaiter(this, void 0, void 0, function* () {
-            let { affectedRows } = yield exports.query(`DELETE FROM ps_contacts WHERE id=${exports.esc(contact.id)}`);
-            let isDeleted = affectedRows ? true : false;
-            if (!isDeleted) {
-                exports.evtExpiredContact.detach(timerId);
-                clearTimeout(timerId);
-                resolve(false);
-            }
-        }))();
-        exports.evtExpiredContact.attachOnceExtract(({ id }) => id === contact.id, timerId, deletedContact => queryPromise.then(() => {
-            clearTimeout(timerId);
-            resolve(true);
-        }));
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exports.query([
+            "DELETE FROM ps_contacts",
+            `WHERE uri=${exports.esc(contact.uri.replace(/;/g, "^3B"))}`
+        ].join("\n"));
     });
 }
 exports.deleteContact = deleteContact;

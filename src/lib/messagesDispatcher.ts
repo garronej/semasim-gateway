@@ -13,6 +13,7 @@ let debug = _debug("_messageDispatcher");
 export function sendMessagesOfDongle(
     dongle: dcTypes.Dongle.Usable
 ) {
+
     sendMessagesOfDongle.lock.acquire(dongle.imei, async () => {
 
         let dc = Dc.getInstance();
@@ -31,27 +32,30 @@ export function sendMessagesOfDongle(
                 );
 
             } catch {
+
                 return;
+
             }
 
+            let sendDate = sendMessageResult.success ?
+                sendMessageResult.sendDate : null;
+
+            onSent(sendDate).then(() => notifyNewSipMessagesToSend(dongle.sim.imsi));
+
             if (!sendMessageResult.success) {
+
+                debug("Dongle send error".red, { sendMessageResult });
 
                 if (sendMessageResult.reason === "DISCONNECT") {
                     return;
                 } else {
-                    await onSent(null);
                     continue;
                 }
 
             }
 
-            let { sendDate } = sendMessageResult;
-
-            onSent(sendDate)
-                .then(() => notifyNewSipMessagesToSend(dongle.sim.imsi));
-
             dc.evtStatusReport.attachOnce(
-                ({ statusReport }) => statusReport.sendDate.getTime() === sendDate.getTime(),
+                ({ statusReport }) => statusReport.sendDate.getTime() === sendDate!.getTime(),
                 ({ statusReport }) => onStatusReport(statusReport)
                     .then(() => notifyNewSipMessagesToSend(dongle.sim.imsi))
             );

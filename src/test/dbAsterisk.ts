@@ -1,7 +1,5 @@
 import * as db from "../lib/db/asterisk";
-import * as sipLibrary from "../tools/sipLibrary";
 import * as types from "../lib/types";
-import { assertSame } from "transfer-tools/dist/lib/testing";
 import { cid } from "../lib/sipProxy/misc";
 
 const contact: types.Contact = (() => {
@@ -22,7 +20,6 @@ const contact: types.Contact = (() => {
     };
 
     return {
-        "id": "__generated_by_asterisk__",
         "uri": [
             `sip:${imsi}@192.168.1.15:35096;`,
             "app-id=851039092461;",
@@ -36,61 +33,6 @@ const contact: types.Contact = (() => {
         "uaSim": { imsi, ua }
     };
 
-})();
-
-const psContact: types.PsContact = (() => {
-
-    let contactAoR: sipLibrary.AoR = {
-        "name": undefined,
-        "uri": contact.uri,
-        "params": {
-            "+sip.instance": contact.uaSim.ua.instance
-        }
-    };
-
-    contact.uri = (() => {
-
-        let parsedUri = sipLibrary.parseUri(contact.uri);
-
-        parsedUri.params = {};
-
-        return sipLibrary.stringifyUri(parsedUri);
-
-    })();
-
-
-    let contactParams = sipLibrary.parseUri(contactAoR.uri).params;
-
-    return {
-        "id": contact.id,
-        "uri": (() => {
-
-            let parsedUri = sipLibrary.parseUri(contactAoR.uri);
-
-            parsedUri.params = {};
-
-            return sipLibrary.stringifyUri(parsedUri);
-
-        })(),
-        "path": contact.path,
-        "endpoint": contact.uaSim.imsi,
-        "user_agent": types.misc.smuggleMiscInPsContactUserAgent({
-            "ua_instance": contactAoR!.params["+sip.instance"]!,
-            "ua_userEmail": contactParams["user_email"]!,
-            "ua_platform": (() => {
-                switch (contactParams["pn-type"]) {
-                    case "google":
-                    case "firebase": return "android";
-                    case "apple": return "iOS";
-                    default: return "other";
-                }
-            })(),
-            "ua_pushToken": contactParams["pn-tok"] || "",
-            "ua_software": contact.uaSim.ua.software,
-            "connectionId": contact.connectionId
-        })
-    };
-
 
 })();
 
@@ -101,50 +43,6 @@ export async function testDbAsterisk() {
     await db.launch();
 
     await db.flush();
-
-    db.query(
-        db.buildInsertQuery(
-            "ps_contacts",
-            psContact,
-            "THROW ERROR"
-        )
-    );
-
-    assertSame(
-        await db.evtNewContact.waitFor(10000),
-        contact
-    );
-
-    db.deleteContact(contact);
-
-    try {
-
-        console.log("Last 3sec...");
-
-        await db.evtExpiredContact.waitFor(3000);
-
-        console.assert(false);
-
-    } catch{ 
-
-        console.log("...continue");
-
-    }
-
-    await db.query(
-        db.buildInsertQuery(
-            "ps_contacts",
-            psContact,
-            "THROW ERROR"
-        )
-    );
-
-    db.query(`DELETE FROM ps_contacts WHERE id= ${db.esc(psContact.id)}`);
-
-    assertSame(
-        await db.evtExpiredContact.waitFor(10000),
-        contact
-    );
 
     let password = await db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi);
 

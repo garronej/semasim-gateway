@@ -2,135 +2,297 @@ import * as sipLibrary from "../../tools/sipLibrary";
 import * as dbAsterisk from "../db/asterisk";
 import * as types from "../types";
 import * as backendSocket from "./backendSocket";
-import { SyncEvent } from "ts-events-extended";
-import * as asteriskSockets from "./asteriskSockets";
+import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
+import { readImsi, cid } from "./misc";
 
 import "colors";
 
 import * as _debug from "debug";
 let debug = _debug("_sipProxy/asteriskSockets/contactsRegistrationMonitor");
 
+//TODO: create proxy
 export const evtContactRegistration = new SyncEvent<types.Contact>();
 
-/** Must be called by router when new asteriskSocket is created */
-export function onNewAsteriskSocket(
-    asteriskSocket: sipLibrary.Socket,
-    { connectionId, imsi }: asteriskSockets.Key
-): Promise<types.Contact> {
-
-    return new Promise<types.Contact>(
-        resolve =>
-            dbAsterisk.evtNewContact.waitFor(
-                contact => (
-                    contact.connectionId === connectionId &&
-                    contact.uaSim.imsi === imsi
-                ),
-                6001
-            ).then(contact => {
-
-                const boundTo = [];
-
-                asteriskSocket.evtClose.attachOnce(() => {
-                    dbAsterisk.evtExpiredContact.detach(boundTo);
-                    dbAsterisk.deleteContact(contact);
-                });
-
-                dbAsterisk.evtExpiredContact.attachOnce(
-                    expiredContact => expiredContact.id === contact.id,
-                    boundTo,
-                    () => {
-                        debug("expired contact");
-                        asteriskSocket.destroy();
-                        backendSocket.remoteApi.forceContactToRegister(contact);
-                    }
-                );
-
-                for (let [socket_i, contact_i] of getContactMap()) {
-
-                    if (contact_i && types.misc.areSameUaSims(contact_i.uaSim, contact.uaSim)) {
-
-                        debug("ua re-register with an other connection");
-
-                        socket_i.destroy();
-
-                        break;
-
-
-                    }
-
-                }
-
-                socketContact.set(asteriskSocket, contact);
-
-                evtContactRegistration.post(contact);
-
-                resolve(contact);
-
-            }).catch(() => asteriskSocket.destroy())
-    );
-
-
-}
-
-namespace socketContact {
-
-    let key = "__contact__";
-
-    export function set(
-        asteriskSocket: sipLibrary.Socket,
-        contact: types.Contact
-    ): void {
-        asteriskSocket.misc[key] = contact;
-    }
-
-    export function get(
-        asteriskSocket: sipLibrary.Socket
-    ): types.Contact | undefined {
-        return asteriskSocket.misc[key];
-    }
-
-}
-
-
-function getContactMap(): Map<sipLibrary.Socket, types.Contact | undefined> {
-
-    let out = new Map<sipLibrary.Socket, types.Contact | undefined>();
-
-    for (let asteriskSocket of asteriskSockets.getAll()) {
-
-        out.set(asteriskSocket, socketContact.get(asteriskSocket));
-
-    }
-
-    return out;
-
-}
-
 export function getContacts(imsi?: string): types.Contact[] {
-
-    let out: types.Contact[] = [];
-
-    for (let contact of getContactMap().values()) {
-
-        if (contact && (!imsi || contact.uaSim.imsi === imsi)) {
-            out.push(contact);
-        }
-
-    }
-
-    return out;
-
+    return contacts.get()
+        .filter(({ contact }) => !!imsi ? (contact.uaSim.imsi === imsi) : true)
+        .map(({ contact }) => contact);
 }
 
 /** Close all asteriskSocket that has a contact registered to a IMSI */
 export function discardContactsRegisteredToSim(imsi: string): void {
 
-    for (let [asteriskSocket, contact] of getContactMap()) {
+    for (let { contact, asteriskSocket } of contacts.get()) {
 
-        if (!contact || contact.uaSim.imsi === imsi) {
+        if (contact.uaSim.imsi === imsi) {
+
             asteriskSocket.destroy();
+
         }
 
     }
 
 }
+
+namespace contacts {
+
+    const map = new Map<types.Contact, { timer: NodeJS.Timer, asteriskSocket: sipLibrary.Socket; }>();
+
+    export const evtExpiredContact = new SyncEvent<{
+        contact: types.Contact,
+        asteriskSocket: sipLibrary.Socket
+    }>();
+
+    export function _delete(contact: types.Contact): void {
+
+        let entry = map.get(contact);
+
+        if (entry) {
+
+            clearTimeout(entry.timer);
+
+        }
+
+        map.delete(contact);
+
+    }
+
+    export function setOrRefresh(
+        contact: types.Contact,
+        asteriskSocket: sipLibrary.Socket,
+        timeout: number
+    ): void {
+
+        _delete(contact);
+
+        let timer = setTimeout(() => {
+
+            map.delete(contact);
+
+            evtExpiredContact.post({ contact, asteriskSocket });
+
+        }, timeout);
+
+        timer.unref();
+
+        map.set(contact, { timer, asteriskSocket });
+
+    }
+
+    export function get() {
+
+        let out: { contact: types.Contact; asteriskSocket: sipLibrary.Socket; }[] = [];
+
+        for (let [contact, { asteriskSocket }] of map) {
+
+            out.push({ contact, asteriskSocket });
+
+        }
+
+        return out;
+
+    }
+
+}
+
+contacts.evtExpiredContact.attach(
+    ({ contact, asteriskSocket }) => {
+
+        debug("expired contact");
+
+        asteriskSocket.destroy();
+
+        backendSocket.remoteApi.forceContactToRegister(contact);
+
+    }
+);
+
+function onContactRegistered(
+    contact: types.Contact,
+    expire: number,
+    asteriskSocket: sipLibrary.Socket
+): void {
+
+    asteriskSocket.evtClose.attachOnce(() => {
+
+        contacts._delete(contact);
+
+        dbAsterisk.deleteContact(contact);
+
+    });
+
+    contacts.get().find(entry => {
+
+        if ( 
+            entry.contact !== contact && 
+            types.misc.areSameUaSims(contact.uaSim, entry.contact.uaSim)
+        ) {
+
+            debug("ua re-register with an other connection");
+
+            entry.asteriskSocket.destroy();
+
+            return true;
+
+        }
+
+        return false;
+
+    });
+
+    contacts.setOrRefresh(contact, asteriskSocket, expire * 1000);
+
+    evtContactRegistration.post(contact);
+
+}
+
+
+export function onNewAsteriskSocket(
+    asteriskSocket: sipLibrary.Socket
+): Promise<types.Contact> {
+
+    let imsi: string;
+    let connectionId: string;
+
+    asteriskSocket.evtPacketPreWrite.attachOnce(
+        sipLibrary.matchRequest,
+        sipRequest => {
+
+            imsi = readImsi(sipRequest);
+            connectionId = cid.read(sipRequest);
+
+        }
+    );
+
+
+
+    let purgedContactUri: string;
+
+
+    asteriskSocket.evtPacketPreWrite.attachOnce(
+        (sipPacket): sipPacket is sipLibrary.Request => (
+            sipLibrary.matchRequest(sipPacket) &&
+            !!sipLibrary.getContact(sipPacket)
+        ),
+        sipRequest => {
+
+            let parsedUri = sipLibrary.parseUri(
+                sipLibrary.getContact(sipRequest)!.uri
+            );
+
+            parsedUri.params = {
+                "stamp": `${cid.parse(connectionId).timestamp}`
+            };
+
+            purgedContactUri = sipLibrary.stringifyUri(parsedUri);
+
+        }
+    );
+
+
+    let contact: types.Contact;
+    let expire: number;
+
+    asteriskSocket.evtPacketPreWrite.attachOnce(
+        (sipPacket): sipPacket is sipLibrary.Request => (
+            sipLibrary.matchRequest(sipPacket) &&
+            sipPacket.method === "REGISTER"
+        ),
+        sipRequestRegister => {
+
+            let [aorParams, uriParams] = (() => {
+
+                let contactAor = sipLibrary.getContact(sipRequestRegister)!;
+
+                return [
+                    contactAor.params,
+                    sipLibrary.parseUri(contactAor.uri).params
+                ];
+
+            })();
+
+            contact = {
+                "uri": purgedContactUri,
+                connectionId,
+                "path": sipLibrary.stringifyPath(sipRequestRegister.headers.path!),
+                "uaSim": {
+                    imsi,
+                    "ua": {
+                        "instance": aorParams["+sip.instance"]!,
+                        "userEmail": types.misc.urlSafeB64.dec((
+                            sipLibrary.parseUri(sipRequestRegister.uri).params["enc_email"] ||
+                            uriParams["enc_email"] ||
+                            aorParams["enc_email"]
+                        )!),
+                        "platform": (() => {
+
+                            switch (uriParams["pn-type"]) {
+                                case "google":
+                                case "firebase":
+                                    return "android";
+                                case "apple":
+                                    return "iOS";
+                                default:
+                                    return "other";
+                            }
+
+                        })(),
+
+                        "pushToken": uriParams["pn-tok"] || "",
+                        "software": sipRequestRegister.headers["user-agent"]
+
+                    }
+                }
+            };
+
+            expire = parseInt(sipRequestRegister.headers["expires"]);
+
+        }
+    );
+
+    let evtRegistered = new VoidSyncEvent();
+
+    asteriskSocket.evtPacketPreWrite.attach(
+        (sipPacket): sipPacket is sipLibrary.Request => (
+            sipLibrary.matchRequest(sipPacket) &&
+            sipPacket.method === "REGISTER" &&
+            sipPacket.headers["authorization"]!!
+        ),
+        sipRequestRegister =>
+            asteriskSocket.evtResponse.attachOnce(
+                sipResponse => sipLibrary.isResponse(sipRequestRegister, sipResponse),
+                ({ status }) => {
+
+                    if (status !== 200) {
+                        return;
+                    }
+
+                    onContactRegistered(contact, expire, asteriskSocket);
+
+                    if (!evtRegistered.postCount) {
+                        evtRegistered.post();
+                    }
+
+                }
+            )
+    );
+
+    asteriskSocket.evtPacketPreWrite.attach(
+        (sipPacket): sipPacket is sipLibrary.Request => (
+            sipLibrary.matchRequest(sipPacket) &&
+            !!sipLibrary.getContact(sipPacket)
+        ),
+        sipPacket => sipLibrary.getContact(sipPacket)!.uri = purgedContactUri
+    );
+
+    return new Promise(
+        resolve => evtRegistered
+            .waitFor(6001)
+            .then(() => resolve(contact))
+            .catch(() => asteriskSocket.destroy())
+    );
+
+}
+
+
+

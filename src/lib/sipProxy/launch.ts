@@ -18,14 +18,6 @@ export async function launch(){
 
     let backendSocketInst= await router.createBackendSocket();
 
-    backendSocketInst.evtConnect.waitFor(10000).catch(()=>{
-
-        console.log("WARN WARN WARN connection to backend took too much time".red);
-
-        backendSocketInst.destroy();
-
-    });
-
     backendSocketInst.evtClose.attachOnce(async () => {
 
         console.log("Backend socket closed, waiting and restarting");

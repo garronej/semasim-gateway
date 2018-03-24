@@ -3,8 +3,10 @@ import * as types from "./types";
 /** For debug purpose only, assume sipPacket content is UTF-8 encoded text */
 export declare function stringify(sipPacket: types.Packet): string;
 export declare function matchRequest(sipPacket: types.Packet): sipPacket is types.Request;
+export declare function clonePacket(sipRequest: types.Request): types.Request;
+export declare function clonePacket(sipResponse: types.Response): types.Response;
 export declare function clonePacket(sipPacket: types.Packet): types.Packet;
-/** Safely set text based content (encoded in utf8 ) */
+/** Safely set text based content ( encoded in utf8 ) */
 export declare function setPacketContent(sipPacket: types.Packet, data: Buffer): void;
 export declare function setPacketContent(sipPacket: types.Packet, str: string): void;
 /** Get the RAW content as buffer */
@@ -24,9 +26,6 @@ export declare function filterSdpCandidates(keep: {
 }, sdp: string): string;
 export declare function getContact(sipRequest: types.Request): types.AoR | undefined;
 export declare function isResponse(sipRequestNextHop: types.Request, sipResponse: types.Response): boolean;
-export declare function getNextHop(sipRequestAsReceived: types.Request): types.Request | undefined;
-export declare function getNextHop(sipResponseAsReceived: types.Response): types.Response | undefined;
-export declare function getNextHop(sipPacketAdReceived: types.Packet): types.Packet | undefined;
 /** Return a clone of the packet ready for next hop */
 export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipRequestAsReceived: types.Request): types.Request;
 export declare function buildNextHopPacket(socket: buildNextHopPacket.ISocket, sipResponseAsReceived: types.Response): types.Response;

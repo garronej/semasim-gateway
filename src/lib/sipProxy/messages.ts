@@ -70,8 +70,6 @@ export function sendMessage(
 
                 sipLibrary.setPacketContent(sipRequest, text);
 
-                console.log("After interception\n", sipLibrary.stringify(sipRequest));
-
                 prSipResponse
                     .then(() => resolve())
                     .catch(() => reject(new Error("Not received")))
@@ -114,38 +112,42 @@ export async function init() {
     await ami.dialplanExtensionAdd(dialplanContext, matchAllExt, 1, "Hangup");
 }
 
-export function onNewAsteriskSocket(asteriskSocket: sipLibrary.Socket, prContact: Promise<types.Contact> ){
+export function onNewAsteriskSocket(
+    asteriskSocket: sipLibrary.Socket, 
+    prContact: Promise<types.Contact>
+) {
 
-            asteriskSocket.evtRequest.attachPrepend(
-                sipLibrary.isPlainMessageRequest,
-                sipRequestAsReceived =>
-                    onOutgoingSipMessage(
-                        sipRequestAsReceived,
-                        asteriskSocket.evtSentPacket.waitFor(
-                            sipPacketNextHop => (
-                                !sipLibrary.matchRequest(sipPacketNextHop) &&
-                                sipLibrary.isResponse(sipRequestAsReceived, sipPacketNextHop)
-                            ), 5000
-                        )
-                    )
-            );
-
-            asteriskSocket.evtSentPacket.attach(
-                (sipPacketNextHop): sipPacketNextHop is sipLibrary.Request => (
-                    sipLibrary.matchRequest(sipPacketNextHop) &&
-                    sipLibrary.isPlainMessageRequest(sipPacketNextHop, "WITH AUTH")
-                ),
-                sipRequestNextHop => asteriskSocket.evtResponse.attachOnce(
-                    sipResponse => sipLibrary.isResponse(sipRequestNextHop, sipResponse),
-                    async ({ status }) => {
-
-                        if (status !== 202) { return; }
-
-                        onIncomingSipMessage(await prContact, sipRequestNextHop);
-
-                    }
+    asteriskSocket.evtRequest.attachPrepend(
+        sipLibrary.isPlainMessageRequest,
+        sipRequestAsReceived =>
+            onOutgoingSipMessage(
+                sipRequestAsReceived,
+                asteriskSocket.evtPacketPreWrite.waitFor(
+                    sipPacketNextHop => (
+                        !sipLibrary.matchRequest(sipPacketNextHop) &&
+                        sipLibrary.isResponse(sipRequestAsReceived, sipPacketNextHop)
+                    ), 5000
                 )
-            );
+            )
+    );
+
+    asteriskSocket.evtPacketPreWrite.attach(
+        (sipPacketNextHop): sipPacketNextHop is sipLibrary.Request => (
+            sipLibrary.matchRequest(sipPacketNextHop) &&
+            sipLibrary.isPlainMessageRequest(sipPacketNextHop, "WITH AUTH")
+        ),
+        sipRequestNextHop => asteriskSocket.evtResponse.attachOnce(
+            sipResponse => sipLibrary.isResponse(sipRequestNextHop, sipResponse),
+            async ({ status }) => {
+
+                if (status !== 202) { return; }
+
+                onIncomingSipMessage(await prContact, sipRequestNextHop);
+
+            }
+        )
+    );
+
 }
 
 /** 
@@ -165,8 +167,6 @@ function onOutgoingSipMessage(
     sipRequestAsReceived: sipLibrary.Request,
     prSipResponse: Promise<any>
 ): void {
-
-    console.log("bim on outgoing!");
 
     sendMessage.evtOutgoingMessage.post({
         "sipRequest": sipRequestAsReceived,
@@ -190,8 +190,6 @@ function onIncomingSipMessage(
     fromContact: types.Contact,
     sipRequest: sipLibrary.Request
 ) {
-
-    console.log("on incoming message yay! ");
 
     let content = sipLibrary.getPacketContent(sipRequest);
 

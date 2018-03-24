@@ -14,11 +14,14 @@ export function matchRequest(sipPacket: types.Packet): sipPacket is types.Reques
 }
 
 //TODO: optimize
+export function clonePacket(sipRequest: types.Request): types.Request;
+export function clonePacket(sipResponse: types.Response): types.Response;
+export function clonePacket(sipPacket: types.Packet): types.Packet;
 export function clonePacket(sipPacket: types.Packet): types.Packet {
     return core.parse(core.toData(sipPacket));
 }
 
-/** Safely set text based content (encoded in utf8 ) */
+/** Safely set text based content ( encoded in utf8 ) */
 export function setPacketContent(sipPacket: types.Packet, data: Buffer): void;
 export function setPacketContent(sipPacket: types.Packet, str: string): void;
 export function setPacketContent(sipPacket: types.Packet, data: Buffer | string ): void {
@@ -205,14 +208,6 @@ export function isResponse(
         sipRequestNextHop.headers.via[0].params["branch"];
 }
 
-const asReceivedToNextHopWeakMap= new WeakMap<types.Packet, types.Packet>();
-
-export function getNextHop( sipRequestAsReceived: types.Request ): types.Request | undefined;
-export function getNextHop( sipResponseAsReceived: types.Response ): types.Response | undefined;
-export function getNextHop( sipPacketAdReceived: types.Packet) : types.Packet | undefined;
-export function getNextHop( sipPacketAdReceived: types.Packet) : types.Packet | undefined {
-    return asReceivedToNextHopWeakMap.get(sipPacketAdReceived);
-}
 
 /** Return a clone of the packet ready for next hop */
 export function buildNextHopPacket(
@@ -233,8 +228,6 @@ export function buildNextHopPacket(
 ): types.Packet {
 
     let sipPacketNextHop= clonePacket(sipPacketAsReceived);
-
-    asReceivedToNextHopWeakMap.set(sipPacketAsReceived, sipPacketNextHop);
 
     if (matchRequest(sipPacketNextHop)) {
 
@@ -404,5 +397,3 @@ export namespace buildNextHopPacket {
     }
 
 }
-
-

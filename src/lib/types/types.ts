@@ -1,27 +1,5 @@
 
-export type PsContact = {
-    id: string;
-    uri: string;
-    path: string;
-    endpoint: string;
-    user_agent: string;
-};
-
-export namespace PsContact {
-
-    export type Misc = {
-        ua_instance: string;
-        ua_userEmail: string;
-        ua_platform: Ua.Platform;
-        ua_pushToken: string;
-        ua_software: string;
-        connectionId: string;
-    };
-
-}
-
 export type Contact = {
-    id: string;
     uri: string;
     path: string;
     connectionId: string;

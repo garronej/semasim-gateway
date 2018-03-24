@@ -4,14 +4,17 @@ import * as types from "./types";
 
 export function makeStreamParser( 
     handler: (sipPacket: types.Packet) => void,
-    onFlood: () => void,
+    onFlood: (data: Buffer, floodType: "headers" | "content" ) => void,
     maxBytesHeaders: number,
     maxContentLength: number
 ): ((data: Buffer) => void) {
 
     let streamParser= sip.makeStreamParser(
         handler,
-        onFlood,
+        (dataAsBinaryStr, floodType)=> onFlood(
+            Buffer.from(dataAsBinaryStr, "binary"), 
+            floodType
+        ),
         maxBytesHeaders,
         maxContentLength,
     );

@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import * as types from "./types";
-export declare function makeStreamParser(handler: (sipPacket: types.Packet) => void, onFlood: () => void, maxBytesHeaders: number, maxContentLength: number): ((data: Buffer) => void);
+export declare function makeStreamParser(handler: (sipPacket: types.Packet) => void, onFlood: (data: Buffer, floodType: "headers" | "content") => void, maxBytesHeaders: number, maxContentLength: number): ((data: Buffer) => void);
 export declare function toData(sipPacket: types.Packet): Buffer;
 export declare const parse: (data: Buffer) => types.Packet;
 export declare const parseUri: (uri: string) => types.ParsedUri;

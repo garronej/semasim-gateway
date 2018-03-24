@@ -30,8 +30,7 @@
     "sip": "github:garronej/sip.js#no-websocket",
     "transfer-tools": "garronej/transfer-tools",
     "ts-events-extended": "garronej/ts-events-extended",
-    "ws": "^4.0.0",
-    "zongji": "^0.4.4"
+    "ws": "^4.0.0"
   },
   "devDependencies": {
     "@types/async-lock": "0.0.20",

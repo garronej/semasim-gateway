@@ -3,7 +3,6 @@ import * as net from "net";
 //import { SyncEvent } from "ts-events-extended";
 import * as networkTools from "../../tools/networkTools";
 import * as sipLibrary from "../../tools/sipLibrary";
-import * as types from "./../types";
 import { readImsi, cid } from "./misc";
 
 //import * as messages from "./messages/index_sipProxy";
@@ -22,8 +21,6 @@ let debug = _debug("_sipProxy/router");
 
 export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
-    debug("Launch");
-
     let localIp: string;
     let host: string;
 
@@ -33,7 +30,7 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
             localIp = await networkTools.getActiveInterfaceIp();
 
-            /** sip.semasim.com */
+            /** SRV _sips._tcp.semasim.com => [{ name: sip.semasim.com }] */
             host = (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
 
             break;
@@ -52,18 +49,31 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
         tls.connect({ host, "port": c.gatewayPort })
     );
 
+    backendSocketInst.enableLogger({
+        "socketId": "backendSocket",
+        "remoteEndId": "BACKEND-GW-SIDE",
+        "localEndId": "GW",
+        "connection": true,
+        "error": true,
+        "close": true,
+        "incomingTraffic": true,
+        "outgoingTraffic": true,
+        "colorizedTraffic": "IN",
+        "ignoreApiTraffic": true
+    });
+
     backendSocket.set(backendSocketInst);
 
     backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush() );
 
-    backendSocketInst.evtData.attach(data=> console.log("BK-GW=>GW\n", `${data.toString("utf8").yellow}`));
-
     backendSocketInst.evtRequest.attach(async sipRequestReceived => {
 
-        let imsi = readImsi(sipRequestReceived);
-        let connectionId = cid.read(sipRequestReceived);
+        let key: asteriskSockets.Key= {
+            "imsi": readImsi(sipRequestReceived),
+            "connectionId": cid.read(sipRequestReceived)
+        };
 
-        let asteriskSocket = asteriskSockets.get({ connectionId, imsi });
+        let asteriskSocket = asteriskSockets.get(key);
 
         if (!asteriskSocket) {
 
@@ -72,96 +82,24 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
             }
 
             asteriskSocket = createAsteriskSocket(
-                connectionId, backendSocketInst, localIp
+                key.connectionId, backendSocketInst, localIp
             );
-
-            let key: asteriskSockets.Key= { connectionId, imsi };
 
             asteriskSockets.set(key, asteriskSocket);
 
-            let prContact= contactRegistrationMonitor.onNewAsteriskSocket(asteriskSocket, key);
+            let prContact= contactRegistrationMonitor.onNewAsteriskSocket(asteriskSocket);
 
-            messages.onNewAsteriskSocket(asteriskSocket, prContact );
+            messages.onNewAsteriskSocket(asteriskSocket, prContact);
 
         }
-
 
         if (!asteriskSocket.evtConnect.postCount) {
             await asteriskSocket.evtConnect.waitFor();
         }
 
-        let sipRequest = asteriskSocket.buildNextHopPacket(sipRequestReceived);
-
-        if (sipRequest.method === "REGISTER") {
-
-            let { params } = sipLibrary.parseUri(sipLibrary.getContact(sipRequest)!.uri);
-
-            let paramsAoR= sipLibrary.getContact(sipRequest)!.params;
-
-            //TODO: Very important base64 is not safe for email as may contain =
-            sipRequest.headers["user-agent"] = types.misc.smuggleMiscInPsContactUserAgent({
-                "ua_instance": paramsAoR["+sip.instance"]!,
-                "ua_userEmail": (()=> {
-
-                    try{
-
-                    return Buffer.from((params["base64_email"] || paramsAoR["base64_email"])!, "base64").toString("utf8");
-
-                    }catch{
-
-                        //TODO: fix ios does not add email
-                        console.log("et bim :(");
-
-                        return "joseph.garrone.gj@gmail.com";
-
-                    }
-
-                })(),
-                "ua_platform": (() => {
-
-                    switch (params["pn-type"]) {
-                        case "google":
-                        case "firebase":
-                            return "android";
-                        case "apple":
-                            return "iOS";
-                        default:
-                            return "other";
-                    }
-
-                })(),
-                "ua_pushToken": params["pn-tok"] || "",
-                "ua_software": sipRequest.headers["user-agent"],
-                connectionId
-            });
-
-        }
-
-        /** 
-         * NOTE: Internally Asterisk use a small buffer of 64 bytes for contact uri variable
-         * In consequence we need to shorten the length of the contact uri by removing 
-         * all the parameters ( app-ip, pn-tok ect ).
-         * Yet to ensure that the uri remain uniq we add a dummy timestamp param
-         */
-        (() => { 
-
-            let contactAoR = sipLibrary.getContact(sipRequest);
-
-            if (contactAoR) {
-
-                let parsedUri = sipLibrary.parseUri(contactAoR.uri);
-
-                parsedUri.params = { "stamp": `${cid.parse(connectionId).timestamp}` };
-
-                contactAoR.uri = sipLibrary.stringifyUri(parsedUri);
-
-            }
-
-        })();
-
-        console.log("GW=>AST\n", `${sipLibrary.stringify(sipRequest).yellow}`)
-
-        asteriskSocket.write(sipRequest);
+        asteriskSocket.write(
+            asteriskSocket.buildNextHopPacket(sipRequestReceived)
+        );
 
     });
 
@@ -175,8 +113,6 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
         if (!asteriskSocket) {
             return;
         }
-
-        console.log("GW=>AST\n", `${sipLibrary.stringify(asteriskSocket.buildNextHopPacket(sipResponseReceived)).yellow}`)
 
         asteriskSocket.write(
             asteriskSocket.buildNextHopPacket(sipResponseReceived)
@@ -202,7 +138,19 @@ function createAsteriskSocket(
         })
     );
 
-    asteriskSocket.evtData.attach(data => console.log("GW<=AST\n", data.toString("utf8")));
+    asteriskSocket.enableLogger({
+        "socketId": "asteriskSocket",
+        "remoteEndId": "ASTERISK",
+        "localEndId": "GW",
+        "connection": true,
+        "error": true,
+        "close": true,
+        "incomingTraffic": false,
+        "outgoingTraffic": false,
+        "colorizedTraffic": "OUT"
+    });
+
+    const clientSocketRemoteAddress= cid.parse(connectionId).clientSocketRemoteAddress;
 
     //TODO: si if for webRtc it is desirable
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
@@ -216,7 +164,7 @@ function createAsteriskSocket(
             !gatewaySocketRemoteAddress ||
             (
                 !sipLibrary.matchRequest(sipPacketNextHop) &&
-                gatewaySocketRemoteAddress === cid.parse(connectionId).clientSocketRemoteAddress
+                gatewaySocketRemoteAddress === clientSocketRemoteAddress
             )
         ) return;
 

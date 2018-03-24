@@ -3,7 +3,7 @@ import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
 import * as types from "../types";
 
 const JSON_CUSTOM= ttJC.get();
-const { enc, dec }= stringTransform.transcode("base64", { "=": "_" });
+export const urlSafeB64= stringTransform.transcode("base64", { "=": "_" });
 const header = (i: number) => `Bundled-Data-${i}`;
 
 export function smuggleBundledDataInHeaders(
@@ -13,7 +13,7 @@ export function smuggleBundledDataInHeaders(
 
     let split = stringTransform.textSplit(
         125,
-        enc( 
+        urlSafeB64.enc( 
             JSON_CUSTOM.stringify(data)
         )
     );
@@ -56,7 +56,7 @@ export function extractBundledDataFromHeaders(
     }
 
     return JSON_CUSTOM.parse(
-        dec(
+        urlSafeB64.dec(
             split.join("")
         )
     );

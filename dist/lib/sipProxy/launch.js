@@ -19,10 +19,6 @@ function launch() {
             yield messages.init();
         }
         let backendSocketInst = yield router.createBackendSocket();
-        backendSocketInst.evtConnect.waitFor(10000).catch(() => {
-            console.log("WARN WARN WARN connection to backend took too much time".red);
-            backendSocketInst.destroy();
-        });
         backendSocketInst.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
             console.log("Backend socket closed, waiting and restarting");
             let delay = (function getRandomArbitrary(min, max) {

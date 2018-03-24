@@ -3,8 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
 const core = require("./core");
 const misc = require("./misc");
+const ApiMessage_1 = require("./api/ApiMessage");
 const _debug = require("debug");
 let debug = _debug("_tools/sipLibrary/Socket");
+require("colors");
 //TODO: make a function to test if message are well formed: have from, to via ect.
 class Socket {
     constructor(connection, spoofedAddressAndPort = {}) {
@@ -19,19 +21,47 @@ class Socket {
         this.evtTimeout = new ts_events_extended_1.VoidSyncEvent();
         /**Emit chunk of data as received by the underlying connection*/
         this.evtData = new ts_events_extended_1.SyncEvent();
-        this.evtSentPacket = new ts_events_extended_1.SyncEvent();
+        this.evtDataOut = new ts_events_extended_1.SyncEvent();
+        /** Provided only so the error can be logged */
+        this.evtError = new ts_events_extended_1.SyncEvent();
+        this.evtPacketPreWrite = new ts_events_extended_1.SyncEvent();
         this.__localPort__ = NaN;
         this.__remotePort__ = NaN;
         this.__localAddress__ = "";
         this.__remoteAddress__ = "";
+        this.haveBeedDestroyed = false;
         this.setKeepAlive = (...inputs) => Socket.matchWebSocket(this.connection) ?
             undefined :
             this.connection.setKeepAlive.apply(this.connection, inputs);
-        let streamParser = core.makeStreamParser(sipPacket => misc.matchRequest(sipPacket) ?
-            this.evtRequest.post(sipPacket) :
-            this.evtResponse.post(sipPacket), () => this.connection.emit("error", new Error("Flood")), Socket.maxBytesHeaders, Socket.maxContentLength);
+        this.loggerEvt = {};
+        let streamParser = core.makeStreamParser(sipPacket => {
+            if (!!this.loggerEvt.evtPacketIn) {
+                this.loggerEvt.evtPacketIn.post(sipPacket);
+            }
+            if (misc.matchRequest(sipPacket)) {
+                this.evtRequest.post(sipPacket);
+            }
+            else {
+                this.evtResponse.post(sipPacket);
+            }
+        }, (data, floodType) => {
+            let message = "Flood! ";
+            switch (floodType) {
+                case "headers":
+                    message += `Sip Headers length > ${Socket.maxBytesHeaders} Bytes`;
+                case "content":
+                    message += `Sip content length > ${Socket.maxContentLength} Bytes`;
+            }
+            let error = new Error(message);
+            error["flood_data"] = data;
+            error["flood_data_toString"] = data.toString("utf8");
+            this.connection.emit("error", error);
+        }, Socket.maxBytesHeaders, Socket.maxContentLength);
         this.connection
-            .once("error", () => this.connection.emit("close", true))
+            .once("error", obj => {
+            this.evtError.post(Socket.matchWebSocket(this.connection) ? obj.error : obj);
+            this.connection.emit("close", true);
+        })
             .once("close", had_error => {
             if (Socket.matchWebSocket(this.connection)) {
                 this.connection.terminate();
@@ -70,7 +100,14 @@ class Socket {
                 this.evtConnect.post(); //For post count
             }
             else {
+                let timer = setTimeout(() => {
+                    if (!!this.evtClose.postCount) {
+                        return;
+                    }
+                    this.connection.emit("error", new Error(`Sip socket connection timeout after ${Socket.connectionTimeout}`));
+                }, Socket.connectionTimeout);
                 this.connection.once(this.connection["encrypted"] ? "secureConnect" : "connect", () => {
+                    clearTimeout(timer);
                     setAddrAndPort();
                     this.evtConnect.post();
                 });
@@ -108,6 +145,7 @@ class Socket {
                 }
             }
         }
+        this.evtPacketPreWrite.post(sipPacket);
         /*NOTE: this could throw but it would mean that it's an error
         on our part as a packet that have been parsed should be stringifiable.*/
         let data = core.toData(sipPacket);
@@ -132,10 +170,18 @@ class Socket {
                 ]);
             }
         }
+        let __before = Date.now();
         ((out instanceof Promise) ? out : Promise.resolve(true))
             .then(isSent => {
+            let __elapsed = Date.now() - __before;
+            if (__elapsed > 200) {
+                console.log(`WARNING WARNING WARNING write took ${__elapsed}ms to compleat`.red);
+            }
             if (isSent) {
-                this.evtSentPacket.post(sipPacket);
+                if (!!this.loggerEvt.evtPacketOut) {
+                    this.loggerEvt.evtPacketOut.post(sipPacket);
+                }
+                this.evtDataOut.post(data);
             }
         });
         return out;
@@ -147,6 +193,7 @@ class Socket {
         this.evtResponse.detach();
         this.evtRequest.detach();
         */
+        this.haveBeedDestroyed = true;
         this.connection.emit("close", false);
     }
     get protocol() {
@@ -160,9 +207,62 @@ class Socket {
     buildNextHopPacket(sipPacket) {
         return misc.buildNextHopPacket(this, sipPacket);
     }
+    enableLogger(params, log = console.log) {
+        const prefix = `[ Sip Socket ${this.protocol} ]`.yellow;
+        const getKey = (params.colorizedTraffic === "IN") ? (direction => [
+            prefix,
+            params.remoteEndId,
+            direction === "IN" ? "=>" : "<=",
+            `${params.localEndId} ( ${params.socketId} )`,
+            "\n"
+        ].join(" ")) : (direction => [
+            prefix,
+            `${params.localEndId} ( ${params.socketId} )`,
+            direction === "IN" ? "<=" : "=>",
+            params.remoteEndId,
+            "\n"
+        ].join(" "));
+        const getColor = (direction) => (params.colorizedTraffic === direction) ? "yellow" : "white";
+        const matchPacket = (sipPacket) => params.ignoreApiTraffic ? !(misc.matchRequest(sipPacket) &&
+            sipPacket.method === ApiMessage_1.sipMethodName) : true;
+        const onPacket = (sipPacket, direction) => log(getKey(direction), misc.stringify(sipPacket)[getColor(direction)]);
+        if (!!params.incomingTraffic) {
+            this.loggerEvt.evtPacketIn = new ts_events_extended_1.SyncEvent();
+            this.loggerEvt.evtPacketIn.attach(matchPacket, sipPacket => onPacket(sipPacket, "IN"));
+        }
+        if (!!params.outgoingTraffic) {
+            this.loggerEvt.evtPacketOut = new ts_events_extended_1.SyncEvent();
+            this.loggerEvt.evtPacketOut.attach(matchPacket, sipPacket => onPacket(sipPacket, "OUT"));
+        }
+        if (!!params.error) {
+            this.evtError.attachOnce(error => log(`${prefix} ${params.socketId} Error`.red, error));
+        }
+        if (!!params.connection) {
+            let message = `${prefix} ${params.socketId} connected`;
+            if (!!this.evtConnect.postCount) {
+                log(message);
+            }
+            else {
+                this.evtConnect.attachOnce(() => log(message));
+            }
+        }
+        if (!!params.close) {
+            let getMessage = () => [
+                `${prefix} ${params.socketId} closed`,
+                this.haveBeedDestroyed ? "( locally destroyed )" : ""
+            ].join(" ");
+            if (!!this.evtClose.postCount) {
+                log(getMessage());
+            }
+            else {
+                this.evtClose.attachOnce(hasError => log(getMessage()));
+            }
+        }
+    }
 }
 Socket.maxBytesHeaders = 7820;
 Socket.maxContentLength = 24624;
+Socket.connectionTimeout = 3000;
 exports.Socket = Socket;
 (function (Socket) {
     function matchWebSocket(socket) {

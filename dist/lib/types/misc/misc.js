@@ -1,40 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const dcSanityChecks = require("chan-dongle-extended-client/dist/lib/sanityChecks");
-function smuggleMiscInPsContactUserAgent(misc) {
-    let user_agent = Buffer.from(JSON.stringify(misc), "utf8").toString("base64");
-    return user_agent;
-}
-exports.smuggleMiscInPsContactUserAgent = smuggleMiscInPsContactUserAgent;
-;
-function buildContactFromPsContact(psContact) {
-    let imsi = psContact.endpoint;
-    let { ua_instance, ua_userEmail, ua_platform, ua_pushToken, ua_software, connectionId } = JSON.parse(Buffer.from(psContact.user_agent, "base64").toString("utf8"));
-    return {
-        "id": psContact.id,
-        "uri": psContact.uri.replace(/\^3B/g, ";"),
-        "path": psContact.path.replace(/\^3B/g, ";"),
-        connectionId,
-        "uaSim": {
-            "ua": {
-                "instance": ua_instance,
-                "userEmail": ua_userEmail,
-                "platform": ua_platform,
-                "pushToken": ua_pushToken,
-                "software": ua_software
-            },
-            imsi
-        }
-    };
-}
-exports.buildContactFromPsContact = buildContactFromPsContact;
-;
 //TODO: rename sanityCheck.
 var sanityChecks;
 (function (sanityChecks) {
     function contact(o) {
         return (o instanceof Object &&
-            typeof o.id === "string" &&
             typeof o.uri === "string" &&
             typeof o.path === "string" &&
             typeof o.connectionId === "string" &&

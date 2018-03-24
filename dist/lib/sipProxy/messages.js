@@ -39,7 +39,6 @@ function sendMessage(contact, fromNumber, headers, text, fromNumberSimName) {
             delete sipRequest.headers.contact;
             sipRequest.headers = Object.assign({}, sipRequest.headers, headers);
             sipLibrary.setPacketContent(sipRequest, text);
-            console.log("After interception\n", sipLibrary.stringify(sipRequest));
             prSipResponse
                 .then(() => resolve())
                 .catch(() => reject(new Error("Not received")));
@@ -68,9 +67,9 @@ function init() {
 }
 exports.init = init;
 function onNewAsteriskSocket(asteriskSocket, prContact) {
-    asteriskSocket.evtRequest.attachPrepend(sipLibrary.isPlainMessageRequest, sipRequestAsReceived => onOutgoingSipMessage(sipRequestAsReceived, asteriskSocket.evtSentPacket.waitFor(sipPacketNextHop => (!sipLibrary.matchRequest(sipPacketNextHop) &&
+    asteriskSocket.evtRequest.attachPrepend(sipLibrary.isPlainMessageRequest, sipRequestAsReceived => onOutgoingSipMessage(sipRequestAsReceived, asteriskSocket.evtPacketPreWrite.waitFor(sipPacketNextHop => (!sipLibrary.matchRequest(sipPacketNextHop) &&
         sipLibrary.isResponse(sipRequestAsReceived, sipPacketNextHop)), 5000)));
-    asteriskSocket.evtSentPacket.attach((sipPacketNextHop) => (sipLibrary.matchRequest(sipPacketNextHop) &&
+    asteriskSocket.evtPacketPreWrite.attach((sipPacketNextHop) => (sipLibrary.matchRequest(sipPacketNextHop) &&
         sipLibrary.isPlainMessageRequest(sipPacketNextHop, "WITH AUTH")), sipRequestNextHop => asteriskSocket.evtResponse.attachOnce(sipResponse => sipLibrary.isResponse(sipRequestNextHop, sipResponse), ({ status }) => __awaiter(this, void 0, void 0, function* () {
         if (status !== 202) {
             return;
@@ -93,7 +92,6 @@ exports.onNewAsteriskSocket = onNewAsteriskSocket;
  */
 //export function onOutgoingSipMessage(
 function onOutgoingSipMessage(sipRequestAsReceived, prSipResponse) {
-    console.log("bim on outgoing!");
     sendMessage.evtOutgoingMessage.post({
         "sipRequest": sipRequestAsReceived,
         prSipResponse
@@ -111,7 +109,6 @@ function onOutgoingSipMessage(sipRequestAsReceived, prSipResponse) {
  *
  */
 function onIncomingSipMessage(fromContact, sipRequest) {
-    console.log("on incoming message yay! ");
     let content = sipLibrary.getPacketContent(sipRequest);
     let text = content.toString("utf8");
     if (!content.equals(Buffer.from(text, "utf8"))) {

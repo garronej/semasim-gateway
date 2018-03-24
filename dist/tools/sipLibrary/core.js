@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sip = require("sip");
 const _sdp_ = require("sip/sdp");
 function makeStreamParser(handler, onFlood, maxBytesHeaders, maxContentLength) {
-    let streamParser = sip.makeStreamParser(handler, onFlood, maxBytesHeaders, maxContentLength);
+    let streamParser = sip.makeStreamParser(handler, (dataAsBinaryStr, floodType) => onFlood(Buffer.from(dataAsBinaryStr, "binary"), floodType), maxBytesHeaders, maxContentLength);
     return data => streamParser(data.toString("binary"));
 }
 exports.makeStreamParser = makeStreamParser;

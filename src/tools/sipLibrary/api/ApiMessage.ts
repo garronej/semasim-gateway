@@ -5,6 +5,8 @@ import { JSON_CUSTOM as ttJC } from "transfer-tools";
 
 const JSON_CUSTOM = ttJC.get();
 
+export const sipMethodName= "API";
+
 export namespace ApiMessage {
 
     const actionIdKey = "api-action-id";
@@ -15,7 +17,7 @@ export namespace ApiMessage {
     ): types.Request {
 
         let sipRequest = core.parse(Buffer.from([
-            `API _ SIP/2.0`,
+            `${sipMethodName} _ SIP/2.0`,
             "Max-Forwards: 0",
             "\r\n"
         ].join("\r\n"), "utf8")) as types.Request;

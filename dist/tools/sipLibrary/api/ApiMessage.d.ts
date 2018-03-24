@@ -1,4 +1,5 @@
 import * as types from "../types";
+export declare const sipMethodName = "API";
 export declare namespace ApiMessage {
     function buildSip(actionId: number, payload: any): types.Request;
     function matchSip(sipRequest: types.Request): boolean;

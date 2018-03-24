@@ -1,45 +1,6 @@
 import * as types from "../types";
 import * as dcSanityChecks from "chan-dongle-extended-client/dist/lib/sanityChecks";
 
-export function smuggleMiscInPsContactUserAgent(misc: types.PsContact.Misc): string {
-    let user_agent = Buffer.from(JSON.stringify(misc), "utf8").toString("base64");
-    return user_agent;
-};
-
-export function buildContactFromPsContact(psContact: types.PsContact): types.Contact {
-
-    let imsi = psContact.endpoint;
-
-    let {
-        ua_instance,
-        ua_userEmail,
-        ua_platform,
-        ua_pushToken,
-        ua_software,
-        connectionId
-    } = JSON.parse(
-        Buffer.from(psContact.user_agent, "base64").toString("utf8")
-    );
-
-    return {
-        "id": psContact.id,
-        "uri": psContact.uri.replace(/\^3B/g, ";"),
-        "path": psContact.path.replace(/\^3B/g, ";"),
-        connectionId,
-        "uaSim": {
-            "ua": {
-                "instance": ua_instance,
-                "userEmail": ua_userEmail,
-                "platform": ua_platform,
-                "pushToken": ua_pushToken,
-                "software": ua_software
-            },
-            imsi
-        }
-    };
-
-};
-
 //TODO: rename sanityCheck.
 export namespace sanityChecks {
 
@@ -47,7 +8,6 @@ export namespace sanityChecks {
 
         return (
             o instanceof Object &&
-            typeof o.id === "string" &&
             typeof o.uri === "string" &&
             typeof o.path === "string" &&
             typeof o.connectionId === "string" &&
@@ -91,9 +51,7 @@ export namespace sanityChecks {
 
     }
 
-
 }
-
 
 export function generateUaId(o: types.Ua): string {
     return JSON.stringify([o.instance, o.userEmail]);
