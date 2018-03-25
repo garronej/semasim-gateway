@@ -7,8 +7,6 @@ import * as sipLibrary from "../../tools/sipLibrary";
  * */
 function isRequestFromClient(sipPacket: sipLibrary.Packet): boolean {
 
-    //TODO: make private
-
     return sipPacket.headers.via[
         sipPacket.headers.via.length - 1
     ].protocol !== "TCP";
@@ -21,7 +19,7 @@ export function readImsi(sipPacket: sipLibrary.Packet): string {
         sipPacket.headers[
             isRequestFromClient(sipPacket) ? "from" : "to"
         ].uri
-    ).user!;
+    ).user!.match(/^([0-9]{15})/)![1]
 
 }
 

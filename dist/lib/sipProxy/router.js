@@ -62,6 +62,7 @@ function createBackendSocket() {
             let asteriskSocket = asteriskSockets.get(key);
             if (!asteriskSocket) {
                 if (asteriskSocket === null) {
+                    debug("connectionId expired, discarding".red);
                     return;
                 }
                 asteriskSocket = createAsteriskSocket(key.connectionId, backendSocketInst, localIp);

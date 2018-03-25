@@ -78,6 +78,9 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
         if (!asteriskSocket) {
 
             if (asteriskSocket === null) {
+
+                debug("connectionId expired, discarding".red);
+
                 return;
             }
 

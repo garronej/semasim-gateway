@@ -58,19 +58,13 @@ export async function deleteContact(contact: types.Contact) {
 
 }
 
+
 export async function createEndpointIfNeededAndGetPassword(
     imsi: string,
     renewPassword: "RENEW PASSWORD" | undefined = undefined
 ): Promise<string> {
 
     let sql = "";
-
-    sql += buildInsertQuery("ps_aors", {
-        "id": imsi,
-        "max_contacts": 12,
-        "qualify_frequency": 0, //15000
-        "support_path": "yes"
-    }, "IGNORE");
 
     sql += [
         "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
@@ -81,62 +75,57 @@ export async function createEndpointIfNeededAndGetPassword(
         ""
     ].join("\n");
 
-    /*
-        "subscribe_context": null,
-        "force_rport": null,
-        "direct_media": null,
-        "asymmetric_rtp_codec": null,
-        "rtcp_mux": null,
-        "direct_media_method": null,
-        "connected_line_method": null,
-        "callerid_tag": null
-    */
-
-    /*
-    //For webRTC:
-    sql += buildInsertQuery("ps_endpoints", {
-        "id": imsi,
+    let ps_endpoints_base = {
         "disallow": "all",
-        "allow": "opus,alaw,ulaw",
-        "use_avpf": "yes",
-        "media_encryption": "dtls",
-        "dtls_ca_file": "/etc/asterisk/keys/ca.crt",
-        "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem",
-        "dtls_verify": "fingerprint",
-        "dtls_setup": "actpass",
-        "media_use_received_transport": "yes",
-        "rtcp_mux": "yes",
         "context": sipCallContext,
-        "message_context": messages_dialplanContext,
-        "aors": imsi,
+        "message_context": messagesDialplanContext,
         "auth": imsi,
         "from_domain": c.domain,
         "ice_support": "yes",
         "transport": "transport-tcp"
-    }, "IGNORE");
-    */
+    };
 
-    //For Linphone:
-    sql += buildInsertQuery("ps_endpoints", {
+    let ps_endpoints_web = (() => {
+
+        let name = `${imsi}-webRTC`;
+
+        return {
+            "id": name,
+            "aors": name,
+            ...ps_endpoints_base,
+            "allow": "opus,alaw,ulaw",
+            //"allow": "alaw,ulaw",
+            "use_avpf": "yes",
+            "media_encryption": "dtls",
+            "dtls_ca_file": "/etc/asterisk/keys/ca.crt",
+            "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem",
+            "dtls_verify": "fingerprint",
+            "dtls_setup": "actpass",
+            "media_use_received_transport": "yes",
+            "rtcp_mux": "yes"
+        };
+
+    })();
+
+    let ps_endpoints_mobile = {
         "id": imsi,
-        "disallow": "all",
-        "allow": "alaw,ulaw",
-        //"allow": "opus",
-        "use_avpf": null,
-        "media_encryption": null,
-        "dtls_ca_file": null,
-        "dtls_verify": null,
-        "dtls_setup": null,
-        "media_use_received_transport": null,
-        "rtcp_mux": null,
-        "context": sipCallContext,
-        "message_context": messagesDialplanContext,
         "aors": imsi,
-        "auth": imsi,
-        "from_domain": c.domain,
-        "ice_support": "yes",
-        "transport": "transport-tcp",
-    }, "IGNORE");
+        ...ps_endpoints_base,
+        "allow": "alaw,ulaw"
+    };
+
+    for (let ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
+
+        sql += buildInsertQuery("ps_aors", {
+            "id": ps_endpoints.aors,
+            "max_contacts": 30,
+            "qualify_frequency": 0,
+            "support_path": "yes"
+        }, "IGNORE");
+
+        sql += buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
+
+    }
 
     sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
 
@@ -145,4 +134,3 @@ export async function createEndpointIfNeededAndGetPassword(
     return password;
 
 }
-

@@ -116,7 +116,7 @@ function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function* () {
         let _ = channel.relax;
         debug("Call originated from sip");
-        let imsi = channel.request.callerid;
+        let imsi = channel.request.callerid.match(/^([0-9]{15})/)[1];
         let usableDongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
         if (!usableDongle) {
             //TODO: Improve

@@ -205,7 +205,7 @@ async function fromSip(channel: agi.AGIChannel) {
 
     debug("Call originated from sip");
 
-    let imsi = channel.request.callerid;
+    let imsi = channel.request.callerid.match(/^([0-9]{15})/)![1];
 
     let usableDongle = Array.from(Dc.getInstance().usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
 

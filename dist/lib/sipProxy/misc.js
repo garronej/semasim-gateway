@@ -7,11 +7,10 @@ const sipLibrary = require("../../tools/sipLibrary");
  * or if it's a sipResponse of a request originated by UA.
  * */
 function isRequestFromClient(sipPacket) {
-    //TODO: make private
     return sipPacket.headers.via[sipPacket.headers.via.length - 1].protocol !== "TCP";
 }
 function readImsi(sipPacket) {
-    return sipLibrary.parseUri(sipPacket.headers[isRequestFromClient(sipPacket) ? "from" : "to"].uri).user;
+    return sipLibrary.parseUri(sipPacket.headers[isRequestFromClient(sipPacket) ? "from" : "to"].uri).user.match(/^([0-9]{15})/)[1];
 }
 exports.readImsi = readImsi;
 var cid;

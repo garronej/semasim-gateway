@@ -51,12 +51,6 @@ exports.deleteContact = deleteContact;
 function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
     return __awaiter(this, void 0, void 0, function* () {
         let sql = "";
-        sql += exports.buildInsertQuery("ps_aors", {
-            "id": imsi,
-            "max_contacts": 12,
-            "qualify_frequency": 0,
-            "support_path": "yes"
-        }, "IGNORE");
         sql += [
             "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
             `VALUES( ${exports.esc(imsi)}, 'userpass', ${exports.esc(imsi)}, MD5(RAND()), 'semasim' )`,
@@ -65,60 +59,31 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             ";",
             ""
         ].join("\n");
-        /*
-            "subscribe_context": null,
-            "force_rport": null,
-            "direct_media": null,
-            "asymmetric_rtp_codec": null,
-            "rtcp_mux": null,
-            "direct_media_method": null,
-            "connected_line_method": null,
-            "callerid_tag": null
-        */
-        /*
-        //For webRTC:
-        sql += buildInsertQuery("ps_endpoints", {
-            "id": imsi,
+        let ps_endpoints_base = {
             "disallow": "all",
-            "allow": "opus,alaw,ulaw",
-            "use_avpf": "yes",
-            "media_encryption": "dtls",
-            "dtls_ca_file": "/etc/asterisk/keys/ca.crt",
-            "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem",
-            "dtls_verify": "fingerprint",
-            "dtls_setup": "actpass",
-            "media_use_received_transport": "yes",
-            "rtcp_mux": "yes",
-            "context": sipCallContext,
-            "message_context": messages_dialplanContext,
-            "aors": imsi,
+            "context": voiceCallBridge_1.sipCallContext,
+            "message_context": sipProxy_1.messagesDialplanContext,
             "auth": imsi,
             "from_domain": c.domain,
             "ice_support": "yes",
             "transport": "transport-tcp"
-        }, "IGNORE");
-        */
-        //For Linphone:
-        sql += exports.buildInsertQuery("ps_endpoints", {
-            "id": imsi,
-            "disallow": "all",
-            "allow": "alaw,ulaw",
-            //"allow": "opus",
-            "use_avpf": null,
-            "media_encryption": null,
-            "dtls_ca_file": null,
-            "dtls_verify": null,
-            "dtls_setup": null,
-            "media_use_received_transport": null,
-            "rtcp_mux": null,
-            "context": voiceCallBridge_1.sipCallContext,
-            "message_context": sipProxy_1.messagesDialplanContext,
-            "aors": imsi,
-            "auth": imsi,
-            "from_domain": c.domain,
-            "ice_support": "yes",
-            "transport": "transport-tcp",
-        }, "IGNORE");
+        };
+        let ps_endpoints_web = (() => {
+            let name = `${imsi}-webRTC`;
+            return Object.assign({ "id": name, "aors": name }, ps_endpoints_base, { "allow": "opus,alaw,ulaw", 
+                //"allow": "alaw,ulaw",
+                "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": "/etc/asterisk/keys/ca.crt", "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem", "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" });
+        })();
+        let ps_endpoints_mobile = Object.assign({ "id": imsi, "aors": imsi }, ps_endpoints_base, { "allow": "alaw,ulaw" });
+        for (let ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
+            sql += exports.buildInsertQuery("ps_aors", {
+                "id": ps_endpoints.aors,
+                "max_contacts": 30,
+                "qualify_frequency": 0,
+                "support_path": "yes"
+            }, "IGNORE");
+            sql += exports.buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
+        }
         sql += `SELECT password FROM ps_auths WHERE id= ${exports.esc(imsi)}`;
         let { password } = (yield exports.query(sql)).pop()[0];
         return password;
