@@ -16,7 +16,7 @@ export declare type Ua = {
     software: string;
 };
 export declare namespace Ua {
-    type Platform = "android" | "iOS" | "other";
+    type Platform = "android" | "iOS" | "web";
 }
 export declare type MessageTowardGsm = {
     date: Date;
@@ -40,7 +40,7 @@ export declare namespace BundledData {
             exactSendDate: Date;
         };
     }
-    type ServerToClient = ServerToClient.Message | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy;
+    type ServerToClient = ServerToClient.Message | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.TargetGsmRinging;
     namespace ServerToClient {
         type Message = {
             type: "MESSAGE";
@@ -70,6 +70,9 @@ export declare namespace BundledData {
             type: "CALL ANSWERED BY";
             date: Date;
             ua: Ua;
+        };
+        type TargetGsmRinging = {
+            type: "TARGET GSM RINGING";
         };
     }
 }

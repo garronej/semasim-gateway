@@ -22,7 +22,7 @@ export type Ua = {
 
 export namespace Ua {
 
-    export type Platform = "android" | "iOS" | "other";
+    export type Platform = "android" | "iOS" | "web";
 
 }
 
@@ -67,7 +67,8 @@ export namespace BundledData {
         ServerToClient.SendReport |
         ServerToClient.StatusReport |
         ServerToClient.MissedCall |
-        ServerToClient.CallAnsweredBy
+        ServerToClient.CallAnsweredBy |
+        ServerToClient.TargetGsmRinging
         ;
 
     export namespace ServerToClient {
@@ -104,6 +105,10 @@ export namespace BundledData {
             type: "CALL ANSWERED BY";
             date: Date;
             ua: Ua
+        };
+
+        export type TargetGsmRinging = {
+            type: "TARGET GSM RINGING";
         };
 
     }

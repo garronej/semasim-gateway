@@ -233,7 +233,7 @@ export function onNewAsteriskSocket(
                                 case "apple":
                                     return "iOS";
                                 default:
-                                    return "other";
+                                    return "web";
                             }
 
                         })(),

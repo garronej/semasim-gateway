@@ -728,3 +728,42 @@ namespace buildMessageTowardSipInsertQuery {
 
 }
 
+
+/**
+ * Notify specific ua that the phone it's trying to reach is ringing.
+ * 
+ * @param uaSim The uaSim that originated the call.
+ * @param number The target phone number.
+ * 
+ * (For now it only send to web ua)
+ * 
+ * 
+ */
+export async function onTargetGsmRinging(
+    contact: types.Contact,
+    number: string
+): Promise<void> {
+
+    if( contact.uaSim.ua.platform !== "web" ){
+        return;
+    }
+
+    let bundledData: types.BundledData.ServerToClient.TargetGsmRinging = {
+        "type": "TARGET GSM RINGING"
+    };
+
+    let sql = buildMessageTowardSipInsertQuery(
+        false,
+        number,
+        "( ringback )",
+        new Date(),
+        bundledData,
+        { 
+            "target": "SPECIFIC UA REGISTERED TO SIM", 
+            "uaSim": contact.uaSim 
+        }
+    );
+
+    await query(sql);
+
+}

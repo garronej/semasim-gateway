@@ -2,13 +2,15 @@ import { SyncEvent } from "ts-events-extended";
 import { 
     DongleController as Dc, 
     Ami, 
-    agi
+    agi,
+    //types as dcTypes
 } from "chan-dongle-extended-client";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
 import * as db from "./db/semasim";
 import * as messageDispatcher from "./messagesDispatcher";
+//import * as sipLibrary from "../tools/sipLibrary";
 
 import * as _debug from "debug";
 const debug = _debug("_voiceCallBridge");
@@ -199,36 +201,57 @@ async function fromDongle(channel: agi.AGIChannel) {
 
 }
 
-async function fromSip(channel: agi.AGIChannel) {
+async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     let _ = channel.relax;
 
     debug("Call originated from sip");
 
-    let imsi = channel.request.callerid.match(/^([0-9]{15})/)![1];
+    let contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
 
-    let usableDongle = Array.from(Dc.getInstance().usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
+    let contact = sipProxy.getContacts()
+        .find(({ uri }) => uri === contact_uri)!
+        ;
 
-    if (!usableDongle) {
+    let dongle = Array.from(Dc.getInstance().usableDongles.values())
+        .find(({ sim }) => sim.imsi === contact.uaSim.imsi)
+        ;
+
+    if (!dongle) {
 
         //TODO: Improve
-
         console.log("DONGLE is not usable");
-
         await _.hangup();
-
         return;
 
     }
+
+    let number = channel.request.extension;
+
+    Dc.getInstance().ami.evt.waitFor(
+        e => (
+            e["event"] === "RTCPSent" &&
+            e["channelstatedesc"] === "Ring" &&
+            e["channel"] === channel.request.channel
+        ), 10000
+    )
+        .then(
+            () => db.onTargetGsmRinging(contact, number)
+                .then(() => messageDispatcher.sendMessagesOfContact(contact))
+        )
+        .catch(() => { })
+        ;
+
 
     await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
 
     await _.setVariable("AGC(rx)", gain);
 
-    await _.exec("Dial", [`Dongle/i:${usableDongle.imei}/${channel.request.extension}`]);
+    //TODO: there is a delay for call terminated when web client abruptly disconnect.
+    await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
 
     //TODO: Increase volume on TX
-
     debug("call terminated");
 
 }
+

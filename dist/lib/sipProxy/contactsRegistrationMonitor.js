@@ -125,7 +125,7 @@ function onNewAsteriskSocket(asteriskSocket) {
                             case "apple":
                                 return "iOS";
                             default:
-                                return "other";
+                                return "web";
                         }
                     })(),
                     "pushToken": uriParams["pn-tok"] || "",

@@ -94,3 +94,14 @@ export declare namespace getUnsentMessagesTowardGsm {
 export declare function lastMessageReceivedDateBySim(): Promise<{
     [imsi: string]: Date;
 }>;
+/**
+ * Notify specific ua that the phone it's trying to reach is ringing.
+ *
+ * @param uaSim The uaSim that originated the call.
+ * @param number The target phone number.
+ *
+ * (For now it only send to web ua)
+ *
+ *
+ */
+export declare function onTargetGsmRinging(contact: types.Contact, number: string): Promise<void>;

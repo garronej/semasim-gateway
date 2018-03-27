@@ -515,3 +515,29 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, text, date, 
     ].join("\n");
     return sql;
 }
+/**
+ * Notify specific ua that the phone it's trying to reach is ringing.
+ *
+ * @param uaSim The uaSim that originated the call.
+ * @param number The target phone number.
+ *
+ * (For now it only send to web ua)
+ *
+ *
+ */
+function onTargetGsmRinging(contact, number) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (contact.uaSim.ua.platform !== "web") {
+            return;
+        }
+        let bundledData = {
+            "type": "TARGET GSM RINGING"
+        };
+        let sql = buildMessageTowardSipInsertQuery(false, number, "( ringback )", new Date(), bundledData, {
+            "target": "SPECIFIC UA REGISTERED TO SIM",
+            "uaSim": contact.uaSim
+        });
+        yield exports.query(sql);
+    });
+}
+exports.onTargetGsmRinging = onTargetGsmRinging;

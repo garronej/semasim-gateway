@@ -66,7 +66,8 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
             "auth": imsi,
             "from_domain": c.domain,
             "ice_support": "yes",
-            "transport": "transport-tcp"
+            "transport": "transport-tcp",
+            "dtmf_mode": "info"
         };
         let ps_endpoints_web = (() => {
             let name = `${imsi}-webRTC`;

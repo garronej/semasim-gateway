@@ -30,7 +30,7 @@ var sanityChecks;
     function platform(o) {
         return (typeof o === "string" && (o === "android" ||
             o === "iOS" ||
-            o === "other"));
+            o === "web"));
     }
     sanityChecks.platform = platform;
 })(sanityChecks = exports.sanityChecks || (exports.sanityChecks = {}));

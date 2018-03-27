@@ -45,7 +45,7 @@ export namespace sanityChecks {
             typeof o === "string" && (
                 o === "android" ||
                 o === "iOS" ||
-                o === "other"
+                o === "web"
             )
         );
 

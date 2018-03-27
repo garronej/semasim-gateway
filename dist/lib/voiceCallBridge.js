@@ -14,6 +14,7 @@ const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 const sipProxy = require("./sipProxy");
 const db = require("./db/semasim");
 const messageDispatcher = require("./messagesDispatcher");
+//import * as sipLibrary from "../tools/sipLibrary";
 const _debug = require("debug");
 const debug = _debug("_voiceCallBridge");
 const gain = `${4000}`;
@@ -116,17 +117,28 @@ function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function* () {
         let _ = channel.relax;
         debug("Call originated from sip");
-        let imsi = channel.request.callerid.match(/^([0-9]{15})/)[1];
-        let usableDongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
-        if (!usableDongle) {
+        let contact_uri = yield _.getVariable("CHANNEL(pjsip,target_uri)");
+        let contact = sipProxy.getContacts()
+            .find(({ uri }) => uri === contact_uri);
+        let dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
+            .find(({ sim }) => sim.imsi === contact.uaSim.imsi);
+        if (!dongle) {
             //TODO: Improve
             console.log("DONGLE is not usable");
             yield _.hangup();
             return;
         }
+        let number = channel.request.extension;
+        chan_dongle_extended_client_1.DongleController.getInstance().ami.evt.waitFor(e => (e["event"] === "RTCPSent" &&
+            e["channelstatedesc"] === "Ring" &&
+            e["channel"] === channel.request.channel), 10000)
+            .then(() => db.onTargetGsmRinging(contact, number)
+            .then(() => messageDispatcher.sendMessagesOfContact(contact)))
+            .catch(() => { });
         yield _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
         yield _.setVariable("AGC(rx)", gain);
-        yield _.exec("Dial", [`Dongle/i:${usableDongle.imei}/${channel.request.extension}`]);
+        //TODO: there is a delay for call terminated when web client abruptly disconnect.
+        yield _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
         //TODO: Increase volume on TX
         debug("call terminated");
     });
