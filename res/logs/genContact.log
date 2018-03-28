@@ -1,0 +1,51 @@
+
+
+From backend:
+REGISTER sip:semasim.com SIP/2.0
+Via: SIP/2.0/TLS 81.64.42.133:80;connection_id=1518998017029;received=88.190.248.170;branch=z9hG4bK-z9hG4bK1537690;rport
+Via: SIP/2.0/WSS semasim.com;branch=z9hG4bK1537690
+Max-Forwards: 68
+To:  <sip:208150113995832@semasim.com>
+From:  <sip:208150113995832@semasim.com>;tag=elk5nj951e
+Call-ID: h9nfhhr4bffhfc927ivif8
+CSeq: 2 REGISTER
+Authorization: Digest algorithm=MD5,username="208150113995832",realm="semasim",nonce="1518998016/630a8d03d6702ab0c8e6aaca02c1546f",uri="sip:semasim.com",response="8d7be29e53a62fd2867bbc093090f4c5",opaque="46b5df7910de64a6",qop=auth,cnonce="o1enk7cis0gv",nc=00000001
+Contact:  <sip:208150113995832@semasim.com;base64_email=am9zZXBoLmdhcnJvbmUuZ2pAZ21haWwuY29t>;+sip.ice;reg-id=1;+sip.instance="<urn:uuid:d28ab28c-9c8f-35f6-a5da-9d05349dd0b1>";expires=600
+Expires: 600
+Allow: INVITE,ACK,CANCEL,BYE,UPDATE,MESSAGE,OPTIONS,REFER,INFO
+Supported: path,gruu,outbound
+User-Agent: JsSIP 3.2.4
+Content-Length: 0
+Path:  <sip:52.57.54.73:80;transport=TLS;lr>
+
+
+
+
+=======> { row:
+   { id: '208150113995832^3B@3e10a685cb867b5840249455ac64b063',
+     uri: 'sip:208150113995832@semasim.com',
+     expiration_time: 1518998616,
+     qualify_frequency: 0,
+     outbound_proxy: '',
+     path: '<sip:192.168.0.60:42606^3Btransport=TCP^3Blr>,  <sip:52.57.54.73:80^3Btransport=TLS^3Blr>',
+     user_agent: 'eyJ1YV9pbnN0YW5jZSI6IlwiPHVybjp1dWlkOmQyOGFiMjhjLTljOGYtMzVmNi1hNWRhLTlkMDUzNDlkZDBiMT5cIiIsInVhX3VzZXJFbWFpbCI6Impvc2VwaC5nYXJyb25lLmdqQGdtYWlsLmNvbSIsInVhX3BsYXRmb3JtIjoib3RoZXIiLCJ1YV9wdXNoVG9rZW4iOiIiLCJ1YV9zb2Z0d2FyZSI6IkpzU0lQIDMuMi40IiwiY29ubmVjdGlvbklkIjoxNTE4OTk4MDE3MDI5fQ==',
+     qualify_timeout: 3,
+     reg_server: '',
+     authenticate_qualify: 'no',
+     via_addr: 'semasim.com',
+     via_port: 0,
+     call_id: 'h9nfhhr4bffhfc927ivif8',
+     endpoint: '208150113995832' } }
+=============> new contact { id: '208150113995832^3B@3e10a685cb867b5840249455ac64b063',
+  uri: 'sip:208150113995832@semasim.com',
+  path: '<sip:192.168.0.60:42606;transport=TCP;lr>,  <sip:52.57.54.73:80;transport=TLS;lr>',
+  connectionId: 1518998017029,
+  uaSim:
+   { ua:
+      { instance: '"<urn:uuid:d28ab28c-9c8f-35f6-a5da-9d05349dd0b1>"',
+        userEmail: 'joseph.garrone.gj@gmail.com',
+        platform: 'other',
+        pushToken: '',
+        software: 'JsSIP 3.2.4' },
+     imsi: '208150113995832' } }
+  _main Contact registered +28s

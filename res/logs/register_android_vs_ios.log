@@ -1,0 +1,53 @@
+
+Register Android:
+
+Via: SIP/2.0/TLS 172.31.18.20:80;connection_id=1511325256829;branch=z9hG4bK-z9hG4bK.r0qZCuvDo;rport
+Via: SIP/2.0/TLS 192.168.1.15:35096;alias;branch=z9hG4bK.r0qZCuvDo;rport
+From: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=ddaLx-2Wf
+To: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>
+CSeq: 576 REGISTER
+Call-ID: R-KpDf2a7x
+Max-Forwards: 69
+Supported: replaces, outbound, gruu, path
+Accept: application/sdp,text/plain,application/vnd.gsma.rcs-ft-http+xml
+Contact:  
+
+<sip:353762037478870@192.168.1.15:35096;
+app-id=851039092461;
+pn-type=firebase;
+pn-tok=f_l7SPs6o7A:APA91bF_c0VGlz3pQPwrgpFe9U0FRzcVXlDmG97jt3DTzOlsjbUzsent-yesz_QpQNhdO3Mbr-4-XxcSmyKj_Hr-XY_-LefF3RhHsSekVsSeYN95PAtwRCpz-i1ytnc5DyMY8je4n69G;
+pn-silent=1;transport=tls
+>;+sip.instance="<urn:uuid:a98eef4a-5a6d-41ca-8918-e1ef1819fec0>"
+
+Expires: 21601
+User-Agent: LinphoneAndroid/3.2.8 (belle-sip/1.6.3)
+Content-Length: 0
+Authorization: Digest realm="semasim",nonce="1511325205/4d0ffecedfdcebd35e03167e2feb0e69",algorithm=md5,opaque="0b98b6fe0a7edf42",username="353762037478870",uri="sip:semasim.com;transport=tls",response="766fa69a320ea461457cf201dbb0e64b",cnonce="~rZqIhHSKPsccCAP",nc=00000001,qop=auth
+Path:  <sip:172.31.18.20:80;transport=TLS;lr>
+
+Register iOS:
+
+Via: SIP/2.0/TLS 172.31.18.20:80;connection_id=1511325358561;branch=z9hG4bK-z9hG4bK.s7JOUi4wo;rport
+Via: SIP/2.0/TLS 192.168.1.13:49520;alias;branch=z9hG4bK.s7JOUi4wo;rport
+From: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=I4LTNkObP
+To: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>
+CSeq: 21 REGISTER
+Call-ID: Til-Sty803
+Max-Forwards: 69
+Supported: replaces, outbound, path
+Accept: application/sdp,text/plain,application/vnd.gsma.rcs-ft-http+xml
+Contact:  <sip:353762037478870@192.168.1.13:49520;
+app-id=com.semasim.semasim.voip.dev;
+pn-type=apple;
+pn-tok=C4BC95D50EE8B8D377E4EEEA7687A681224E8C77C24D23A109523C7290E9360A;
+pn-msg-str=IM_MSG;
+pn-call-str=IC_MSG;
+pn-call-snd=notes_of_the_optimistic.caf;
+pn-msg-snd=msg.caf;pn-timeout=0;
+pn-silent=1;transport=tls
+>;+sip.instance="<urn:uuid:ea342a58-da8d-48e7-9547-3e18bbd79527>"
+Expires: 21601
+User-Agent: Semasim_iPhone6.2_iOS11.1.2/3.16.4-142-gc9abca27 (belle-sip/1.6.3)
+Content-Length: 0
+Authorization: Digest realm="semasim",nonce="1511325464/1b1c0ed96a4872a8d3cbc854f1569a83",algorithm=md5,opaque="449ae7192e03483b",username="353762037478870",uri="sip:semasim.com",response="f58fdfdffd95b60a983d865100a4fea7",cnonce="JyprKq8sMIvEAZvP",nc=00000001,qop=auth
+Path:  <sip:172.31.18.20:80;transport=TLS;lr>

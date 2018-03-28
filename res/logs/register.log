@@ -1,0 +1,84 @@
+  == Spawn extension (from-dongle, +33769365812, 3) exited non-zero on 'Dongle/Dongle1-0100000004'
+[Oct 29 21:05:10] DEBUG[1376]: pjproject:0 <?>:         sip_endpoint.c Processing incoming message: Request msg REGISTER/cseq=22 (rdata0x2e18ee0)
+<--- Received SIP request (1623 bytes) from TCP:192.168.0.20:54632 --->
+REGISTER sip:semasim.com;transport=tls SIP/2.0
+Via: SIP/2.0/TCP 192.168.0.20:54632;branch=z9hG4bK-z9hG4bK-z9hG4bK.5i-gIXq41;rport
+Via: SIP/2.0/TLS 172.31.18.20:80;connection_id=1509311070040;branch=z9hG4bK-z9hG4bK.5i-gIXq41;rport
+Via: SIP/2.0/TLS 192.168.0.13:48805;alias;branch=z9hG4bK.5i-gIXq41;rport
+From: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=4tBE91873
+To: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>
+CSeq: 22 REGISTER
+Call-ID: IEj-R5zKcW
+Max-Forwards: 68
+Supported: replaces, outbound, gruu, path
+Accept: application/sdp,text/plain,application/vnd.gsma.rcs-ft-http+xml
+Contact:  <sip:353762037478870@192.168.0.13:48805;app-id=851039092461;pn-type=firebase;pn-tok=eFyLhia3VJQ:APA91bEc6heCSIXcSgM_Y20UQ673amA9QrRJPHkg9BhyeDyIXfEmNwjwOvaMhyZaJh6HBkdu1CHZTEScwC38vzBeVte8JUfKNnk27iAOM67mXSbb4KO06u1Cr3zeyjuwd1TeZakwLkZj;pn-silent=1;transport=tls>;+sip.instance="<urn:uuid:2f8ebc8b-9321-43b1-910e-bbe298d67f22>"
+Expires: 21601
+User-Agent: eyJjb25uZWN0aW9uSWQiOjE1MDkzMTEwNzAwNDAsInVhX2luc3RhbmNlIjoiXCI8dXJuOnV1aWQ6MmY4ZWJjOGItOTMyMS00M2IxLTkxMGUtYmJlMjk4ZDY3ZjIyPlwiIiwidWFfc29mdHdhcmUiOiJMaW5waG9uZUFuZHJvaWQvMy4yLjggKGJlbGxlLXNpcC8xLjYuMykifQ==
+Content-Length: 0
+Authorization: Digest realm="semasim",nonce="1509311069/01324f1b99a9a16811fdf8ddac42903c",algorithm=md5,opaque="1d5146d046a82e68",username="353762037478870",uri="sip:semasim.com;transport=tls",response="4b8fd6cd72a5c5a0b8a0a2f3b0594627",cnonce="0uYGNaCwNDZAdRrX",nc=00000002,qop=auth
+Path:  <sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>
+
+
+[Oct 29 21:05:10] DEBUG[11219]: pjproject:0 <?>:        sip_endpoint.c Distributing rdata to modules: Request msg REGISTER/cseq=22 (rdata0x2e1a924)
+[Oct 29 21:05:10] DEBUG[11219]: pjproject:0 <?>:              endpoint .Response msg 401/REGISTER/cseq=22 (tdta0x2e112f4) created
+<--- Transmitting SIP response (767 bytes) to TCP:192.168.0.20:54632 --->
+SIP/2.0 401 Unauthorized
+Via: SIP/2.0/TCP 192.168.0.20:54632;rport=54632;received=192.168.0.20;branch=z9hG4bK-z9hG4bK-z9hG4bK.5i-gIXq41
+Via: SIP/2.0/TLS 172.31.18.20:80;rport;branch=z9hG4bK-z9hG4bK.5i-gIXq41;connection_id=1509311070040
+Via: SIP/2.0/TLS 192.168.0.13:48805;rport;branch=z9hG4bK.5i-gIXq41;alias
+Call-ID: IEj-R5zKcW
+From: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=4tBE91873
+To: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=z9hG4bK-z9hG4bK-z9hG4bK.5i-gIXq41
+CSeq: 22 REGISTER
+WWW-Authenticate: Digest  realm="semasim",nonce="1509311110/de4b453c29aad739f4b73c4c9e688061",opaque="56f4abc96931fffc",stale=true,algorithm=md5,qop="auth"
+Server: Asterisk PBX 14.5.0
+Content-Length:  0
+
+
+[Oct 29 21:05:10] DEBUG[11219]: pjproject:0 <?>:         tdta0x2e112f4 .Destroying txdata Response msg 401/REGISTER/cseq=22 (tdta0x2e112f4)
+[Oct 29 21:05:12] DEBUG[1376]: pjproject:0 <?>:         sip_endpoint.c Processing incoming message: Request msg REGISTER/cseq=23 (rdata0x2e18ee0)
+<--- Received SIP request (1623 bytes) from TCP:192.168.0.20:54632 --->
+REGISTER sip:semasim.com;transport=tls SIP/2.0
+Via: SIP/2.0/TCP 192.168.0.20:54632;branch=z9hG4bK-z9hG4bK-z9hG4bK.YTbwkrhq2;rport
+Via: SIP/2.0/TLS 172.31.18.20:80;connection_id=1509311070040;branch=z9hG4bK-z9hG4bK.YTbwkrhq2;rport
+Via: SIP/2.0/TLS 192.168.0.13:48805;alias;branch=z9hG4bK.YTbwkrhq2;rport
+From: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=4tBE91873
+To: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>
+CSeq: 23 REGISTER
+Call-ID: IEj-R5zKcW
+Max-Forwards: 68
+Supported: replaces, outbound, gruu, path
+Accept: application/sdp,text/plain,application/vnd.gsma.rcs-ft-http+xml
+Contact:  <sip:353762037478870@192.168.0.13:48805;app-id=851039092461;pn-type=firebase;pn-tok=eFyLhia3VJQ:APA91bEc6heCSIXcSgM_Y20UQ673amA9QrRJPHkg9BhyeDyIXfEmNwjwOvaMhyZaJh6HBkdu1CHZTEScwC38vzBeVte8JUfKNnk27iAOM67mXSbb4KO06u1Cr3zeyjuwd1TeZakwLkZj;pn-silent=1;transport=tls>;+sip.instance="<urn:uuid:2f8ebc8b-9321-43b1-910e-bbe298d67f22>"
+Expires: 21601
+User-Agent: eyJjb25uZWN0aW9uSWQiOjE1MDkzMTEwNzAwNDAsInVhX2luc3RhbmNlIjoiXCI8dXJuOnV1aWQ6MmY4ZWJjOGItOTMyMS00M2IxLTkxMGUtYmJlMjk4ZDY3ZjIyPlwiIiwidWFfc29mdHdhcmUiOiJMaW5waG9uZUFuZHJvaWQvMy4yLjggKGJlbGxlLXNpcC8xLjYuMykifQ==
+Content-Length: 0
+Authorization: Digest realm="semasim",nonce="1509311110/de4b453c29aad739f4b73c4c9e688061",algorithm=md5,opaque="56f4abc96931fffc",username="353762037478870",uri="sip:semasim.com;transport=tls",response="593990a3f1841f3fd4469a55d2bc61bc",cnonce="QgZlS6sc59C3iePO",nc=00000001,qop=auth
+Path:  <sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>
+
+
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:        sip_endpoint.c Distributing rdata to modules: Request msg REGISTER/cseq=23 (rdata0x2e1a924)
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:              endpoint .Response msg 401/REGISTER/cseq=23 (tdta0x2e112f4) created
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:         tdta0x2e112f4 .Destroying txdata Response msg 401/REGISTER/cseq=23 (tdta0x2e112f4)
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:              endpoint .Response msg 200/REGISTER/cseq=23 (tdta0x2e112f4) created
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:         tsx0x75d6a44c ..Transaction created for Request msg REGISTER/cseq=23 (rdata0x2e1a924)
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:         tsx0x75d6a44c .Incoming Request msg REGISTER/cseq=23 (rdata0x2e1a924) in state Null
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:         tsx0x75d6a44c ..State changed from Null to Trying, event=RX_MSG
+[Oct 29 21:05:12] DEBUG[11219]: pjproject:0 <?>:         tsx0x75d6a44c .Sending Response msg 200/REGISTER/cseq=23 (tdta0x2e112f4) in state Trying
+<--- Transmitting SIP response (1046 bytes) to TCP:192.168.0.20:54632 --->
+SIP/2.0 200 OK
+Via: SIP/2.0/TCP 192.168.0.20:54632;rport=54632;received=192.168.0.20;branch=z9hG4bK-z9hG4bK-z9hG4bK.YTbwkrhq2
+Via: SIP/2.0/TLS 172.31.18.20:80;rport;branch=z9hG4bK-z9hG4bK.YTbwkrhq2;connection_id=1509311070040
+Via: SIP/2.0/TLS 192.168.0.13:48805;rport;branch=z9hG4bK.YTbwkrhq2;alias
+Call-ID: IEj-R5zKcW
+From: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=4tBE91873
+To: "Sim1: 0769365812-Lliad/FREE Mobile" <sip:353762037478870@semasim.com>;tag=z9hG4bK-z9hG4bK-z9hG4bK.YTbwkrhq2
+CSeq: 23 REGISTER
+Date: Sun, 29 Oct 2017 21:05:12 GMT
+Contact: <sip:353762037478870@192.168.0.13:48805;transport=tls;app-id=851039092461;pn-type=firebase;pn-tok=eFyLhia3VJQ:APA91bEc6heCSIXcSgM_Y20UQ673amA9QrRJPHkg9BhyeDyIXfEmNwjwOvaMhyZaJh6HBkdu1CHZTEScwC38vzBeVte8JUfKNnk27iAOM67mXSbb4KO06u1Cr3zeyjuwd1TeZakwLkZj;pn-silent=1>;expires=7199
+Expires: 7200
+Supported: path
+Path: <sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>
+Server: Asterisk PBX 14.5.0
+Content-Length:  0

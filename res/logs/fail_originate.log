@@ -1,0 +1,64 @@
+
+    -- Executing [+33769365812@from-dongle:1] Set("Dongle/Dongle1-0100000004", "EXTENSION_PATTERN=_[+0-9].") in new stack
+    -- Executing [+33769365812@from-dongle:2] AGI("Dongle/Dongle1-0100000004", "agi:async") in new stack
+    -- AGI Script Executing Application: (Originate) Options: (PJSIP/353762037478870/sip:353762037478870@192.168.0.13:48805;transport=tls;app-id=851039092461;pn-type=firebase;pn-tok=eFyLhia3VJQ:APA91bEc6heCSIXcSgM_Y20UQ673amA9QrRJPHkg9BhyeDyIXfEmNwjwOvaMhyZaJh6HBkdu1CHZTEScwC38vzBeVte8JUfKNnk27iAOM67mXSbb4KO06u1Cr3zeyjuwd1TeZakwLkZj;pn-silent=1,app,Playback,hello-world)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c UAC dialog created
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c Module Outbound INVITE Auth added as dialog usage, data=(nil)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c Module mod-invite added as dialog usage, data=0x75f27ac4
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c .Session count inc to 2 by mod-invite
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c Module mod-100rel added as dialog usage, data=0x75f27c08
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c 100rel module attached
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         inv0x75d6a44c UAC invite session created for dialog dlg0x75d6a44c
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c .Session count inc to 2 by Session Module
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c Module Session Module added as dialog usage, data=(nil)
+    -- Called 353762037478870/sip:353762037478870@192.168.0.13:48805;transport=tls;app-id=851
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        icess0x75f0928 ICE session created, comp_cnt=2, role is Unknown agent
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        icess0x75f0928 Candidate 0 added: comp_id=1, type=host, foundation=Hc0a80014, addr=192.168.0.20:24516, base=192.168.0.20:24516, prio=0x7effffff (2130706431)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        icess0x75f0928 Candidate 1 added: comp_id=1, type=srflx, foundation=S5140886d, addr=81.64.136.109:24516, base=192.168.0.20:24516, prio=0x64ffffff (1694498815)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        icess0x75f0928 Candidate 2 added: comp_id=2, type=host, foundation=Hc0a80014, addr=192.168.0.20:24517, base=192.168.0.20:24517, prio=0x7efffffe (2130706430)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        icess0x75f0928 Candidate 3 added: comp_id=2, type=srflx, foundation=S5140886d, addr=81.64.136.109:24517, base=192.168.0.20:24517, prio=0x64fffffe (1694498814)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:              endpoint Request msg INVITE/cseq=31764 (tdta0x2e16cac) created.
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c Module WebSocket Transport Module added as dialog usage, data=(nil)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c Module NAT added as dialog usage, data=(nil)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         inv0x75d6a44c .Sending Request msg INVITE/cseq=31764 (tdta0x2e16cac)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         dlg0x75d6a44c ..Sending Request msg INVITE/cseq=31764 (tdta0x2e16cac)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         tsx0x70064034 ...Transaction created for Request msg INVITE/cseq=31763 (tdta0x2e16cac)
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:         tsx0x70064034 ..Sending Request msg INVITE/cseq=31763 (tdta0x2e16cac) in state Null
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        tcpc0x75f1d7d4 ...TCP client transport created
+[Oct 29 21:04:58] DEBUG[11219]: pjproject:0 <?>:        tcpc0x75f1d7d4 ...TCP transport 192.168.0.20:46209 is connecting to 192.168.0.13:48805...
+<--- Transmitting SIP request (1440 bytes) to TCP:192.168.0.13:48805 --->
+INVITE sip:353762037478870@192.168.0.13:48805;transport=tls;app-id=851 SIP/2.0
+Via: SIP/2.0/TCP 192.168.0.20:5060;rport;branch=z9hG4bKPj49ea97eb-f641-45b5-a7c6-e5fa6f4cf605;alias
+From: "Anonymous" <sip:anonymous@semasim.com>;tag=124a8764-4e8c-4dcf-817c-21a3b1d9bce2
+To: <sip:353762037478870@192.168.0.13;app-id=851>
+Contact: <sip:asterisk@192.168.0.20:5060;transport=TCP>
+Call-ID: 09a87ce5-b025-478d-a52d-162a6bf1b97d
+CSeq: 31763 INVITE
+Allow: OPTIONS, SUBSCRIBE, NOTIFY, PUBLISH, INVITE, ACK, BYE, CANCEL, UPDATE, PRACK, REGISTER, REFER, MESSAGE
+Supported: 100rel, timer, replaces, norefersub, path
+Session-Expires: 1800
+Min-SE: 90
+Max-Forwards: 70
+User-Agent: Asterisk PBX 14.5.0
+Content-Type: application/sdp
+Content-Length:   689
+
+v=0
+o=- 1076164743 1076164743 IN IP4 192.168.0.20
+s=Asterisk
+c=IN IP4 192.168.0.20
+t=0 0
+m=audio 24516 RTP/AVP 8 0 101
+a=ice-ufrag:3f0189ac72515641346fd8e64c1b756b
+a=ice-pwd:320915a3734da231787d649b3c0d38fc
+a=candidate:Hc0a80014 1 UDP 2130706431 192.168.0.20 24516 typ host
+a=candidate:S5140886d 1 UDP 1694498815 81.64.136.109 24516 typ srflx raddr 192.168.0.20 rport 24516
+a=candidate:Hc0a80014 2 UDP 2130706430 192.168.0.20 24517 typ host
+a=candidate:S5140886d 2 UDP 1694498814 81.64.136.109 24517 typ srflx raddr 192.168.0.20 rport 24517
+a=rtpmap:8 PCMA/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-16
+a=ptime:20
+a=maxptime:150
+a=sendrecv
