@@ -40,7 +40,7 @@ export declare namespace BundledData {
             exactSendDate: Date;
         };
     }
-    type ServerToClient = ServerToClient.Message | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.TargetGsmRinging;
+    type ServerToClient = ServerToClient.Message | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
     namespace ServerToClient {
         type Message = {
             type: "MESSAGE";
@@ -71,8 +71,9 @@ export declare namespace BundledData {
             date: Date;
             ua: Ua;
         };
-        type TargetGsmRinging = {
-            type: "TARGET GSM RINGING";
+        type Ringback = {
+            type: "RINGBACK";
+            callId: string;
         };
     }
 }

@@ -208,6 +208,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     debug("Call originated from sip");
 
     let contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
+    let call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
 
     let contact = sipProxy.getContacts()
         .find(({ uri }) => uri === contact_uri)!
@@ -221,7 +222,6 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
         //TODO: Improve
         console.log("DONGLE is not usable");
-        await _.hangup();
         return;
 
     }
@@ -233,19 +233,19 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
             e["event"] === "RTCPSent" &&
             e["channelstatedesc"] === "Ring" &&
             e["channel"] === channel.request.channel
-        ), 10000
+        ), 30000
     )
         .then(
-            () => db.onTargetGsmRinging(contact, number)
+            () => db.onTargetGsmRinging(contact, number, call_id)
                 .then(() => messageDispatcher.sendMessagesOfContact(contact))
         )
         .catch(() => { })
         ;
 
-
     await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
 
     await _.setVariable("AGC(rx)", gain);
+
 
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
     await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
@@ -254,4 +254,3 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     debug("call terminated");
 
 }
-

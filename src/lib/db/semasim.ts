@@ -730,6 +730,9 @@ namespace buildMessageTowardSipInsertQuery {
 
 
 /**
+ * 
+ * TODO: include in tests
+ * 
  * Notify specific ua that the phone it's trying to reach is ringing.
  * 
  * @param uaSim The uaSim that originated the call.
@@ -741,21 +744,23 @@ namespace buildMessageTowardSipInsertQuery {
  */
 export async function onTargetGsmRinging(
     contact: types.Contact,
-    number: string
+    number: string,
+    callId: string
 ): Promise<void> {
 
     if( contact.uaSim.ua.platform !== "web" ){
         return;
     }
 
-    let bundledData: types.BundledData.ServerToClient.TargetGsmRinging = {
-        "type": "TARGET GSM RINGING"
+    let bundledData: types.BundledData.ServerToClient.Ringback = {
+        "type": "RINGBACK",
+        callId
     };
 
     let sql = buildMessageTowardSipInsertQuery(
         false,
         number,
-        "( ringback )",
+        "( notify ringback )",
         new Date(),
         bundledData,
         { 

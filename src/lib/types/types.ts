@@ -68,7 +68,7 @@ export namespace BundledData {
         ServerToClient.StatusReport |
         ServerToClient.MissedCall |
         ServerToClient.CallAnsweredBy |
-        ServerToClient.TargetGsmRinging
+        ServerToClient.Ringback
         ;
 
     export namespace ServerToClient {
@@ -107,8 +107,9 @@ export namespace BundledData {
             ua: Ua
         };
 
-        export type TargetGsmRinging = {
-            type: "TARGET GSM RINGING";
+        export type Ringback = {
+            type: "RINGBACK";
+            callId: string;
         };
 
     }

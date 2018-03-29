@@ -118,6 +118,7 @@ function fromSip(channel) {
         let _ = channel.relax;
         debug("Call originated from sip");
         let contact_uri = yield _.getVariable("CHANNEL(pjsip,target_uri)");
+        let call_id = (yield _.getVariable("CHANNEL(pjsip,call-id)"));
         let contact = sipProxy.getContacts()
             .find(({ uri }) => uri === contact_uri);
         let dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
@@ -125,14 +126,13 @@ function fromSip(channel) {
         if (!dongle) {
             //TODO: Improve
             console.log("DONGLE is not usable");
-            yield _.hangup();
             return;
         }
         let number = channel.request.extension;
         chan_dongle_extended_client_1.DongleController.getInstance().ami.evt.waitFor(e => (e["event"] === "RTCPSent" &&
             e["channelstatedesc"] === "Ring" &&
-            e["channel"] === channel.request.channel), 10000)
-            .then(() => db.onTargetGsmRinging(contact, number)
+            e["channel"] === channel.request.channel), 30000)
+            .then(() => db.onTargetGsmRinging(contact, number, call_id)
             .then(() => messageDispatcher.sendMessagesOfContact(contact)))
             .catch(() => { });
         yield _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);

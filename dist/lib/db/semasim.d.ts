@@ -95,6 +95,9 @@ export declare function lastMessageReceivedDateBySim(): Promise<{
     [imsi: string]: Date;
 }>;
 /**
+ *
+ * TODO: include in tests
+ *
  * Notify specific ua that the phone it's trying to reach is ringing.
  *
  * @param uaSim The uaSim that originated the call.
@@ -104,4 +107,4 @@ export declare function lastMessageReceivedDateBySim(): Promise<{
  *
  *
  */
-export declare function onTargetGsmRinging(contact: types.Contact, number: string): Promise<void>;
+export declare function onTargetGsmRinging(contact: types.Contact, number: string, callId: string): Promise<void>;
