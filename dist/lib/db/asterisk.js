@@ -16,10 +16,7 @@ function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         const connectionConfig = Object.assign({}, c.dbParamsGateway, { "database": "asterisk" });
         let api = yield mysqlCustom.connectAndGetApi(connectionConfig);
-        yield api.query([
-            "DELETE FROM ps_contacts",
-            "WHERE endpoint LIKE '_______________'"
-        ].join("\n"));
+        yield api.query("DELETE FROM ps_contacts");
         exports.query = api.query;
         exports.esc = api.esc;
         exports.buildInsertQuery = api.buildInsertQuery;

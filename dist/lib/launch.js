@@ -108,7 +108,7 @@ function registerListeners() {
         }
     }));
     sipProxy.evtContactRegistration.attach((contact) => __awaiter(this, void 0, void 0, function* () {
-        debug(`Contact registered`);
+        debug(`Contact registered`, contact);
         let { isUaCreatedOrUpdated, isFirstUaForSim } = yield db.semasim.addUaSim(contact.uaSim);
         if (isUaCreatedOrUpdated) {
             sipProxy.backendSocket.remoteApi.notifyNewOrUpdatedUa(contact.uaSim.ua);

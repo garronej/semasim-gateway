@@ -180,7 +180,7 @@ function registerListeners() {
     sipProxy.evtContactRegistration.attach(
         async contact => {
 
-            debug(`Contact registered`);
+            debug(`Contact registered`, contact);
 
             let {
                 isUaCreatedOrUpdated,

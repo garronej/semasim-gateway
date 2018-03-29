@@ -1,7 +1,7 @@
 import { SyncEvent } from "ts-events-extended";
-import { 
-    DongleController as Dc, 
-    Ami, 
+import {
+    DongleController as Dc,
+    Ami,
     agi,
     //types as dcTypes
 } from "chan-dongle-extended-client";
@@ -10,7 +10,7 @@ import * as sipProxy from "./sipProxy";
 import * as types from "./types";
 import * as db from "./db/semasim";
 import * as messageDispatcher from "./messagesDispatcher";
-//import * as sipLibrary from "../tools/sipLibrary";
+import * as sipLibrary from "../tools/sipLibrary";
 
 import * as _debug from "debug";
 const debug = _debug("_voiceCallBridge");
@@ -18,13 +18,13 @@ const debug = _debug("_voiceCallBridge");
 const gain = `${4000}`;
 
 const jitterBuffer = {
-        //type: "fixed",
-        //params: "2500,10000"
-        //type: "fixed",
-        //params: "default"
-        "type": "adaptive",
-        "params": "default"
-    };
+    //type: "fixed",
+    //params: "2500,10000"
+    //type: "fixed",
+    //params: "default"
+    "type": "adaptive",
+    "params": "default"
+};
 
 export const sipCallContext = "from-sip-call";
 
@@ -52,13 +52,13 @@ async function fromDongle(channel: agi.AGIChannel) {
         ({ sim }) => sim.imsi === imsi
     );
 
-    if (!dongle){
+    if (!dongle) {
         return;
     }
 
     let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
 
-    let evtReachableContact= new SyncEvent<types.Contact>();
+    let evtReachableContact = new SyncEvent<types.Contact>();
 
     sipProxy.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
@@ -109,12 +109,12 @@ async function fromDongle(channel: agi.AGIChannel) {
             let ringingUas = Array.from(ringingChannels.keys())
                 .map(contact => contact.uaSim.ua);
 
-                await db.onCallAnswered(
-                    number,
-                    imsi,
-                    contact.uaSim.ua,
-                    ringingUas
-                );
+            await db.onCallAnswered(
+                number,
+                imsi,
+                contact.uaSim.ua,
+                ringingUas
+            );
 
         } else {
 
@@ -138,7 +138,11 @@ async function fromDongle(channel: agi.AGIChannel) {
         let sipChannelId = Ami.generateUniqueActionId();
 
         ami.postAction("Originate", {
-            "channel": `PJSIP/${contact.uaSim.imsi}/${contact.uri}`,
+            "channel": [
+                "PJSIP",
+                sipLibrary.parseUri(contact.uri).user!,
+                contact.uri
+            ].join("/"),
             "application": "Bridge",
             "data": dongleChannelName,
             "callerid": `"" <${number}>`,
@@ -151,11 +155,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
             evtEstablishedOrEnded.post(contact);
 
-        }).catch((error) => {
-
-            ringingChannels.delete(contact);
-
-        });
+        }).catch((error) => ringingChannels.delete(contact));
 
         ami.evt.attachOnce(
             ({ event, uniqueid }) => (
@@ -170,11 +170,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
                 ringingChannels.set(contact, sipChannelName);
 
-                ami.setVar(
-                    "AGC(rx)",
-                    gain,
-                    sipChannelName
-                );
+                ami.setVar("AGC(rx)", gain, sipChannelName);
 
                 ami.setVar(
                     `JITTERBUFFER(${jitterBuffer.type})`,

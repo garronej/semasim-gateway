@@ -22,10 +22,7 @@ export async function launch(): Promise<void> {
 
     let api = await mysqlCustom.connectAndGetApi(connectionConfig);
 
-    await api.query([
-        "DELETE FROM ps_contacts",
-        "WHERE endpoint LIKE '_______________'"
-    ].join("\n"));
+    await api.query("DELETE FROM ps_contacts");
 
     query= api.query;
     esc = api.esc;

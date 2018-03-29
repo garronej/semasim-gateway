@@ -91,7 +91,7 @@ function onNewAsteriskSocket(asteriskSocket) {
         !!sipLibrary.getContact(sipPacket)), sipRequest => {
         let parsedUri = sipLibrary.parseUri(sipLibrary.getContact(sipRequest).uri);
         parsedUri.params = {
-            "stamp": `${misc_1.cid.parse(connectionId).timestamp}`
+            "mk": `${misc_1.cid.parse(connectionId).timestamp}`.match(/([0-9]{6})$/)[1]
         };
         purgedContactUri = sipLibrary.stringifyUri(parsedUri);
     });

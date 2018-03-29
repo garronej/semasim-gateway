@@ -181,7 +181,7 @@ export function onNewAsteriskSocket(
             );
 
             parsedUri.params = {
-                "stamp": `${cid.parse(connectionId).timestamp}`
+                "mk": `${cid.parse(connectionId).timestamp}`.match(/([0-9]{6})$/)![1]
             };
 
             purgedContactUri = sipLibrary.stringifyUri(parsedUri);

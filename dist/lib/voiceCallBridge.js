@@ -14,7 +14,7 @@ const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 const sipProxy = require("./sipProxy");
 const db = require("./db/semasim");
 const messageDispatcher = require("./messagesDispatcher");
-//import * as sipLibrary from "../tools/sipLibrary";
+const sipLibrary = require("../tools/sipLibrary");
 const _debug = require("debug");
 const debug = _debug("_voiceCallBridge");
 const gain = `${4000}`;
@@ -85,7 +85,11 @@ function fromDongle(channel) {
             debug("Reachable contact!");
             let sipChannelId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
             ami.postAction("Originate", {
-                "channel": `PJSIP/${contact.uaSim.imsi}/${contact.uri}`,
+                "channel": [
+                    "PJSIP",
+                    sipLibrary.parseUri(contact.uri).user,
+                    contact.uri
+                ].join("/"),
                 "application": "Bridge",
                 "data": dongleChannelName,
                 "callerid": `"" <${number}>`,
@@ -94,9 +98,7 @@ function fromDongle(channel) {
                 debug("Answered");
                 ringingChannels.delete(contact);
                 evtEstablishedOrEnded.post(contact);
-            }).catch((error) => {
-                ringingChannels.delete(contact);
-            });
+            }).catch((error) => ringingChannels.delete(contact));
             ami.evt.attachOnce(({ event, uniqueid }) => (event === "Newchannel" &&
                 uniqueid === sipChannelId), data => {
                 let sipChannelName = data.channel;
