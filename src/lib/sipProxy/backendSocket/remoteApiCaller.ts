@@ -83,16 +83,23 @@ export function notifySimOffline(
 
 
 //TODO: to remove ua should be added on connection
-export function notifyNewOrUpdatedUa(
+export async function notifyNewOrUpdatedUa(
     ua: types.Ua
-): void {
+): Promise<void> {
 
     let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
     type Params = apiDeclaration.notifyNewOrUpdatedUa.Params;
     type Response = apiDeclaration.notifyNewOrUpdatedUa.Response;
 
-    sendRequest<Params, Response>(methodName, ua)
-        .catch(() => { });
+    try {
+
+        await sendRequest<Params, Response>(methodName, ua)
+
+    } catch{
+
+        return new Promise<void>(resolve => { });
+
+    }
 
 }
 

@@ -189,7 +189,7 @@ function registerListeners() {
 
             if (isUaCreatedOrUpdated) {
 
-                sipProxy.backendSocket.remoteApi.notifyNewOrUpdatedUa(
+                await sipProxy.backendSocket.remoteApi.notifyNewOrUpdatedUa(
                     contact.uaSim.ua
                 );
 

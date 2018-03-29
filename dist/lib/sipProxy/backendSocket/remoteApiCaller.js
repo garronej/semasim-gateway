@@ -56,9 +56,15 @@ function notifySimOffline(imsi) {
 exports.notifySimOffline = notifySimOffline;
 //TODO: to remove ua should be added on connection
 function notifyNewOrUpdatedUa(ua) {
-    let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
-    sendRequest(methodName, ua)
-        .catch(() => { });
+    return __awaiter(this, void 0, void 0, function* () {
+        let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
+        try {
+            yield sendRequest(methodName, ua);
+        }
+        catch (_a) {
+            return new Promise(resolve => { });
+        }
+    });
 }
 exports.notifyNewOrUpdatedUa = notifyNewOrUpdatedUa;
 /**

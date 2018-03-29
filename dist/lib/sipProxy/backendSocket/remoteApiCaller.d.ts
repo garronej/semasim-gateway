@@ -3,7 +3,7 @@ import { types as dcTypes } from "chan-dongle-extended-client";
 import * as types from "../../types";
 export declare function notifySimOnline(dongle: dcTypes.Dongle.Usable): void;
 export declare function notifySimOffline(imsi: string): void;
-export declare function notifyNewOrUpdatedUa(ua: types.Ua): void;
+export declare function notifyNewOrUpdatedUa(ua: types.Ua): Promise<void>;
 /**
  *
  * To use when we want to send a message or make a call

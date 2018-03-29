@@ -111,7 +111,7 @@ function registerListeners() {
         debug(`Contact registered`, contact);
         let { isUaCreatedOrUpdated, isFirstUaForSim } = yield db.semasim.addUaSim(contact.uaSim);
         if (isUaCreatedOrUpdated) {
-            sipProxy.backendSocket.remoteApi.notifyNewOrUpdatedUa(contact.uaSim.ua);
+            yield sipProxy.backendSocket.remoteApi.notifyNewOrUpdatedUa(contact.uaSim.ua);
         }
         if (isFirstUaForSim) {
             debug("First SIM UA");
