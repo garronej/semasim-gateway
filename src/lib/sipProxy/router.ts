@@ -1,11 +1,8 @@
 import * as tls from "tls";
 import * as net from "net";
-//import { SyncEvent } from "ts-events-extended";
 import * as networkTools from "../../tools/networkTools";
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import { readImsi, cid } from "./misc";
-
-//import * as messages from "./messages/index_sipProxy";
 import * as backendSocket from "./backendSocket/index_sipProxy";
 import * as asteriskSockets from "./asteriskSockets";
 import * as contactRegistrationMonitor from "./contactsRegistrationMonitor";

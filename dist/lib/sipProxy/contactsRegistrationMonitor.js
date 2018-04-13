@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const sipLibrary = require("../../tools/sipLibrary");
-const dbAsterisk = require("../db/asterisk");
+const sipLibrary = require("ts-sip");
+const db_1 = require("../db");
 const types = require("../types");
 const backendSocket = require("./backendSocket");
 const ts_events_extended_1 = require("ts-events-extended");
@@ -65,7 +65,7 @@ contacts.evtExpiredContact.attach(({ contact, asteriskSocket }) => {
 function onContactRegistered(contact, expire, asteriskSocket) {
     asteriskSocket.evtClose.attachOnce(() => {
         contacts._delete(contact);
-        dbAsterisk.deleteContact(contact);
+        db_1.asterisk.deleteContact(contact);
     });
     contacts.get().find(entry => {
         if (entry.contact !== contact &&

@@ -1,6 +1,6 @@
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import * as apiDeclaration from "./../../sipApiDeclarations/semasimGateway/backendSocket";
-import * as sipLibrary from "../../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import * as remoteApi from "./remoteApiCaller";
 import * as db from "../../db";
 
@@ -74,6 +74,8 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
 
     let handler: sipLibrary.api.Server.Handler<Params, Response> = {
         "handler": async ({ imei, pin }) => {
+
+            //TODO check is dongle locked or at least return undefined when status disconnect
 
             try {
 

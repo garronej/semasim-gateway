@@ -1,4 +1,4 @@
-import * as sipLibrary from "../../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import { VoidSyncEvent } from "ts-events-extended";
 import { handlers as localApiHandlers } from "./localApiHandlers";
 
@@ -22,9 +22,9 @@ export function set(backendSocketInst: sipLibrary.Socket) {
 
     sipLibrary.api.client.enableKeepAlive(backendSocketInst);
 
-    sipLibrary.api.client.enableLogging(
+    sipLibrary.api.client.enableErrorLogging(
         backendSocketInst, 
-        sipLibrary.api.client.getDefaultLogger({ idString })
+        sipLibrary.api.client.getDefaultErrorLogger({ idString })
     );
 
     backendSocketInst.evtConnect.attachOnce(() =>

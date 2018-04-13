@@ -8,22 +8,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-process.on("warning", error => {
-    console.log("WARNING WARNING WARNING");
-    console.log(error.stack);
-});
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
+const ts_ami_1 = require("ts-ami");
+const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
+//TODO: Create issue on Typescript repository.
+dcMisc;
 const db = require("./db");
 const sipProxy = require("./sipProxy");
 const messagesDispatcher = require("./messagesDispatcher");
 const voiceCallBridge = require("./voiceCallBridge");
+const ts_events_extended_1 = require("ts-events-extended");
 require("colors");
 const _debug = require("debug");
 let debug = _debug("_launch");
 debug("Starting semasim gateway !");
+let dc;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Launching!...");
+        ts_ami_1.Ami.getInstance(dcMisc.amiUser);
         yield launchDongleController();
         yield db.launch();
         sipProxy.launch();
@@ -36,26 +39,25 @@ function launch() {
 exports.launch = launch;
 function launchDongleController() {
     return __awaiter(this, void 0, void 0, function* () {
-        let dc = undefined;
-        while (!dc) {
+        while (true) {
+            dc = chan_dongle_extended_client_1.DongleController.getInstance("127.0.0.1", dcMisc.port);
             try {
-                yield chan_dongle_extended_client_1.DongleController.getInstance().initialization;
-                dc = chan_dongle_extended_client_1.DongleController.getInstance();
+                yield dc.prInitialization;
             }
             catch (_a) {
                 debug("dongle-extended not initialized yet, scheduling retry...");
-                yield new Promise(resolve => setTimeout(resolve, 5000));
+                continue;
             }
+            break;
         }
-        dc.evtDisconnect.attachOnce(error => {
-            debug(error.message.red);
-            throw error;
+        dc.evtClose.attachOnce(() => {
+            debug("chan-dongle-extended service stopped");
+            process.exit(-1);
         });
     });
 }
 function init() {
     return __awaiter(this, void 0, void 0, function* () {
-        let dc = chan_dongle_extended_client_1.DongleController.getInstance();
         for (let dongle of dc.usableDongles.values()) {
             messagesDispatcher.sendMessagesOfDongle(dongle);
         }
@@ -74,7 +76,6 @@ function init() {
     });
 }
 function registerListeners() {
-    let dc = chan_dongle_extended_client_1.DongleController.getInstance();
     sipProxy.backendSocket.evtNewBackendConnection.attach(() => __awaiter(this, void 0, void 0, function* () {
         debug("Connection established with backend");
         for (let dongle of dc.usableDongles.values()) {
@@ -94,18 +95,12 @@ function registerListeners() {
         }
         sipProxy.backendSocket.remoteApi.notifySimOffline(dongle.sim.imsi);
     }));
-    dc.evtMessage.attach(({ dongle, message }) => __awaiter(this, void 0, void 0, function* () {
+    dc.evtMessage.attach(({ dongle, message, submitShouldSave }) => __awaiter(this, void 0, void 0, function* () {
         debug("FROM DONGLE MESSAGE", { message });
+        let evtShouldSave = new ts_events_extended_1.SyncEvent();
+        submitShouldSave(evtShouldSave.waitFor());
         let wasAdded = yield db.semasim.onDongleMessage(message.number, message.text, message.date, dongle.sim.imsi);
-        if (wasAdded) {
-            messagesDispatcher.notifyNewSipMessagesToSend(dongle.sim.imsi);
-            dc.getMessagesOfSim({
-                "imsi": dongle.sim.imsi,
-                "fromDate": message.date,
-                "toDate": message.date,
-                "flush": true
-            });
-        }
+        evtShouldSave.post(wasAdded ? "DO NOT SAVE MESSAGE" : "SAVE MESSAGE");
     }));
     sipProxy.evtContactRegistration.attach((contact) => __awaiter(this, void 0, void 0, function* () {
         debug(`Contact registered`, contact);

@@ -18,6 +18,10 @@ function sendRequest(socket, methodName, params, extra = {}) {
         let actionId = ApiMessage_1.ApiMessage.readActionId(sipRequest);
         let writeSuccess = yield socket.write(sipRequest);
         if (!writeSuccess) {
+            if (!!logger.onRequestNotSent) {
+                logger.onRequestNotSent(methodName, params, socket);
+            }
+            socket.destroy();
             throw new SendRequestError(methodName, params, "CANNOT SEND REQUEST");
         }
         let sipRequestResponse;
@@ -118,6 +122,7 @@ function getDefaultLogger(options) {
         `params: ${JSON.stringify(params)}\n`,
     ].join(" ");
     return {
+        "onRequestNotSent": (methodName, params, socket) => log(`${base(socket, methodName, params)}Request not sent`),
         "onClosedConnection": (methodName, params, socket) => log(`${base(socket, methodName, params)}Remote connection lost`),
         "onRequestTimeout": (methodName, params, timeoutValue, socket) => log(`${base(socket, methodName, params)}Request timeout after ${timeoutValue}ms`),
         "onMalformedResponse": (methodName, params, rawResponse, socket) => log(`${base(socket, methodName, params)}Malformed response\nrawResponse: ${rawResponse}`)

@@ -1,12 +1,9 @@
 import { SyncEvent } from "ts-events-extended";
-import {
-    DongleController as Dc,
-    Ami
-} from "chan-dongle-extended-client";
+import { Ami } from "ts-ami";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 //TODO: Create issue on Typescript repository.
 dcMisc;
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import * as types from "../types";
 
 import * as _debug from "debug";
@@ -44,7 +41,7 @@ export function sendMessage(
 
         fromNumber = dcMisc.toNationalNumber(fromNumber, contact.uaSim.imsi);
 
-        Dc.getInstance().ami.messageSend(
+        Ami.getInstance().messageSend(
             `pjsip:${contact.uaSim.imsi}/${uri}`, fromNumber, actionId
         ).catch(amiError => reject(amiError));
 
@@ -94,6 +91,7 @@ export namespace sendMessage {
 
 //From here functions are not exported outside sipProxy
 
+
 /** 
  * Must be called before the first connection to backend 
  * and after DongleController have been instantiated
@@ -103,7 +101,7 @@ export namespace sendMessage {
  * */
 export async function init() {
 
-    let ami = Dc.getInstance().ami;
+    let ami= Ami.getInstance();
 
     let matchAllExt = "_.";
 

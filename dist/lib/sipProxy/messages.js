@@ -9,11 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
-const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
+const ts_ami_1 = require("ts-ami");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 //TODO: Create issue on Typescript repository.
 dcMisc;
-const sipLibrary = require("../../tools/sipLibrary");
+const sipLibrary = require("ts-sip");
 const types = require("../types");
 const _debug = require("debug");
 let debug = _debug("_sipProxy/messages");
@@ -21,14 +21,14 @@ exports.dialplanContext = "from-sip-message";
 exports.evtMessage = new ts_events_extended_1.SyncEvent();
 function sendMessage(contact, fromNumber, headers, text, fromNumberSimName) {
     return new Promise((resolve, reject) => {
-        let actionId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
+        let actionId = ts_ami_1.Ami.generateUniqueActionId();
         let uri = (() => {
             let parsedUri = sipLibrary.parsePath(contact.path)[0].uri;
             delete parsedUri.params["lr"];
             return sipLibrary.stringifyUri(parsedUri);
         })();
         fromNumber = dcMisc.toNationalNumber(fromNumber, contact.uaSim.imsi);
-        chan_dongle_extended_client_1.DongleController.getInstance().ami.messageSend(`pjsip:${contact.uaSim.imsi}/${uri}`, fromNumber, actionId).catch(amiError => reject(amiError));
+        ts_ami_1.Ami.getInstance().messageSend(`pjsip:${contact.uaSim.imsi}/${uri}`, fromNumber, actionId).catch(amiError => reject(amiError));
         sendMessage.evtOutgoingMessage.attachOnce(({ sipRequest }) => sipLibrary.getPacketContent(sipRequest).toString("utf8") === actionId, 2000, ({ sipRequest, prSipResponse }) => {
             if (fromNumberSimName) {
                 sipRequest.headers.from.name = `"${fromNumberSimName} (sim)"`;
@@ -59,7 +59,7 @@ exports.sendMessage = sendMessage;
  * */
 function init() {
     return __awaiter(this, void 0, void 0, function* () {
-        let ami = chan_dongle_extended_client_1.DongleController.getInstance().ami;
+        let ami = ts_ami_1.Ami.getInstance();
         let matchAllExt = "_.";
         yield ami.dialplanExtensionRemove(matchAllExt, exports.dialplanContext);
         yield ami.dialplanExtensionAdd(exports.dialplanContext, matchAllExt, 1, "Hangup");

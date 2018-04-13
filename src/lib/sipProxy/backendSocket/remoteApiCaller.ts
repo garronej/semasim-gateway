@@ -1,4 +1,4 @@
-import * as sipLibrary from "../../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import * as apiDeclaration from "../../sipApiDeclarations/semasimBackend/gatewaySide/gatewaySockets";
 import * as db from "../../db";
 import { types as dcTypes } from "chan-dongle-extended-client";

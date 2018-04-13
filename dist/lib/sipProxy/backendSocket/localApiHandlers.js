@@ -47,6 +47,7 @@ exports.handlers = {};
     const methodName = apiDeclaration.unlockDongle.methodName;
     let handler = {
         "handler": ({ imei, pin }) => __awaiter(this, void 0, void 0, function* () {
+            //TODO check is dongle locked or at least return undefined when status disconnect
             try {
                 return yield chan_dongle_extended_client_1.DongleController.getInstance().unlock(imei, pin);
             }

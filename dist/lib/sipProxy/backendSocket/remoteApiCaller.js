@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const sipLibrary = require("../../../tools/sipLibrary");
+const sipLibrary = require("ts-sip");
 const apiDeclaration = require("../../sipApiDeclarations/semasimBackend/gatewaySide/gatewaySockets");
 const db = require("../../db");
 const backendSocket = require("./store");

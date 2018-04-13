@@ -8,12 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const asterisk_1 = require("./asterisk");
+//import { launch as launchAsterisk } from "./asterisk";
+const asterisk_lite_1 = require("./asterisk_lite");
 const semasim_1 = require("./semasim");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         yield Promise.all([
-            asterisk_1.launch(),
+            asterisk_lite_1.launch(),
             semasim_1.launch()
         ]);
     });

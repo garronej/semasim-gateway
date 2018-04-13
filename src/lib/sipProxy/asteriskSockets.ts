@@ -1,4 +1,4 @@
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 
 /** map connectionId+imsi => asteriskSocket
  * PROTECTED: only for contactsRegistrationMonitor.ts
@@ -52,12 +52,3 @@ export function flush(){
     }
 
 }
-
-/*
-export function getAll(): sipLibrary.Socket[]{
-
-    return Array.from(map.values())
-        .filter(asteriskSocket => asteriskSocket !== null) as sipLibrary.Socket[];
-
-}
-*/

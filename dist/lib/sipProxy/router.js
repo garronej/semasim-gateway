@@ -10,11 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const tls = require("tls");
 const net = require("net");
-//import { SyncEvent } from "ts-events-extended";
 const networkTools = require("../../tools/networkTools");
-const sipLibrary = require("../../tools/sipLibrary");
+const sipLibrary = require("ts-sip");
 const misc_1 = require("./misc");
-//import * as messages from "./messages/index_sipProxy";
 const backendSocket = require("./backendSocket/index_sipProxy");
 const asteriskSockets = require("./asteriskSockets");
 const contactRegistrationMonitor = require("./contactsRegistrationMonitor");

@@ -1,4 +1,4 @@
-import * as sipLibrary from "../../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import { VoidSyncEvent } from "ts-events-extended";
 export declare const evtNewBackendConnection: VoidSyncEvent;
 export declare function set(backendSocketInst: sipLibrary.Socket): void;

@@ -10,11 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const ts_events_extended_1 = require("ts-events-extended");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
+const ts_ami_1 = require("ts-ami");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 const sipProxy = require("./sipProxy");
 const db = require("./db/semasim");
 const messageDispatcher = require("./messagesDispatcher");
-const sipLibrary = require("../tools/sipLibrary");
+const sipLibrary = require("ts-sip");
 const _debug = require("debug");
 const debug = _debug("_voiceCallBridge");
 const gain = `${4000}`;
@@ -27,19 +28,21 @@ const jitterBuffer = {
     "params": "default"
 };
 exports.sipCallContext = "from-sip-call";
+let dc;
+let ami;
 function initAgi() {
-    let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-    dc.ami.startAgi({
+    ami = ts_ami_1.Ami.getInstance();
+    dc = chan_dongle_extended_client_1.DongleController.getInstance();
+    const dongleCallContext = dc.staticModuleConfiguration.defaults["context"];
+    ami.startAgi({
         [exports.sipCallContext]: { "_[+0-9].": fromSip },
-        [dc.moduleConfiguration.defaults.context]: { "_[+0-9].": fromDongle }
+        [dongleCallContext]: { "_[+0-9].": fromDongle }
     });
 }
 exports.initAgi = initAgi;
 function fromDongle(channel) {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Call originated from dongle");
-        let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-        let ami = dc.ami;
         let imsi = (yield channel.relax.getVariable("DONGLEIMSI"));
         let dongle = Array.from(dc.usableDongles.values()).find(({ sim }) => sim.imsi === imsi);
         if (!dongle) {
@@ -83,7 +86,7 @@ function fromDongle(channel) {
         let dongleChannelName = channel.request.channel;
         evtReachableContact.attach(contact => {
             debug("Reachable contact!");
-            let sipChannelId = chan_dongle_extended_client_1.Ami.generateUniqueActionId();
+            let sipChannelId = ts_ami_1.Ami.generateUniqueActionId();
             ami.postAction("Originate", {
                 "channel": [
                     "PJSIP",
@@ -131,7 +134,7 @@ function fromSip(channel) {
             return;
         }
         let number = channel.request.extension;
-        chan_dongle_extended_client_1.DongleController.getInstance().ami.evt.waitFor(e => (e["event"] === "RTCPSent" &&
+        ami.evt.waitFor(e => (e["event"] === "RTCPSent" &&
             e["channelstatedesc"] === "Ring" &&
             e["channel"] === channel.request.channel), 30000)
             .then(() => db.onTargetGsmRinging(contact, number, call_id)

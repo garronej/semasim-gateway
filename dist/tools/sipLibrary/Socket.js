@@ -4,8 +4,6 @@ const ts_events_extended_1 = require("ts-events-extended");
 const core = require("./core");
 const misc = require("./misc");
 const ApiMessage_1 = require("./api/ApiMessage");
-const _debug = require("debug");
-let debug = _debug("_tools/sipLibrary/Socket");
 require("colors");
 //TODO: make a function to test if message are well formed: have from, to via ect.
 class Socket {
@@ -80,7 +78,6 @@ class Socket {
                 streamParser(data);
             }
             catch (error) {
-                debug("Stream parser error");
                 this.connection.emit("error", error);
             }
         });
@@ -132,7 +129,6 @@ class Socket {
             throw new Error("Trying to write before socket connect");
         }
         if (this.evtClose.postCount) {
-            debug("The socket you try to write on is closed");
             return new Promise(resolve => { });
         }
         if (misc.matchRequest(sipPacket)) {
@@ -140,7 +136,6 @@ class Socket {
             if (maxForwardsHeaderValue !== undefined) {
                 let maxForwards = parseInt(maxForwardsHeaderValue);
                 if (maxForwards < 0) {
-                    debug("Avoid writing, max forward reached");
                     return false;
                 }
             }
@@ -170,13 +165,8 @@ class Socket {
                 ]);
             }
         }
-        let __before = Date.now();
         ((out instanceof Promise) ? out : Promise.resolve(true))
             .then(isSent => {
-            let __elapsed = Date.now() - __before;
-            if (__elapsed > 200) {
-                console.log(`WARNING WARNING WARNING write took ${__elapsed}ms to compleat`.red);
-            }
             if (isSent) {
                 if (!!this.loggerEvt.evtPacketOut) {
                     this.loggerEvt.evtPacketOut.post(sipPacket);

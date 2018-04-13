@@ -1,5 +1,5 @@
 import { SyncEvent } from "ts-events-extended";
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import * as types from "../types";
 export declare const dialplanContext = "from-sip-message";
 export declare const evtMessage: SyncEvent<{

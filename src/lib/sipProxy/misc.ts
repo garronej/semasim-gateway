@@ -1,5 +1,5 @@
 import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 
 /** 
  * Return true if it's a sipRequest originated of UA 

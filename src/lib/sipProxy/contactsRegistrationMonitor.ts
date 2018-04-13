@@ -1,5 +1,5 @@
-import * as sipLibrary from "../../tools/sipLibrary";
-import * as dbAsterisk from "../db/asterisk";
+import * as sipLibrary from "ts-sip";
+import { asterisk as dbAsterisk} from "../db";
 import * as types from "../types";
 import * as backendSocket from "./backendSocket";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
@@ -164,10 +164,7 @@ export function onNewAsteriskSocket(
         }
     );
 
-
-
     let purgedContactUri: string;
-
 
     asteriskSocket.evtPacketPreWrite.attachOnce(
         (sipPacket): sipPacket is sipLibrary.Request => (
@@ -188,7 +185,6 @@ export function onNewAsteriskSocket(
 
         }
     );
-
 
     let contact: types.Contact;
     let expire: number;

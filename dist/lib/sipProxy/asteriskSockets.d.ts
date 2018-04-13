@@ -1,4 +1,4 @@
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 /** map connectionId+imsi => asteriskSocket
  * PROTECTED: only for contactsRegistrationMonitor.ts
  */

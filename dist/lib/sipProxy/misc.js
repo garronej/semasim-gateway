@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const stringTransform = require("transfer-tools/dist/lib/stringTransform");
-const sipLibrary = require("../../tools/sipLibrary");
+const sipLibrary = require("ts-sip");
 /**
  * Return true if it's a sipRequest originated of UA
  * or if it's a sipResponse of a request originated by UA.

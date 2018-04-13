@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const sipLibrary = require("../tools/sipLibrary");
+const sipLibrary = require("ts-sip");
 const testing_1 = require("transfer-tools/dist/lib/testing");
 const misc_1 = require("../lib/sipProxy/misc");
 let asteriskSocket = {

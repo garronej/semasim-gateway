@@ -1,7 +1,7 @@
-import * as mysql from "mysql";
+import * as sqliteCustom from "../../tools/sqliteCustom";
 import * as types from "../types";
-
-import * as mysqlCustom from "../../tools/mysqlCustom";
+import * as path from "path";
+import * as md5 from "md5";
 
 import { sipCallContext } from "../voiceCallBridge";
 import { messagesDialplanContext } from "../sipProxy";
@@ -9,22 +9,15 @@ import { messagesDialplanContext } from "../sipProxy";
 import * as c from "../_constants"
 
 //Note: Exported only for tests.
-export let query: mysqlCustom.Api["query"];
-export let esc: mysqlCustom.Api["esc"];
-export let buildInsertQuery: mysqlCustom.Api["buildInsertQuery"];
+export let query: sqliteCustom.Api["query"];
+export let esc: sqliteCustom.Api["esc"];
+export let buildInsertQuery: sqliteCustom.Api["buildInsertQuery"];
 
 export async function launch(): Promise<void> {
 
-    if( 1 === 1 ){
-        throw new Error("!!!!!");
-    }
-
-    const connectionConfig: mysql.IConnectionConfig = {
-        ...c.dbParamsGateway,
-        "database": "asterisk"
-    };
-
-    let api = await mysqlCustom.connectAndGetApi(connectionConfig);
+    let api = await sqliteCustom.connectAndGetApi(
+        path.join(__dirname, "..", "..", "..", "res", "asterisk.db")
+    );
 
     await api.query("DELETE FROM ps_contacts");
 
@@ -59,44 +52,38 @@ export async function deleteContact(contact: types.Contact) {
 
 }
 
-
 export async function createEndpointIfNeededAndGetPassword(
     imsi: string,
     renewPassword: "RENEW PASSWORD" | undefined = undefined
 ): Promise<string> {
 
-    let sql = "";
+    let sql = buildInsertQuery("ps_auths", {
+        "id": imsi,
+        "auth_type": "userpass",
+        "username": imsi,
+        "password": md5(`${Date.now()}`),
+        "realm": "semasim"
+    }, !!renewPassword ? "REPLACE" : "IGNORE");
 
-    sql += [
-        "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
-        `VALUES( ${esc(imsi)}, 'userpass', ${esc(imsi)}, MD5(RAND()), 'semasim' )`,
-        "ON DUPLICATE KEY UPDATE",
-        renewPassword ? "password= VALUES(password)" : "id=id",
-        ";",
-        ""
-    ].join("\n");
+    let [ps_endpoints_web, ps_endpoints_mobile] = (() => {
 
-    let ps_endpoints_base = {
-        "disallow": "all",
-        "context": sipCallContext,
-        "message_context": messagesDialplanContext,
-        "auth": imsi,
-        "from_domain": c.domain,
-        "ice_support": "yes",
-        "transport": "transport-tcp",
-        "dtmf_mode": "info"
-    };
+        let ps_endpoints_base = {
+            "disallow": "all",
+            "context": sipCallContext,
+            "message_context": messagesDialplanContext,
+            "auth": imsi,
+            "from_domain": c.domain,
+            "ice_support": "yes",
+            "transport": "transport-tcp",
+            "dtmf_mode": "info"
+        };
 
-    let ps_endpoints_web = (() => {
+        let webId = `${imsi}-webRTC`;
 
-        let name = `${imsi}-webRTC`;
-
-        return {
-            "id": name,
-            "aors": name,
+        return [{
+            "id": webId,
+            "aors": webId,
             ...ps_endpoints_base,
-            "allow": "opus,alaw,ulaw",
-            //"allow": "alaw,ulaw",
             "use_avpf": "yes",
             "media_encryption": "dtls",
             "dtls_ca_file": "/etc/asterisk/keys/ca.crt",
@@ -105,16 +92,13 @@ export async function createEndpointIfNeededAndGetPassword(
             "dtls_setup": "actpass",
             "media_use_received_transport": "yes",
             "rtcp_mux": "yes"
-        };
+        }, {
+            "id": imsi,
+            "aors": imsi,
+            ...ps_endpoints_base
+        }];
 
     })();
-
-    let ps_endpoints_mobile = {
-        "id": imsi,
-        "aors": imsi,
-        ...ps_endpoints_base,
-        "allow": "alaw,ulaw"
-    };
 
     for (let ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
 

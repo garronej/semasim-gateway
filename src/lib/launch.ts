@@ -1,19 +1,13 @@
-process.on("warning", error=> { 
-
-    console.log("WARNING WARNING WARNING");
-
-    console.log(error.stack);
-
-});
-
-import { 
-    DongleController as Dc, 
-    types as dcTypes 
-} from "chan-dongle-extended-client";
+import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-client";
+import { Ami } from "ts-ami";
+import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
+//TODO: Create issue on Typescript repository.
+dcMisc;
 import * as db from "./db";
 import * as sipProxy from "./sipProxy";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
+import { SyncEvent } from "ts-events-extended";
 
 import "colors";
 
@@ -22,9 +16,13 @@ let debug = _debug("_launch");
 
 debug("Starting semasim gateway !");
 
+let dc!: Dc;
+
 export async function launch() {
 
     debug("Launching!...");
+
+    Ami.getInstance(dcMisc.amiUser);
 
     await launchDongleController();
 
@@ -43,40 +41,38 @@ export async function launch() {
 }
 
 async function launchDongleController() {
+    
+    while(true){
 
-    let dc: Dc | undefined = undefined;
+        dc= Dc.getInstance("127.0.0.1", dcMisc.port);
 
-    while (!dc) {
+        try{
 
-        try {
+            await dc.prInitialization;
 
-            await Dc.getInstance().initialization;
-
-            dc = Dc.getInstance();
-
-        } catch{
+        }catch{
 
             debug("dongle-extended not initialized yet, scheduling retry...");
 
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            continue;
 
         }
 
+        break;
+
     }
 
-    dc.evtDisconnect.attachOnce(error => {
+    dc.evtClose.attachOnce(()=> {
 
-        debug(error!.message.red);
+        debug("chan-dongle-extended service stopped");
 
-        throw error;
+        process.exit(-1);
 
     });
 
 }
 
 async function init() {
-
-    let dc = Dc.getInstance();
 
     for (let dongle of dc.usableDongles.values()) {
 
@@ -106,8 +102,6 @@ async function init() {
 }
 
 function registerListeners() {
-
-    let dc = Dc.getInstance();
 
     sipProxy.backendSocket.evtNewBackendConnection.attach(
         async () => {
@@ -150,9 +144,13 @@ function registerListeners() {
     );
 
     dc.evtMessage.attach(
-        async ({ dongle, message }) => {
+        async ({ dongle, message, submitShouldSave }) => {
 
             debug("FROM DONGLE MESSAGE", { message });
+
+            let evtShouldSave= new SyncEvent<"SAVE MESSAGE" | "DO NOT SAVE MESSAGE">();
+
+            submitShouldSave(evtShouldSave.waitFor());
 
             let wasAdded = await db.semasim.onDongleMessage(
                 message.number,
@@ -161,18 +159,7 @@ function registerListeners() {
                 dongle.sim.imsi
             );
 
-            if (wasAdded) {
-
-                messagesDispatcher.notifyNewSipMessagesToSend(dongle.sim.imsi);
-
-                dc.getMessagesOfSim({
-                    "imsi": dongle.sim.imsi,
-                    "fromDate": message.date,
-                    "toDate": message.date,
-                    "flush": true
-                });
-
-            }
+            evtShouldSave.post(wasAdded?"DO NOT SAVE MESSAGE":"SAVE MESSAGE");
 
         }
     );

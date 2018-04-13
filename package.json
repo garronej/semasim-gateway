@@ -28,8 +28,11 @@
     "network": "^0.3.2",
     "rejection-tracker": "github:garronej/rejection-tracker",
     "sip": "github:garronej/sip.js#no-websocket",
+    "sqlite": "^2.9.1",
     "transfer-tools": "garronej/transfer-tools",
+    "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
+    "ts-sip": "github:garronej/ts-sip",
     "ws": "^4.0.0"
   },
   "devDependencies": {

@@ -8,17 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mysqlCustom = require("../../tools/mysqlCustom");
+const sqliteCustom = require("../../tools/sqliteCustom");
+const path = require("path");
+const md5 = require("md5");
 const voiceCallBridge_1 = require("../voiceCallBridge");
 const sipProxy_1 = require("../sipProxy");
 const c = require("../_constants");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        if (1 === 1) {
-            throw new Error("!!!!!");
-        }
-        const connectionConfig = Object.assign({}, c.dbParamsGateway, { "database": "asterisk" });
-        let api = yield mysqlCustom.connectAndGetApi(connectionConfig);
+        let api = yield sqliteCustom.connectAndGetApi(path.join(__dirname, "..", "..", "..", "res", "asterisk.db"));
         yield api.query("DELETE FROM ps_contacts");
         exports.query = api.query;
         exports.esc = api.esc;
@@ -50,32 +48,27 @@ function deleteContact(contact) {
 exports.deleteContact = deleteContact;
 function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
     return __awaiter(this, void 0, void 0, function* () {
-        let sql = "";
-        sql += [
-            "INSERT INTO ps_auths ( id, auth_type, username, password, realm )",
-            `VALUES( ${exports.esc(imsi)}, 'userpass', ${exports.esc(imsi)}, MD5(RAND()), 'semasim' )`,
-            "ON DUPLICATE KEY UPDATE",
-            renewPassword ? "password= VALUES(password)" : "id=id",
-            ";",
-            ""
-        ].join("\n");
-        let ps_endpoints_base = {
-            "disallow": "all",
-            "context": voiceCallBridge_1.sipCallContext,
-            "message_context": sipProxy_1.messagesDialplanContext,
-            "auth": imsi,
-            "from_domain": c.domain,
-            "ice_support": "yes",
-            "transport": "transport-tcp",
-            "dtmf_mode": "info"
-        };
-        let ps_endpoints_web = (() => {
-            let name = `${imsi}-webRTC`;
-            return Object.assign({ "id": name, "aors": name }, ps_endpoints_base, { "allow": "opus,alaw,ulaw", 
-                //"allow": "alaw,ulaw",
-                "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": "/etc/asterisk/keys/ca.crt", "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem", "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" });
+        let sql = exports.buildInsertQuery("ps_auths", {
+            "id": imsi,
+            "auth_type": "userpass",
+            "username": imsi,
+            "password": md5(`${Date.now()}`),
+            "realm": "semasim"
+        }, !!renewPassword ? "REPLACE" : "IGNORE");
+        let [ps_endpoints_web, ps_endpoints_mobile] = (() => {
+            let ps_endpoints_base = {
+                "disallow": "all",
+                "context": voiceCallBridge_1.sipCallContext,
+                "message_context": sipProxy_1.messagesDialplanContext,
+                "auth": imsi,
+                "from_domain": c.domain,
+                "ice_support": "yes",
+                "transport": "transport-tcp",
+                "dtmf_mode": "info"
+            };
+            let webId = `${imsi}-webRTC`;
+            return [Object.assign({ "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": "/etc/asterisk/keys/ca.crt", "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem", "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), Object.assign({ "id": imsi, "aors": imsi }, ps_endpoints_base)];
         })();
-        let ps_endpoints_mobile = Object.assign({ "id": imsi, "aors": imsi }, ps_endpoints_base, { "allow": "alaw,ulaw" });
         for (let ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
             sql += exports.buildInsertQuery("ps_aors", {
                 "id": ps_endpoints.aors,

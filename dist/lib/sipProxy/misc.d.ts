@@ -1,4 +1,4 @@
-import * as sipLibrary from "../../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 export declare function readImsi(sipPacket: sipLibrary.Packet): string;
 export declare namespace cid {
     /** on backend on client connection */

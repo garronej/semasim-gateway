@@ -1,4 +1,4 @@
-import * as sipLibrary from "../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 import { assertSame } from "transfer-tools/dist/lib/testing";
 import { cid, readImsi } from "../lib/sipProxy/misc";
 

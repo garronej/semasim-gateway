@@ -1,16 +1,12 @@
 import { SyncEvent } from "ts-events-extended";
-import {
-    DongleController as Dc,
-    Ami,
-    agi,
-    //types as dcTypes
-} from "chan-dongle-extended-client";
+import { DongleController as Dc } from "chan-dongle-extended-client";
+import { Ami, agi } from "ts-ami";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
 import * as db from "./db/semasim";
 import * as messageDispatcher from "./messagesDispatcher";
-import * as sipLibrary from "../tools/sipLibrary";
+import * as sipLibrary from "ts-sip";
 
 import * as _debug from "debug";
 const debug = _debug("_voiceCallBridge");
@@ -28,13 +24,19 @@ const jitterBuffer = {
 
 export const sipCallContext = "from-sip-call";
 
+let dc!: Dc;
+let ami!: Ami;
+
 export function initAgi() {
 
-    let dc = Dc.getInstance();
+    ami = Ami.getInstance();
+    dc = Dc.getInstance();
 
-    dc.ami.startAgi({
+    const dongleCallContext = dc.staticModuleConfiguration.defaults["context"];
+
+    ami.startAgi({
         [sipCallContext]: { "_[+0-9].": fromSip },
-        [dc.moduleConfiguration.defaults.context]: { "_[+0-9].": fromDongle }
+        [dongleCallContext]: { "_[+0-9].": fromDongle }
     });
 
 }
@@ -42,9 +44,6 @@ export function initAgi() {
 async function fromDongle(channel: agi.AGIChannel) {
 
     debug("Call originated from dongle");
-
-    let dc = Dc.getInstance();
-    let ami = dc.ami;
 
     let imsi = (await channel.relax.getVariable("DONGLEIMSI"))!;
 
@@ -224,7 +223,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     let number = channel.request.extension;
 
-    Dc.getInstance().ami.evt.waitFor(
+    ami.evt.waitFor(
         e => (
             e["event"] === "RTCPSent" &&
             e["channelstatedesc"] === "Ring" &&
