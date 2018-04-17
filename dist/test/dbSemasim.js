@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const db = require("../lib/db/semasim");
+const db_1 = require("../lib/db");
 const ttTesting = require("transfer-tools/dist/lib/testing");
 var assertSame = ttTesting.assertSame;
 exports.generateUa = (email = `${ttTesting.genHexStr(10)}@foo.com`) => ({
@@ -20,53 +20,54 @@ exports.generateUa = (email = `${ttTesting.genHexStr(10)}@foo.com`) => ({
 });
 function testDbSemasim() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.launch();
+        yield db_1.semasim.launch();
+        yield new Promise(resolve => setTimeout(() => resolve(), 2000));
         yield t1();
         yield t2();
         yield t3();
         yield t4();
         yield t5();
         yield t6();
-        yield db.flush();
+        yield db_1.semasim.flush();
         console.log("ALL TESTS DB SEMASIM PASSED");
     });
 }
 exports.testDbSemasim = testDbSemasim;
 function t1() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.flush();
+        yield db_1.semasim.flush();
         let uaSim = {
             "imsi": ttTesting.genDigits(15),
             "ua": exports.generateUa()
         };
-        assertSame(yield db.lastMessageReceivedDateBySim(), {});
-        assertSame(yield db.addUaSim(uaSim), { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true });
-        assertSame(yield db.addUaSim(uaSim), { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false });
+        assertSame(yield db_1.semasim.lastMessageReceivedDateBySim(), {});
+        assertSame(yield db_1.semasim.addUaSim(uaSim), { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true });
+        assertSame(yield db_1.semasim.addUaSim(uaSim), { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false });
         uaSim.ua.software = "...";
-        assertSame(yield db.addUaSim(uaSim), { "isFirstUaForSim": false, "isUaCreatedOrUpdated": true });
+        assertSame(yield db_1.semasim.addUaSim(uaSim), { "isFirstUaForSim": false, "isUaCreatedOrUpdated": true });
         let imsi2 = "123456789123456";
-        assertSame(yield db.addUaSim({
+        assertSame(yield db_1.semasim.addUaSim({
             "imsi": imsi2,
             "ua": uaSim.ua
         }), { "isFirstUaForSim": true, "isUaCreatedOrUpdated": false });
-        assertSame(yield db.lastMessageReceivedDateBySim(), {
+        assertSame(yield db_1.semasim.lastMessageReceivedDateBySim(), {
             [uaSim.imsi]: new Date(0),
             [imsi2]: new Date(0)
         });
-        assertSame(yield db.getUnsentMessagesTowardGsm(uaSim.imsi), []);
+        assertSame(yield db_1.semasim.getUnsentMessagesTowardGsm(uaSim.imsi), []);
         console.log("ADD UA PASS");
     });
 }
 function t2() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.flush();
+        yield db_1.semasim.flush();
         let imsi = ttTesting.genDigits(15);
         let email = `${ttTesting.genHexStr(10)}@foo.com`;
         let messagesTowardGsm = [];
         let uas = [];
         for (let i = 0; i < 10; i++) {
             let ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-            assertSame(yield db.addUaSim({ imsi, ua }), { "isFirstUaForSim": i === 0, "isUaCreatedOrUpdated": true });
+            assertSame(yield db_1.semasim.addUaSim({ imsi, ua }), { "isFirstUaForSim": i === 0, "isUaCreatedOrUpdated": true });
             uas.push(ua);
         }
         let sendingUa = uas[0];
@@ -80,23 +81,23 @@ function t2() {
                     "ua": sendingUa
                 }
             };
-            yield db.onSipMessage(message.toNumber, message.text, message.uaSim, message.date);
+            yield db_1.semasim.onSipMessage(message.toNumber, message.text, message.uaSim, message.date);
             messagesTowardGsm.push(message);
         }
-        assertSame(yield db.lastMessageReceivedDateBySim(), {
+        assertSame(yield db_1.semasim.lastMessageReceivedDateBySim(), {
             [imsi]: new Date(0)
         });
         const checkMark = Buffer.from("e29c94", "hex").toString("utf8");
         const crossMark = Buffer.from("e29d8c", "hex").toString("utf8");
-        while ((yield db.getUnsentMessagesTowardGsm(imsi)).length) {
-            assertSame((yield db.getUnsentMessagesTowardGsm(imsi)).map(v => v[0]), messagesTowardGsm);
-            let [messageTowardGsm, { onSent, onStatusReport }] = (yield db.getUnsentMessagesTowardGsm(imsi))[0];
+        while ((yield db_1.semasim.getUnsentMessagesTowardGsm(imsi)).length) {
+            assertSame((yield db_1.semasim.getUnsentMessagesTowardGsm(imsi)).map(v => v[0]), messagesTowardGsm);
+            let [messageTowardGsm, { onSent, onStatusReport }] = (yield db_1.semasim.getUnsentMessagesTowardGsm(imsi))[0];
             assertSame(messageTowardGsm, messagesTowardGsm[0]);
             let sendDate = (messagesTowardGsm.length % 3 === 0) ? null : new Date();
             yield onSent(sendDate);
             messagesTowardGsm.shift();
             yield (() => __awaiter(this, void 0, void 0, function* () {
-                let o = yield db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
+                let o = yield db_1.semasim.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
                 assertSame(o.length, 1);
                 let [[mts, setSent]] = o;
                 assertSame(mts, {
@@ -140,9 +141,10 @@ function t2() {
                 messageTowardGsm,
                 statusReport
             };
+            let __i = 0;
             yield (() => __awaiter(this, void 0, void 0, function* () {
-                let o = yield db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
-                assertSame(o.length, 1);
+                let o = yield db_1.semasim.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
+                assertSame(o.length, 1, "yo man" + __i++);
                 let [[mts, setSent]] = o;
                 assertSame(mts, {
                     "fromNumber": messageTowardGsm.toNumber,
@@ -160,7 +162,7 @@ function t2() {
             for (let ua of uas.filter(ua => (ua.userEmail === messageTowardGsm.uaSim.ua.userEmail &&
                 ua.instance !== messageTowardGsm.uaSim.ua.instance))) {
                 __in = true;
-                let o = yield db.getUnsentMessagesTowardSip({ ua, imsi });
+                let o = yield db_1.semasim.getUnsentMessagesTowardSip({ ua, imsi });
                 assertSame(o.length, 1);
                 let [[mts, setSent]] = o;
                 assertSame(mts, {
@@ -176,7 +178,7 @@ function t2() {
             __in = false;
             for (let ua of uas.filter(ua => ua.userEmail !== messageTowardGsm.uaSim.ua.userEmail)) {
                 __in = true;
-                let o = yield db.getUnsentMessagesTowardSip({ ua, imsi });
+                let o = yield db_1.semasim.getUnsentMessagesTowardSip({ ua, imsi });
                 assertSame(o.length, 1);
                 let [[mts, setSent]] = o;
                 assertSame(mts, {
@@ -195,14 +197,14 @@ function t2() {
 }
 function t3() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.flush();
-        assertSame(yield db.onDongleMessage(ttTesting.genDigits(10), ttTesting.genUtf8Str(100), new Date(), ttTesting.genDigits(15)), false);
+        yield db_1.semasim.flush();
+        assertSame(yield db_1.semasim.onDongleMessage(ttTesting.genDigits(10), ttTesting.genUtf8Str(100), new Date(), ttTesting.genDigits(15)), false);
         let imsi = ttTesting.genDigits(15);
         let email = `${ttTesting.genHexStr(10)}@foo.com`;
         let uas = [];
         for (let i = 0; i < 12; i++) {
             let ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-            assertSame(yield db.addUaSim({ imsi, ua }), {
+            assertSame(yield db_1.semasim.addUaSim({ imsi, ua }), {
                 "isFirstUaForSim": i === 0,
                 "isUaCreatedOrUpdated": true
             });
@@ -221,18 +223,18 @@ function t3() {
                 "isFromDongle": true,
                 "text": ttTesting.genUtf8Str(400)
             };
-            assertSame(yield db.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.text, messageTowardSip.date, imsi), true);
+            assertSame(yield db_1.semasim.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.text, messageTowardSip.date, imsi), true);
             messagesTowardSipSrc.push(messageTowardSip);
         }
-        assertSame(yield db.lastMessageReceivedDateBySim(), {
+        assertSame(yield db_1.semasim.lastMessageReceivedDateBySim(), {
             [imsi]: messagesTowardSipSrc[messagesTowardSipSrc.length - 1].date
         });
         for (let ua of uas) {
             let messagesTowardSip = [...messagesTowardSipSrc];
-            assertSame((yield db.getUnsentMessagesTowardSip({ imsi, ua }))
+            assertSame((yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua }))
                 .map(v => v[0]), messagesTowardSip);
-            while ((yield db.getUnsentMessagesTowardSip({ imsi, ua })).length) {
-                let [[messageTowardSip, onSent]] = yield db.getUnsentMessagesTowardSip({ imsi, ua });
+            while ((yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua })).length) {
+                let [[messageTowardSip, onSent]] = yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua });
                 assertSame(messageTowardSip, messagesTowardSip[0]);
                 yield onSent();
                 messagesTowardSip.shift();
@@ -243,12 +245,12 @@ function t3() {
 }
 function t4() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.flush();
+        yield db_1.semasim.flush();
         let uaSimExt = {
             "imsi": ttTesting.genDigits(15),
             "ua": exports.generateUa()
         };
-        assertSame(yield db.addUaSim(uaSimExt), {
+        assertSame(yield db_1.semasim.addUaSim(uaSimExt), {
             "isUaCreatedOrUpdated": true,
             "isFirstUaForSim": true
         });
@@ -259,15 +261,15 @@ function t4() {
             if (allowedUas.length < 10) {
                 allowedUas.push(ua);
             }
-            assertSame(yield db.addUaSim({ imsi, ua }), {
+            assertSame(yield db_1.semasim.addUaSim({ imsi, ua }), {
                 "isUaCreatedOrUpdated": true,
                 "isFirstUaForSim": allowedUas.length === 1
             });
         }
-        yield db.removeUaSim(imsi, allowedUas);
+        yield db_1.semasim.removeUaSim(imsi, allowedUas);
         let remainingUas = [];
         let notAffectedUas = [];
-        let rows = yield db.query([
+        let rows = yield db_1.semasim._.query([
             "SELECT ua.*, ua_sim.imsi",
             "FROM ua",
             "INNER JOIN ua_sim ON ua_sim.ua= ua.id_",
@@ -295,23 +297,23 @@ function t4() {
 }
 function t5() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.flush();
+        yield db_1.semasim.flush();
         let imsi = ttTesting.genDigits(15);
         let email = `${ttTesting.genHexStr(10)}@foo.com`;
         let uas = [];
         for (let i = 0; i < 12; i++) {
             let ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-            assertSame(yield db.addUaSim({ imsi, ua }), {
+            assertSame(yield db_1.semasim.addUaSim({ imsi, ua }), {
                 "isFirstUaForSim": i === 0,
                 "isUaCreatedOrUpdated": true
             });
             uas.push(ua);
         }
         let missedCallNumber = ttTesting.genDigits(10);
-        yield db.onMissedCall(imsi, missedCallNumber);
+        yield db_1.semasim.onMissedCall(imsi, missedCallNumber);
         for (let ua of uas) {
-            assertSame((yield db.getUnsentMessagesTowardSip({ imsi, ua })).length, 1);
-            let [[messagesTowardSip]] = yield db.getUnsentMessagesTowardSip({ imsi, ua });
+            assertSame((yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua })).length, 1);
+            let [[messagesTowardSip]] = yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua });
             assertSame(messagesTowardSip, {
                 "bundledData": {
                     "type": "MISSED CALL",
@@ -328,13 +330,13 @@ function t5() {
 }
 function t6() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield db.flush();
+        yield db_1.semasim.flush();
         let imsi = ttTesting.genDigits(15);
         let email = `${ttTesting.genHexStr(10)}@foo.com`;
         let ringingUas = [];
         for (let i = 0; i < 12; i++) {
             let ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-            assertSame(yield db.addUaSim({ imsi, ua }), {
+            assertSame(yield db_1.semasim.addUaSim({ imsi, ua }), {
                 "isFirstUaForSim": i === 0,
                 "isUaCreatedOrUpdated": true
             });
@@ -342,10 +344,10 @@ function t6() {
         }
         let answeringUa = ringingUas.shift();
         let number = ttTesting.genDigits(10);
-        yield db.onCallAnswered(number, imsi, answeringUa, ringingUas);
+        yield db_1.semasim.onCallAnswered(number, imsi, answeringUa, ringingUas);
         for (let ua of ringingUas.filter(({ userEmail }) => userEmail !== answeringUa.userEmail)) {
-            assertSame((yield db.getUnsentMessagesTowardSip({ imsi, ua })).length, 1);
-            let [[messagesTowardSip]] = yield db.getUnsentMessagesTowardSip({ imsi, ua });
+            assertSame((yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua })).length, 1);
+            let [[messagesTowardSip]] = yield db_1.semasim.getUnsentMessagesTowardSip({ imsi, ua });
             assertSame(messagesTowardSip, {
                 "bundledData": {
                     "type": "CALL ANSWERED BY",
@@ -360,4 +362,9 @@ function t6() {
         }
         console.log("ON CALL ANSWERED PASS");
     });
+}
+if (require.main === module) {
+    console.log("Run standalone");
+    require("rejection-tracker").main(__dirname, "..", "..");
+    testDbSemasim().then(() => process.exit(0));
 }

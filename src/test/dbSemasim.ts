@@ -1,4 +1,4 @@
-import * as db from "../lib/db/semasim";
+import { semasim as db} from "../lib/db";
 import * as types from "../lib/types";
 import { types as dcTypes } from "chan-dongle-extended-client";
 
@@ -16,6 +16,8 @@ export const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`)
 export async  function testDbSemasim(){
 
     await db.launch();
+
+    await new Promise(resolve=> setTimeout(()=> resolve(), 2000));
 
     await t1();
     await t2();
@@ -47,7 +49,6 @@ async function t1() {
     assertSame(
         await db.addUaSim(uaSim),
         { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true }
-        
     );
 
     assertSame(
@@ -173,7 +174,7 @@ async function t2() {
 
             let o= await db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
 
-            assertSame( o.length, 1 );
+            assertSame( o.length, 1);
 
             let [[mts, setSent]] = o;
 
@@ -233,11 +234,13 @@ async function t2() {
             statusReport
         };
 
+        let __i=0;
+
         await (async () => {
 
             let o = await db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
 
-            assertSame(o.length, 1);
+            assertSame(o.length, 1, "yo man" + __i++);
 
             let [[mts, setSent]] = o;
 
@@ -486,7 +489,7 @@ async function t4() {
     let remainingUas: types.Ua[] = [];
     let notAffectedUas: types.Ua[] = [];
 
-    let rows = await db.query([
+    let rows = await db._.query([
         "SELECT ua.*, ua_sim.imsi",
         "FROM ua",
         "INNER JOIN ua_sim ON ua_sim.ua= ua.id_",
@@ -652,6 +655,16 @@ async function t6() {
     }
 
     console.log("ON CALL ANSWERED PASS");
+
+}
+
+if (require.main === module) {
+
+    console.log("Run standalone");
+
+    require("rejection-tracker").main(__dirname, "..", "..");
+
+    testDbSemasim().then(() => process.exit(0));
 
 }
 

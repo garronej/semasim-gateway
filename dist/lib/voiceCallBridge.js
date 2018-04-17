@@ -13,7 +13,7 @@ const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const ts_ami_1 = require("ts-ami");
 const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 const sipProxy = require("./sipProxy");
-const db = require("./db/semasim");
+const db_1 = require("./db");
 const messageDispatcher = require("./messagesDispatcher");
 const sipLibrary = require("ts-sip");
 const _debug = require("debug");
@@ -75,11 +75,11 @@ function fromDongle(channel) {
             if (!!contact) {
                 let ringingUas = Array.from(ringingChannels.keys())
                     .map(contact => contact.uaSim.ua);
-                yield db.onCallAnswered(number, imsi, contact.uaSim.ua, ringingUas);
+                yield db_1.semasim.onCallAnswered(number, imsi, contact.uaSim.ua, ringingUas);
             }
             else {
                 debug("Dongle channel hanged up but not answered");
-                yield db.onMissedCall(imsi, number);
+                yield db_1.semasim.onMissedCall(imsi, number);
             }
             messageDispatcher.notifyNewSipMessagesToSend(imsi);
         }));
@@ -123,25 +123,31 @@ function fromSip(channel) {
         let _ = channel.relax;
         debug("Call originated from sip");
         let contact_uri = yield _.getVariable("CHANNEL(pjsip,target_uri)");
+        console.log({ contact_uri });
         let call_id = (yield _.getVariable("CHANNEL(pjsip,call-id)"));
+        console.log({ call_id });
         let contact = sipProxy.getContacts()
             .find(({ uri }) => uri === contact_uri);
+        console.log({ contact });
         let dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
             .find(({ sim }) => sim.imsi === contact.uaSim.imsi);
+        console.log({ dongle });
         if (!dongle) {
             //TODO: Improve
             console.log("DONGLE is not usable");
             return;
         }
         let number = channel.request.extension;
+        console.log({ number });
         ami.evt.waitFor(e => (e["event"] === "RTCPSent" &&
             e["channelstatedesc"] === "Ring" &&
             e["channel"] === channel.request.channel), 30000)
-            .then(() => db.onTargetGsmRinging(contact, number, call_id)
+            .then(() => db_1.semasim.onTargetGsmRinging(contact, number, call_id)
             .then(() => messageDispatcher.sendMessagesOfContact(contact)))
             .catch(() => { });
         yield _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
         yield _.setVariable("AGC(rx)", gain);
+        console.log("avant dial");
         //TODO: there is a delay for call terminated when web client abruptly disconnect.
         yield _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
         //TODO: Increase volume on TX

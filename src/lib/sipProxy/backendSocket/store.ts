@@ -56,7 +56,3 @@ export function get(): sipLibrary.Socket | Promise<sipLibrary.Socket> {
     }
 
 }
-
-
-
-

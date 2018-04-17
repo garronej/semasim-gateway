@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const AsyncLock = require("async-lock");
 const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
-const db = require("./db/semasim");
+const db_1 = require("./db");
 const sipProxy = require("./sipProxy");
 const types = require("./types");
 const _debug = require("debug");
@@ -18,7 +18,7 @@ let debug = _debug("_messageDispatcher");
 function sendMessagesOfDongle(dongle) {
     sendMessagesOfDongle.lock.acquire(dongle.imei, () => __awaiter(this, void 0, void 0, function* () {
         let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-        for (let [message, { onSent, onStatusReport }] of yield db.getUnsentMessagesTowardGsm(dongle.sim.imsi)) {
+        for (let [message, { onSent, onStatusReport }] of yield db_1.semasim.getUnsentMessagesTowardGsm(dongle.sim.imsi)) {
             let sendMessageResult;
             try {
                 sendMessageResult = yield dc.sendMessage(dongle.imei, message.toNumber, message.text);
@@ -50,7 +50,7 @@ exports.sendMessagesOfDongle = sendMessagesOfDongle;
 function notifyNewSipMessagesToSend(imsi) {
     return __awaiter(this, void 0, void 0, function* () {
         for (let contact of sipProxy.getContacts(imsi)) {
-            if (!(yield db.messageTowardSipUnsentCount(contact.uaSim))) {
+            if (!(yield db_1.semasim.messageTowardSipUnsentCount(contact.uaSim))) {
                 continue;
             }
             if ((yield sipProxy.backendSocket.remoteApi.wakeUpContact(contact))
@@ -65,7 +65,7 @@ exports.notifyNewSipMessagesToSend = notifyNewSipMessagesToSend;
 /** Assert contact reachable  */
 function sendMessagesOfContact(contact) {
     sendMessagesOfContact.lock.acquire(types.misc.generateUaSimId(contact.uaSim), () => __awaiter(this, void 0, void 0, function* () {
-        for (let [message, onReceived] of yield db.getUnsentMessagesTowardSip(contact.uaSim)) {
+        for (let [message, onReceived] of yield db_1.semasim.getUnsentMessagesTowardSip(contact.uaSim)) {
             try {
                 yield sipProxy.sendMessage(contact, message.fromNumber, types.misc.smuggleBundledDataInHeaders(message.bundledData), message.text);
             }

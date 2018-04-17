@@ -40,3 +40,5 @@ jspm_packages
 
 res/asterisk/manager.conf
 res/asterisk/dongle.conf
+res/semasim.db
+res/asterisk.db

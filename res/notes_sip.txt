@@ -1,0 +1,220 @@
+NOTE: no contact header => no record route
+
+=============================================================
+=========== REQUEST/RESPONSE INIT FROM ASTERISK =============
+=============================================================
+
+===Request===
+gateway:5080] =>(A)=> [gateway:XXX, gateway:YYY ] =>(B)=> [ backend:80, backend:443] =>(C)=> [ client:ZZZ
+
+
+===Response===
+gateway:5080] <=(f)<= [gateway:XXX, gateway:YYY ] <=(e)<= [ backend:80, backend:443] <=(d)<= [ client:ZZZ
+
+---From Gateway perspective---
+astSocket:remote ] <=>(A/f)<=> [ astSocket:local, backendSocket:local ] <=>(B/e)<=> [ backendSocket:remote
+
+---From Backend perspective---
+gwSocket:remote] <=>(B/e)<=> [gwSocket:local, clientSocket:local] <=>(C/d)<=> [clientSocket:remote
+
+
+===(A)===
+Via: /TCP gateway:5080
+Route: gateway:XXX;t=TCP, backend:80;t=TLS
+Recod-Route: []
+
+===(B)===
+Via: /TLS gateway:YYY;c_id=ddd, /TCP gateway:5080
+route: backend:80;t=TLS
+Record-Route: gateway:YYY;t=TLS
+
+===(C)===
+Via: /WSS backend:443, /TLS gateway:YYY;c_id=ddd, /TCP gateway:5080
+route: []
+Record-Route: backend:443;t=WSS, gateway:YYY;t=TLS
+
+===(d)===
+Via: /WSS backend:443, /TLS gateway:YYY;c_id=ddd, /TCP gateway:5080
+Record-Route: backend:443;t=WSS, gateway:YYY;t=TLS
+
+===(e)===
+Via: /TLS gateway:YYY;c_id=ddd, /TCP gateway:5080
+Record-Route: backend:80;t=TLS, gateway:YYY;t=TLS
+
+===(f)===
+Via: /TCP gateway:5080
+Record-Route: backend:80;t=TLS, gateway:XXX;t=TCP
+
+
+(A)=>(B): 
+backendSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
+backendSocket.addViaHeader(sipRequest, { "c_id": ddd });
+
+(B)=>(C): 
+clientSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
+clientSocket.addViaHeader(sipRequest);
+
+(d)=>(e): 
+gatewaySocket.rewriteRecordRoute(sipResponse);
+sipResponse.header.via.shift();
+
+(e)=>(f): 
+asteriskSocket.rewriteRecordRoute(sipResponse);
+sipResponse.header.via.shift();
+
+
+=============================================================
+=========== REQUEST/RESPONSE INIT FROM CLIENT (UA) ==========
+=============================================================
+
+
+===Request===
+ client:ZZZ ] =>(A)=> [ backend:443, backend:80 ] =>(B)=> [ gateway:YYY, gateway:XXX ] =>(C)=> [ gateway:5060
+ 
+===Response===
+ client:ZZZ ] <=(f)<= [ backend:443, backend:80 ] <=(e)<= [ gateway:YYY, gateway:XXX ] <=(d)<= [ gateway:5060
+ 
+
+---From Backend perspective---
+ clientSocket:remote] <=>(A/f)<=> [clientSocket:local, gwSocket:local ] <=>(B/e) [ gwSocket:remote
+ 
+---From gateway perspective---
+ backendSocket:remote ] <=>(B/e)<=> [ backendSocket:local, astSocket:local ] <=>(C/d)<=> [ astSocket:remote
+
+-------------------------------------------------------------
+---------------- NOT REGISTER -------------------------------
+-------------------------------------------------------------
+
+===(A)===
+Via: /WSS client:ZZZ
+Route: backend:433;t=WSS, gateway:YYY;t=TLS
+Record-Route: []
+
+===(B)===
+Via: /TLS backend:80;c_id=ddd;received=client, /WSS client:ZZZ
+Route: gateway:YYY;t=TLS
+Record-Route: backend:80;t=TLS
+
+===(C)===
+Via: /TCP gateway:XXX, /TLS backend:80;c_id=ddd;received=client, /WSS client:ZZZ
+Route: []
+Record-Route: gateway:XXX;t=TCP, backend:80;t=TLS
+
+===(d)===
+Via: /TCP gateway:XXX, /TLS backend:80;c_id=ddd;received=client, /WSS client:ZZZ
+Record-Route: gateway:XXX;t=TCP, backend:80;t=TLS
+
+===(e)===
+Via: /TLS backend:80;c_id=ddd;;received=client, /WSS client:ZZZ
+Record-Route: gateway:YYY;t=TLS, backend:80;t=TLS
+
+===(f)===
+Via: /WSS client:ZZZ
+Record-Route: gateway:YYY;t=TLS, backend:443;t=WSS
+
+
+(A)=>(B): 
+gwSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
+gwSocket.addViaHeader(sipRequest, { "c_id": ddd, "received": clientSocket.remoteAddress });
+
+
+(B)=>(C)
+astSocket.shiftRouteAndUnshiftRecordRoute(sipRequest);
+astSocket.addViaHeader(sipRequest);
+
+(d)=>(e)
+backendSocket.rewriteRecordRoute(sipResponse);
+sipResponse.header.via.shift();
+
+(e)=>(f)
+clientSocket.rewriteRecordRoute(sipResponse);
+sipResponse.header.via.shift();
+
+-------------------------------------------------------------
+---------------- REGISTER -----------------------------------
+-------------------------------------------------------------
+
+
+===(A)===
+Via: /WSS client:ZZZ
+Route: backend:433;t=WSS OR []
+Supported: path ( may be missing, need to be added )
+
+===(B)===
+Via: /TLS backend:80;c_id=ddd;received=client, /WSS client:ZZZ
+Supported: path
+Path: backend:80;t=TLS
+
+===(C)===
+Via: /TCP gateway:XXX, /TLS backend:80;c_id=ddd;received=client, /WSS client:ZZZ
+Supported: path
+Path: gateway:XXX;t=TCP, backend:80;t=TLS
+
+===(d)===
+Via: /TCP gateway:XXX, /TLS backend:80;c_id=ddd;received=client, /WSS client:ZZZ
+Supported: path
+Path: gateway:XXX;t=TCP, backend:80;t=TLS
+
+===(e)===
+Via: /TLS backend:80;c_id=ddd;;received=client, /WSS client:ZZZ
+Supported: path
+Path: gateway:XXX;t=TCP, backend:80;t=TLS
+
+===(f)===
+Via: /WSS client:ZZZ
+Supported: path
+Path: gateway:XXX;t=TCP, backend:80;t=TLS
+
+
+(A)=>(B): 
+sipLibrary.addOptionTag(sipRequest.headers, "supported", "path");
+gwSocket.addPathHeader(sipRequest);
+gwSocket.addViaHeader(sipRequest, { "c_id": ddd, "received": clientSocket.remoteAddress });
+
+
+(B)=>(C)
+astSocket.addPathHeader(sipRequest);
+astSocket.addViaHeader(sipRequest);
+
+(d)=>(e)
+sipResponse.header.via.shift();
+
+(e)=>(f)
+sipResponse.header.via.shift();
+
+
+
+
+
+
+
+
+
+
+
+                /*
+
+Via: X, X, X, X
+Rec: o, x, x
+
+4=>0
+3-4 + 1= 0
+
+Via: X, X, X
+Rec: x, o, x
+
+3=>1
+3-3 + 1 = 1
+
+Via: X, X
+Rec: x, x, o
+
+2=>2
+3-2 + 1= 2
+
+                */
+
+
+
+
+

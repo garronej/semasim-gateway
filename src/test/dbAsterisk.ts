@@ -1,4 +1,4 @@
-import * as db from "../lib/db/asterisk";
+import { asterisk as db } from "../lib/db";
 import * as types from "../lib/types";
 import { cid } from "../lib/sipProxy/misc";
 
@@ -76,5 +76,16 @@ export async function testDbAsterisk() {
     await db.flush();
 
     console.log("PASS ASTERISK");
+
+}
+
+
+if (require.main === module) {
+
+    console.log("Run standalone");
+
+    require("rejection-tracker").main(__dirname, "..", "..");
+
+    testDbAsterisk().then(() => process.exit(0));
 
 }

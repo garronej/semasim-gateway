@@ -8,19 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const mysqlCustom = require("../../tools/mysqlCustom");
+const sqliteCustom = require("../../tools/sqliteCustom");
+const path = require("path");
 const transfer_tools_1 = require("transfer-tools");
-const c = require("../_constants");
 const JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();
-let esc;
-let buildInsertQuery;
 /** Must be called and awaited before use */
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        let api = yield mysqlCustom.connectAndGetApi(Object.assign({}, c.dbParamsGateway, { "database": "semasim" }), "HANDLE STRING ENCODING");
-        exports.query = api.query;
-        esc = api.esc;
-        buildInsertQuery = api.buildInsertQuery;
+        //sqliteCustom.enableLog();
+        exports._ = yield sqliteCustom.connectAndGetApi(path.join(__dirname, "..", "..", "..", "res", "semasim.db"), "HANDLE STRING ENCODING");
     });
 }
 exports.launch = launch;
@@ -31,7 +27,7 @@ function flush() {
             "DELETE FROM ua;",
             "DELETE FROM message_toward_sip;"
         ].join("\n");
-        yield exports.query(sql);
+        yield exports._.query(sql);
     });
 }
 exports.flush = flush;
@@ -39,33 +35,31 @@ function addUaSim(uaSim) {
     return __awaiter(this, void 0, void 0, function* () {
         let sql = "";
         let { imsi, ua } = uaSim;
-        sql += buildInsertQuery("ua", {
+        sql += exports._.buildInsertOrUpdateQueries("ua", {
             "instance": ua.instance,
             "user_email": ua.userEmail,
             "platform": ua.platform,
             "push_token": ua.pushToken,
             "software": ua.software
-        }, "UPDATE");
+        }, ["instance", "user_email"]);
         sql += [
-            "SELECT @ua_ref:=ua.id_",
+            "INSERT OR IGNORE INTO ua_sim ( ua, imsi )",
+            `SELECT id_, ${exports._.esc(imsi)}`,
             "FROM ua",
-            `WHERE instance= ${esc(ua.instance)} AND user_email= ${esc(ua.userEmail)}`,
+            `WHERE instance=${exports._.esc(ua.instance)} AND user_email=${exports._.esc(ua.userEmail)}`,
             ";",
             ""
         ].join("\n");
-        sql += buildInsertQuery("ua_sim", {
-            "ua": { "@": "ua_ref" },
-            imsi
-        }, "IGNORE");
         sql += [
             `SELECT COUNT(*) as sim_ua_count`,
             "FROM ua_sim",
-            `WHERE imsi= ${esc(imsi)}`
+            `WHERE imsi= ${exports._.esc(imsi)}`
         ].join("\n");
-        let queryResults = yield exports.query(sql);
+        let queryResults = yield exports._.query(sql);
         return {
-            "isUaCreatedOrUpdated": queryResults[0].insertId !== 0,
-            "isFirstUaForSim": (queryResults[2].insertId !== 0 &&
+            "isUaCreatedOrUpdated": (!!queryResults[0].insertId ||
+                !!queryResults[1].affectedRows),
+            "isFirstUaForSim": (!!queryResults[2].affectedRows &&
                 queryResults[3][0]["sim_ua_count"] === 1)
         };
     });
@@ -74,15 +68,13 @@ exports.addUaSim = addUaSim;
 function removeUaSim(imsi, uasToKeep = []) {
     return __awaiter(this, void 0, void 0, function* () {
         let condition = uasToKeep.length ? [
-            " AND NOT ( ",
-            uasToKeep.map(ua => `ua.instance= ${esc(ua.instance)} AND ua.user_email= ${esc(ua.userEmail)}`).join(" OR "),
+            "NOT ( ",
+            uasToKeep.map(ua => `ua.instance=${exports._.esc(ua.instance)} AND ua.user_email=${exports._.esc(ua.userEmail)}`).join(" OR "),
             " )"
-        ].join("") : "";
-        yield exports.query([
-            "DELETE ua_sim.*",
-            "FROM ua_sim",
-            "INNER JOIN ua ON ua.id_= ua_sim.ua",
-            `WHERE ua_sim.imsi= ${esc(imsi)}${condition}`
+        ].join("") : "1";
+        yield exports._.query([
+            "DELETE FROM ua_sim",
+            `WHERE imsi=${exports._.esc(imsi)} AND ua IN ( SELECT id_ from ua WHERE ${condition} )`
         ].join("\n"));
     });
 }
@@ -102,26 +94,20 @@ exports.removeUaSim = removeUaSim;
 function onSipMessage(toNumber, text, uaSim, date = new Date()) {
     return __awaiter(this, void 0, void 0, function* () {
         let sql = [
-            "SELECT @ua_sim_ref:= ua_sim.id_",
+            "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date )",
+            `SELECT ${exports._.esc(date.getTime())}, ua_sim.id_, ${exports._.esc(toNumber)}, ${exports._.esc(text)}, NULL`,
             "FROM ua_sim",
             "INNER JOIN ua ON ua.id_= ua_sim.ua",
             "WHERE",
             [
-                `ua_sim.imsi= ${esc(uaSim.imsi)}`,
-                `ua.instance = ${esc(uaSim.ua.instance)}`,
-                `ua.user_email= ${esc(uaSim.ua.userEmail)}`
+                `ua_sim.imsi= ${exports._.esc(uaSim.imsi)}`,
+                `ua.instance = ${exports._.esc(uaSim.ua.instance)}`,
+                `ua.user_email= ${exports._.esc(uaSim.ua.userEmail)}`
             ].join(" AND "),
             ";",
             ""
         ].join("\n");
-        sql += buildInsertQuery("message_toward_gsm", {
-            "date": date.getTime(),
-            "ua_sim": { "@": "ua_sim_ref" },
-            "to_number": toNumber,
-            "text": text,
-            "send_date": null
-        }, "THROW ERROR");
-        yield exports.query(sql);
+        yield exports._.query(sql);
     });
 }
 exports.onSipMessage = onSipMessage;
@@ -148,7 +134,7 @@ function onDongleMessage(fromNumber, text, date, imsi) {
             "pduDate": date
         };
         let sql = buildMessageTowardSipInsertQuery(true, fromNumber, text, date, bundledData, { "target": "ALL UA REGISTERED TO SIM", imsi });
-        let queryResults = yield exports.query(sql);
+        let queryResults = yield exports._.query(sql);
         return queryResults[0].insertId !== 0;
     });
 }
@@ -170,7 +156,7 @@ function onMissedCall(imsi, number) {
             "target": "ALL UA REGISTERED TO SIM",
             imsi
         });
-        yield exports.query(sql);
+        yield exports._.query(sql);
     });
 }
 exports.onMissedCall = onMissedCall;
@@ -202,7 +188,7 @@ function onCallAnswered(number, imsi, answeredByUa, ringingUas) {
         if (!sql) {
             return;
         }
-        yield exports.query(sql);
+        yield exports._.query(sql);
     });
 }
 exports.onCallAnswered = onCallAnswered;
@@ -218,12 +204,12 @@ function messageTowardSipUnsentCount(uaSim) {
             "WHERE",
             [
                 "ua_sim_message_toward_sip.delivered_date IS NULL",
-                `ua_sim.imsi= ${esc(uaSim.imsi)}`,
-                `ua.instance= ${esc(uaSim.ua.instance)}`,
-                `ua.user_email= ${esc(uaSim.ua.userEmail)}`
+                `ua_sim.imsi= ${exports._.esc(uaSim.imsi)}`,
+                `ua.instance= ${exports._.esc(uaSim.ua.instance)}`,
+                `ua.user_email= ${exports._.esc(uaSim.ua.userEmail)}`
             ].join(" AND ")
         ].join("\n");
-        return (yield exports.query(sql))[0]["count"];
+        return (yield exports._.query(sql))[0]["count"];
     });
 }
 exports.messageTowardSipUnsentCount = messageTowardSipUnsentCount;
@@ -245,13 +231,13 @@ function getUnsentMessagesTowardSip(uaSim) {
             "WHERE",
             [
                 "ua_sim_message_toward_sip.delivered_date IS NULL",
-                `ua_sim.imsi= ${esc(uaSim.imsi)}`,
-                `ua.instance= ${esc(uaSim.ua.instance)}`,
-                `ua.user_email= ${esc(uaSim.ua.userEmail)}`
+                `ua_sim.imsi= ${exports._.esc(uaSim.imsi)}`,
+                `ua.instance= ${exports._.esc(uaSim.ua.instance)}`,
+                `ua.user_email= ${exports._.esc(uaSim.ua.userEmail)}`
             ].join(" AND "),
             "ORDER BY message_toward_sip.date"
         ].join("\n");
-        let rows = yield exports.query(sql);
+        let rows = yield exports._.query(sql);
         let out = new Array();
         for (let row of rows) {
             let message = {
@@ -262,10 +248,10 @@ function getUnsentMessagesTowardSip(uaSim) {
                 "text": row["text"]
             };
             let onReceived = () => __awaiter(this, void 0, void 0, function* () {
-                return yield exports.query(buildInsertQuery("ua_sim_message_toward_sip", {
+                yield exports._.query(exports._.buildInsertOrUpdateQueries("ua_sim_message_toward_sip", {
                     "id_": row["id_"],
                     "delivered_date": Date.now()
-                }, "UPDATE"));
+                }, ["id_"]));
             });
             out.push([message, onReceived]);
         }
@@ -282,7 +268,7 @@ exports.getUnsentMessagesTowardSip = getUnsentMessagesTowardSip;
  * */
 function getUnsentMessagesTowardGsm(imsi) {
     return __awaiter(this, void 0, void 0, function* () {
-        let rows = yield exports.query([
+        let rows = yield exports._.query([
             "SELECT",
             "message_toward_gsm.id_,",
             "message_toward_gsm.date,",
@@ -297,7 +283,7 @@ function getUnsentMessagesTowardGsm(imsi) {
             "FROM message_toward_gsm",
             "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
             "INNER JOIN ua ON ua.id_ = ua_sim.ua",
-            `WHERE ua_sim.imsi=${esc(imsi)} AND message_toward_gsm.send_date IS NULL`,
+            `WHERE ua_sim.imsi=${exports._.esc(imsi)} AND message_toward_gsm.send_date IS NULL`,
             "ORDER BY message_toward_gsm.date",
             ";"
         ].join("\n"));
@@ -352,10 +338,10 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
     function onSent(messageTowardGsm_id, messageTowardGsm, sendDate) {
         return __awaiter(this, void 0, void 0, function* () {
             let isSuccess = sendDate ? true : false;
-            let sql = buildInsertQuery("message_toward_gsm", {
+            let sql = exports._.buildInsertOrUpdateQueries("message_toward_gsm", {
                 "id_": messageTowardGsm_id,
                 "send_date": isSuccess ? sendDate.getTime() : -1
-            }, "UPDATE");
+            }, ["id_"]);
             let bundledData = {
                 "type": "SEND REPORT",
                 messageTowardGsm,
@@ -365,13 +351,12 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                 "target": "SPECIFIC UA REGISTERED TO SIM",
                 "uaSim": messageTowardGsm.uaSim
             });
-            yield exports.query(sql);
+            yield exports._.query(sql);
         });
     }
     getUnsentMessagesTowardGsm.onSent = onSent;
     function onStatusReport(messageTowardGsm_id, messageTowardGsm, statusReport) {
         return __awaiter(this, void 0, void 0, function* () {
-            let sql = "";
             //TODO: set send date and delivery date and not now!!!!!!
             //TODO: may be useless...depend of operator I assume
             if (isNaN(statusReport.dischargeDate.getTime())) {
@@ -385,6 +370,7 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
             };
             let now = new Date();
             let build = (text, target) => buildMessageTowardSipInsertQuery(false, messageTowardGsm.toNumber, text, now, bundledData, target);
+            let sql = "";
             if (statusReport.isDelivered) {
                 sql += build(`${checkMark}${checkMark}`, {
                     "target": "SPECIFIC UA REGISTERED TO SIM",
@@ -405,7 +391,7 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                     "uaSim": messageTowardGsm.uaSim
                 });
             }
-            yield exports.query(sql);
+            yield exports._.query(sql);
         });
     }
     getUnsentMessagesTowardGsm.onStatusReport = onStatusReport;
@@ -418,7 +404,7 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
  */
 function lastMessageReceivedDateBySim() {
     return __awaiter(this, void 0, void 0, function* () {
-        let rows = yield exports.query([
+        let rows = yield exports._.query([
             "SELECT",
             "ua_sim.imsi,",
             "MAX(message_toward_sip.date) AS last_received",
@@ -471,25 +457,25 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, text, date, 
     switch (target.target) {
         case "SPECIFIC UA REGISTERED TO SIM":
             sqlSelectionUaSim += [
-                esc(target.uaSim.imsi),
-                `ua.instance= ${esc(target.uaSim.ua.instance)}`,
-                `ua.user_email= ${esc(target.uaSim.ua.userEmail)}`
+                exports._.esc(target.uaSim.imsi),
+                `ua.instance= ${exports._.esc(target.uaSim.ua.instance)}`,
+                `ua.user_email= ${exports._.esc(target.uaSim.ua.userEmail)}`
             ].join(" AND ");
             break;
         case "ALL UA REGISTERED TO SIM":
-            sqlSelectionUaSim += `${esc(target.imsi)}`;
+            sqlSelectionUaSim += `${exports._.esc(target.imsi)}`;
             break;
         case "ALL OTHER UA OF USER REGISTERED TO SIM":
             sqlSelectionUaSim += [
-                esc(target.uaSim.imsi),
-                `ua.instance <> ${esc(target.uaSim.ua.instance)}`,
-                `ua.user_email= ${esc(target.uaSim.ua.userEmail)}`
+                exports._.esc(target.uaSim.imsi),
+                `ua.instance <> ${exports._.esc(target.uaSim.ua.instance)}`,
+                `ua.user_email= ${exports._.esc(target.uaSim.ua.userEmail)}`
             ].join(" AND ");
             break;
         case "ALL UA OF OTHER USERS REGISTERED TO SIM":
             sqlSelectionUaSim += [
-                esc(target.uaSim.imsi),
-                `ua.user_email<> ${esc(target.uaSim.ua.userEmail)}`
+                exports._.esc(target.uaSim.imsi),
+                `ua.user_email<> ${exports._.esc(target.uaSim.ua.userEmail)}`
             ].join(" AND ");
             break;
     }
@@ -497,18 +483,19 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, text, date, 
         "INSERT INTO message_toward_sip ( is_from_dongle, bundled_data, date, from_number, text )",
         "SELECT",
         [
-            mysqlCustom.bool.enc(isFromDongle),
-            esc(JSON_CUSTOM.stringify(bundledData)),
-            esc(date.getTime()),
-            esc(fromNumber),
-            esc(text)
+            sqliteCustom.bool.enc(isFromDongle),
+            exports._.esc(JSON_CUSTOM.stringify(bundledData)),
+            exports._.esc(date.getTime()),
+            exports._.esc(fromNumber),
+            exports._.esc(text)
         ].join(", "),
         sqlSelectionUaSim,
-        "HAVING COUNT(*) <> 0",
+        "GROUP BY NULL",
         ";",
+        exports._.buildSetVarQuery("message_toward_sip_id", "integer_value", "last_insert_rowid()"),
         "INSERT INTO ua_sim_message_toward_sip",
         "( ua_sim, message_toward_sip, delivered_date )",
-        "SELECT ua_sim.id_, LAST_INSERT_ID(), NULL",
+        `SELECT ua_sim.id_, ${exports._.buildGetVarQuery("message_toward_sip_id")}, NULL`,
         sqlSelectionUaSim,
         ";",
         ""
@@ -541,7 +528,7 @@ function onTargetGsmRinging(contact, number, callId) {
             "target": "SPECIFIC UA REGISTERED TO SIM",
             "uaSim": contact.uaSim
         });
-        yield exports.query(sql);
+        yield exports._.query(sql);
     });
 }
 exports.onTargetGsmRinging = onTargetGsmRinging;

@@ -1,7 +1,5 @@
 require("rejection-tracker").main(__dirname, "..", "..");
 
-import "./sip";
-
 import { testDbAsterisk }  from "./dbAsterisk";
 import { testDbSemasim } from "./dbSemasim";
 

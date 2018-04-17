@@ -27,6 +27,8 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
             localIp = await networkTools.getActiveInterfaceIp();
 
+            console.log({ localIp });
+
             /** SRV _sips._tcp.semasim.com => [{ name: sip.semasim.com }] */
             host = (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
 

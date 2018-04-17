@@ -20,7 +20,7 @@ let dc!: Dc;
 
 export async function launch() {
 
-    debug("Launching!...");
+    debug("Launching...");
 
     Ami.getInstance(dcMisc.amiUser);
 
@@ -159,7 +159,17 @@ function registerListeners() {
                 dongle.sim.imsi
             );
 
-            evtShouldSave.post(wasAdded?"DO NOT SAVE MESSAGE":"SAVE MESSAGE");
+            if( wasAdded ){
+
+                messagesDispatcher.notifyNewSipMessagesToSend(dongle.sim.imsi);
+
+                evtShouldSave.post("DO NOT SAVE MESSAGE");
+
+            }else{
+
+                evtShouldSave.post("SAVE MESSAGE");
+
+            }
 
         }
     );

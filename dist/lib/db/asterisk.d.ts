@@ -1,8 +1,9 @@
+import * as sqliteCustom from "../../tools/sqliteCustom";
 import * as types from "../types";
-import * as mysqlCustom from "../../tools/mysqlCustom";
-export declare let query: mysqlCustom.Api["query"];
-export declare let esc: mysqlCustom.Api["esc"];
-export declare let buildInsertQuery: mysqlCustom.Api["buildInsertQuery"];
+export declare let query: sqliteCustom.Api["query"];
+export declare let esc: sqliteCustom.Api["esc"];
+export declare let buildInsertQuery: sqliteCustom.Api["buildInsertQuery"];
+export declare let buildInsertOrUpdateQueries: sqliteCustom.Api["buildInsertOrUpdateQueries"];
 export declare function launch(): Promise<void>;
 /** for test purpose only */
 export declare function flush(): Promise<void>;

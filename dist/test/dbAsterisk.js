@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const db = require("../lib/db/asterisk");
+const db_1 = require("../lib/db");
 const types = require("../lib/types");
 const misc_1 = require("../lib/sipProxy/misc");
 const contact = (() => {
@@ -42,19 +42,24 @@ const contact = (() => {
 function testDbAsterisk() {
     return __awaiter(this, void 0, void 0, function* () {
         console.assert(types.misc.sanityChecks.contact(contact));
-        yield db.launch();
-        yield db.flush();
-        let password = yield db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi);
-        let rows = yield db.query(`SELECT * FROM ps_aors WHERE id= ${db.esc(contact.uaSim.imsi)}`);
+        yield db_1.asterisk.launch();
+        yield db_1.asterisk.flush();
+        let password = yield db_1.asterisk.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi);
+        let rows = yield db_1.asterisk.query(`SELECT * FROM ps_aors WHERE id= ${db_1.asterisk.esc(contact.uaSim.imsi)}`);
         console.assert(rows.length === 1);
-        rows = yield db.query(`SELECT * FROM ps_auths WHERE id= ${db.esc(contact.uaSim.imsi)}`);
+        rows = yield db_1.asterisk.query(`SELECT * FROM ps_auths WHERE id= ${db_1.asterisk.esc(contact.uaSim.imsi)}`);
         console.assert(rows.length === 1);
         console.assert(rows[0]["username"] === contact.uaSim.imsi);
         console.assert(rows[0]["password"] === password);
-        console.assert((yield db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi)) === password);
-        console.assert((yield db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi, "RENEW PASSWORD")) !== password);
-        yield db.flush();
+        console.assert((yield db_1.asterisk.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi)) === password);
+        console.assert((yield db_1.asterisk.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi, "RENEW PASSWORD")) !== password);
+        yield db_1.asterisk.flush();
         console.log("PASS ASTERISK");
     });
 }
 exports.testDbAsterisk = testDbAsterisk;
+if (require.main === module) {
+    console.log("Run standalone");
+    require("rejection-tracker").main(__dirname, "..", "..");
+    testDbAsterisk().then(() => process.exit(0));
+}

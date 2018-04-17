@@ -1,6 +1,13 @@
 import * as semasim from "./semasim";
-//import * as asterisk from "./asterisk";
-import * as asterisk from "./asterisk_lite";
-import { launch } from "./launch";
+import * as asterisk from "./asterisk";
+
+async function launch(): Promise<void> {
+
+    await Promise.all([ 
+        asterisk.launch(), 
+        semasim.launch() 
+    ]);
+
+}
 
 export { launch, semasim, asterisk };

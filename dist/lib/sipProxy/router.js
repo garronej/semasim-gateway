@@ -28,6 +28,7 @@ function createBackendSocket() {
         while (true) {
             try {
                 localIp = yield networkTools.getActiveInterfaceIp();
+                console.log({ localIp });
                 /** SRV _sips._tcp.semasim.com => [{ name: sip.semasim.com }] */
                 host = (yield networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
                 break;

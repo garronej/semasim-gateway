@@ -4,7 +4,7 @@ import { Ami, agi } from "ts-ami";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
-import * as db from "./db/semasim";
+import { semasim as db} from "./db";
 import * as messageDispatcher from "./messagesDispatcher";
 import * as sipLibrary from "ts-sip";
 
@@ -203,15 +203,24 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     debug("Call originated from sip");
 
     let contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
+
+    console.log({ contact_uri });
+
     let call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
+
+    console.log({ call_id });
 
     let contact = sipProxy.getContacts()
         .find(({ uri }) => uri === contact_uri)!
         ;
+    
+    console.log({ contact });
 
     let dongle = Array.from(Dc.getInstance().usableDongles.values())
         .find(({ sim }) => sim.imsi === contact.uaSim.imsi)
         ;
+    
+    console.log({ dongle });
 
     if (!dongle) {
 
@@ -222,6 +231,8 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     }
 
     let number = channel.request.extension;
+
+    console.log({ number });
 
     ami.evt.waitFor(
         e => (
@@ -241,6 +252,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     await _.setVariable("AGC(rx)", gain);
 
+    console.log("avant dial");
 
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
     await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);

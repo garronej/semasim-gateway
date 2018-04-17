@@ -3,7 +3,7 @@ import {
     DongleController as Dc,
     types as dcTypes
 } from "chan-dongle-extended-client";
-import * as db from "./db/semasim";
+import { semasim as db } from "./db";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
 

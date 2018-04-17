@@ -1,8 +1,7 @@
-import * as mysqlCustom from "../../tools/mysqlCustom";
+import * as sqliteCustom from "../../tools/sqliteCustom";
 import * as types from "../types";
 import { types as dcTypes } from "chan-dongle-extended-client";
-/** exported only for tests */
-export declare let query: mysqlCustom.Api["query"];
+export declare let _: sqliteCustom.Api;
 /** Must be called and awaited before use */
 export declare function launch(): Promise<void>;
 /** Only for test purpose */

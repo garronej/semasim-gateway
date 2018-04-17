@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("rejection-tracker").main(__dirname, "..", "..");
-require("./sip");
 const dbAsterisk_1 = require("./dbAsterisk");
 const dbSemasim_1 = require("./dbSemasim");
 (() => __awaiter(this, void 0, void 0, function* () {

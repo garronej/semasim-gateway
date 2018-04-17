@@ -25,7 +25,7 @@ debug("Starting semasim gateway !");
 let dc;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        debug("Launching!...");
+        debug("Launching...");
         ts_ami_1.Ami.getInstance(dcMisc.amiUser);
         yield launchDongleController();
         yield db.launch();
@@ -100,7 +100,13 @@ function registerListeners() {
         let evtShouldSave = new ts_events_extended_1.SyncEvent();
         submitShouldSave(evtShouldSave.waitFor());
         let wasAdded = yield db.semasim.onDongleMessage(message.number, message.text, message.date, dongle.sim.imsi);
-        evtShouldSave.post(wasAdded ? "DO NOT SAVE MESSAGE" : "SAVE MESSAGE");
+        if (wasAdded) {
+            messagesDispatcher.notifyNewSipMessagesToSend(dongle.sim.imsi);
+            evtShouldSave.post("DO NOT SAVE MESSAGE");
+        }
+        else {
+            evtShouldSave.post("SAVE MESSAGE");
+        }
     }));
     sipProxy.evtContactRegistration.attach((contact) => __awaiter(this, void 0, void 0, function* () {
         debug(`Contact registered`, contact);
