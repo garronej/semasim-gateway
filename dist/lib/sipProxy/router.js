@@ -17,6 +17,7 @@ const backendSocket = require("./backendSocket/index_sipProxy");
 const asteriskSockets = require("./asteriskSockets");
 const contactRegistrationMonitor = require("./contactsRegistrationMonitor");
 const messages = require("./messages");
+const installer_1 = require("../../bin/installer");
 const c = require("./../_constants");
 require("colors");
 const _debug = require("debug");
@@ -90,7 +91,7 @@ exports.createBackendSocket = createBackendSocket;
 function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
     let asteriskSocket = new sipLibrary.Socket(net.connect({
         "host": localIp,
-        "port": 5060
+        "port": installer_1.ast_sip_port
     }));
     asteriskSocket.enableLogger({
         "socketId": "asteriskSocket",

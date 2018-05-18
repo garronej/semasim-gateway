@@ -9,14 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sqliteCustom = require("../../tools/sqliteCustom");
-const path = require("path");
 const transfer_tools_1 = require("transfer-tools");
+const installer_1 = require("../../bin/installer");
 const JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();
 /** Must be called and awaited before use */
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         //sqliteCustom.enableLog();
-        exports._ = yield sqliteCustom.connectAndGetApi(path.join(__dirname, "..", "..", "..", "res", "semasim.db"), "HANDLE STRING ENCODING");
+        exports._ = yield sqliteCustom.connectAndGetApi(installer_1.app_db_path, "HANDLE STRING ENCODING");
     });
 }
 exports.launch = launch;

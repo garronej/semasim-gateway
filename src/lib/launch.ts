@@ -8,6 +8,9 @@ import * as sipProxy from "./sipProxy";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 import { SyncEvent } from "ts-events-extended";
+import * as child_process from "child_process";
+import { ast_dir_path,ast_path, ast_lib_dir_path, ast_etc_dir_path, ast_main_conf_path, working_directory_path } from "../bin/installer";
+import * as path from "path";
 
 import "colors";
 
@@ -22,7 +25,19 @@ export async function launch() {
 
     debug("Launching...");
 
-    Ami.getInstance(dcMisc.amiUser);
+    spawn_asterisk(message=> debug(`asterisk: ${message}`))
+    .catch((error)=> {
+        debug(error.message);
+        process.exit(-1);
+    });
+
+    //TODO: wait asterisk fully booted.
+
+    await new Promise<void>(resolve=> setTimeout(()=> resolve(), 15000));
+
+    debug("We go on with initialization...");
+
+    Ami.getInstance(undefined, ast_etc_dir_path);
 
     await launchDongleController();
 
@@ -37,6 +52,37 @@ export async function launch() {
     init();
 
     debug("...started");
+
+}
+
+export async function spawn_asterisk(
+    log: (message: string)=> void
+): Promise<never>{
+
+    const home_path= path.join(ast_dir_path,"var","lib","asterisk")
+
+    const asterisk_child_process= child_process.spawn(
+        ast_path,
+        ["-fvvvv", "-C",ast_main_conf_path],
+        {
+            "cwd": home_path,
+            "env": {
+                "HOME": home_path,
+                "LD_LIBRARY_PATH": [
+                    ast_lib_dir_path,
+                    path.join(working_directory_path, "speexdsp"),
+                    path.join(working_directory_path, "speex")
+                ].join(":")
+            }
+        }
+    );
+
+    asterisk_child_process.stdout.on("data", data=> log(data.toString()))
+    asterisk_child_process.stderr.on("data", data=> log(data.toString().red))
+
+    return new Promise<never>(
+        (resolve,reject)=> asterisk_child_process.once("close", code=> reject(new Error(`Asterisk terminated with code ${code}`)))
+    );
 
 }
 

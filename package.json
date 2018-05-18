@@ -6,10 +6,10 @@
   "version": "0.10.1",
   "scripts": {
     "postinstall": "npm run remove-bold-color",
-    "remove-bold-color": "sed -i '/bold: string;/d' ./node_modules/@types/colors/index.d.ts",
+    "remove-bold-color": "sed -i '/bold: string;/d' ./node_modules/@types/colors/index.d.ts || true",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
-    "start": "DEBUG=_* node ./node_modules/nodemon/bin/nodemon ./dist/bin/main.js",
+    "start": "sudo ./working_directory/start.sh",
     "test": "node ./dist/test/main"
   },
   "repository": {
@@ -20,20 +20,22 @@
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "async-lock": "^1.0.0",
-    "chan-dongle-extended-client": "git+https://206e4c24cb9a1e4a8d42b7ac86e4a026b02cee42:x-oauth-basic@github.com/garronej/chan-dongle-extended-client.git",
+    "chan-dongle-extended-client": "github:garronej/chan-dongle-extended-client",
     "colors": "^1.1.2",
     "commander": "^2.11.0",
     "debug": "^2.6.8",
     "mysql": "^2.13.0",
     "network": "^0.3.2",
     "rejection-tracker": "github:garronej/rejection-tracker",
+    "scripting-tools": "github:garronej/scripting-tools",
     "sip": "github:garronej/sip.js#no-websocket",
     "sqlite": "^2.9.1",
     "transfer-tools": "garronej/transfer-tools",
     "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
     "ts-sip": "github:garronej/ts-sip",
-    "ws": "^4.0.0"
+    "ws": "^4.0.0",
+    "ini-extended": "github:garronej/ini-extended"
   },
   "devDependencies": {
     "@types/async-lock": "0.0.20",

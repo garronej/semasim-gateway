@@ -18,6 +18,9 @@ const sipProxy = require("./sipProxy");
 const messagesDispatcher = require("./messagesDispatcher");
 const voiceCallBridge = require("./voiceCallBridge");
 const ts_events_extended_1 = require("ts-events-extended");
+const child_process = require("child_process");
+const installer_1 = require("../bin/installer");
+const path = require("path");
 require("colors");
 const _debug = require("debug");
 let debug = _debug("_launch");
@@ -26,7 +29,15 @@ let dc;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Launching...");
-        ts_ami_1.Ami.getInstance(dcMisc.amiUser);
+        spawn_asterisk(message => debug(`asterisk: ${message}`))
+            .catch((error) => {
+            debug(error.message);
+            process.exit(-1);
+        });
+        //TODO: wait asterisk fully booted.
+        yield new Promise(resolve => setTimeout(() => resolve(), 15000));
+        debug("We go on with initialization...");
+        ts_ami_1.Ami.getInstance(undefined, installer_1.ast_etc_dir_path);
         yield launchDongleController();
         yield db.launch();
         sipProxy.launch();
@@ -37,6 +48,26 @@ function launch() {
     });
 }
 exports.launch = launch;
+function spawn_asterisk(log) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const home_path = path.join(installer_1.ast_dir_path, "var", "lib", "asterisk");
+        const asterisk_child_process = child_process.spawn(installer_1.ast_path, ["-fvvvv", "-C", installer_1.ast_main_conf_path], {
+            "cwd": home_path,
+            "env": {
+                "HOME": home_path,
+                "LD_LIBRARY_PATH": [
+                    installer_1.ast_lib_dir_path,
+                    path.join(installer_1.working_directory_path, "speexdsp"),
+                    path.join(installer_1.working_directory_path, "speex")
+                ].join(":")
+            }
+        });
+        asterisk_child_process.stdout.on("data", data => log(data.toString()));
+        asterisk_child_process.stderr.on("data", data => log(data.toString().red));
+        return new Promise((resolve, reject) => asterisk_child_process.once("close", code => reject(new Error(`Asterisk terminated with code ${code}`))));
+    });
+}
+exports.spawn_asterisk = spawn_asterisk;
 function launchDongleController() {
     return __awaiter(this, void 0, void 0, function* () {
         while (true) {

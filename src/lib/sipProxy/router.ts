@@ -7,6 +7,7 @@ import * as backendSocket from "./backendSocket/index_sipProxy";
 import * as asteriskSockets from "./asteriskSockets";
 import * as contactRegistrationMonitor from "./contactsRegistrationMonitor";
 import * as messages from "./messages";
+import { ast_sip_port } from "../../bin/installer";
 
 
 import * as c from "./../_constants";
@@ -136,7 +137,7 @@ function createAsteriskSocket(
     let asteriskSocket = new sipLibrary.Socket(
         net.connect({
             "host": localIp,
-            "port": 5060
+            "port": ast_sip_port
         })
     );
 

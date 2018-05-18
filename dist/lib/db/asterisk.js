@@ -9,14 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sqliteCustom = require("../../tools/sqliteCustom");
-const path = require("path");
 const md5 = require("md5");
+const installer_1 = require("../../bin/installer");
 const voiceCallBridge_1 = require("../voiceCallBridge");
 const sipProxy_1 = require("../sipProxy");
 const c = require("../_constants");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        let api = yield sqliteCustom.connectAndGetApi(path.join(__dirname, "..", "..", "..", "res", "asterisk.db"));
+        let api = yield sqliteCustom.connectAndGetApi(installer_1.ast_db_path);
         yield api.query("DELETE FROM ps_contacts");
         exports.query = api.query;
         exports.esc = api.esc;
@@ -79,7 +79,7 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
                 "dtmf_mode": "info"
             };
             let webId = `${imsi}-webRTC`;
-            return [Object.assign({ "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": "/etc/asterisk/keys/ca.crt", "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem", "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), Object.assign({ "id": imsi, "aors": imsi }, ps_endpoints_base)];
+            return [Object.assign({ "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": installer_1.ca_crt_path, "dtls_cert_file": installer_1.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), Object.assign({ "id": imsi, "aors": imsi }, ps_endpoints_base)];
         })();
         for (let ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
             sql += exports.buildInsertQuery("ps_aors", {

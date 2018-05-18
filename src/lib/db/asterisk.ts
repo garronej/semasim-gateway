@@ -1,7 +1,7 @@
 import * as sqliteCustom from "../../tools/sqliteCustom";
 import * as types from "../types";
-import * as path from "path";
 import * as md5 from "md5";
+import { ast_db_path, host_pem_path, ca_crt_path } from "../../bin/installer";
 
 import { sipCallContext } from "../voiceCallBridge";
 import { messagesDialplanContext } from "../sipProxy";
@@ -16,9 +16,7 @@ export let buildInsertOrUpdateQueries: sqliteCustom.Api["buildInsertOrUpdateQuer
 
 export async function launch(): Promise<void> {
 
-    let api = await sqliteCustom.connectAndGetApi(
-        path.join(__dirname, "..", "..", "..", "res", "asterisk.db")
-    );
+    let api = await sqliteCustom.connectAndGetApi(ast_db_path);
 
     await api.query("DELETE FROM ps_contacts");
 
@@ -108,8 +106,8 @@ export async function createEndpointIfNeededAndGetPassword(
             ...ps_endpoints_base,
             "use_avpf": "yes",
             "media_encryption": "dtls",
-            "dtls_ca_file": "/etc/asterisk/keys/ca.crt",
-            "dtls_cert_file": "/etc/asterisk/keys/asterisk.pem",
+            "dtls_ca_file": ca_crt_path,
+            "dtls_cert_file": host_pem_path,
             "dtls_verify": "fingerprint",
             "dtls_setup": "actpass",
             "media_use_received_transport": "yes",
