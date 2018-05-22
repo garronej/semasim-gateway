@@ -29,14 +29,16 @@ let dc;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         debug("Launching...");
-        spawn_asterisk(message => debug(`asterisk: ${message}`))
-            .catch((error) => {
+        yield new Promise(resolve => spawn_asterisk(message => {
+            debug(`asterisk: ${message}`);
+            console.log(JSON.stringify(message));
+            if (!!message.match(/Asterisk\ Ready\./)) {
+                resolve();
+            }
+        }).catch((error) => {
             debug(error.message);
             process.exit(-1);
-        });
-        //TODO: wait asterisk fully booted.
-        yield new Promise(resolve => setTimeout(() => resolve(), 15000));
-        debug("We go on with initialization...");
+        }));
         ts_ami_1.Ami.getInstance(undefined, installer_1.ast_etc_dir_path);
         yield launchDongleController();
         yield db.launch();
@@ -55,11 +57,7 @@ function spawn_asterisk(log) {
             "cwd": home_path,
             "env": {
                 "HOME": home_path,
-                "LD_LIBRARY_PATH": [
-                    installer_1.ast_lib_dir_path,
-                    path.join(installer_1.working_directory_path, "speexdsp"),
-                    path.join(installer_1.working_directory_path, "speex")
-                ].join(":")
+                "LD_LIBRARY_PATH": installer_1.ld_library_path_for_asterisk
             }
         });
         asterisk_child_process.stdout.on("data", data => log(data.toString()));

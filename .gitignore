@@ -43,7 +43,8 @@ res/asterisk/dongle.conf
 res/semasim.db
 res/asterisk.db
 
-./node
-./working_directory
-./.working_directory
+node
+working_directory
+.working_directory
+
 

@@ -9,12 +9,11 @@ import { ini } from "ini-extended";
 
 const module_dir_path = path.join(__dirname, "..", "..");
 const main_js_path = path.join(module_dir_path, "dist", "bin", "main.js");
-export const working_directory_path = path.join(module_dir_path, "working_directory");
+const working_directory_path = path.join(module_dir_path, "working_directory");
 const pre_compiled_dir_path = path.join(module_dir_path, "pre_compiled");
 const node_path = path.join(module_dir_path, "node");
 const pkg_list_path = path.join(module_dir_path, "pkg_installed.json");
 export const ast_dir_path = path.join(working_directory_path, "asterisk");
-export const ast_lib_dir_path= path.join(ast_dir_path, "lib");
 export const ast_path = path.join(ast_dir_path, "sbin", "asterisk");
 const dongle_dir_path = path.join(working_directory_path, "dongle");
 export const ast_etc_dir_path = path.join(ast_dir_path, "etc", "asterisk");
@@ -24,6 +23,13 @@ export const app_db_path = path.join(working_directory_path, "semasim.db");
 const keys_dir_path = path.join(ast_etc_dir_path, "keys");
 export const ca_crt_path = path.join(keys_dir_path, "ca.crt");
 export const host_pem_path = path.join(keys_dir_path, "host.pem");
+const ast_dir_link_path = "/usr/share/asterisk_semasim";
+
+export const ld_library_path_for_asterisk = [
+    path.join(ast_dir_path, "lib"),
+    path.join(working_directory_path, "speexdsp","lib"),
+    path.join(working_directory_path, "speex", "lib")
+].join(":");
 
 export const ast_sip_port = 48398;
 
@@ -59,7 +65,7 @@ program.command("install")
             try {
 
                 previous_working_directory_path = scriptLib.execSync(
-                    `dirname $(readlink -e $(which dongle))`
+                    "dirname $(readlink -e $(which semasim_uninstaller) 2>/dev/null) 2>/dev/null"
                 ).replace("\n", "");
 
             } catch{
@@ -158,16 +164,16 @@ program
 
         scriptLib.execSyncTrace(`find ${path.join(dir_path, "node_modules")} -type f -name "*.ts" -exec rm -rf {} \\;`);
 
-        (()=>{
+        (() => {
 
-            const new_pre_compiled_dir_path= path.join(dir_path, path.basename(pre_compiled_dir_path));
-            const old_working_directory= path.join(dir_path, path.basename(working_directory_path));
+            const new_pre_compiled_dir_path = path.join(dir_path, path.basename(pre_compiled_dir_path));
+            const old_working_directory = path.join(dir_path, path.basename(working_directory_path));
 
             scriptLib.execSyncTrace(`mkdir ${new_pre_compiled_dir_path}`);
 
-            for( let dir_name of [ "asterisk", "speex", "speexdsp", path.basename(dongle_dir_path) ]){
+            for (let dir_name of ["asterisk", "speex", "speexdsp", path.basename(dongle_dir_path)]) {
 
-                scriptLib.execSyncTrace(`mv ${path.join(old_working_directory,dir_name)} ${new_pre_compiled_dir_path}`);
+                scriptLib.execSyncTrace(`mv ${path.join(old_working_directory, dir_name)} ${new_pre_compiled_dir_path}`);
 
             }
 
@@ -185,6 +191,8 @@ program
 
 
 async function install() {
+
+    unixUser.create();
 
     let assume_chan_dongle_installed: boolean;
 
@@ -220,7 +228,6 @@ async function install() {
 
             scriptLib.execSyncTrace(`rm -rf ${ast_tarball_path}`);
 
-            //TODO if armV8 => armV7
             scriptLib.execSyncTrace(`wget https://github.com/garronej/asterisk/releases/download/latest/asterisk_$(uname -m).tar.gz -O ${ast_tarball_path}`);
 
             scriptLib.execSyncTrace(`tar -xzf ${ast_tarball_path} -C ${working_directory_path}`);
@@ -235,7 +242,9 @@ async function install() {
 
             scriptLib.execSyncTrace(`rm -rf ${dongle_tarball_path}`);
 
-            scriptLib.execSyncTrace(`wget https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz -O ${dongle_dir_path}`)
+            scriptLib.execSyncTrace(`wget https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz -O ${dongle_tarball_path}`)
+
+            scriptLib.execSyncTrace(`mkdir ${dongle_dir_path}`);
 
             scriptLib.execSyncTrace(`tar -xzf ${dongle_tarball_path} -C ${dongle_dir_path}`);
 
@@ -247,14 +256,92 @@ async function install() {
 
     await (async function configure_asterisk() {
 
+        /*
+        TODO: in debian stretch and above there is no libssl1.0.1 package
+        so we should install libssl1.0.2 and try to create symbolic link
+
+        libssl.so.1.0.0 -> libssl.so.1.0.2
+
+        pi @ raspberrypi-1b ~ $ dpkg -L libssl1.0.2
+        /.
+        /usr
+        /usr/lib
+        /usr/lib/arm-linux-gnueabihf
+        /usr/lib/arm-linux-gnueabihf/libcrypto.so.1.0.2
+        /usr/lib/arm-linux-gnueabihf/libssl.so.1.0.2
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/lib4758cca.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libaep.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libatalla.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libcapi.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libchil.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libcswift.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libgmp.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libgost.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libnuron.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libpadlock.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libsureware.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libubsec.so
+        /usr/share
+        /usr/share/doc
+        /usr/share/doc/libssl1.0.2
+        /usr/share/doc/libssl1.0.2/changelog.Debian.gz
+        /usr/share/doc/libssl1.0.2/changelog.gz
+        /usr/share/doc/libssl1.0.2/copyright
+        /usr/share/lintian
+        /usr/share/lintian/overrides
+        /usr/share/lintian/overrides/libssl1.0.2
+         ✓ pi @ raspberrypi-1b ~ $ cd /usr/lib/arm-linux-gnueabihf/
+         ✓ pi @ raspberrypi-1b /usr/lib/arm-linux-gnueabihf $ ll | grep libssl
+        -rw-r--r--  1 root root  264K Oct  7  2017 libssl3.so
+        -rw-r--r--  1 root root  321K Mar 29 10:51 libssl.so.1.1
+        lrwxrwxrwx  1 root root    13 Mar 29 10:51 libssl.so -> libssl.so.1.1
+        -rw-r--r--  1 root root  480K Mar 29 10:51 libssl.a
+        -rw-r--r--  1 root root  314K Mar 29 11:10 libssl.so.1.0.2
+
+        pi @ raspberrypi-3 /usr/lib/arm-linux-gnueabihf $ dpkg -L libssl1.0.0
+        /.
+        /usr
+        /usr/share
+        /usr/share/doc
+        /usr/share/doc/libssl1.0.0
+        /usr/share/doc/libssl1.0.0/changelog.gz
+        /usr/share/doc/libssl1.0.0/copyright
+        /usr/share/doc/libssl1.0.0/changelog.Debian.gz
+        /usr/lib
+        /usr/lib/arm-linux-gnueabihf
+        /usr/lib/arm-linux-gnueabihf/libcrypto.so.1.0.0
+        /usr/lib/arm-linux-gnueabihf/libssl.so.1.0.0
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libgmp.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libnuron.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libatalla.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libubsec.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libpadlock.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libcswift.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libaep.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libgost.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libchil.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/lib4758cca.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libsureware.so
+        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libcapi.so
+         ✓ pi @ raspberrypi-3 /usr/lib/arm-linux-gnueabihf $ ll | grep libssl
+        -rw-r--r-- 1 root root  264K Oct 11  2017 libssl3.so
+        lrwxrwxrwx 1 root root    15 Mar 29 22:33 libssl.so -> libssl.so.1.0.0
+        -rw-r--r-- 1 root root  294K Mar 29 22:33 libssl.so.1.0.0
+        -rw-r--r-- 1 root root  430K Mar 29 22:33 libssl.a
+        */
+
         for (let package_name of [
-            "uuid-dev",
-            "libjansson-dev",
-            "libxml2-dev",
-            "libsqlite3-dev",
-            "libsrtp0-dev",
+            "libssl1.0.0",
+            "libuuid1",
+            "libjansson4",
+            "libxml2",
+            "libsqlite3-0",
             "unixodbc",
-            "unixodbc-dev",
+            "libsrtp0",
             "libsqliteodbc"
         ]) {
 
@@ -266,19 +353,18 @@ async function install() {
             ast_main_conf_path,
             Buffer.from(
                 [
-                    ``,
                     `[directories](!)`,
-                    `astetcdir => ${ast_dir_path}/etc/asterisk`,
-                    `astmoddir => ${ast_dir_path}/usr/lib/asterisk/modules`,
-                    `astvarlibdir => ${ast_dir_path}/var/lib/asterisk`,
-                    `astdbdir => ${ast_dir_path}/var/lib/asterisk`,
-                    `astkeydir => ${ast_dir_path}/var/lib/asterisk`,
-                    `astdatadir => ${ast_dir_path}/var/lib/asterisk`,
-                    `astagidir => ${ast_dir_path}/var/lib/asterisk/agi-bin`,
-                    `astspooldir => ${ast_dir_path}/var/spool/asterisk`,
-                    `astrundir => ${ast_dir_path}/var/run/asterisk`,
-                    `astlogdir => ${ast_dir_path}/var/log/asterisk`,
-                    `astsbindir => ${ast_dir_path}/usr/sbin`,
+                    `astetcdir => ${ast_dir_link_path}/etc/asterisk`,
+                    `astmoddir => ${ast_dir_link_path}/lib/asterisk/modules`,
+                    `astvarlibdir => ${ast_dir_link_path}/var/lib/asterisk`,
+                    `astdbdir => ${ast_dir_link_path}/var/lib/asterisk`,
+                    `astkeydir => ${ast_dir_link_path}/var/lib/asterisk`,
+                    `astdatadir => ${ast_dir_link_path}/var/lib/asterisk`,
+                    `astagidir => ${ast_dir_link_path}/var/lib/asterisk/agi-bin`,
+                    `astspooldir => ${ast_dir_link_path}/var/spool/asterisk`,
+                    `astrundir => ${ast_dir_link_path}/var/run/asterisk`,
+                    `astlogdir => ${ast_dir_link_path}/var/log/asterisk`,
+                    `astsbindir => ${ast_dir_link_path}/sbin`,
                     ``,
                     `[options]`,
                     `documentation_language = en_US`,
@@ -292,11 +378,12 @@ async function install() {
             )
         );
 
+        scriptLib.execSync(`ln -s ${ast_dir_path} ${ast_dir_link_path}`);
+
         fs.writeFileSync(
             path.join(ast_etc_dir_path, "rtp.conf"),
             Buffer.from(
                 [
-                    ``,
                     `[general]`,
                     `icesupport=yes`,
                     `stunaddr=stun.${c.domain}:19302`,
@@ -305,7 +392,7 @@ async function install() {
             )
         );
 
-        scriptLib.execSync(`cp ${path.join(working_directory_path, "res", "asterisk_empty.db")} ${ast_db_path}`);
+        scriptLib.execSync(`cp ${path.join(module_dir_path, "res", "asterisk_empty.db")} ${ast_db_path}`);
 
         odbc.configure();
 
@@ -313,7 +400,6 @@ async function install() {
             path.join(ast_etc_dir_path, "res_odbc.conf"),
             Buffer.from(
                 [
-                    ``,
                     `[${odbc.connection_name}]`,
                     `enabled => yes`,
                     `dsn => ${odbc.connection_name}`,
@@ -327,7 +413,6 @@ async function install() {
             path.join(ast_etc_dir_path, "sorcery.conf"),
             Buffer.from(
                 [
-                    ``,
                     `[res_pjsip]`,
                     `endpoint=realtime,ps_endpoints`,
                     `auth=realtime,ps_auths`,
@@ -346,24 +431,6 @@ async function install() {
             path.join(ast_etc_dir_path, "extconfig.conf"),
             Buffer.from(
                 [
-                    ``,
-                    `[settings]`,
-                    `ps_endpoints => odbc,${odbc.connection_name}`,
-                    `ps_auths => odbc,${odbc.connection_name}`,
-                    `ps_aors => odbc,${odbc.connection_name}`,
-                    `ps_domain_aliases => odbc,${odbc.connection_name}`,
-                    `ps_endpoint_id_ips => odbc,${odbc.connection_name}`,
-                    `ps_contacts => odbc,${odbc.connection_name}`,
-                    ``
-                ].join("\n"), "utf8"
-            )
-        );
-
-        fs.writeFileSync(
-            path.join(ast_etc_dir_path, "extconfig.conf"),
-            Buffer.from(
-                [
-                    ``,
                     `[settings]`,
                     `ps_endpoints => odbc,${odbc.connection_name}`,
                     `ps_auths => odbc,${odbc.connection_name}`,
@@ -380,7 +447,6 @@ async function install() {
             path.join(ast_etc_dir_path, "pjsip.conf"),
             Buffer.from(
                 [
-                    ``,
                     `[transport-tcp]`,
                     `type=transport`,
                     `protocol=tcp`,
@@ -390,9 +456,22 @@ async function install() {
             )
         );
 
+        fs.writeFileSync(
+            path.join(ast_etc_dir_path, "modules.conf"),
+            Buffer.from(
+                [
+                    `[modules]`,
+                    `autoload=yes`,
+                    ``
+                ].join("\n"), "utf8"
+            )
+        );
+
+        scriptLib.execSync(`chmod 640 ${ast_etc_dir_path}/*`);
+
         await (async function generate_dtls_certs() {
 
-            await scriptLib.apt_get_install("openssl", "openssl");
+            await scriptLib.apt_get_install("openssl");
 
             const { exec, onSuccess } = scriptLib.start_long_running_process("Generating TLS certificates");
 
@@ -404,7 +483,6 @@ async function install() {
                 host_cfg_path,
                 Buffer.from(
                     [
-                        ``,
                         `[req]`,
                         `distinguished_name = req_distinguished_name`,
                         `prompt = no`,
@@ -423,7 +501,6 @@ async function install() {
                 ca_cfg_path,
                 Buffer.from(
                     [
-                        ``,
                         `[req]`,
                         `distinguished_name = req_distinguished_name`,
                         `prompt = no`,
@@ -510,11 +587,9 @@ async function install() {
 
     })();
 
-    scriptLib.execSync(`cp ${path.join(working_directory_path, "res", "semasim_empty.db")} ${app_db_path}`);
+    scriptLib.execSync(`cp ${path.join(module_dir_path, "res", "semasim_empty.db")} ${app_db_path}`);
 
     shellScripts.create();
-
-    unixUser.create();
 
     scriptLib.execSync(`chown -R ${unix_user}:${unix_user} ${working_directory_path}`);
 
@@ -547,45 +622,49 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
     }
 
-    runRecover("Uninstalling chan_dongle_extended ...", ()=> dongle.uninstall());
-
-    runRecover("Restoring odbc ... ", () => odbc.restore());
-
-    runRecover("Removing uninstaller from path ...", ()=> shellScripts.remove_symbolic_links());
+    runRecover("Terminating running instance ... ", () => unixUser.gracefullyKillProcess());
 
     runRecover("Removing systemd service ... ", () => systemd.remove());
 
-    runRecover("Deleting unix user ... ", () => unixUser.remove());
+    runRecover("Uninstalling chan_dongle_extended ...", () => dongle.uninstall());
+
+    runRecover("Restoring odbc ... ", () => odbc.restore());
+
+    runRecover("Removing uninstaller from path ...", () => shellScripts.remove_symbolic_links());
 
     runRecover("Deleting working_directory ... ", () => scriptLib.execSync(`rm -r ${working_directory_path}`));
+
+    runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSync(`rm -r ${ast_dir_link_path}`));
+
+    runRecover("Deleting unix user ... ", () => unixUser.remove());
 
 }
 
 namespace dongle {
 
-    const installer_path= path.join(dongle_dir_path, "dist", "bin", "installer.js");
+    const installer_cmd = `${path.join(dongle_dir_path, "node")} ${path.join(dongle_dir_path, "dist", "bin", "installer.js")}`;
 
-    export function install(assume_chan_dongle_installed: boolean){
+    export function install(assume_chan_dongle_installed: boolean) {
 
         scriptLib.execSyncTrace([
-            `${node_path} ${installer_path} install`,
+            `${installer_cmd} install`,
             `--asterisk_main_conf ${ast_main_conf_path}`,
             `--disable_sms_dialplan`,
-            `--ast_include_dir_path ${ast_lib_dir_path}`,
+            `--ast_include_dir_path ${path.join(ast_dir_path, "include")}`,
             `--enable_ast_ami_on_port 48397`,
-            `--assume_asterisk_installed`,
-            assume_chan_dongle_installed ? `--assume_chan_dongle_installed` : ``
+            assume_chan_dongle_installed ? `--assume_chan_dongle_installed` : ``,
+            `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
         ].join(" "));
 
-        (function merge_installed_pkg(){
+        (function merge_installed_pkg() {
 
-            const dongle_pkg_list_path= path.join(dongle_dir_path, "pkg_installed.json");
+            const dongle_pkg_list_path = path.join(dongle_dir_path, "pkg_installed.json");
 
-            if( fs.existsSync(dongle_pkg_list_path) ){
+            if (fs.existsSync(dongle_pkg_list_path)) {
 
-                const pkg_list: string[]= require(dongle_pkg_list_path);
+                const pkg_list: string[] = require(dongle_pkg_list_path);
 
-                for( let pkg_name of pkg_list ){
+                for (let pkg_name of pkg_list) {
 
                     scriptLib.apt_get_install.record_installed_package(pkg_list_path, pkg_name);
 
@@ -597,9 +676,9 @@ namespace dongle {
 
     }
 
-    export async function uninstall(){
+    export async function uninstall() {
 
-        scriptLib.execSync(`${node_path} ${installer_path} uninstall 2> /dev/null`);
+        scriptLib.execSync(`${installer_cmd} uninstall 2>/dev/null`);
 
     }
 
@@ -631,7 +710,7 @@ namespace shellScripts {
                 ``,
                 `pkill -u ${unix_user} -SIGUSR2 || true`,
                 `cd ${working_directory_path}`,
-                `su -s bash -c "DEBUG=_* ${node_path} ${path.join(module_dir_path, "node_modules", ".bin", "nodemon")} ${main_js_path}" ${unix_user}`,
+                `su -s $(which bash) -c "DEBUG=_* ${node_path} ${path.join(module_dir_path, "node_modules", ".bin", "nodemon")} ${main_js_path}" ${unix_user}`,
                 ``
             ].join("\n")
         );
@@ -644,7 +723,18 @@ namespace shellScripts {
                 `# This script connect to the CLI of Semasim's Asterisk instance.`,
                 ``,
                 `cd ${path.join(ast_dir_path, "var", "lib", "asterisk")}`,
-                `su -s bash -c "LD_LIBRARY_PATH=${ast_lib_dir_path} ${ast_path} -rvvvvvv" ${unix_user}`,
+                `su -s $(which bash) -c "LD_LIBRARY_PATH=${ld_library_path_for_asterisk} ${ast_path} -rvvvvvv -C ${ast_main_conf_path}" ${unix_user}`,
+                ``
+            ].join("\n")
+        );
+
+        writeAndSetPerms(
+            path.join(working_directory_path, "asterisk_start.sh"),
+            [
+                `#!/usr/bin/env bash`,
+                ``,
+                `cd ${path.join(ast_dir_path, "var", "lib", "asterisk")}`,
+                `su -s $(which bash) -c "LD_LIBRARY_PATH=${ld_library_path_for_asterisk} ${ast_path} -fvvvvvvc -C ${ast_main_conf_path}" ${unix_user}`,
                 ``
             ].join("\n")
         );
@@ -682,7 +772,7 @@ namespace shellScripts {
 
     export function remove_symbolic_links() {
 
-        scriptLib.execSync( `rm -f ${uninstaller_link_path} 2> /dev/null`);
+        scriptLib.execSync(`rm -f ${uninstaller_link_path} 2>/dev/null`);
 
     }
 
@@ -733,7 +823,7 @@ namespace odbc {
 
 namespace unixUser {
 
-    export const gracefullyKillProcess = () => scriptLib.execSync(`pkill -u ${unix_user} -SIGUSR2 2> /dev/null || true`);
+    export const gracefullyKillProcess = () => scriptLib.execSync(`pkill -u ${unix_user} -SIGUSR2 2>/dev/null || true`);
 
     export function create() {
 
@@ -741,7 +831,7 @@ namespace unixUser {
 
         gracefullyKillProcess();
 
-        scriptLib.execSync(`userdel ${unix_user} 2> /dev/null || true`);
+        scriptLib.execSync(`userdel ${unix_user} 2>/dev/null || true`);
 
         scriptLib.execSync(`useradd -M ${unix_user} -s /bin/false -d ${working_directory_path}`);
 
@@ -751,7 +841,7 @@ namespace unixUser {
 
     export function remove() {
 
-        scriptLib.execSync(`userdel ${unix_user} 2> /dev/null`);
+        scriptLib.execSync(`userdel ${unix_user} 2>/dev/null`);
 
     }
 
@@ -808,7 +898,7 @@ namespace systemd {
 
         } catch{ }
 
-        scriptLib.execSync("systemctl daemon-reload 2> /dev/null");
+        scriptLib.execSync("systemctl daemon-reload 2>/dev/null");
 
     }
 

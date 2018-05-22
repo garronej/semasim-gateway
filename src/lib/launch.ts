@@ -9,7 +9,12 @@ import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 import { SyncEvent } from "ts-events-extended";
 import * as child_process from "child_process";
-import { ast_dir_path,ast_path, ast_lib_dir_path, ast_etc_dir_path, ast_main_conf_path, working_directory_path } from "../bin/installer";
+import { 
+    ast_dir_path,ast_path, 
+    ast_etc_dir_path, 
+    ast_main_conf_path, 
+    ld_library_path_for_asterisk
+} from "../bin/installer";
 import * as path from "path";
 
 import "colors";
@@ -25,17 +30,24 @@ export async function launch() {
 
     debug("Launching...");
 
-    spawn_asterisk(message=> debug(`asterisk: ${message}`))
-    .catch((error)=> {
-        debug(error.message);
-        process.exit(-1);
-    });
+    await new Promise<void>(
+        resolve => spawn_asterisk(message => {
 
-    //TODO: wait asterisk fully booted.
+            debug(`asterisk: ${message}`)
 
-    await new Promise<void>(resolve=> setTimeout(()=> resolve(), 15000));
+            console.log(JSON.stringify(message));
 
-    debug("We go on with initialization...");
+            if( !!message.match(/Asterisk\ Ready\./) ){
+
+                resolve();
+
+            }
+
+        }).catch((error) => {
+            debug(error.message);
+            process.exit(-1);
+        })
+    );
 
     Ami.getInstance(undefined, ast_etc_dir_path);
 
@@ -56,47 +68,43 @@ export async function launch() {
 }
 
 export async function spawn_asterisk(
-    log: (message: string)=> void
-): Promise<never>{
+    log: (message: string) => void
+): Promise<never> {
 
-    const home_path= path.join(ast_dir_path,"var","lib","asterisk")
+    const home_path = path.join(ast_dir_path, "var", "lib", "asterisk")
 
-    const asterisk_child_process= child_process.spawn(
+    const asterisk_child_process = child_process.spawn(
         ast_path,
-        ["-fvvvv", "-C",ast_main_conf_path],
+        ["-fvvvv", "-C", ast_main_conf_path],
         {
             "cwd": home_path,
             "env": {
                 "HOME": home_path,
-                "LD_LIBRARY_PATH": [
-                    ast_lib_dir_path,
-                    path.join(working_directory_path, "speexdsp"),
-                    path.join(working_directory_path, "speex")
-                ].join(":")
+                "LD_LIBRARY_PATH": ld_library_path_for_asterisk
             }
         }
     );
 
-    asterisk_child_process.stdout.on("data", data=> log(data.toString()))
-    asterisk_child_process.stderr.on("data", data=> log(data.toString().red))
+    asterisk_child_process.stdout.on("data", data => log(data.toString()))
+    asterisk_child_process.stderr.on("data", data => log(data.toString().red))
 
     return new Promise<never>(
-        (resolve,reject)=> asterisk_child_process.once("close", code=> reject(new Error(`Asterisk terminated with code ${code}`)))
+        (resolve, reject) => asterisk_child_process.once("close", code => reject(new Error(`Asterisk terminated with code ${code}`)))
     );
 
 }
 
 async function launchDongleController() {
-    
-    while(true){
 
-        dc= Dc.getInstance("127.0.0.1", dcMisc.port);
+    while (true) {
 
-        try{
+        dc = Dc.getInstance("127.0.0.1", dcMisc.port);
+
+        try {
 
             await dc.prInitialization;
 
-        }catch{
+        } catch{
 
             debug("dongle-extended not initialized yet, scheduling retry...");
 
@@ -108,7 +116,7 @@ async function launchDongleController() {
 
     }
 
-    dc.evtClose.attachOnce(()=> {
+    dc.evtClose.attachOnce(() => {
 
         debug("chan-dongle-extended service stopped");
 
@@ -194,7 +202,7 @@ function registerListeners() {
 
             debug("FROM DONGLE MESSAGE", { message });
 
-            let evtShouldSave= new SyncEvent<"SAVE MESSAGE" | "DO NOT SAVE MESSAGE">();
+            let evtShouldSave = new SyncEvent<"SAVE MESSAGE" | "DO NOT SAVE MESSAGE">();
 
             submitShouldSave(evtShouldSave.waitFor());
 
@@ -205,13 +213,13 @@ function registerListeners() {
                 dongle.sim.imsi
             );
 
-            if( wasAdded ){
+            if (wasAdded) {
 
                 messagesDispatcher.notifyNewSipMessagesToSend(dongle.sim.imsi);
 
                 evtShouldSave.post("DO NOT SAVE MESSAGE");
 
-            }else{
+            } else {
 
                 evtShouldSave.post("SAVE MESSAGE");
 
