@@ -480,6 +480,10 @@ var shellScripts;
             fs.writeFileSync(script_path, Buffer.from(script, "utf8"));
             scriptLib.execSync(`chmod +x ${script_path}`);
         };
+        let node_exec_cmd = (() => {
+            const nodemon_path = path.join(module_dir_path, "node_modules", ".bin", "nodemon");
+            return fs.existsSync(nodemon_path) ? `${node_path} ${nodemon_path}` : node_path;
+        })();
         writeAndSetPerms(path.join(working_directory_path, "start.sh"), [
             `#!/usr/bin/env bash`,
             ``,
@@ -488,7 +492,7 @@ var shellScripts;
             ``,
             `pkill -u ${exports.unix_user} -SIGUSR2 || true`,
             `cd ${working_directory_path}`,
-            `su -s $(which bash) -c "DEBUG=_* ${node_path} ${path.join(module_dir_path, "node_modules", ".bin", "nodemon")} ${main_js_path}" ${exports.unix_user}`,
+            `su -s $(which bash) -c "DEBUG=_* ${node_exec_cmd} ${main_js_path}" ${exports.unix_user}`,
             ``
         ].join("\n"));
         writeAndSetPerms(path.join(working_directory_path, "asterisk_cli.sh"), [

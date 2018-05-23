@@ -27,7 +27,7 @@ const ast_dir_link_path = "/usr/share/asterisk_semasim";
 
 export const ld_library_path_for_asterisk = [
     path.join(ast_dir_path, "lib"),
-    path.join(working_directory_path, "speexdsp","lib"),
+    path.join(working_directory_path, "speexdsp", "lib"),
     path.join(working_directory_path, "speex", "lib")
 ].join(":");
 
@@ -152,7 +152,6 @@ program
         scriptLib.execSyncTrace(`cp -r ${module_dir_path} ${dir_path}`);
 
         scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${dir_path}`);
-
 
         for (let name of [".git", ".gitignore", "src", "tsconfig.json"]) {
             scriptLib.execSyncTrace(`rm -rf ${path.join(dir_path, name)}`);
@@ -700,6 +699,14 @@ namespace shellScripts {
 
         };
 
+        let node_exec_cmd = (() => {
+
+            const nodemon_path = path.join(module_dir_path, "node_modules", ".bin", "nodemon");
+
+            return fs.existsSync(nodemon_path) ? `${node_path} ${nodemon_path}` : node_path;
+
+        })();
+
         writeAndSetPerms(
             path.join(working_directory_path, "start.sh"),
             [
@@ -710,7 +717,7 @@ namespace shellScripts {
                 ``,
                 `pkill -u ${unix_user} -SIGUSR2 || true`,
                 `cd ${working_directory_path}`,
-                `su -s $(which bash) -c "DEBUG=_* ${node_path} ${path.join(module_dir_path, "node_modules", ".bin", "nodemon")} ${main_js_path}" ${unix_user}`,
+                `su -s $(which bash) -c "DEBUG=_* ${node_exec_cmd} ${main_js_path}" ${unix_user}`,
                 ``
             ].join("\n")
         );

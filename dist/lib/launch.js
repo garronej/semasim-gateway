@@ -31,7 +31,6 @@ function launch() {
         debug("Launching...");
         yield new Promise(resolve => spawn_asterisk(message => {
             debug(`asterisk: ${message}`);
-            console.log(JSON.stringify(message));
             if (!!message.match(/Asterisk\ Ready\./)) {
                 resolve();
             }

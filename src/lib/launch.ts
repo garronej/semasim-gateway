@@ -35,8 +35,6 @@ export async function launch() {
 
             debug(`asterisk: ${message}`)
 
-            console.log(JSON.stringify(message));
-
             if( !!message.match(/Asterisk\ Ready\./) ){
 
                 resolve();
