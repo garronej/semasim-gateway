@@ -10,7 +10,8 @@
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
     "start": "sudo ./working_directory/start.sh",
-    "test": "node ./dist/test/main"
+    "test": "sudo node ./dist/test/main",
+    "tarball": "sudo node dist/bin/installer tarball"
   },
   "repository": {
     "type": "git",

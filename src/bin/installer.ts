@@ -42,7 +42,7 @@ scriptLib.apt_get_install.onInstallSuccess = package_name =>
 program.command("install")
     .action(async options => {
 
-        console.log("---Installing chan-dongle-extended---");
+        console.log("---Installing semasim---");
 
         if (fs.existsSync(working_directory_path)) {
 
@@ -145,44 +145,39 @@ program
             scriptLib.execSync("uname -m").replace("\n", "")
         ].join("_");
 
-        const dir_path = path.join("/tmp", v_name);
+        const _module_dir_path = path.join("/tmp", v_name);
 
-        scriptLib.execSyncTrace(`rm -rf ${dir_path}`);
+        scriptLib.execSyncTrace(`rm -rf ${_module_dir_path}`);
 
-        scriptLib.execSyncTrace(`cp -r ${module_dir_path} ${dir_path}`);
+        scriptLib.execSyncTrace(`cp -r ${module_dir_path} ${_module_dir_path}`);
 
-        scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${dir_path}`);
+        scriptLib.execSyncTrace(`rm -rf ${path.join(_module_dir_path, path.basename(working_directory_path))}`);
+
+        scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${_module_dir_path}`);
 
         for (let name of [".git", ".gitignore", "src", "tsconfig.json"]) {
-            scriptLib.execSyncTrace(`rm -rf ${path.join(dir_path, name)}`);
+            scriptLib.execSyncTrace(`rm -r ${path.join(_module_dir_path, name)}`);
         }
 
         for (let name of ["@types", "typescript", "nodemon"]) {
-            scriptLib.execSyncTrace(`rm -r ${path.join(dir_path, "node_modules", name)}`);
+            scriptLib.execSyncTrace(`rm -r ${path.join(_module_dir_path, "node_modules", name)}`);
         }
 
-        scriptLib.execSyncTrace(`find ${path.join(dir_path, "node_modules")} -type f -name "*.ts" -exec rm -rf {} \\;`);
+        scriptLib.execSyncTrace(`find ${path.join(_module_dir_path, "node_modules")} -type f -name "*.ts" -exec rm -rf {} \\;`);
 
         (() => {
 
-            const new_pre_compiled_dir_path = path.join(dir_path, path.basename(pre_compiled_dir_path));
-            const old_working_directory = path.join(dir_path, path.basename(working_directory_path));
+            const _pre_compiled_dir_path = path.join(_module_dir_path, path.basename(pre_compiled_dir_path));
 
-            scriptLib.execSyncTrace(`mkdir ${new_pre_compiled_dir_path}`);
+            scriptLib.execSyncTrace(`mkdir ${_pre_compiled_dir_path}`);
 
-            for (let dir_name of ["asterisk", "speex", "speexdsp", path.basename(dongle_dir_path)]) {
-
-                scriptLib.execSyncTrace(`mv ${path.join(old_working_directory, dir_name)} ${new_pre_compiled_dir_path}`);
-
-            }
-
-            scriptLib.execSyncTrace(`rm -rf ${old_working_directory}`);
+            fetch_asterisk_and_dongle(_pre_compiled_dir_path);
 
         })();
 
-        scriptLib.execSyncTrace(`tar -czf ${path.join(module_dir_path, `${v_name}.tar.gz`)} -C ${dir_path} .`);
+        scriptLib.execSyncTrace(`tar -czf ${path.join(module_dir_path, `${v_name}.tar.gz`)} -C ${_module_dir_path} .`);
 
-        scriptLib.execSyncTrace(`rm -r ${dir_path}`);
+        scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
 
         console.log("---DONE---");
 
@@ -195,15 +190,9 @@ async function install() {
 
     let assume_chan_dongle_installed: boolean;
 
-    if (fs.existsSync(path.join(module_dir_path, ".working_directory"))) {
+    if (fs.existsSync(pre_compiled_dir_path)) {
 
         assume_chan_dongle_installed = true;
-
-        /* 
-        TODO: we assume there is:
-        asterisk speex speexdsp dongle
-        in the .working_directory dir
-        */
 
         const { exec, onSuccess } = scriptLib.start_long_running_process("Restoring working_directory");
 
@@ -221,35 +210,7 @@ async function install() {
 
         scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${node_path}`);
 
-        (function fetch_asterisk() {
-
-            const ast_tarball_path = "/tmp/asterisk.tar.gz";
-
-            scriptLib.execSyncTrace(`rm -rf ${ast_tarball_path}`);
-
-            scriptLib.execSyncTrace(`wget https://github.com/garronej/asterisk/releases/download/latest/asterisk_$(uname -m).tar.gz -O ${ast_tarball_path}`);
-
-            scriptLib.execSyncTrace(`tar -xzf ${ast_tarball_path} -C ${working_directory_path}`);
-
-            scriptLib.execSyncTrace(`rm -r ${ast_tarball_path}`);
-
-        })();
-
-        (function fetch_dongle() {
-
-            const dongle_tarball_path = "/tmp/dongle.tar.gz";
-
-            scriptLib.execSyncTrace(`rm -rf ${dongle_tarball_path}`);
-
-            scriptLib.execSyncTrace(`wget https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz -O ${dongle_tarball_path}`)
-
-            scriptLib.execSyncTrace(`mkdir ${dongle_dir_path}`);
-
-            scriptLib.execSyncTrace(`tar -xzf ${dongle_tarball_path} -C ${dongle_dir_path}`);
-
-            scriptLib.execSyncTrace(`rm -r ${dongle_tarball_path}`);
-
-        })();
+        fetch_asterisk_and_dongle(working_directory_path);
 
     }
 
@@ -636,6 +597,43 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
     runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSync(`rm -r ${ast_dir_link_path}`));
 
     runRecover("Deleting unix user ... ", () => unixUser.remove());
+
+}
+
+
+function fetch_asterisk_and_dongle(dest_dir_path: string) {
+
+    (function fetch_asterisk() {
+
+        const ast_tarball_path = "/tmp/asterisk.tar.gz";
+
+        scriptLib.execSyncTrace(`rm -rf ${ast_tarball_path}`);
+
+        scriptLib.execSyncTrace(`wget https://github.com/garronej/asterisk/releases/download/latest/asterisk_$(uname -m).tar.gz -O ${ast_tarball_path}`);
+
+        scriptLib.execSyncTrace(`tar -xzf ${ast_tarball_path} -C ${dest_dir_path}`);
+
+        scriptLib.execSyncTrace(`rm -r ${ast_tarball_path}`);
+
+    })();
+
+    (function fetch_dongle() {
+
+        const _dongle_dir_path = path.join(dest_dir_path, path.basename(dongle_dir_path));
+
+        const dongle_tarball_path = "/tmp/dongle.tar.gz";
+
+        scriptLib.execSyncTrace(`rm -rf ${dongle_tarball_path}`);
+
+        scriptLib.execSyncTrace(`wget https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz -O ${dongle_tarball_path}`)
+
+        scriptLib.execSyncTrace(`mkdir ${_dongle_dir_path}`);
+
+        scriptLib.execSyncTrace(`tar -xzf ${dongle_tarball_path} -C ${_dongle_dir_path}`);
+
+        scriptLib.execSyncTrace(`rm -r ${dongle_tarball_path}`);
+
+    })();
 
 }
 

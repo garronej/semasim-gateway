@@ -45,6 +45,7 @@ res/asterisk.db
 
 node
 working_directory
-.working_directory
+pre_compiled
+semasim_*.tar.gz
 
 
