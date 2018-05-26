@@ -17,25 +17,25 @@ const c = require("../lib/_constants");
 const ini_extended_1 = require("ini-extended");
 const module_dir_path = path.join(__dirname, "..", "..");
 const main_js_path = path.join(module_dir_path, "dist", "bin", "main.js");
-const working_directory_path = path.join(module_dir_path, "working_directory");
+exports.working_directory_path = path.join(module_dir_path, "working_directory");
 const pre_compiled_dir_path = path.join(module_dir_path, "pre_compiled");
 const node_path = path.join(module_dir_path, "node");
 const pkg_list_path = path.join(module_dir_path, "pkg_installed.json");
-exports.ast_dir_path = path.join(working_directory_path, "asterisk");
+exports.ast_dir_path = path.join(exports.working_directory_path, "asterisk");
 exports.ast_path = path.join(exports.ast_dir_path, "sbin", "asterisk");
-const dongle_dir_path = path.join(working_directory_path, "dongle");
+const dongle_dir_path = path.join(exports.working_directory_path, "dongle");
 exports.ast_etc_dir_path = path.join(exports.ast_dir_path, "etc", "asterisk");
 exports.ast_main_conf_path = path.join(exports.ast_etc_dir_path, "asterisk.conf");
-exports.ast_db_path = path.join(working_directory_path, "asterisk.db");
-exports.app_db_path = path.join(working_directory_path, "semasim.db");
+exports.ast_db_path = path.join(exports.working_directory_path, "asterisk.db");
+exports.app_db_path = path.join(exports.working_directory_path, "semasim.db");
 const keys_dir_path = path.join(exports.ast_etc_dir_path, "keys");
 exports.ca_crt_path = path.join(keys_dir_path, "ca.crt");
 exports.host_pem_path = path.join(keys_dir_path, "host.pem");
 const ast_dir_link_path = "/usr/share/asterisk_semasim";
 exports.ld_library_path_for_asterisk = [
     path.join(exports.ast_dir_path, "lib"),
-    path.join(working_directory_path, "speexdsp", "lib"),
-    path.join(working_directory_path, "speex", "lib")
+    path.join(exports.working_directory_path, "speexdsp", "lib"),
+    path.join(exports.working_directory_path, "speex", "lib")
 ].join(":");
 exports.ast_sip_port = 48398;
 exports.unix_user = "semasim";
@@ -44,18 +44,18 @@ scriptLib.apt_get_install.onInstallSuccess = package_name => scriptLib.apt_get_i
 program.command("install")
     .action((options) => __awaiter(this, void 0, void 0, function* () {
     console.log("---Installing semasim---");
-    if (fs.existsSync(working_directory_path)) {
+    if (fs.existsSync(exports.working_directory_path)) {
         process.stdout.write(scriptLib.colorize("Already installed, uninstalling previous install... ", "YELLOW"));
         yield uninstall();
         console.log("DONE");
     }
     else {
-        unixUser.gracefullyKillProcess();
+        stopRunningInstance();
     }
     (() => {
         let previous_working_directory_path;
         try {
-            previous_working_directory_path = scriptLib.execSync("dirname $(readlink -e $(which semasim_uninstaller) 2>/dev/null) 2>/dev/null").replace("\n", "");
+            previous_working_directory_path = scriptLib.execSyncQuiet("dirname $(readlink -e $(which semasim_uninstaller))").slice(0, -1);
         }
         catch (_a) {
             return;
@@ -107,7 +107,7 @@ program
     const _module_dir_path = path.join("/tmp", v_name);
     scriptLib.execSyncTrace(`rm -rf ${_module_dir_path}`);
     scriptLib.execSyncTrace(`cp -r ${module_dir_path} ${_module_dir_path}`);
-    scriptLib.execSyncTrace(`rm -rf ${path.join(_module_dir_path, path.basename(working_directory_path))}`);
+    scriptLib.execSyncTrace(`rm -rf ${path.join(_module_dir_path, path.basename(exports.working_directory_path))}`);
     scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${_module_dir_path}`);
     for (let name of [".git", ".gitignore", "src", "tsconfig.json"]) {
         scriptLib.execSyncTrace(`rm -r ${path.join(_module_dir_path, name)}`);
@@ -120,6 +120,8 @@ program
         const _pre_compiled_dir_path = path.join(_module_dir_path, path.basename(pre_compiled_dir_path));
         scriptLib.execSyncTrace(`mkdir ${_pre_compiled_dir_path}`);
         fetch_asterisk_and_dongle(_pre_compiled_dir_path);
+        const get_chan_dongle_module_path = (target) => path.join(target === "SRC" ? exports.working_directory_path : _pre_compiled_dir_path, "asterisk", "lib", "asterisk", "modules", "chan_dongle.so");
+        scriptLib.execSyncTrace(`cp ${get_chan_dongle_module_path("SRC")} ${get_chan_dongle_module_path("DEST")}`);
     })();
     scriptLib.execSyncTrace(`tar -czf ${path.join(module_dir_path, `${v_name}.tar.gz`)} -C ${_module_dir_path} .`);
     scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
@@ -132,15 +134,15 @@ function install() {
         if (fs.existsSync(pre_compiled_dir_path)) {
             assume_chan_dongle_installed = true;
             const { exec, onSuccess } = scriptLib.start_long_running_process("Restoring working_directory");
-            yield exec(`mv ${pre_compiled_dir_path} ${working_directory_path}`);
+            yield exec(`mv ${pre_compiled_dir_path} ${exports.working_directory_path}`);
             onSuccess();
         }
         else {
             assume_chan_dongle_installed = false;
             scriptLib.enableTrace();
-            scriptLib.execSyncTrace(`mkdir ${working_directory_path}`);
+            scriptLib.execSyncTrace(`mkdir ${exports.working_directory_path}`);
             scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${node_path}`);
-            fetch_asterisk_and_dongle(working_directory_path);
+            fetch_asterisk_and_dongle(exports.working_directory_path);
         }
         yield (function configure_asterisk() {
             return __awaiter(this, void 0, void 0, function* () {
@@ -391,7 +393,7 @@ function install() {
         })();
         scriptLib.execSync(`cp ${path.join(module_dir_path, "res", "semasim_empty.db")} ${exports.app_db_path}`);
         shellScripts.create();
-        scriptLib.execSync(`chown -R ${exports.unix_user}:${exports.unix_user} ${working_directory_path}`);
+        scriptLib.execSync(`chown -R ${exports.unix_user}:${exports.unix_user} ${exports.working_directory_path}`);
         dongle.install(assume_chan_dongle_installed);
         systemd.create();
     });
@@ -409,15 +411,24 @@ function uninstall(verbose) {
             log(scriptLib.colorize(message, "RED"));
         }
     };
-    runRecover("Terminating running instance ... ", () => unixUser.gracefullyKillProcess());
+    runRecover("Terminating running instance ... ", () => stopRunningInstance());
     runRecover("Removing systemd service ... ", () => systemd.remove());
     runRecover("Uninstalling chan_dongle_extended ...", () => dongle.uninstall());
     runRecover("Restoring odbc ... ", () => odbc.restore());
     runRecover("Removing uninstaller from path ...", () => shellScripts.remove_symbolic_links());
-    runRecover("Deleting working_directory ... ", () => scriptLib.execSync(`rm -r ${working_directory_path}`));
+    runRecover("Deleting working_directory ... ", () => scriptLib.execSync(`rm -r ${exports.working_directory_path}`));
     runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSync(`rm -r ${ast_dir_link_path}`));
     runRecover("Deleting unix user ... ", () => unixUser.remove());
 }
+function stopRunningInstance() {
+    try {
+        scriptLib.execSyncQuiet(stopRunningInstance.cmd);
+    }
+    catch (_a) { }
+}
+(function (stopRunningInstance) {
+    stopRunningInstance.cmd = `pkill -u ${exports.unix_user} -SIGUSR2`;
+})(stopRunningInstance || (stopRunningInstance = {}));
 function fetch_asterisk_and_dongle(dest_dir_path) {
     (function fetch_asterisk() {
         const ast_tarball_path = "/tmp/asterisk.tar.gz";
@@ -440,7 +451,7 @@ var dongle;
 (function (dongle) {
     const installer_cmd = `${path.join(dongle_dir_path, "node")} ${path.join(dongle_dir_path, "dist", "bin", "installer.js")}`;
     function install(assume_chan_dongle_installed) {
-        scriptLib.execSyncTrace([
+        scriptLib.execSync([
             `${installer_cmd} install`,
             `--asterisk_main_conf ${exports.ast_main_conf_path}`,
             `--disable_sms_dialplan`,
@@ -448,7 +459,7 @@ var dongle;
             `--enable_ast_ami_on_port 48397`,
             assume_chan_dongle_installed ? `--assume_chan_dongle_installed` : ``,
             `--ld_library_path_for_asterisk ${exports.ld_library_path_for_asterisk}`
-        ].join(" "));
+        ].join(" "), { "stdio": "inherit" });
         (function merge_installed_pkg() {
             const dongle_pkg_list_path = path.join(dongle_dir_path, "pkg_installed.json");
             if (fs.existsSync(dongle_pkg_list_path)) {
@@ -462,7 +473,7 @@ var dongle;
     dongle.install = install;
     function uninstall() {
         return __awaiter(this, void 0, void 0, function* () {
-            scriptLib.execSync(`${installer_cmd} uninstall 2>/dev/null`);
+            scriptLib.execSyncQuiet(`${installer_cmd} uninstall`);
         });
     }
     dongle.uninstall = uninstall;
@@ -480,18 +491,17 @@ var shellScripts;
             const nodemon_path = path.join(module_dir_path, "node_modules", ".bin", "nodemon");
             return fs.existsSync(nodemon_path) ? `${node_path} ${nodemon_path}` : node_path;
         })();
-        writeAndSetPerms(path.join(working_directory_path, "start.sh"), [
+        writeAndSetPerms(path.join(exports.working_directory_path, "start.sh"), [
             `#!/usr/bin/env bash`,
             ``,
             `# In charge of launching the service in interactive mode (via $ nmp start)`,
             `# It will gracefully terminate any running instance before.`,
             ``,
-            `pkill -u ${exports.unix_user} -SIGUSR2 || true`,
-            `cd ${working_directory_path}`,
-            `su -s $(which bash) -c "DEBUG=_* ${node_exec_cmd} ${main_js_path}" ${exports.unix_user}`,
+            `${stopRunningInstance.cmd} 2>/dev/null`,
+            `su -s $(which bash) -c "(cd ${exports.working_directory_path} && DEBUG=_* ${node_exec_cmd} ${main_js_path})" ${exports.unix_user}`,
             ``
         ].join("\n"));
-        writeAndSetPerms(path.join(working_directory_path, "asterisk_cli.sh"), [
+        writeAndSetPerms(path.join(exports.working_directory_path, "asterisk_cli.sh"), [
             `#!/usr/bin/env bash`,
             ``,
             `# This script connect to the CLI of Semasim's Asterisk instance.`,
@@ -500,14 +510,14 @@ var shellScripts;
             `su -s $(which bash) -c "LD_LIBRARY_PATH=${exports.ld_library_path_for_asterisk} ${exports.ast_path} -rvvvvvv -C ${exports.ast_main_conf_path}" ${exports.unix_user}`,
             ``
         ].join("\n"));
-        writeAndSetPerms(path.join(working_directory_path, "asterisk_start.sh"), [
+        writeAndSetPerms(path.join(exports.working_directory_path, "asterisk_start.sh"), [
             `#!/usr/bin/env bash`,
             ``,
             `cd ${path.join(exports.ast_dir_path, "var", "lib", "asterisk")}`,
             `su -s $(which bash) -c "LD_LIBRARY_PATH=${exports.ld_library_path_for_asterisk} ${exports.ast_path} -fvvvvvvc -C ${exports.ast_main_conf_path}" ${exports.unix_user}`,
             ``
         ].join("\n"));
-        const uninstaller_sh_path = path.join(working_directory_path, "uninstaller.sh");
+        const uninstaller_sh_path = path.join(exports.working_directory_path, "uninstaller.sh");
         writeAndSetPerms(uninstaller_sh_path, [
             `#!/bin/bash`,
             ``,
@@ -532,7 +542,7 @@ var shellScripts;
     }
     shellScripts.create = create;
     function remove_symbolic_links() {
-        scriptLib.execSync(`rm -f ${uninstaller_link_path} 2>/dev/null`);
+        scriptLib.execSyncQuiet(`rm -f ${uninstaller_link_path}`);
     }
     shellScripts.remove_symbolic_links = remove_symbolic_links;
 })(shellScripts || (shellScripts = {}));
@@ -560,17 +570,16 @@ var odbc;
 })(odbc || (odbc = {}));
 var unixUser;
 (function (unixUser) {
-    unixUser.gracefullyKillProcess = () => scriptLib.execSync(`pkill -u ${exports.unix_user} -SIGUSR2 2>/dev/null || true`);
     function create() {
         process.stdout.write(`Creating unix user '${exports.unix_user}' ... `);
-        unixUser.gracefullyKillProcess();
-        scriptLib.execSync(`userdel ${exports.unix_user} 2>/dev/null || true`);
-        scriptLib.execSync(`useradd -M ${exports.unix_user} -s /bin/false -d ${working_directory_path}`);
+        stopRunningInstance();
+        scriptLib.execSyncQuiet(`userdel ${exports.unix_user} || true`);
+        scriptLib.execSync(`useradd -M ${exports.unix_user} -s /bin/false -d ${exports.working_directory_path}`);
         console.log(scriptLib.colorize("OK", "GREEN"));
     }
     unixUser.create = create;
     function remove() {
-        scriptLib.execSync(`userdel ${exports.unix_user} 2>/dev/null`);
+        scriptLib.execSyncQuiet(`userdel ${exports.unix_user}`);
     }
     unixUser.remove = remove;
 })(unixUser || (unixUser = {}));
@@ -588,7 +597,7 @@ var systemd;
             `ExecStart=${node_path} ${main_js_path}`,
             `Environment=NODE_ENV=production`,
             `StandardOutput=journal`,
-            `WorkingDirectory=${working_directory_path}`,
+            `WorkingDirectory=${exports.working_directory_path}`,
             `Restart=always`,
             `RestartPreventExitStatus=0`,
             `RestartSec=10`,
@@ -602,22 +611,22 @@ var systemd;
         fs.writeFileSync(service_file_path, Buffer.from(service, "utf8"));
         scriptLib.execSync("systemctl daemon-reload");
         scriptLib.execSync(`systemctl enable ${srv_name} --quiet`);
-        //scriptLib.execSync(`systemctl start ${srv_name}`);
+        scriptLib.execSync(`systemctl start ${srv_name}`);
         console.log(scriptLib.colorize("OK", "GREEN"));
     }
     systemd.create = create;
     function remove() {
         try {
-            scriptLib.execSync(`systemctl disable ${srv_name} --quiet`);
+            scriptLib.execSyncQuiet(`systemctl disable ${srv_name}`);
             fs.unlinkSync(service_file_path);
         }
         catch (_a) { }
-        scriptLib.execSync("systemctl daemon-reload 2>/dev/null");
+        scriptLib.execSyncQuiet("systemctl daemon-reload");
     }
     systemd.remove = remove;
 })(systemd || (systemd = {}));
 if (require.main === module) {
-    require("rejection-tracker").main(working_directory_path);
+    require("rejection-tracker").main(exports.working_directory_path);
     scriptLib.exit_if_not_root();
     program.parse(process.argv);
 }

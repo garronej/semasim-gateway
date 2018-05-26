@@ -105,7 +105,7 @@ function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
         "colorizedTraffic": "OUT"
     });
     const clientSocketRemoteAddress = misc_1.cid.parse(connectionId).clientSocketRemoteAddress;
-    //TODO: si if for webRtc it is desirable
+    //TODO: see if for webRtc it is desirable
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */
     const fixSdp = (sipPacketNextHop) => {
         let sdp = sipLibrary.getPacketContent(sipPacketNextHop).toString("utf8");

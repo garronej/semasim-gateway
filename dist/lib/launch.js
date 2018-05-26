@@ -24,7 +24,7 @@ const path = require("path");
 require("colors");
 const _debug = require("debug");
 let debug = _debug("_launch");
-debug("Starting semasim gateway !");
+debug("Starting semasim gateway");
 let dc;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -38,7 +38,11 @@ function launch() {
             debug(error.message);
             process.exit(-1);
         }));
-        ts_ami_1.Ami.getInstance(undefined, installer_1.ast_etc_dir_path);
+        ts_ami_1.Ami.getInstance(undefined, installer_1.ast_etc_dir_path)
+            .evtTcpConnectionClosed.attachOnce(() => {
+            debug("Asterisk TCP connection closed");
+            process.exit(-1);
+        });
         yield launchDongleController();
         yield db.launch();
         sipProxy.launch();
@@ -74,6 +78,7 @@ function launchDongleController() {
             }
             catch (_a) {
                 debug("dongle-extended not initialized yet, scheduling retry...");
+                yield new Promise(resolve => setTimeout(resolve, 3000));
                 continue;
             }
             break;

@@ -1,3 +1,4 @@
+export declare const working_directory_path: string;
 export declare const ast_dir_path: string;
 export declare const ast_path: string;
 export declare const ast_etc_dir_path: string;

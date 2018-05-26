@@ -22,7 +22,7 @@ import "colors";
 import * as _debug from "debug";
 let debug = _debug("_launch");
 
-debug("Starting semasim gateway !");
+debug("Starting semasim gateway");
 
 let dc!: Dc;
 
@@ -35,7 +35,7 @@ export async function launch() {
 
             debug(`asterisk: ${message}`)
 
-            if( !!message.match(/Asterisk\ Ready\./) ){
+            if (!!message.match(/Asterisk\ Ready\./)) {
 
                 resolve();
 
@@ -47,7 +47,14 @@ export async function launch() {
         })
     );
 
-    Ami.getInstance(undefined, ast_etc_dir_path);
+    Ami.getInstance(undefined, ast_etc_dir_path)
+        .evtTcpConnectionClosed.attachOnce(() => {
+
+            debug("Asterisk TCP connection closed");
+
+            process.exit(-1);
+
+        });
 
     await launchDongleController();
 
@@ -105,6 +112,8 @@ async function launchDongleController() {
         } catch{
 
             debug("dongle-extended not initialized yet, scheduling retry...");
+
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
             continue;
 

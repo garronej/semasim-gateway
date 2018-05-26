@@ -83,7 +83,6 @@ export async function createEndpointIfNeededAndGetPassword(
 
     })();
 
-
     let [ps_endpoints_web, ps_endpoints_mobile] = (() => {
 
         let ps_endpoints_base = {

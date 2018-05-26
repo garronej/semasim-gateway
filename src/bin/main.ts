@@ -1,4 +1,22 @@
-require("rejection-tracker").main(__dirname, "..", "..");
+import { launch } from "../lib/launch";
+import { unix_user, working_directory_path } from "./installer";
+import * as os from "os";
+
+require("rejection-tracker").main(working_directory_path);
+
+if( os.userInfo().username !== unix_user ){
+
+    throw new Error(`Must be executed by unix user: ${unix_user}`);
+
+}
+
+process.once("SIGUSR2", () => {
+
+    console.log("User requested stop");
+
+    process.exit(0)
+
+});
 
 process.on("warning", error=> { 
 
@@ -8,23 +26,5 @@ process.on("warning", error=> {
 
 });
 
-import { launch } from "../lib/launch";
-import { unix_user } from "./installer";
-import * as os from "os";
-
-if( os.userInfo().username !== unix_user ){
-
-    throw new Error(`Must be executed by unix user: ${unix_user}`);
-
-}
-
 launch();
-
-process.once("SIGUSR2", () => {
-
-    console.log("User requested stop");
-
-    process.exit(0)
-
-});
 

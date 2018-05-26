@@ -9,7 +9,7 @@ import { ini } from "ini-extended";
 
 const module_dir_path = path.join(__dirname, "..", "..");
 const main_js_path = path.join(module_dir_path, "dist", "bin", "main.js");
-const working_directory_path = path.join(module_dir_path, "working_directory");
+export const working_directory_path = path.join(module_dir_path, "working_directory");
 const pre_compiled_dir_path = path.join(module_dir_path, "pre_compiled");
 const node_path = path.join(module_dir_path, "node");
 const pkg_list_path = path.join(module_dir_path, "pkg_installed.json");
@@ -54,7 +54,7 @@ program.command("install")
 
         } else {
 
-            unixUser.gracefullyKillProcess();
+            stopRunningInstance();
 
         }
 
@@ -64,9 +64,9 @@ program.command("install")
 
             try {
 
-                previous_working_directory_path = scriptLib.execSync(
-                    "dirname $(readlink -e $(which semasim_uninstaller) 2>/dev/null) 2>/dev/null"
-                ).replace("\n", "");
+                previous_working_directory_path = scriptLib.execSyncQuiet(
+                    "dirname $(readlink -e $(which semasim_uninstaller))"
+                ).slice(0,-1);
 
             } catch{
 
@@ -173,6 +173,13 @@ program
 
             fetch_asterisk_and_dongle(_pre_compiled_dir_path);
 
+            const get_chan_dongle_module_path= (target: "SRC" | "DEST")=> path.join(
+                target==="SRC"?working_directory_path:_pre_compiled_dir_path, 
+                "asterisk", "lib", "asterisk", "modules", "chan_dongle.so"
+            );
+
+            scriptLib.execSyncTrace(`cp ${get_chan_dongle_module_path("SRC")} ${get_chan_dongle_module_path("DEST")}`);
+
         })();
 
         scriptLib.execSyncTrace(`tar -czf ${path.join(module_dir_path, `${v_name}.tar.gz`)} -C ${_module_dir_path} .`);
@@ -182,7 +189,6 @@ program
         console.log("---DONE---");
 
     });
-
 
 async function install() {
 
@@ -582,7 +588,7 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
     }
 
-    runRecover("Terminating running instance ... ", () => unixUser.gracefullyKillProcess());
+    runRecover("Terminating running instance ... ", () => stopRunningInstance());
 
     runRecover("Removing systemd service ... ", () => systemd.remove());
 
@@ -600,6 +606,13 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
 }
 
+function stopRunningInstance(){
+    try{ scriptLib.execSyncQuiet(stopRunningInstance.cmd); }catch{}
+}
+
+namespace stopRunningInstance {
+    export const cmd= `pkill -u ${unix_user} -SIGUSR2`;
+}
 
 function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
@@ -643,7 +656,7 @@ namespace dongle {
 
     export function install(assume_chan_dongle_installed: boolean) {
 
-        scriptLib.execSyncTrace([
+        scriptLib.execSync([
             `${installer_cmd} install`,
             `--asterisk_main_conf ${ast_main_conf_path}`,
             `--disable_sms_dialplan`,
@@ -651,7 +664,7 @@ namespace dongle {
             `--enable_ast_ami_on_port 48397`,
             assume_chan_dongle_installed ? `--assume_chan_dongle_installed` : ``,
             `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
-        ].join(" "));
+        ].join(" "), { "stdio": "inherit" });
 
         (function merge_installed_pkg() {
 
@@ -675,7 +688,7 @@ namespace dongle {
 
     export async function uninstall() {
 
-        scriptLib.execSync(`${installer_cmd} uninstall 2>/dev/null`);
+        scriptLib.execSyncQuiet(`${installer_cmd} uninstall`);
 
     }
 
@@ -713,9 +726,8 @@ namespace shellScripts {
                 `# In charge of launching the service in interactive mode (via $ nmp start)`,
                 `# It will gracefully terminate any running instance before.`,
                 ``,
-                `pkill -u ${unix_user} -SIGUSR2 || true`,
-                `cd ${working_directory_path}`,
-                `su -s $(which bash) -c "DEBUG=_* ${node_exec_cmd} ${main_js_path}" ${unix_user}`,
+                `${stopRunningInstance.cmd} 2>/dev/null`,
+                `su -s $(which bash) -c "(cd ${working_directory_path} && DEBUG=_* ${node_exec_cmd} ${main_js_path})" ${unix_user}`,
                 ``
             ].join("\n")
         );
@@ -777,7 +789,7 @@ namespace shellScripts {
 
     export function remove_symbolic_links() {
 
-        scriptLib.execSync(`rm -f ${uninstaller_link_path} 2>/dev/null`);
+        scriptLib.execSyncQuiet(`rm -f ${uninstaller_link_path}`);
 
     }
 
@@ -828,15 +840,13 @@ namespace odbc {
 
 namespace unixUser {
 
-    export const gracefullyKillProcess = () => scriptLib.execSync(`pkill -u ${unix_user} -SIGUSR2 2>/dev/null || true`);
-
     export function create() {
 
         process.stdout.write(`Creating unix user '${unix_user}' ... `);
 
-        gracefullyKillProcess();
+        stopRunningInstance();
 
-        scriptLib.execSync(`userdel ${unix_user} 2>/dev/null || true`);
+        scriptLib.execSyncQuiet(`userdel ${unix_user} || true`);
 
         scriptLib.execSync(`useradd -M ${unix_user} -s /bin/false -d ${working_directory_path}`);
 
@@ -846,7 +856,7 @@ namespace unixUser {
 
     export function remove() {
 
-        scriptLib.execSync(`userdel ${unix_user} 2>/dev/null`);
+        scriptLib.execSyncQuiet(`userdel ${unix_user}`);
 
     }
 
@@ -887,7 +897,7 @@ namespace systemd {
 
         scriptLib.execSync(`systemctl enable ${srv_name} --quiet`);
 
-        //scriptLib.execSync(`systemctl start ${srv_name}`);
+        scriptLib.execSync(`systemctl start ${srv_name}`);
 
         console.log(scriptLib.colorize("OK", "GREEN"));
 
@@ -897,13 +907,13 @@ namespace systemd {
 
         try {
 
-            scriptLib.execSync(`systemctl disable ${srv_name} --quiet`);
+            scriptLib.execSyncQuiet(`systemctl disable ${srv_name}`);
 
             fs.unlinkSync(service_file_path);
 
         } catch{ }
 
-        scriptLib.execSync("systemctl daemon-reload 2>/dev/null");
+        scriptLib.execSyncQuiet("systemctl daemon-reload");
 
     }
 
