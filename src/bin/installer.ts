@@ -222,86 +222,7 @@ async function install() {
 
     await (async function configure_asterisk() {
 
-        /*
-        TODO: in debian stretch and above there is no libssl1.0.1 package
-        so we should install libssl1.0.2 and try to create symbolic link
-
-        libssl.so.1.0.0 -> libssl.so.1.0.2
-
-        pi @ raspberrypi-1b ~ $ dpkg -L libssl1.0.2
-        /.
-        /usr
-        /usr/lib
-        /usr/lib/arm-linux-gnueabihf
-        /usr/lib/arm-linux-gnueabihf/libcrypto.so.1.0.2
-        /usr/lib/arm-linux-gnueabihf/libssl.so.1.0.2
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/lib4758cca.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libaep.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libatalla.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libcapi.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libchil.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libcswift.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libgmp.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libgost.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libnuron.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libpadlock.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libsureware.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.2/engines/libubsec.so
-        /usr/share
-        /usr/share/doc
-        /usr/share/doc/libssl1.0.2
-        /usr/share/doc/libssl1.0.2/changelog.Debian.gz
-        /usr/share/doc/libssl1.0.2/changelog.gz
-        /usr/share/doc/libssl1.0.2/copyright
-        /usr/share/lintian
-        /usr/share/lintian/overrides
-        /usr/share/lintian/overrides/libssl1.0.2
-         ✓ pi @ raspberrypi-1b ~ $ cd /usr/lib/arm-linux-gnueabihf/
-         ✓ pi @ raspberrypi-1b /usr/lib/arm-linux-gnueabihf $ ll | grep libssl
-        -rw-r--r--  1 root root  264K Oct  7  2017 libssl3.so
-        -rw-r--r--  1 root root  321K Mar 29 10:51 libssl.so.1.1
-        lrwxrwxrwx  1 root root    13 Mar 29 10:51 libssl.so -> libssl.so.1.1
-        -rw-r--r--  1 root root  480K Mar 29 10:51 libssl.a
-        -rw-r--r--  1 root root  314K Mar 29 11:10 libssl.so.1.0.2
-
-        pi @ raspberrypi-3 /usr/lib/arm-linux-gnueabihf $ dpkg -L libssl1.0.0
-        /.
-        /usr
-        /usr/share
-        /usr/share/doc
-        /usr/share/doc/libssl1.0.0
-        /usr/share/doc/libssl1.0.0/changelog.gz
-        /usr/share/doc/libssl1.0.0/copyright
-        /usr/share/doc/libssl1.0.0/changelog.Debian.gz
-        /usr/lib
-        /usr/lib/arm-linux-gnueabihf
-        /usr/lib/arm-linux-gnueabihf/libcrypto.so.1.0.0
-        /usr/lib/arm-linux-gnueabihf/libssl.so.1.0.0
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libgmp.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libnuron.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libatalla.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libubsec.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libpadlock.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libcswift.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libaep.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libgost.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libchil.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/lib4758cca.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libsureware.so
-        /usr/lib/arm-linux-gnueabihf/openssl-1.0.0/engines/libcapi.so
-         ✓ pi @ raspberrypi-3 /usr/lib/arm-linux-gnueabihf $ ll | grep libssl
-        -rw-r--r-- 1 root root  264K Oct 11  2017 libssl3.so
-        lrwxrwxrwx 1 root root    15 Mar 29 22:33 libssl.so -> libssl.so.1.0.0
-        -rw-r--r-- 1 root root  294K Mar 29 22:33 libssl.so.1.0.0
-        -rw-r--r-- 1 root root  430K Mar 29 22:33 libssl.a
-        */
-
         for (let package_name of [
-            "libssl1.0.0",
             "libuuid1",
             "libjansson4",
             "libxml2",
@@ -600,7 +521,7 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
     runRecover("Deleting working_directory ... ", () => scriptLib.execSync(`rm -r ${working_directory_path}`));
 
-    runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSync(`rm -r ${ast_dir_link_path}`));
+    runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSyncQuiet(`rm -r ${ast_dir_link_path}`));
 
     runRecover("Deleting unix user ... ", () => unixUser.remove());
 
