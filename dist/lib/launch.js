@@ -96,11 +96,11 @@ function init() {
         }
         let lastMessageReceivedDateBySim = yield db.semasim.lastMessageReceivedDateBySim();
         for (let imsi in lastMessageReceivedDateBySim) {
-            //TODO: may throw
-            let messages = yield dc.getMessagesOfSim({
+            //NOTE: should not throw but if it does it is the expected behavior.
+            const messages = yield dc.getMessages({
                 imsi,
                 "fromDate": new Date(lastMessageReceivedDateBySim[imsi].getTime() + 1),
-                "flush": true,
+                "flush": true
             });
             for (let { number, text, date } of messages) {
                 yield db.semasim.onDongleMessage(number, text, date, imsi);
@@ -149,7 +149,7 @@ function registerListeners() {
         }
         if (isFirstUaForSim) {
             debug("First SIM UA");
-            let messages = yield dc.getMessagesOfSim({
+            let messages = yield dc.getMessages({
                 "imsi": contact.uaSim.imsi,
                 "flush": true
             });

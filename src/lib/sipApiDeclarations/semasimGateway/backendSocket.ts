@@ -57,3 +57,27 @@ export namespace reNotifySimOnline {
 
 }
 
+export namespace createContact {
+
+    export const methodName= "createContact";
+
+    export type Params = { imsi: string; name: string; number: string; };
+
+    export type Response = {
+        mem_index: number;
+        name_as_stored: string;
+        new_storage_digest: string;
+    } | undefined;
+
+}
+
+export namespace updateContactName {
+
+    export const methodName= "updateContactName";
+
+    export type Params = { imsi: string; mem_index: number; newName: string; };
+
+    export type Response = { new_name_as_stored: string; new_storage_digest: string; } | undefined;
+
+}
+

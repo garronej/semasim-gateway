@@ -20,3 +20,11 @@ var reNotifySimOnline;
 (function (reNotifySimOnline) {
     reNotifySimOnline.methodName = "reNotifySimOnline";
 })(reNotifySimOnline = exports.reNotifySimOnline || (exports.reNotifySimOnline = {}));
+var createContact;
+(function (createContact) {
+    createContact.methodName = "createContact";
+})(createContact = exports.createContact || (exports.createContact = {}));
+var updateContactName;
+(function (updateContactName) {
+    updateContactName.methodName = "updateContactName";
+})(updateContactName = exports.updateContactName || (exports.updateContactName = {}));

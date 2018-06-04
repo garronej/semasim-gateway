@@ -1,4 +1,4 @@
-import { DongleController as Dc } from "chan-dongle-extended-client";
+import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-client";
 import * as apiDeclaration from "./../../sipApiDeclarations/semasimGateway/backendSocket";
 import * as sipLibrary from "ts-sip";
 import * as remoteApi from "./remoteApiCaller";
@@ -81,6 +81,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
 
                 return await Dc.getInstance().unlock(imei, pin);
 
+
             } catch{
 
                 return undefined;
@@ -115,6 +116,91 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
             }
 
             return undefined;
+
+        }
+    };
+
+    handlers[methodName]= handler;
+
+})();
+
+(() => {
+
+    const methodName = apiDeclaration.createContact.methodName;
+    type Params = apiDeclaration.createContact.Params;
+    type Response = apiDeclaration.createContact.Response;
+
+    const handler: sipLibrary.api.Server.Handler<Params, Response> = {
+        "handler": async ({ imsi, name, number }) => {
+
+            const dc = Dc.getInstance();
+
+            let dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+
+            if (!dongle) {
+                return undefined;
+            }
+
+            let contact : dcTypes.Sim.Contact;
+
+            try{
+
+                contact = await dc.createContact(imsi, number, name)
+
+            }catch{
+
+                return undefined;
+
+            }
+
+            return {
+                "mem_index": contact.index,
+                "name_as_stored": contact.name,
+                "new_storage_digest": dongle.sim.storage.digest
+            };
+
+        }
+    };
+
+    handlers[methodName]= handler;
+
+})();
+
+(() => {
+
+    const methodName = apiDeclaration.updateContactName.methodName;
+    type Params = apiDeclaration.updateContactName.Params;
+    type Response = apiDeclaration.updateContactName.Response;
+
+    const handler: sipLibrary.api.Server.Handler<Params, Response> = {
+        "handler": async ({ imsi, mem_index, newName }) => {
+
+            let dc = Dc.getInstance();
+
+            let dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+
+            if (!dongle) {
+                return undefined;
+            }
+
+            let contact : dcTypes.Sim.Contact;
+
+            try{
+
+                contact = await dc.updateContact(imsi, mem_index, newName, undefined);
+
+            }catch{
+
+                return undefined;
+
+            }
+
+            return {
+                "new_name_as_stored": contact.name,
+                "new_storage_digest": dongle.sim.storage.digest
+            };
 
         }
     };

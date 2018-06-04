@@ -36,3 +36,28 @@ export declare namespace reNotifySimOnline {
     };
     type Response = undefined;
 }
+export declare namespace createContact {
+    const methodName = "createContact";
+    type Params = {
+        imsi: string;
+        name: string;
+        number: string;
+    };
+    type Response = {
+        mem_index: number;
+        name_as_stored: string;
+        new_storage_digest: string;
+    } | undefined;
+}
+export declare namespace updateContactName {
+    const methodName = "updateContactName";
+    type Params = {
+        imsi: string;
+        mem_index: number;
+        newName: string;
+    };
+    type Response = {
+        new_name_as_stored: string;
+        new_storage_digest: string;
+    } | undefined;
+}

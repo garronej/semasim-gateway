@@ -73,3 +73,54 @@ exports.handlers = {};
     };
     exports.handlers[methodName] = handler;
 })();
+(() => {
+    const methodName = apiDeclaration.createContact.methodName;
+    const handler = {
+        "handler": ({ imsi, name, number }) => __awaiter(this, void 0, void 0, function* () {
+            const dc = chan_dongle_extended_client_1.DongleController.getInstance();
+            let dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+            if (!dongle) {
+                return undefined;
+            }
+            let contact;
+            try {
+                contact = yield dc.createContact(imsi, number, name);
+            }
+            catch (_a) {
+                return undefined;
+            }
+            return {
+                "mem_index": contact.index,
+                "name_as_stored": contact.name,
+                "new_storage_digest": dongle.sim.storage.digest
+            };
+        })
+    };
+    exports.handlers[methodName] = handler;
+})();
+(() => {
+    const methodName = apiDeclaration.updateContactName.methodName;
+    const handler = {
+        "handler": ({ imsi, mem_index, newName }) => __awaiter(this, void 0, void 0, function* () {
+            let dc = chan_dongle_extended_client_1.DongleController.getInstance();
+            let dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+            if (!dongle) {
+                return undefined;
+            }
+            let contact;
+            try {
+                contact = yield dc.updateContact(imsi, mem_index, newName, undefined);
+            }
+            catch (_a) {
+                return undefined;
+            }
+            return {
+                "new_name_as_stored": contact.name,
+                "new_storage_digest": dongle.sim.storage.digest
+            };
+        })
+    };
+    exports.handlers[methodName] = handler;
+})();

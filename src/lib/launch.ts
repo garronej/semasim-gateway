@@ -145,11 +145,11 @@ async function init() {
 
     for (let imsi in lastMessageReceivedDateBySim) {
 
-        //TODO: may throw
-        let messages = await dc.getMessagesOfSim({
+        //NOTE: should not throw but if it does it is the expected behavior.
+        const messages = await dc.getMessages({
             imsi,
             "fromDate": new Date(lastMessageReceivedDateBySim[imsi].getTime() + 1),
-            "flush": true,
+            "flush": true
         });
 
         for (let { number, text, date } of messages) {
@@ -257,7 +257,7 @@ function registerListeners() {
 
                 debug("First SIM UA");
 
-                let messages = await dc.getMessagesOfSim({
+                let messages = await dc.getMessages({
                     "imsi": contact.uaSim.imsi,
                     "flush": true
                 });
