@@ -28,3 +28,7 @@ var updateContactName;
 (function (updateContactName) {
     updateContactName.methodName = "updateContactName";
 })(updateContactName = exports.updateContactName || (exports.updateContactName = {}));
+var deleteContact;
+(function (deleteContact) {
+    deleteContact.methodName = "deleteContact";
+})(deleteContact = exports.deleteContact || (exports.deleteContact = {}));

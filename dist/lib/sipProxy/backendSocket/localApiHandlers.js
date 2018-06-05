@@ -78,7 +78,7 @@ exports.handlers = {};
     const handler = {
         "handler": ({ imsi, name, number }) => __awaiter(this, void 0, void 0, function* () {
             const dc = chan_dongle_extended_client_1.DongleController.getInstance();
-            let dongle = Array.from(dc.usableDongles.values())
+            const dongle = Array.from(dc.usableDongles.values())
                 .find(({ sim }) => sim.imsi === imsi);
             if (!dongle) {
                 return undefined;
@@ -103,8 +103,8 @@ exports.handlers = {};
     const methodName = apiDeclaration.updateContactName.methodName;
     const handler = {
         "handler": ({ imsi, mem_index, newName }) => __awaiter(this, void 0, void 0, function* () {
-            let dc = chan_dongle_extended_client_1.DongleController.getInstance();
-            let dongle = Array.from(dc.usableDongles.values())
+            const dc = chan_dongle_extended_client_1.DongleController.getInstance();
+            const dongle = Array.from(dc.usableDongles.values())
                 .find(({ sim }) => sim.imsi === imsi);
             if (!dongle) {
                 return undefined;
@@ -120,6 +120,27 @@ exports.handlers = {};
                 "new_name_as_stored": contact.name,
                 "new_storage_digest": dongle.sim.storage.digest
             };
+        })
+    };
+    exports.handlers[methodName] = handler;
+})();
+(() => {
+    const methodName = apiDeclaration.deleteContact.methodName;
+    const handler = {
+        "handler": ({ imsi, mem_index }) => __awaiter(this, void 0, void 0, function* () {
+            const dc = chan_dongle_extended_client_1.DongleController.getInstance();
+            const dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+            if (!dongle) {
+                return undefined;
+            }
+            try {
+                yield dc.deleteContact(imsi, mem_index);
+            }
+            catch (_a) {
+                return undefined;
+            }
+            return { "new_storage_digest": dongle.sim.storage.digest };
         })
     };
     exports.handlers[methodName] = handler;

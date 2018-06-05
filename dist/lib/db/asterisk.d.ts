@@ -1,4 +1,4 @@
-import * as sqliteCustom from "../../tools/sqliteCustom";
+import * as sqliteCustom from "sqlite-custom";
 import * as types from "../types";
 export declare let query: sqliteCustom.Api["query"];
 export declare let esc: sqliteCustom.Api["esc"];

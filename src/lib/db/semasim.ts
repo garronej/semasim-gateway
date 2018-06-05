@@ -1,4 +1,4 @@
-import * as sqliteCustom from "../../tools/sqliteCustom";
+import * as sqliteCustom from "sqlite-custom";
 
 import * as types from "../types";
 import { types as dcTypes } from "chan-dongle-extended-client";

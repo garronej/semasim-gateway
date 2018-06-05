@@ -135,7 +135,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
 
             const dc = Dc.getInstance();
 
-            let dongle = Array.from(dc.usableDongles.values())
+            const dongle = Array.from(dc.usableDongles.values())
                 .find(({ sim }) => sim.imsi === imsi);
 
             if (!dongle) {
@@ -176,9 +176,9 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
     const handler: sipLibrary.api.Server.Handler<Params, Response> = {
         "handler": async ({ imsi, mem_index, newName }) => {
 
-            let dc = Dc.getInstance();
+            const dc = Dc.getInstance();
 
-            let dongle = Array.from(dc.usableDongles.values())
+            const dongle = Array.from(dc.usableDongles.values())
                 .find(({ sim }) => sim.imsi === imsi);
 
             if (!dongle) {
@@ -201,6 +201,43 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
                 "new_name_as_stored": contact.name,
                 "new_storage_digest": dongle.sim.storage.digest
             };
+
+        }
+    };
+
+    handlers[methodName]= handler;
+
+})();
+
+(() => {
+
+    const methodName = apiDeclaration.deleteContact.methodName;
+    type Params = apiDeclaration.deleteContact.Params;
+    type Response = apiDeclaration.deleteContact.Response;
+
+    const handler: sipLibrary.api.Server.Handler<Params, Response> = {
+        "handler": async ({ imsi, mem_index }) => {
+
+            const dc = Dc.getInstance();
+
+            const dongle = Array.from(dc.usableDongles.values())
+                .find(({ sim }) => sim.imsi === imsi);
+
+            if (!dongle) {
+                return undefined;
+            }
+
+            try{
+
+                await dc.deleteContact(imsi, mem_index);
+
+            }catch{
+
+                return undefined;
+
+            }
+
+            return { "new_storage_digest": dongle.sim.storage.digest };
 
         }
     };

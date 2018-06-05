@@ -1,4 +1,4 @@
-import * as sqliteCustom from "../../tools/sqliteCustom";
+import * as sqliteCustom from "sqlite-custom";
 import * as types from "../types";
 import * as md5 from "md5";
 import { ast_db_path, host_pem_path, ca_crt_path } from "../../bin/installer";

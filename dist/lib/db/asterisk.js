@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const sqliteCustom = require("../../tools/sqliteCustom");
+const sqliteCustom = require("sqlite-custom");
 const md5 = require("md5");
 const installer_1 = require("../../bin/installer");
 const voiceCallBridge_1 = require("../voiceCallBridge");

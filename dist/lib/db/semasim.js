@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const sqliteCustom = require("../../tools/sqliteCustom");
+const sqliteCustom = require("sqlite-custom");
 const transfer_tools_1 = require("transfer-tools");
 const installer_1 = require("../../bin/installer");
 const JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();

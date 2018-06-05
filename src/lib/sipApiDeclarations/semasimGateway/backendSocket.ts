@@ -81,3 +81,13 @@ export namespace updateContactName {
 
 }
 
+export namespace deleteContact {
+
+    export const methodName= "deleteContact";
+
+    export type Params = { imsi: string; mem_index: number; };
+
+    export type Response = { new_storage_digest: string; } | undefined;
+
+}
+
