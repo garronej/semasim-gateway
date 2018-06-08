@@ -6,9 +6,9 @@ import {
 import { semasim as db } from "./db";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
+import * as logger from "../tools/logger";
 
-import * as _debug from "debug";
-let debug = _debug("_messageDispatcher");
+const debug = logger.debugFactory();
 
 export function sendMessagesOfDongle(
     dongle: dcTypes.Dongle.Usable

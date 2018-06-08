@@ -38,11 +38,6 @@ jspm_packages
 
 .vscode
 
-res/asterisk/manager.conf
-res/asterisk/dongle.conf
-res/semasim.db
-res/asterisk.db
-
 node
 working_directory
 pre_compiled

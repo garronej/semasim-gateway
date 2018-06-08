@@ -36,6 +36,7 @@
     "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
     "ts-sip": "github:garronej/ts-sip",
+    "winston": "^2.4.2",
     "ws": "^4.0.0"
   },
   "devDependencies": {

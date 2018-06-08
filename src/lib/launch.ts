@@ -16,11 +16,9 @@ import {
     ld_library_path_for_asterisk
 } from "../bin/installer";
 import * as path from "path";
+import * as logger from "../tools/logger";
 
-import "colors";
-
-import * as _debug from "debug";
-let debug = _debug("_launch");
+const debug = logger.debugFactory();
 
 debug("Starting semasim gateway");
 

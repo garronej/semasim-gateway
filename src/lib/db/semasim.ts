@@ -3,7 +3,7 @@ import * as sqliteCustom from "sqlite-custom";
 import * as types from "../types";
 import { types as dcTypes } from "chan-dongle-extended-client";
 import { JSON_CUSTOM as ttJC } from "transfer-tools";
-import { app_db_path } from "../../bin/installer";
+import { semasim_db_path } from "../../bin/installer";
 
 const JSON_CUSTOM = ttJC.get();
 
@@ -15,7 +15,7 @@ export async function launch(): Promise<void> {
     //sqliteCustom.enableLog();
 
     _ = await sqliteCustom.connectAndGetApi( 
-        app_db_path, "HANDLE STRING ENCODING"
+        semasim_db_path, "HANDLE STRING ENCODING"
     );
 
 }

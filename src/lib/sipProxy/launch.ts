@@ -1,16 +1,18 @@
 
 import * as messages from "./messages";
 import * as router from "./router";
+import { getVersionStatus, genRetryDelay } from "../versionStatus";
+import * as logger from "../../tools/logger";
 
-import "colors";
+const debug = logger.debugFactory();
 
-let launchCount= 0;
+let isFistLaunch= true;
 
 export async function launch(){
 
-    console.log({ launchCount });
+    if( isFistLaunch ){
 
-    if( !launchCount ){
+        isFistLaunch=false;
 
         await messages.init();
 
@@ -20,18 +22,20 @@ export async function launch(){
 
     backendSocketInst.evtClose.attachOnce(async () => {
 
-        console.log("Backend socket closed, waiting and restarting");
+        debug("Backend socket closed, waiting and restarting");
 
-        let delay = (function getRandomArbitrary(min, max) {
-            return Math.floor(Math.random() * (max - min) + min);
-        })(3000, 5000);
+        await new Promise(resolve => setTimeout(resolve, genRetryDelay()));
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        if( "UP TO DATE" !== await getVersionStatus() ){
+
+            debug("Need update, restarting ...");
+
+            process.exit(1);
+
+        }
 
         launch();
 
     });
-
-    launchCount++;
 
 }

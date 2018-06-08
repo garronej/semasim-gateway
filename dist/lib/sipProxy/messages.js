@@ -15,8 +15,8 @@ const dcMisc = require("chan-dongle-extended-client/dist/lib/misc");
 dcMisc;
 const sipLibrary = require("ts-sip");
 const types = require("../types");
-const _debug = require("debug");
-let debug = _debug("_sipProxy/messages");
+const logger = require("../../tools/logger");
+const debug = logger.debugFactory();
 exports.dialplanContext = "from-sip-message";
 exports.evtMessage = new ts_events_extended_1.SyncEvent();
 function sendMessage(contact, fromNumber, headers, text, fromNumberSimName) {

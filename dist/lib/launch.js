@@ -21,9 +21,8 @@ const ts_events_extended_1 = require("ts-events-extended");
 const child_process = require("child_process");
 const installer_1 = require("../bin/installer");
 const path = require("path");
-require("colors");
-const _debug = require("debug");
-let debug = _debug("_launch");
+const logger = require("../tools/logger");
+const debug = logger.debugFactory();
 debug("Starting semasim gateway");
 let dc;
 function launch() {

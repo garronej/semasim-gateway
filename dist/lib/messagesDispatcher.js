@@ -13,8 +13,8 @@ const chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 const db_1 = require("./db");
 const sipProxy = require("./sipProxy");
 const types = require("./types");
-const _debug = require("debug");
-let debug = _debug("_messageDispatcher");
+const logger = require("../tools/logger");
+const debug = logger.debugFactory();
 function sendMessagesOfDongle(dongle) {
     sendMessagesOfDongle.lock.acquire(dongle.imei, () => __awaiter(this, void 0, void 0, function* () {
         let dc = chan_dongle_extended_client_1.DongleController.getInstance();

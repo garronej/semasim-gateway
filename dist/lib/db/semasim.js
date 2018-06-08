@@ -16,7 +16,7 @@ const JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         //sqliteCustom.enableLog();
-        exports._ = yield sqliteCustom.connectAndGetApi(installer_1.app_db_path, "HANDLE STRING ENCODING");
+        exports._ = yield sqliteCustom.connectAndGetApi(installer_1.semasim_db_path, "HANDLE STRING ENCODING");
     });
 }
 exports.launch = launch;

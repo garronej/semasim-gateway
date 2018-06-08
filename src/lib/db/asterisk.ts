@@ -6,8 +6,6 @@ import { ast_db_path, host_pem_path, ca_crt_path } from "../../bin/installer";
 import { sipCallContext } from "../voiceCallBridge";
 import { messagesDialplanContext } from "../sipProxy";
 
-import * as c from "../_constants"
-
 //Note: Exported only for tests.
 export let query: sqliteCustom.Api["query"];
 export let esc: sqliteCustom.Api["esc"];
@@ -91,7 +89,7 @@ export async function createEndpointIfNeededAndGetPassword(
             "context": sipCallContext,
             "message_context": messagesDialplanContext,
             "auth": imsi,
-            "from_domain": c.domain,
+            "from_domain": "semasim.com",
             "ice_support": "yes",
             "transport": "transport-tcp",
             "dtmf_mode": "info"

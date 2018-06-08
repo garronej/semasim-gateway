@@ -13,64 +13,75 @@ const program = require("commander");
 const fs = require("fs");
 const path = require("path");
 const scriptLib = require("scripting-tools");
-const c = require("../lib/_constants");
 const ini_extended_1 = require("ini-extended");
-const module_dir_path = path.join(__dirname, "..", "..");
-const main_js_path = path.join(module_dir_path, "dist", "bin", "main.js");
-exports.working_directory_path = path.join(module_dir_path, "working_directory");
-const pre_compiled_dir_path = path.join(module_dir_path, "pre_compiled");
-const node_path = path.join(module_dir_path, "node");
-const pkg_list_path = path.join(module_dir_path, "pkg_installed.json");
+const versionStatus_1 = require("../lib/versionStatus");
+exports.module_dir_path = path.join(__dirname, "..", "..");
+const main_js_path = path.join(exports.module_dir_path, "dist", "bin", "main.js");
+exports.unix_user = "semasim";
+const srv_name = "semasim";
+exports.working_directory_path = path.join(exports.module_dir_path, "working_directory");
+const node_path = path.join(exports.module_dir_path, "node");
+const installed_pkg_record_path = path.join(exports.module_dir_path, "pkg_installed.json");
 exports.ast_dir_path = path.join(exports.working_directory_path, "asterisk");
 exports.ast_path = path.join(exports.ast_dir_path, "sbin", "asterisk");
 const dongle_dir_path = path.join(exports.working_directory_path, "dongle");
 exports.ast_etc_dir_path = path.join(exports.ast_dir_path, "etc", "asterisk");
 exports.ast_main_conf_path = path.join(exports.ast_etc_dir_path, "asterisk.conf");
 exports.ast_db_path = path.join(exports.working_directory_path, "asterisk.db");
-exports.app_db_path = path.join(exports.working_directory_path, "semasim.db");
+exports.semasim_db_path = path.join(exports.working_directory_path, "semasim.db");
 const keys_dir_path = path.join(exports.ast_etc_dir_path, "keys");
 exports.ca_crt_path = path.join(keys_dir_path, "ca.crt");
 exports.host_pem_path = path.join(keys_dir_path, "host.pem");
 const ast_dir_link_path = "/usr/share/asterisk_semasim";
+const start_sh_path = path.join(exports.working_directory_path, "start.sh");
+const uninstaller_link_path = `/usr/sbin/${srv_name}_uninstaller`;
+exports.pid_file_path = path.join(exports.working_directory_path, `${srv_name}.pid`);
+const to_distribute_rel_paths = [
+    "LICENSE",
+    "README.md",
+    `res/${path.basename(exports.ast_db_path)}`,
+    `res/${path.basename(exports.semasim_db_path)}`,
+    "dist",
+    "node_modules",
+    "package.json"
+];
+scriptLib.apt_get_install.onInstallSuccess = package_name => scriptLib.apt_get_install.record_installed_package(installed_pkg_record_path, package_name);
+exports.ast_sip_port = 48398;
 exports.ld_library_path_for_asterisk = [
     path.join(exports.ast_dir_path, "lib"),
     path.join(exports.working_directory_path, "speexdsp", "lib"),
     path.join(exports.working_directory_path, "speex", "lib")
 ].join(":");
-exports.ast_sip_port = 48398;
-exports.unix_user = "semasim";
-const srv_name = "semasim";
-scriptLib.apt_get_install.onInstallSuccess = package_name => scriptLib.apt_get_install.record_installed_package(pkg_list_path, package_name);
+function getIsProd() {
+    if (getIsProd.value !== undefined) {
+        return getIsProd.value;
+    }
+    getIsProd.value = !fs.existsSync(path.join(exports.module_dir_path, ".git"));
+    return getIsProd();
+}
+exports.getIsProd = getIsProd;
+(function (getIsProd) {
+    getIsProd.value = undefined;
+})(getIsProd = exports.getIsProd || (exports.getIsProd = {}));
 program.command("install")
     .action((options) => __awaiter(this, void 0, void 0, function* () {
     console.log("---Installing semasim---");
-    if (fs.existsSync(exports.working_directory_path)) {
-        process.stdout.write(scriptLib.colorize("Already installed, uninstalling previous install... ", "YELLOW"));
-        yield uninstall();
-        console.log("DONE");
+    if (fs.existsSync(start_sh_path)) {
+        process.stdout.write(scriptLib.colorize("Uninstalling previous instal found in current directory... ", "YELLOW"));
+        uninstall();
+        console.log(scriptLib.colorize("DONE", "GREEN"));
     }
-    else {
-        stopRunningInstance();
+    if (fs.existsSync(uninstaller_link_path)) {
+        process.stdout.write(scriptLib.colorize("Uninstalling previous instal found in default location... ", "YELLOW"));
+        scriptLib.execSync(`${uninstaller_link_path} run`);
+        console.log(scriptLib.colorize("DONE", "GREEN"));
     }
-    (() => {
-        let previous_working_directory_path;
-        try {
-            previous_working_directory_path = scriptLib.execSyncQuiet("dirname $(readlink -e $(which semasim_uninstaller))").slice(0, -1);
-        }
-        catch (_a) {
-            return;
-        }
-        process.stdout.write(scriptLib.colorize("Previous install found, uninstalling... ", "YELLOW"));
-        scriptLib.execSync(`${path.join(previous_working_directory_path, "uninstaller.sh")} run`);
-        console.log("DONE");
-    })();
     try {
         yield install();
     }
     catch ({ message }) {
-        process.stdout.write(scriptLib.colorize(`An error occurred: '${message}', rollback ...`, "RED"));
-        yield uninstall();
-        console.log("DONE");
+        console.log(scriptLib.colorize(`An error occurred: '${message}'`, "RED"));
+        uninstall();
         process.exit(-1);
         return;
     }
@@ -83,13 +94,12 @@ program
     console.log("---Uninstalling semasim---");
     uninstall("VERBOSE");
     console.log("---DONE---");
-    if (fs.existsSync(pkg_list_path)) {
-        let pkg_list = require(pkg_list_path);
+    if (fs.existsSync(installed_pkg_record_path)) {
         console.log([
             "NOTE: Some packages have been installed automatically, ",
             "you can remove them if you no longer need them.",
             "\n",
-            `$ sudo apt-get purge ${pkg_list.join(" ")}`,
+            `$ sudo apt-get purge ${require(installed_pkg_record_path).join(" ")}`,
             "\n",
             `$ sudo apt-get --purge autoremove`
         ].join(""));
@@ -97,33 +107,97 @@ program
     process.exit(0);
 }));
 program
+    .command("update")
+    .action(() => __awaiter(this, void 0, void 0, function* () {
+    scriptLib.enableCmdTrace();
+    const versionStatus = yield versionStatus_1.getVersionStatus();
+    if (versionStatus === "MAJOR") {
+        console.log("Major update needed, re-installing semasim...");
+        const reinstall_script_path = "/var/tmp/reinstall_semasim.sh";
+        scriptLib.createScript(reinstall_script_path, [
+            `#!/bin/bash`,
+            ``,
+            `SCRIPT_PATH=${reinstall_script_path}`,
+            `CRON_FILE_PATH=/tmp/root_cron`,
+            `CRON_LINE="@reboot $SCRIPT_PATH"`,
+            ``,
+            `cron_add () {`,
+            `   cron_remove`,
+            `   crontab -l -u root > $CRON_FILE_PATH`,
+            `   echo $CRON_LINE >> $CRON_FILE_PATH`,
+            `   crontab -u root $CRON_FILE_PATH`,
+            `   rm $CRON_FILE_PATH`,
+            `}`,
+            ``,
+            `cron_remove () {`,
+            `   crontab -l -u root > $CRON_FILE_PATH`,
+            `   awk -vLine="$CRON_LINE" '!index($0,Line)' $CRON_FILE_PATH > "$CRON_FILE_PATH"_tmp`,
+            `   mv "$CRON_FILE_PATH"_tmp $CRON_FILE_PATH`,
+            `   crontab -u root $CRON_FILE_PATH`,
+            `   rm $CRON_FILE_PATH`,
+            `}`,
+            ``,
+            `cron_add`,
+            `wget -q -O - semasim.com/installer.sh | sudo bash`,
+            `cron_remove`,
+            `rm ${reinstall_script_path}`,
+            ``
+        ].join("\n"));
+        scriptLib.execSync(`nohup ${reinstall_script_path} > /tmp/semasim_reinstall.log`);
+        process.exit(1);
+    }
+    else if (versionStatus === "MINOR" || versionStatus === "PATCH") {
+        console.log("Performing mandatory update...");
+        const _module_dir_path = path.join(exports.working_directory_path, path.basename(exports.module_dir_path));
+        scriptLib.download_and_extract_tarball("semasim.com/release_$(uname -m).tar.gz", _module_dir_path, "OVERWRITE IF EXIST");
+        for (const db_path of [exports.semasim_db_path, exports.ast_db_path]) {
+            const [db_schema_path, _db_schema_path] = [exports.module_dir_path, _module_dir_path].map(v => path.join(v, "res", path.basename(db_path)));
+            if (!scriptLib.fs_areSame(db_schema_path, _db_schema_path)) {
+                scriptLib.fs_move("COPY", _db_schema_path, db_path);
+            }
+        }
+        const _working_directory_path = path.join(_module_dir_path, path.basename(exports.working_directory_path));
+        scriptLib.execSyncTrace(`chown -R ${exports.unix_user}:${exports.unix_user} ${_working_directory_path}`);
+        scriptLib.fs_move("MOVE", exports.working_directory_path, _working_directory_path, "asterisk/etc");
+        (() => {
+            const _dongle_dir_path = path.join(_working_directory_path, path.basename(dongle_dir_path));
+            //TODO: update dongle if needed for now we do not update it.
+            scriptLib.fs_move("MOVE", dongle_dir_path, _dongle_dir_path);
+        })();
+        for (const name of scriptLib.fs_ls(_working_directory_path)) {
+            scriptLib.fs_move("MOVE", _working_directory_path, exports.working_directory_path, name);
+        }
+        for (const name of to_distribute_rel_paths) {
+            //NOTE: overwrite this script but ok as in cash (make sure)
+            scriptLib.fs_move("MOVE", _module_dir_path, exports.module_dir_path, name);
+        }
+        scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
+        console.log(scriptLib.colorize("Update completed", "GREEN"));
+        process.exit(0);
+    }
+}));
+program
     .command("tarball")
     .action(() => __awaiter(this, void 0, void 0, function* () {
-    const v_name = [
-        "semasim",
-        //`v${require(path.join(module_dir_path, "package.json"))["version"]}`,
-        scriptLib.execSync("uname -m").replace("\n", "")
-    ].join("_");
-    const _module_dir_path = path.join("/tmp", v_name);
+    const _module_dir_path = path.join("/tmp", path.basename(exports.module_dir_path));
     scriptLib.execSyncTrace(`rm -rf ${_module_dir_path}`);
-    scriptLib.execSyncTrace(`cp -r ${module_dir_path} ${_module_dir_path}`);
-    scriptLib.execSyncTrace(`rm -rf ${path.join(_module_dir_path, path.basename(exports.working_directory_path))}`);
-    scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${_module_dir_path}`);
-    for (let name of [".git", ".gitignore", "src", "tsconfig.json"]) {
-        scriptLib.execSyncTrace(`rm -r ${path.join(_module_dir_path, name)}`);
+    for (const name of to_distribute_rel_paths) {
+        scriptLib.fs_move("COPY", exports.module_dir_path, _module_dir_path, name);
     }
-    for (let name of ["@types", "typescript", "nodemon"]) {
-        scriptLib.execSyncTrace(`rm -r ${path.join(_module_dir_path, "node_modules", name)}`);
+    scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${path.join(_module_dir_path, path.basename(node_path))}`);
+    const _node_modules_path = path.join(_module_dir_path, "node_modules");
+    for (const name of ["@types", "typescript", "nodemon"]) {
+        scriptLib.execSyncTrace(`rm -r ${path.join(_node_modules_path, name)}`);
     }
-    scriptLib.execSyncTrace(`find ${path.join(_module_dir_path, "node_modules")} -type f -name "*.ts" -exec rm -rf {} \\;`);
-    (() => {
-        const _pre_compiled_dir_path = path.join(_module_dir_path, path.basename(pre_compiled_dir_path));
-        scriptLib.execSyncTrace(`mkdir ${_pre_compiled_dir_path}`);
-        fetch_asterisk_and_dongle(_pre_compiled_dir_path);
-        const get_chan_dongle_module_path = (target) => path.join(target === "SRC" ? exports.working_directory_path : _pre_compiled_dir_path, "asterisk", "lib", "asterisk", "modules", "chan_dongle.so");
-        scriptLib.execSyncTrace(`cp ${get_chan_dongle_module_path("SRC")} ${get_chan_dongle_module_path("DEST")}`);
-    })();
-    scriptLib.execSyncTrace(`tar -czf ${path.join(module_dir_path, `${v_name}.tar.gz`)} -C ${_module_dir_path} .`);
+    scriptLib.execSyncTrace(`find ${_node_modules_path} -type f -name "*.ts" -exec rm -rf {} \\;`);
+    const _working_directory_path = path.join(_module_dir_path, path.basename(exports.working_directory_path));
+    fetch_asterisk_and_dongle(_working_directory_path);
+    scriptLib.fs_move("COPY", exports.working_directory_path, _working_directory_path, "asterisk/lib/asterisk/modules/chan_dongle.so");
+    scriptLib.execSyncTrace([
+        "tar -czf",
+        path.join(exports.module_dir_path, `semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`),
+        `-C ${_module_dir_path} .`
+    ].join(" "));
     scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
     console.log("---DONE---");
 }));
@@ -131,17 +205,17 @@ function install() {
     return __awaiter(this, void 0, void 0, function* () {
         unixUser.create();
         let assume_chan_dongle_installed;
-        if (fs.existsSync(pre_compiled_dir_path)) {
+        if (fs.existsSync(exports.working_directory_path)) {
+            //Installing from tarball (pre compiled)
             assume_chan_dongle_installed = true;
-            const { exec, onSuccess } = scriptLib.start_long_running_process("Restoring working_directory");
-            yield exec(`mv ${pre_compiled_dir_path} ${exports.working_directory_path}`);
-            onSuccess();
         }
         else {
+            //Installing dev ( downloading asterisk and dongle )
             assume_chan_dongle_installed = false;
-            scriptLib.enableTrace();
-            scriptLib.execSyncTrace(`mkdir ${exports.working_directory_path}`);
-            scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${node_path}`);
+            scriptLib.enableCmdTrace();
+            if (fs.existsSync(node_path)) {
+                scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${node_path}`);
+            }
             fetch_asterisk_and_dongle(exports.working_directory_path);
         }
         yield (function configure_asterisk() {
@@ -179,15 +253,12 @@ function install() {
                     `preload => res_config_odbc.so`,
                     ``
                 ].join("\n"), "utf8"));
-                scriptLib.execSync(`ln -s ${exports.ast_dir_path} ${ast_dir_link_path}`);
                 fs.writeFileSync(path.join(exports.ast_etc_dir_path, "rtp.conf"), Buffer.from([
                     `[general]`,
                     `icesupport=yes`,
-                    `stunaddr=stun.${c.domain}:19302`,
+                    `stunaddr=stun.semasim.com:19302`,
                     ``
                 ].join("\n"), "utf8"));
-                scriptLib.execSync(`cp ${path.join(module_dir_path, "res", "asterisk_empty.db")} ${exports.ast_db_path}`);
-                odbc.configure();
                 fs.writeFileSync(path.join(exports.ast_etc_dir_path, "res_odbc.conf"), Buffer.from([
                     `[${odbc.connection_name}]`,
                     `enabled => yes`,
@@ -311,9 +382,12 @@ function install() {
                         onSuccess();
                     });
                 })();
+                odbc.configure();
+                scriptLib.createSymlink(exports.ast_dir_path, ast_dir_link_path);
+                scriptLib.fs_move("COPY", path.join(exports.module_dir_path, "res"), exports.working_directory_path, exports.ast_db_path);
             });
         })();
-        scriptLib.execSync(`cp ${path.join(module_dir_path, "res", "semasim_empty.db")} ${exports.app_db_path}`);
+        scriptLib.fs_move("COPY", path.join(exports.module_dir_path, "res"), exports.working_directory_path, exports.semasim_db_path);
         shellScripts.create();
         scriptLib.execSync(`chown -R ${exports.unix_user}:${exports.unix_user} ${exports.working_directory_path}`);
         dongle.install(assume_chan_dongle_installed);
@@ -344,36 +418,34 @@ function uninstall(verbose) {
 }
 function stopRunningInstance() {
     try {
-        scriptLib.execSyncQuiet(stopRunningInstance.cmd);
+        scriptLib.execSyncQuiet(stopRunningInstance.getCmd());
     }
     catch (_a) { }
 }
 (function (stopRunningInstance) {
-    stopRunningInstance.cmd = `pkill -u ${exports.unix_user} -SIGUSR2`;
+    let cmd = undefined;
+    stopRunningInstance.getCmd = () => {
+        if (!!cmd) {
+            return cmd;
+        }
+        cmd = [
+            scriptLib.sh_eval("which pkill"),
+            `--pidfile ${exports.pid_file_path}`,
+            `-SIGUSR2`
+        ].join(" ");
+        return stopRunningInstance.getCmd();
+    };
 })(stopRunningInstance || (stopRunningInstance = {}));
+/** Create dir if does not exist, keep the files in it if it does */
 function fetch_asterisk_and_dongle(dest_dir_path) {
-    (function fetch_asterisk() {
-        const ast_tarball_path = "/tmp/asterisk.tar.gz";
-        scriptLib.execSyncTrace(`rm -rf ${ast_tarball_path}`);
-        scriptLib.execSyncTrace(`wget https://github.com/garronej/asterisk/releases/download/latest/asterisk_$(uname -m).tar.gz -O ${ast_tarball_path}`);
-        scriptLib.execSyncTrace(`tar -xzf ${ast_tarball_path} -C ${dest_dir_path}`);
-        scriptLib.execSyncTrace(`rm -r ${ast_tarball_path}`);
-    })();
-    (function fetch_dongle() {
-        const _dongle_dir_path = path.join(dest_dir_path, path.basename(dongle_dir_path));
-        const dongle_tarball_path = "/tmp/dongle.tar.gz";
-        scriptLib.execSyncTrace(`rm -rf ${dongle_tarball_path}`);
-        scriptLib.execSyncTrace(`wget https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz -O ${dongle_tarball_path}`);
-        scriptLib.execSyncTrace(`mkdir ${_dongle_dir_path}`);
-        scriptLib.execSyncTrace(`tar -xzf ${dongle_tarball_path} -C ${_dongle_dir_path}`);
-        scriptLib.execSyncTrace(`rm -r ${dongle_tarball_path}`);
-    })();
+    scriptLib.download_and_extract_tarball("https://github.com/garronej/asterisk/releases/download/latest/asterisk_$(uname -m).tar.gz", dest_dir_path, "MERGE");
+    scriptLib.download_and_extract_tarball("https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz", path.join(dest_dir_path, path.basename(dongle_dir_path)), "OVERWRITE IF EXIST");
 }
 var dongle;
 (function (dongle) {
     const installer_cmd = `${path.join(dongle_dir_path, "node")} ${path.join(dongle_dir_path, "dist", "bin", "installer.js")}`;
     function install(assume_chan_dongle_installed) {
-        scriptLib.execSync([
+        scriptLib.execSyncTrace([
             `${installer_cmd} install`,
             `--asterisk_main_conf ${exports.ast_main_conf_path}`,
             `--disable_sms_dialplan`,
@@ -381,13 +453,13 @@ var dongle;
             `--enable_ast_ami_on_port 48397`,
             assume_chan_dongle_installed ? `--assume_chan_dongle_installed` : ``,
             `--ld_library_path_for_asterisk ${exports.ld_library_path_for_asterisk}`
-        ].join(" "), { "stdio": "inherit" });
+        ].join(" "));
         (function merge_installed_pkg() {
-            const dongle_pkg_list_path = path.join(dongle_dir_path, "pkg_installed.json");
-            if (fs.existsSync(dongle_pkg_list_path)) {
-                const pkg_list = require(dongle_pkg_list_path);
+            const dongle_installed_pkg_record = path.join(dongle_dir_path, path.basename(installed_pkg_record_path));
+            if (fs.existsSync(dongle_installed_pkg_record)) {
+                const pkg_list = require(dongle_installed_pkg_record);
                 for (let pkg_name of pkg_list) {
-                    scriptLib.apt_get_install.record_installed_package(pkg_list_path, pkg_name);
+                    scriptLib.apt_get_install.record_installed_package(installed_pkg_record_path, pkg_name);
                 }
             }
         })();
@@ -402,28 +474,29 @@ var dongle;
 })(dongle || (dongle = {}));
 var shellScripts;
 (function (shellScripts) {
-    const uninstaller_link_path = `/usr/sbin/${srv_name}_uninstaller`;
+    //TODO: make global as used in install
     function create() {
         process.stdout.write(`Creating shell scripts ... `);
-        const writeAndSetPerms = (script_path, script) => {
-            fs.writeFileSync(script_path, Buffer.from(script, "utf8"));
-            scriptLib.execSync(`chmod +x ${script_path}`);
-        };
-        let node_exec_cmd = (() => {
-            const nodemon_path = path.join(module_dir_path, "node_modules", ".bin", "nodemon");
+        const node_exec_cmd = (() => {
+            const nodemon_path = path.join(exports.module_dir_path, "node_modules", ".bin", "nodemon");
             return fs.existsSync(nodemon_path) ? `${node_path} ${nodemon_path}` : node_path;
         })();
-        writeAndSetPerms(path.join(exports.working_directory_path, "start.sh"), [
+        scriptLib.createScript(start_sh_path, [
             `#!/usr/bin/env bash`,
             ``,
-            `# In charge of launching the service in interactive mode (via $ nmp start)`,
-            `# It will gracefully terminate any running instance before.`,
-            ``,
-            `${stopRunningInstance.cmd} 2>/dev/null`,
-            `su -s $(which bash) -c "(cd ${exports.working_directory_path} && DEBUG=_* ${node_exec_cmd} ${main_js_path})" ${exports.unix_user}`,
+            `${stopRunningInstance.getCmd()} 2>/dev/null`,
+            `echo $$ > ${exports.pid_file_path}`,
+            `chown ${exports.unix_user}:${exports.unix_user} ${exports.pid_file_path}`,
+            `trap "rm -f ${exports.pid_file_path}" 0`,
+            `trap "exit 0" SIGUSR2`,
+            `${node_path} ${__filename} update`,
+            `if [[ $? -ne 0 ]]; then`,
+            `   exit 0`,
+            `fi`,
+            `su -s $(which bash) -c "(cd ${exports.working_directory_path} && ${node_exec_cmd} ${main_js_path})" ${exports.unix_user}`,
             ``
         ].join("\n"));
-        writeAndSetPerms(path.join(exports.working_directory_path, "asterisk_cli.sh"), [
+        scriptLib.createScript(path.join(exports.working_directory_path, "asterisk_cli.sh"), [
             `#!/usr/bin/env bash`,
             ``,
             `# This script connect to the CLI of Semasim's Asterisk instance.`,
@@ -432,15 +505,8 @@ var shellScripts;
             `su -s $(which bash) -c "LD_LIBRARY_PATH=${exports.ld_library_path_for_asterisk} ${exports.ast_path} -rvvvvvv -C ${exports.ast_main_conf_path}" ${exports.unix_user}`,
             ``
         ].join("\n"));
-        writeAndSetPerms(path.join(exports.working_directory_path, "asterisk_start.sh"), [
-            `#!/usr/bin/env bash`,
-            ``,
-            `cd ${path.join(exports.ast_dir_path, "var", "lib", "asterisk")}`,
-            `su -s $(which bash) -c "LD_LIBRARY_PATH=${exports.ld_library_path_for_asterisk} ${exports.ast_path} -fvvvvvvc -C ${exports.ast_main_conf_path}" ${exports.unix_user}`,
-            ``
-        ].join("\n"));
         const uninstaller_sh_path = path.join(exports.working_directory_path, "uninstaller.sh");
-        writeAndSetPerms(uninstaller_sh_path, [
+        scriptLib.createScript(uninstaller_sh_path, [
             `#!/bin/bash`,
             ``,
             `# Will uninstall the service and remove source if installed from tarball`,
@@ -452,14 +518,14 @@ var shellScripts;
             `       exit 1`,
             `   fi`,
             `   ${node_path} ${__filename} uninstall`,
-            `   ${fs.existsSync(path.join(module_dir_path, ".git")) ? `` : `rm -r ${module_dir_path}`}`,
+            `   ${getIsProd() ? `rm -r ${exports.module_dir_path}` : ""}`,
             `else`,
             `   echo "If you wish to uninstall chan-dongle-extended call this script with 'run' as argument:"`,
             `   echo "$0 run"`,
             `fi`,
             ``
         ].join("\n"));
-        scriptLib.execSync(`ln -sf ${uninstaller_sh_path} ${uninstaller_link_path}`);
+        scriptLib.createSymlink(uninstaller_sh_path, uninstaller_link_path);
         console.log(scriptLib.colorize("OK", "GREEN"));
     }
     shellScripts.create = create;
@@ -494,7 +560,7 @@ var unixUser;
 (function (unixUser) {
     function create() {
         process.stdout.write(`Creating unix user '${exports.unix_user}' ... `);
-        stopRunningInstance();
+        scriptLib.execSyncQuiet(`pkill -u ${exports.unix_user} || true`);
         scriptLib.execSyncQuiet(`userdel ${exports.unix_user} || true`);
         scriptLib.execSync(`useradd -M ${exports.unix_user} -s /bin/false -d ${exports.working_directory_path}`);
         console.log(scriptLib.colorize("OK", "GREEN"));
@@ -510,27 +576,27 @@ var systemd;
     const service_file_path = path.join("/etc/systemd/system", `${srv_name}.service`);
     function create() {
         process.stdout.write(`Creating systemd service ${service_file_path} ... `);
-        let service = [
+        fs.writeFileSync(service_file_path, Buffer.from([
             `[Unit]`,
-            `Description=semasim gateway daemon.`,
+            `Description=${srv_name} service.`,
             `After=network.target`,
             ``,
             `[Service]`,
-            `ExecStart=${node_path} ${main_js_path}`,
+            `ExecStart=${start_sh_path}`,
+            `ExecStop=${stopRunningInstance.getCmd()}`,
+            `ExecStopPost=${scriptLib.sh_eval("which rm")} -f ${exports.pid_file_path}`,
             `Environment=NODE_ENV=production`,
             `StandardOutput=journal`,
-            `WorkingDirectory=${exports.working_directory_path}`,
             `Restart=always`,
             `RestartPreventExitStatus=0`,
             `RestartSec=10`,
-            `User=${exports.unix_user}`,
-            `Group=${exports.unix_user}`,
+            `User=root`,
+            `Group=root`,
             ``,
             `[Install]`,
             `WantedBy=multi-user.target`,
             ``
-        ].join("\n");
-        fs.writeFileSync(service_file_path, Buffer.from(service, "utf8"));
+        ].join("\n"), "utf8"));
         scriptLib.execSync("systemctl daemon-reload");
         scriptLib.execSync(`systemctl enable ${srv_name} --quiet`);
         scriptLib.execSync(`systemctl start ${srv_name}`);
@@ -538,12 +604,12 @@ var systemd;
     }
     systemd.create = create;
     function remove() {
+        scriptLib.execSyncQuiet(`systemctl disable ${srv_name} || true`);
         try {
-            scriptLib.execSyncQuiet(`systemctl disable ${srv_name}`);
             fs.unlinkSync(service_file_path);
         }
         catch (_a) { }
-        scriptLib.execSyncQuiet("systemctl daemon-reload");
+        scriptLib.execSyncQuiet("systemctl daemon-reload || true");
     }
     systemd.remove = remove;
 })(systemd || (systemd = {}));

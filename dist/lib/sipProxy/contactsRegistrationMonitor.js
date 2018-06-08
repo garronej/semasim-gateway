@@ -6,9 +6,8 @@ const types = require("../types");
 const backendSocket = require("./backendSocket");
 const ts_events_extended_1 = require("ts-events-extended");
 const misc_1 = require("./misc");
-require("colors");
-const _debug = require("debug");
-let debug = _debug("_sipProxy/asteriskSockets/contactsRegistrationMonitor");
+const logger = require("../../tools/logger");
+const debug = logger.debugFactory();
 //TODO: create proxy
 exports.evtContactRegistration = new ts_events_extended_1.SyncEvent();
 function getContacts(imsi) {

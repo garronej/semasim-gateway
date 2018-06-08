@@ -13,7 +13,6 @@ const md5 = require("md5");
 const installer_1 = require("../../bin/installer");
 const voiceCallBridge_1 = require("../voiceCallBridge");
 const sipProxy_1 = require("../sipProxy");
-const c = require("../_constants");
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
         let api = yield sqliteCustom.connectAndGetApi(installer_1.ast_db_path);
@@ -73,7 +72,7 @@ function createEndpointIfNeededAndGetPassword(imsi, renewPassword = undefined) {
                 "context": voiceCallBridge_1.sipCallContext,
                 "message_context": sipProxy_1.messagesDialplanContext,
                 "auth": imsi,
-                "from_domain": c.domain,
+                "from_domain": "semasim.com",
                 "ice_support": "yes",
                 "transport": "transport-tcp",
                 "dtmf_mode": "info"

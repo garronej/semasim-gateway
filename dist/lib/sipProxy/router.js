@@ -18,10 +18,8 @@ const asteriskSockets = require("./asteriskSockets");
 const contactRegistrationMonitor = require("./contactsRegistrationMonitor");
 const messages = require("./messages");
 const installer_1 = require("../../bin/installer");
-const c = require("./../_constants");
-require("colors");
-const _debug = require("debug");
-let debug = _debug("_sipProxy/router");
+const logger = require("../../tools/logger");
+const debug = logger.debugFactory();
 function createBackendSocket() {
     return __awaiter(this, void 0, void 0, function* () {
         let localIp;
@@ -29,9 +27,9 @@ function createBackendSocket() {
         while (true) {
             try {
                 localIp = yield networkTools.getActiveInterfaceIp();
-                console.log({ localIp });
+                debug({ localIp });
                 /** SRV _sips._tcp.semasim.com => [{ name: sip.semasim.com }] */
-                host = (yield networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
+                host = (yield networkTools.resolveSrv(`_sips._tcp.semasim.com`))[0].name;
                 break;
             }
             catch (error) {
@@ -39,7 +37,7 @@ function createBackendSocket() {
                 yield new Promise(resolve => setTimeout(resolve, 5000));
             }
         }
-        let backendSocketInst = new sipLibrary.Socket(tls.connect({ host, "port": c.gatewayPort }));
+        let backendSocketInst = new sipLibrary.Socket(tls.connect({ host, "port": 80 }));
         backendSocketInst.enableLogger({
             "socketId": "backendSocket",
             "remoteEndId": "BACKEND-GW-SIDE",
@@ -51,7 +49,7 @@ function createBackendSocket() {
             "outgoingTraffic": true,
             "colorizedTraffic": "IN",
             "ignoreApiTraffic": true
-        });
+        }, logger.log);
         backendSocket.set(backendSocketInst);
         backendSocketInst.evtClose.attachOnce(() => asteriskSockets.flush());
         backendSocketInst.evtRequest.attach((sipRequestReceived) => __awaiter(this, void 0, void 0, function* () {
@@ -103,7 +101,7 @@ function createAsteriskSocket(connectionId, backendSocketInst, localIp) {
         "incomingTraffic": false,
         "outgoingTraffic": false,
         "colorizedTraffic": "OUT"
-    });
+    }, logger.log);
     const clientSocketRemoteAddress = misc_1.cid.parse(connectionId).clientSocketRemoteAddress;
     //TODO: see if for webRtc it is desirable
     /** Hot-fix to make linphone ICE implementation compatible with asterisk */

@@ -5,10 +5,9 @@ import * as backendSocket from "./backendSocket";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import { readImsi, cid } from "./misc";
 
-import "colors";
+import * as logger from "../../tools/logger";
 
-import * as _debug from "debug";
-let debug = _debug("_sipProxy/asteriskSockets/contactsRegistrationMonitor");
+const debug = logger.debugFactory();
 
 //TODO: create proxy
 export const evtContactRegistration = new SyncEvent<types.Contact>();

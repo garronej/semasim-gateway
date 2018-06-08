@@ -6,8 +6,9 @@ dcMisc;
 import * as sipLibrary from "ts-sip";
 import * as types from "../types";
 
-import * as _debug from "debug";
-let debug = _debug("_sipProxy/messages");
+import * as logger from "../../tools/logger";
+
+const debug= logger.debugFactory();
 
 export const dialplanContext = "from-sip-message";
 

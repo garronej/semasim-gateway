@@ -10,24 +10,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const messages = require("./messages");
 const router = require("./router");
-require("colors");
-let launchCount = 0;
+const versionStatus_1 = require("../versionStatus");
+const logger = require("../../tools/logger");
+const debug = logger.debugFactory();
+let isFistLaunch = true;
 function launch() {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log({ launchCount });
-        if (!launchCount) {
+        if (isFistLaunch) {
+            isFistLaunch = false;
             yield messages.init();
         }
         let backendSocketInst = yield router.createBackendSocket();
         backendSocketInst.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
-            console.log("Backend socket closed, waiting and restarting");
-            let delay = (function getRandomArbitrary(min, max) {
-                return Math.floor(Math.random() * (max - min) + min);
-            })(3000, 5000);
-            yield new Promise(resolve => setTimeout(resolve, delay));
+            debug("Backend socket closed, waiting and restarting");
+            yield new Promise(resolve => setTimeout(resolve, versionStatus_1.genRetryDelay()));
+            if ("UP TO DATE" !== (yield versionStatus_1.getVersionStatus())) {
+                debug("Need update, restarting ...");
+                process.exit(1);
+            }
             launch();
         }));
-        launchCount++;
     });
 }
 exports.launch = launch;

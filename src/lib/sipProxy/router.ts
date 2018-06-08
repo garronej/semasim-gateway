@@ -9,13 +9,9 @@ import * as contactRegistrationMonitor from "./contactsRegistrationMonitor";
 import * as messages from "./messages";
 import { ast_sip_port } from "../../bin/installer";
 
+import * as logger from "../../tools/logger";
 
-import * as c from "./../_constants";
-
-import "colors";
-
-import * as _debug from "debug";
-let debug = _debug("_sipProxy/router");
+const debug= logger.debugFactory();
 
 export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
@@ -28,10 +24,10 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
 
             localIp = await networkTools.getActiveInterfaceIp();
 
-            console.log({ localIp });
+            debug({ localIp });
 
             /** SRV _sips._tcp.semasim.com => [{ name: sip.semasim.com }] */
-            host = (await networkTools.resolveSrv(`_sips._tcp.${c.domain}`))[0].name;
+            host = (await networkTools.resolveSrv(`_sips._tcp.semasim.com`))[0].name;
 
             break;
 
@@ -46,7 +42,7 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
     }
 
     let backendSocketInst = new sipLibrary.Socket(
-        tls.connect({ host, "port": c.gatewayPort })
+        tls.connect({ host, "port": 80 })
     );
 
     backendSocketInst.enableLogger({
@@ -60,7 +56,7 @@ export async function createBackendSocket(): Promise<sipLibrary.Socket> {
         "outgoingTraffic": true,
         "colorizedTraffic": "IN",
         "ignoreApiTraffic": true
-    });
+    }, logger.log);
 
     backendSocket.set(backendSocketInst);
 
@@ -151,7 +147,7 @@ function createAsteriskSocket(
         "incomingTraffic": false,
         "outgoingTraffic": false,
         "colorizedTraffic": "OUT"
-    });
+    }, logger.log);
 
     const clientSocketRemoteAddress= cid.parse(connectionId).clientSocketRemoteAddress;
 

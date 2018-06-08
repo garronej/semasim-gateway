@@ -7,17 +7,13 @@ import * as types from "./types";
 import { semasim as db} from "./db";
 import * as messageDispatcher from "./messagesDispatcher";
 import * as sipLibrary from "ts-sip";
+import * as logger from "../tools/logger";
 
-import * as _debug from "debug";
-const debug = _debug("_voiceCallBridge");
+const debug = logger.debugFactory();
 
 const gain = `${4000}`;
 
 const jitterBuffer = {
-    //type: "fixed",
-    //params: "2500,10000"
-    //type: "fixed",
-    //params: "default"
     "type": "adaptive",
     "params": "default"
 };
@@ -198,41 +194,31 @@ async function fromDongle(channel: agi.AGIChannel) {
 
 async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
-    let _ = channel.relax;
+    const _ = channel.relax;
 
     debug("Call originated from sip");
 
-    let contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
+    const contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
 
-    console.log({ contact_uri });
+    const call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
 
-    let call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
-
-    console.log({ call_id });
-
-    let contact = sipProxy.getContacts()
+    const contact = sipProxy.getContacts()
         .find(({ uri }) => uri === contact_uri)!
         ;
-    
-    console.log({ contact });
 
-    let dongle = Array.from(Dc.getInstance().usableDongles.values())
+    const dongle = Array.from(Dc.getInstance().usableDongles.values())
         .find(({ sim }) => sim.imsi === contact.uaSim.imsi)
         ;
-    
-    console.log({ dongle });
 
     if (!dongle) {
 
         //TODO: Improve
-        console.log("DONGLE is not usable");
+        debug("DONGLE is not usable");
         return;
 
     }
 
-    let number = channel.request.extension;
-
-    console.log({ number });
+    const number = channel.request.extension;
 
     ami.evt.waitFor(
         e => (
@@ -251,8 +237,6 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
 
     await _.setVariable("AGC(rx)", gain);
-
-    console.log("avant dial");
 
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
     await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);

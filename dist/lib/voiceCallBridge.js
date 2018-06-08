@@ -16,14 +16,10 @@ const sipProxy = require("./sipProxy");
 const db_1 = require("./db");
 const messageDispatcher = require("./messagesDispatcher");
 const sipLibrary = require("ts-sip");
-const _debug = require("debug");
-const debug = _debug("_voiceCallBridge");
+const logger = require("../tools/logger");
+const debug = logger.debugFactory();
 const gain = `${4000}`;
 const jitterBuffer = {
-    //type: "fixed",
-    //params: "2500,10000"
-    //type: "fixed",
-    //params: "default"
     "type": "adaptive",
     "params": "default"
 };
@@ -120,25 +116,20 @@ function fromDongle(channel) {
 }
 function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function* () {
-        let _ = channel.relax;
+        const _ = channel.relax;
         debug("Call originated from sip");
-        let contact_uri = yield _.getVariable("CHANNEL(pjsip,target_uri)");
-        console.log({ contact_uri });
-        let call_id = (yield _.getVariable("CHANNEL(pjsip,call-id)"));
-        console.log({ call_id });
-        let contact = sipProxy.getContacts()
+        const contact_uri = yield _.getVariable("CHANNEL(pjsip,target_uri)");
+        const call_id = (yield _.getVariable("CHANNEL(pjsip,call-id)"));
+        const contact = sipProxy.getContacts()
             .find(({ uri }) => uri === contact_uri);
-        console.log({ contact });
-        let dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
+        const dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
             .find(({ sim }) => sim.imsi === contact.uaSim.imsi);
-        console.log({ dongle });
         if (!dongle) {
             //TODO: Improve
-            console.log("DONGLE is not usable");
+            debug("DONGLE is not usable");
             return;
         }
-        let number = channel.request.extension;
-        console.log({ number });
+        const number = channel.request.extension;
         ami.evt.waitFor(e => (e["event"] === "RTCPSent" &&
             e["channelstatedesc"] === "Ring" &&
             e["channel"] === channel.request.channel), 30000)
@@ -147,7 +138,6 @@ function fromSip(channel) {
             .catch(() => { });
         yield _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
         yield _.setVariable("AGC(rx)", gain);
-        console.log("avant dial");
         //TODO: there is a delay for call terminated when web client abruptly disconnect.
         yield _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
         //TODO: Increase volume on TX
