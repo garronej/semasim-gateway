@@ -662,7 +662,7 @@ if (require.main === module) {
 
     console.log("Run standalone");
 
-    require("rejection-tracker").main(__dirname, "..", "..");
+    process.once("unhandledRejection", error => { throw error; });
 
     testDbSemasim().then(() => process.exit(0));
 

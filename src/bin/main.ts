@@ -1,55 +1,69 @@
 import * as fs from "fs";
 import { launch } from "../lib/launch";
-import * as os from "os";
-import { unix_user, pid_file_path, working_directory_path, module_dir_path } from "./installer";
-import * as logger from "../tools/logger"
-import * as path from "path";
-const debug = logger.debugFactory("main");
+import * as scriptLib from "scripting-tools";
+import * as logger from "logger";
 
-if( os.userInfo().username !== unix_user ){
-    throw new Error(`Must be executed by unix user: ${unix_user}`);
-}
+const pidfile_path= "./chan_dongle.pid";
+const logfile_path= "./current.log";
 
-fs.writeFileSync(pid_file_path, Buffer.from(process.pid.toString(), "utf8"));
+logger.file.enable(logfile_path, 900000);
 
-logger.init(
-    path.join(working_directory_path, "curr.log"),
-    path.join(module_dir_path, "dist")
-);
+fs.writeFileSync(pidfile_path, Buffer.from(process.pid.toString(), "utf8"));
 
-process.on("warning", w => debug("Process waning", w));
+let exitCode = 1;
 
+process.once("SIGUSR2", () => {
 
-function cleanupAndExit(code: number) {
+    logger.log("Stop script called (SIGUSR2)");
 
-    debug(`cleaning up and exiting with code ${code}`);
+    exitCode= 0;
 
-    if (code !== 0) {
+    process.emit("beforeExit", NaN);
 
-        debug("Create crash report");
+});
 
-        logger.createLogfileBackup(path.join(working_directory_path,"crash.log"));
+process.removeAllListeners("uncaughtException");
+
+process.once("uncaughtException", error => {
+
+    logger.log(error);
+
+    process.emit("beforeExit", NaN);
+
+});
+
+process.removeAllListeners("unhandledRejection");
+
+process.once("unhandledRejection", error => {
+
+    logger.log(error);
+
+    process.emit("beforeExit", NaN);
+
+});
+
+process.once("beforeExit", async () => {
+
+    process.removeAllListeners("unhandledRejection");
+    process.on("unhandledRejection", ()=> { });
+
+    process.removeAllListeners("uncaughtException");
+    process.on("uncaughtException", ()=> { });
+
+    try{ await logger.log("---end---"); } catch{}
+
+    if(  exitCode !== 0 ){
+
+        try{ scriptLib.execSync(`cp ${logfile_path} ./previous_crash.log`); }catch{}
 
     }
 
-    logger.deleteLogfile();
+    try{ fs.unlinkSync(logfile_path); }catch{}
 
-    fs.unlinkSync(pid_file_path); 
+    try{ fs.unlinkSync(pidfile_path); }catch{}
 
-    process.exit(code);
+    process.exit(exitCode);
 
-}
-
-process.once("SIGINT", () => { debug("Ctrl+C pressed ( SIGINT )"); cleanupAndExit(2); });
-
-process.once("SIGUSR2", () => { debug("Stop script called (SIGUSR2)"); cleanupAndExit(0); });
-
-process.once("beforeExit", code => cleanupAndExit(code));
-
-process.removeAllListeners("uncaughtException");
-process.once("uncaughtException", error => { debug("uncaughtException", error); cleanupAndExit(1); });
-
-process.removeAllListeners("unhandledRejection");
-process.once("unhandledRejection", error => { debug("unhandledRejection", error); cleanupAndExit(1); });
+});
 
 launch();

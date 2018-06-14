@@ -9,7 +9,7 @@ import * as contactRegistrationMonitor from "./contactsRegistrationMonitor";
 import * as messages from "./messages";
 import { ast_sip_port } from "../../bin/installer";
 
-import * as logger from "../../tools/logger";
+import * as logger from "logger";
 
 const debug= logger.debugFactory();
 

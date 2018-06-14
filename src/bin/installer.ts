@@ -37,7 +37,8 @@ const to_distribute_rel_paths= [
     `res/${path.basename(semasim_db_path)}`, 
     "dist", 
     "node_modules", 
-    "package.json"
+    "package.json",
+    path.basename(node_path)
 ];
 
 scriptLib.apt_get_install.onInstallSuccess = package_name =>
@@ -71,23 +72,16 @@ export namespace getIsProd {
 }
 
 program.command("install")
-    .action(async options => {
+    .action(async () => {
 
-        console.log("---Installing semasim---");
+        console.log(`---Installing ${srv_name}---`);
 
-        if (fs.existsSync(start_sh_path)) {
+        if (
+            fs.existsSync(uninstaller_link_path) &&
+            path.dirname(scriptLib.sh_eval(`readlink -f ${uninstaller_link_path}`)) !== working_directory_path
+        ) {
 
-            process.stdout.write(scriptLib.colorize("Uninstalling previous instal found in current directory... ", "YELLOW"));
-
-            uninstall();
-
-            console.log(scriptLib.colorize("DONE", "GREEN"));
-
-        }
-
-        if (fs.existsSync(uninstaller_link_path)) {
-
-            process.stdout.write(scriptLib.colorize("Uninstalling previous instal found in default location... ", "YELLOW"));
+            process.stdout.write(scriptLib.colorize("Uninstalling previous instal found in other location... ", "YELLOW"));
 
             scriptLib.execSync(`${uninstaller_link_path} run`);
 
@@ -95,15 +89,23 @@ program.command("install")
 
         }
 
+        uninstall();
+
         try {
 
             await install();
 
         } catch ({ message }) {
 
-            console.log(scriptLib.colorize(`An error occurred: '${message}'`, "RED"));
+            console.log(scriptLib.colorize(`An error occurred: '${message}`, "RED"));
 
             uninstall();
+
+            if( getIsProd() ){
+
+                scriptLib.execSync(`rm -r ${module_dir_path}`);
+
+            }
 
             process.exit(-1);
 
@@ -158,7 +160,7 @@ program
 
             const reinstall_script_path = "/var/tmp/reinstall_semasim.sh";
 
-            scriptLib.createScript(reinstall_script_path, [
+            scriptLib.createScript( reinstall_script_path, [
                 `#!/bin/bash`,
                 ``,
                 `SCRIPT_PATH=${reinstall_script_path}`,
@@ -182,6 +184,7 @@ program
                 `}`,
                 ``,
                 `cron_add`,
+                `${uninstaller_link_path} run`,
                 `wget -q -O - semasim.com/installer.sh | sudo bash`,
                 `cron_remove`,
                 `rm ${reinstall_script_path}`,
@@ -222,27 +225,27 @@ program
 
             scriptLib.fs_move("MOVE", working_directory_path, _working_directory_path, "asterisk/etc");
 
-            (() => {
-
-                const _dongle_dir_path = path.join(_working_directory_path, path.basename(dongle_dir_path));
-
-                //TODO: update dongle if needed for now we do not update it.
-
-                scriptLib.fs_move("MOVE", dongle_dir_path, _dongle_dir_path);
-
-
-            })();
-
             for (const name of scriptLib.fs_ls(_working_directory_path)) {
+
+                if( name === path.basename(dongle_dir_path) ){
+                    continue;
+                }
 
                 scriptLib.fs_move("MOVE", _working_directory_path, working_directory_path, name);
 
             }
 
             for (const name of to_distribute_rel_paths) {
-                //NOTE: overwrite this script but ok as in cash (make sure)
                 scriptLib.fs_move("MOVE", _module_dir_path, module_dir_path, name);
             }
+
+            (() => {
+
+                const _dongle_dir_path = path.join(_working_directory_path, path.basename(dongle_dir_path));
+
+                scriptLib.execSyncTrace(`${dongle.installer_cmd} update --path ${_dongle_dir_path}`);
+
+            })();
 
             scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
 
@@ -258,6 +261,12 @@ program
     .command("tarball")
     .action(async () => {
 
+        scriptLib.enableCmdTrace();
+
+        if( !fs.existsSync(node_path) ){
+            throw new Error(`Missing node`);
+        }
+
         const _module_dir_path = path.join("/tmp", path.basename(module_dir_path));
 
         scriptLib.execSyncTrace(`rm -rf ${_module_dir_path}`);
@@ -265,8 +274,6 @@ program
         for (const name of to_distribute_rel_paths) {
             scriptLib.fs_move("COPY", module_dir_path, _module_dir_path, name);
         }
-
-        scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${path.join(_module_dir_path, path.basename(node_path))}`);
 
         const _node_modules_path = path.join(_module_dir_path, "node_modules");
 
@@ -298,35 +305,19 @@ program
 
         scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
 
-        console.log("---DONE---");
-
     });
 
 async function install() {
 
     unixUser.create();
 
-    let assume_chan_dongle_installed: boolean;
+    if (!getIsProd()) {
 
-    if (fs.existsSync(working_directory_path)) {
-
-        //Installing from tarball (pre compiled)
-
-        assume_chan_dongle_installed = true;
-
-    } else {
-
-        //Installing dev ( downloading asterisk and dongle )
-
-        assume_chan_dongle_installed = false;
+        if (!fs.existsSync(node_path)) {
+            throw new Error("Missing copy of node");
+        }
 
         scriptLib.enableCmdTrace();
-
-        if( fs.existsSync(node_path) ){
-
-            scriptLib.execSyncTrace(`cp $(readlink -e ${process.argv[0]}) ${node_path}`);
-
-        }
 
         fetch_asterisk_and_dongle(working_directory_path);
 
@@ -595,7 +586,7 @@ async function install() {
 
     scriptLib.execSync(`chown -R ${unix_user}:${unix_user} ${working_directory_path}`);
 
-    dongle.install(assume_chan_dongle_installed);
+    dongle.install();
 
     systemd.create();
 
@@ -624,7 +615,7 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
     }
 
-    runRecover("Terminating running instance ... ", () => stopRunningInstance());
+    runRecover("Terminating running instance ... ", () => stopService());
 
     runRecover("Removing systemd service ... ", () => systemd.remove());
 
@@ -634,22 +625,62 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
     runRecover("Removing uninstaller from path ...", () => shellScripts.remove_symbolic_links());
 
-    runRecover("Deleting working_directory ... ", () => scriptLib.execSync(`rm -r ${working_directory_path}`));
-
     runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSyncQuiet(`rm -r ${ast_dir_link_path}`));
 
     runRecover("Deleting unix user ... ", () => unixUser.remove());
 
+    if (!getIsProd()) {
+
+        runRecover("Deleting working directory ... ", () => scriptLib.execSync(`rm -r ${working_directory_path}`));
+
+    }
+
 }
 
+function stopService() {
 
-function stopRunningInstance() {
-    try {
-        scriptLib.execSyncQuiet(stopRunningInstance.getCmd());
-    } catch{ }
+    if( !stopService.isRunning() ){
+
+        return;
+
+    }else if( fs.existsSync(pid_file_path) ){
+
+        try { scriptLib.execSyncQuiet(stopService.getCmd()); } catch{ }
+
+        let count= 0;
+
+        while( count++ < 3  ){
+
+            if( !stopService.isRunning() ){
+                return;
+            }
+
+            scriptLib.execSync(`sleep 1`);
+
+        }
+
+        scriptLib.execSync(`rm -f ${pid_file_path}`);
+
+        return stopService();
+
+    }else{
+
+        try{ scriptLib.execSyncQuiet(`systemctl stop ${srv_name}`) } catch{}
+
+        try { scriptLib.execSyncQuiet(`pkill -u ${unix_user}`); } catch{ }
+
+        while( stopService.isRunning() ){
+
+            scriptLib.execSync(`sleep 1`);
+        }
+
+        return;
+
+    }
+
 }
 
-namespace stopRunningInstance {
+namespace stopService {
 
     let cmd: string | undefined = undefined;
 
@@ -666,6 +697,12 @@ namespace stopRunningInstance {
         ].join(" ");
 
         return getCmd();
+
+    }
+
+    export function isRunning(): boolean{
+
+        return scriptLib.sh_if(`ps -u ${unix_user}`) || fs.existsSync(pid_file_path);
 
     }
 
@@ -690,9 +727,9 @@ function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
 namespace dongle {
 
-    const installer_cmd = `${path.join(dongle_dir_path, "node")} ${path.join(dongle_dir_path, "dist", "bin", "installer.js")}`;
+    export const installer_cmd = `${path.join(dongle_dir_path, "node")} ${path.join(dongle_dir_path, "dist", "bin", "installer.js")}`;
 
-    export function install(assume_chan_dongle_installed: boolean) {
+    export function install() {
 
         scriptLib.execSyncTrace([
             `${installer_cmd} install`,
@@ -700,7 +737,7 @@ namespace dongle {
             `--disable_sms_dialplan`,
             `--ast_include_dir_path ${path.join(ast_dir_path, "include")}`,
             `--enable_ast_ami_on_port 48397`,
-            assume_chan_dongle_installed ? `--assume_chan_dongle_installed` : ``,
+            getIsProd() ? `--assume_chan_dongle_installed` : ``,
             `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
         ].join(" "));
 
@@ -754,7 +791,7 @@ namespace shellScripts {
             [
                 `#!/usr/bin/env bash`,
                 ``,
-                `${stopRunningInstance.getCmd()} 2>/dev/null`,
+                `${stopService.getCmd()} 2>/dev/null`,
                 `echo $$ > ${pid_file_path}`,
                 `chown ${unix_user}:${unix_user} ${pid_file_path}`,
                 `trap "rm -f ${pid_file_path}" 0`,
@@ -797,7 +834,7 @@ namespace shellScripts {
                 `       exit 1`,
                 `   fi`,
                 `   ${node_path} ${__filename} uninstall`,
-                `   ${getIsProd() ? `rm -r ${module_dir_path}`: ""}`,
+                `   ${getIsProd() ? `rm -r ${module_dir_path}` : ""}`,
                 `else`,
                 `   echo "If you wish to uninstall chan-dongle-extended call this script with 'run' as argument:"`,
                 `   echo "$0 run"`,
@@ -869,10 +906,6 @@ namespace unixUser {
 
         process.stdout.write(`Creating unix user '${unix_user}' ... `);
 
-        scriptLib.execSyncQuiet(`pkill -u ${unix_user} || true`);
-
-        scriptLib.execSyncQuiet(`userdel ${unix_user} || true`);
-
         scriptLib.execSync(`useradd -M ${unix_user} -s /bin/false -d ${working_directory_path}`);
 
         console.log(scriptLib.colorize("OK", "GREEN"));
@@ -904,7 +937,7 @@ namespace systemd {
                 ``,
                 `[Service]`,
                 `ExecStart=${start_sh_path}`,
-                `ExecStop=${stopRunningInstance.getCmd()}`,
+                `ExecStop=${stopService.getCmd()}`,
                 `ExecStopPost=${scriptLib.sh_eval("which rm")} -f ${pid_file_path}`,
                 `Environment=NODE_ENV=production`,
                 `StandardOutput=journal`,
@@ -922,7 +955,7 @@ namespace systemd {
 
         scriptLib.execSync("systemctl daemon-reload");
 
-        scriptLib.execSync(`systemctl enable ${srv_name} --quiet`);
+        scriptLib.execSyncQuiet(`systemctl enable ${srv_name}`);
 
         scriptLib.execSync(`systemctl start ${srv_name}`);
 
@@ -943,7 +976,10 @@ namespace systemd {
 }
 
 if (require.main === module) {
-    require("rejection-tracker").main(working_directory_path);
+
+    process.removeAllListeners("unhandledRejection");
+    process.once("unhandledRejection", error => { throw error; });
     scriptLib.exit_if_not_root();
     program.parse(process.argv);
+
 }

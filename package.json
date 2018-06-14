@@ -5,8 +5,7 @@
   "types": "./dist/index.d.ts",
   "version": "0.12.0",
   "scripts": {
-    "postinstall": "npm run remove-bold-color",
-    "remove-bold-color": "sed -i '/bold: string;/d' ./node_modules/@types/colors/index.d.ts || true",
+    "postinstall": "cp $(readlink -e $(which node)) ./node",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
     "start": "sudo ./working_directory/start.sh",
@@ -22,12 +21,10 @@
   "dependencies": {
     "async-lock": "^1.0.0",
     "chan-dongle-extended-client": "github:garronej/chan-dongle-extended-client",
-    "colors": "^1.1.2",
     "commander": "^2.11.0",
-    "debug": "^2.6.8",
     "ini-extended": "github:garronej/ini-extended",
+    "logger": "github:garronej/logger",
     "network": "^0.3.2",
-    "rejection-tracker": "github:garronej/rejection-tracker",
     "scripting-tools": "github:garronej/scripting-tools",
     "sip": "github:garronej/sip.js#no-websocket",
     "sqlite": "^2.9.1",
@@ -36,16 +33,14 @@
     "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
     "ts-sip": "github:garronej/ts-sip",
-    "winston": "^2.4.2",
     "ws": "^4.0.0"
   },
   "devDependencies": {
     "@types/async-lock": "0.0.20",
-    "@types/colors": "^1.1.3",
     "@types/debug": "0.0.29",
     "@types/node": "^6.0.96",
     "@types/ws": "^4.0.0",
     "nodemon": "^1.11.0",
-    "typescript": "^2.7.1"
+    "typescript": "^2.9.1"
   }
 }

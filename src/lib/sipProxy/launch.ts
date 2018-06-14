@@ -2,7 +2,7 @@
 import * as messages from "./messages";
 import * as router from "./router";
 import { getVersionStatus, genRetryDelay } from "../versionStatus";
-import * as logger from "../../tools/logger";
+import * as logger from "logger";
 
 const debug = logger.debugFactory();
 

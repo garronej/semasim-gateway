@@ -6,7 +6,7 @@ dcMisc;
 import * as sipLibrary from "ts-sip";
 import * as types from "../types";
 
-import * as logger from "../../tools/logger";
+import * as logger from "logger";
 
 const debug= logger.debugFactory();
 

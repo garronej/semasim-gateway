@@ -16,7 +16,7 @@ import {
     ld_library_path_for_asterisk
 } from "../bin/installer";
 import * as path from "path";
-import * as logger from "../tools/logger";
+import * as logger from "logger";
 
 const debug = logger.debugFactory();
 

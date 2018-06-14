@@ -7,7 +7,7 @@ import * as types from "./types";
 import { semasim as db} from "./db";
 import * as messageDispatcher from "./messagesDispatcher";
 import * as sipLibrary from "ts-sip";
-import * as logger from "../tools/logger";
+import * as logger from "logger";
 
 const debug = logger.debugFactory();
 

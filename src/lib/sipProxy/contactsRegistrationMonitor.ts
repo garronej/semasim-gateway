@@ -5,7 +5,7 @@ import * as backendSocket from "./backendSocket";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import { readImsi, cid } from "./misc";
 
-import * as logger from "../../tools/logger";
+import * as logger from "logger";
 
 const debug = logger.debugFactory();
 

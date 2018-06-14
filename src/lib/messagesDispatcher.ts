@@ -6,7 +6,7 @@ import {
 import { semasim as db } from "./db";
 import * as sipProxy from "./sipProxy";
 import * as types from "./types";
-import * as logger from "../tools/logger";
+import * as logger from "logger";
 
 const debug = logger.debugFactory();
 

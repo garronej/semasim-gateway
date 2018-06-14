@@ -1,1 +1,0 @@
-export declare const HOW_TO = "\n\n    Import sub-modules manually!\n\n    example: \n\n    import * as types from \"semasim-gateway/dist/lib/types\";\n\n    or ( to prevent typescript from checking all the module dep ):\n\n    import * as types from \"../../node_modules/semasim-gateway/dist/lib/types\";\n\n";

@@ -1,7 +1,7 @@
 import { module_dir_path, getIsProd } from "../bin/installer";
 import * as path from "path";
 import * as scriptLib from "scripting-tools";
-const localVersion = require(path.join(module_dir_path, "package.json"))["version"];
+const localVersion: string = require(path.join(module_dir_path, "package.json"))["version"];
 
 function genIntegerInRange(min, max): number {
     return Math.floor(Math.random() * (max - min) + min);
