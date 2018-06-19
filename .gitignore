@@ -38,10 +38,12 @@ jspm_packages
 
 .vscode
 
-node
-working_directory
-pre_compiled
-semasim_*.tar.gz
-pkg_installed.json
+/node
+/working_directory
+/pre_compiled
+/semasim_*.tar.gz
+/pkg_installed.json
+/dist
+
 
 
