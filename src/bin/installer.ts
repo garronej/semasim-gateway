@@ -202,7 +202,7 @@ program
             const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
             scriptLib.download_and_extract_tarball(
-                "semasim.com/release_$(uname -m).tar.gz",
+                "semasim.com/semasim_$(uname -m).tar.gz",
                 _module_dir_path,
                 "OVERWRITE IF EXIST"
             );
@@ -363,8 +363,7 @@ async function install() {
                     `preload => res_odbc.so`,
                     `preload => res_config_odbc.so`,
                     ``
-                ].join("\n"),
-                "utf8"
+                ].join("\n"), "utf8"
             )
         );
 
@@ -639,19 +638,19 @@ function uninstall(verbose?: "VERBOSE" | undefined) {
 
 function stopService() {
 
-    if( !stopService.isRunning() ){
+    if (!stopService.isRunning()) {
 
         return;
 
-    }else if( fs.existsSync(pid_file_path) ){
+    } else if (fs.existsSync(pid_file_path)) {
 
         try { scriptLib.execSyncQuiet(stopService.getCmd()); } catch{ }
 
-        let count= 0;
+        let count = 0;
 
-        while( count++ < 3  ){
+        while (count++ < 3) {
 
-            if( !stopService.isRunning() ){
+            if (!stopService.isRunning()) {
                 return;
             }
 
@@ -663,13 +662,13 @@ function stopService() {
 
         return stopService();
 
-    }else{
+    } else {
 
-        try{ scriptLib.execSyncQuiet(`systemctl stop ${srv_name}`) } catch{}
+        try { scriptLib.execSyncQuiet(`systemctl stop ${srv_name}`) } catch{ }
 
         try { scriptLib.execSyncQuiet(`pkill -u ${unix_user}`); } catch{ }
 
-        while( stopService.isRunning() ){
+        while (stopService.isRunning()) {
 
             scriptLib.execSync(`sleep 1`);
         }
@@ -700,7 +699,7 @@ namespace stopService {
 
     }
 
-    export function isRunning(): boolean{
+    export function isRunning(): boolean {
 
         return scriptLib.sh_if(`ps -u ${unix_user}`) || fs.existsSync(pid_file_path);
 
@@ -737,7 +736,7 @@ namespace dongle {
             `--disable_sms_dialplan`,
             `--ast_include_dir_path ${path.join(ast_dir_path, "include")}`,
             `--enable_ast_ami_on_port 48397`,
-            getIsProd() ? `--assume_chan_dongle_installed` : ``,
+            getIsProd() ? "--assume_chan_dongle_installed" : "",
             `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
         ].join(" "));
 
@@ -771,8 +770,6 @@ namespace dongle {
 }
 
 namespace shellScripts {
-
-    //TODO: make global as used in install
 
     export function create(): void {
 
