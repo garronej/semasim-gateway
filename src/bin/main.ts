@@ -46,6 +46,8 @@ scriptLib.createService({
                                 process.emit("beforeExit", process.exitCode = 0);
                                 break;
                             default:
+                                //TODO: restart here because if the process is killed we will have an error here
+                                //At the same time if the process is killed we should not restart maybe.
                                 reject(new Error("Update failed"));
                         }
 

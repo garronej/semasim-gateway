@@ -15,6 +15,8 @@ export function genRetryDelay(){
 
     }else{
 
+        console.log("Dev mode, waiting only one second");
+
         return 1000;
 
     }

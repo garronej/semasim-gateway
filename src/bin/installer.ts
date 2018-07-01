@@ -164,7 +164,7 @@ async function program_action_update() {
         const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
         await scriptLib.download_and_extract_tarball(
-            "semasim.com/semasim_$(uname -m).tar.gz",
+            `semasim.com/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
             _module_dir_path,
             "OVERWRITE IF EXIST"
         );
