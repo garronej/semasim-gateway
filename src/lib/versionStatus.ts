@@ -30,9 +30,11 @@ export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINO
         try {
 
             //TODO: make sure that throw if backend is down
-            serverVersion = await scriptLib.exec(`wget -qO- semasim.com/api/version`);
+            serverVersion= await scriptLib.web_get("semasim.com/api/version");
 
         } catch{
+
+            console.log("Semasim.com is down");
 
             await new Promise(
                 resolve => setTimeout(resolve, genRetryDelay())

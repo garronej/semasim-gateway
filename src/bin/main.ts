@@ -1,69 +1,121 @@
-import * as fs from "fs";
-import { launch } from "../lib/launch";
 import * as scriptLib from "scripting-tools";
-import * as logger from "logger";
 
-const pidfile_path= "./chan_dongle.pid";
-const logfile_path= "./current.log";
+scriptLib.createService({
+    "rootProcess": async () => {
 
-logger.file.enable(logfile_path, 900000);
+        const [
+            { node_path, pidfile_path, unix_user, installer_js_path },
+            child_process,
+            logger,
+        ] = await Promise.all([
+            import("./installer"),
+            import("child_process"),
+            import("logger")
+        ]);
 
-fs.writeFileSync(pidfile_path, Buffer.from(process.pid.toString(), "utf8"));
+        const childProcessDebug = logger.debugFactory("updater");
 
-let exitCode = 1;
+        return {
+            pidfile_path,
+            "assert_unix_user": "root",
+            "daemon_unix_user": unix_user,
+            "daemon_node_path": node_path,
+            "preForkTask": async terminateChildProcesses => new Promise<void>((resolve, reject) => {
 
-process.once("SIGUSR2", () => {
+                const childProcess = child_process.exec(`${node_path} ${installer_js_path} update`);
 
-    logger.log("Stop script called (SIGUSR2)");
+                childProcess.stdout.on("data", data => childProcessDebug(data.toString()));
 
-    exitCode= 0;
+                childProcess
+                    .once("error", error => { 
 
-    process.emit("beforeExit", NaN);
+                        terminateChildProcesses.impl = ()=> Promise.resolve();
 
-});
+                        reject(error); 
 
-process.removeAllListeners("uncaughtException");
+                    })
+                    .once("close", code => {
 
-process.once("uncaughtException", error => {
+                        terminateChildProcesses.impl = () => Promise.resolve();
 
-    logger.log(error);
+                        switch (code) {
+                            case 0:
+                                resolve();
+                                break;
+                            case 43:
+                                process.emit("beforeExit", process.exitCode = 0);
+                                break;
+                            default:
+                                reject(new Error("Update failed"));
+                        }
 
-    process.emit("beforeExit", NaN);
+                    })
+                    ;
 
-});
+                terminateChildProcesses.impl = () => new Promise(resolve_ => {
 
-process.removeAllListeners("unhandledRejection");
+                    resolve = () => resolve_();
 
-process.once("unhandledRejection", error => {
+                    childProcess.kill("SIGKILL");
 
-    logger.log(error);
+                });
 
-    process.emit("beforeExit", NaN);
 
-});
+            })
+        };
 
-process.once("beforeExit", async () => {
+    },
+    "daemonProcess": async () => {
 
-    process.removeAllListeners("unhandledRejection");
-    process.on("unhandledRejection", ()=> { });
+        const [
+            path,
+            fs,
+            { working_directory_path },
+            logger,
+            { launch }
+        ] = await Promise.all([
+            import("path"),
+            import("fs"),
+            import("./installer"),
+            import("logger"),
+            import("../lib/launch")
+        ]);
 
-    process.removeAllListeners("uncaughtException");
-    process.on("uncaughtException", ()=> { });
+        const logfile_path = path.join(working_directory_path, "log");
 
-    try{ await logger.log("---end---"); } catch{}
+        return {
+            "launch": () => {
 
-    if(  exitCode !== 0 ){
+                logger.file.enable(logfile_path);
 
-        try{ scriptLib.execSync(`cp ${logfile_path} ./previous_crash.log`); }catch{}
+                launch();
+
+            },
+            "beforeExitTask": async error => {
+
+                if (!!error) {
+
+                    logger.log(error);
+
+
+                }
+
+                await logger.file.terminate();
+
+                if (!!error) {
+
+                    scriptLib.execSync(`mv ${logfile_path} ${path.join(path.dirname(logfile_path), "previous_crash.log")}`);
+
+                } else {
+
+                    fs.unlinkSync(logfile_path);
+
+                }
+
+            }
+        };
 
     }
-
-    try{ fs.unlinkSync(logfile_path); }catch{}
-
-    try{ fs.unlinkSync(pidfile_path); }catch{}
-
-    process.exit(exitCode);
-
 });
 
-launch();
+

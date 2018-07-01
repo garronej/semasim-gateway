@@ -30,7 +30,9 @@ export async function launch(){
 
             debug("Need update, restarting ...");
 
-            process.exit(1);
+            process.emit("beforeExit", process.exitCode = 0);
+
+            return;
 
         }
 
