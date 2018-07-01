@@ -645,14 +645,16 @@ function uninstall(verbose: false | "VERBOSE" = false) {
 /** Create dir if does not exist, keep the files in it if it does */
 async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
+    const arch= scriptLib.sh_eval("uname -m");
+
     await scriptLib.download_and_extract_tarball(
-        "https://github.com/garronej/asterisk/releases/download/latest/asterisk_$(uname -m).tar.gz",
+        `https://github.com/garronej/asterisk/releases/download/latest/asterisk_${arch}.tar.gz`,
         dest_dir_path,
         "MERGE"
     );
 
     await scriptLib.download_and_extract_tarball(
-        "https://github.com/garronej/dongle/releases/download/latest/dongle_$(uname -m).tar.gz",
+        `https://github.com/garronej/dongle/releases/download/latest/dongle_${arch}.tar.gz`,
         path.join(dest_dir_path, path.basename(dongle_dir_path)),
         "OVERWRITE IF EXIST"
     );
