@@ -1,10 +1,12 @@
 import * as scriptLib from "scripting-tools";
 
+const stop_timeout= 8000;
+
 scriptLib.createService({
     "rootProcess": async () => {
 
         const [
-            { node_path, pidfile_path, unix_user, installer_js_path },
+            { node_path, pidfile_path, unix_user, installer_js_path, srv_name },
             child_process,
             logger,
         ] = await Promise.all([
@@ -14,56 +16,64 @@ scriptLib.createService({
         ]);
 
         const childProcessDebug = logger.debugFactory("updater");
+        const debug= logger.debugFactory("root process");
 
         return {
             pidfile_path,
+            srv_name,
+            stop_timeout,
             "assert_unix_user": "root",
             "daemon_unix_user": unix_user,
             "daemon_node_path": node_path,
-            "preForkTask": async terminateChildProcesses => new Promise<void>((resolve, reject) => {
+            "preForkTask": async () => {
 
-                const childProcess = child_process.exec(`${node_path} ${installer_js_path} update`);
+                while (true) {
 
-                childProcess.stdout.on("data", data => childProcessDebug(data.toString()));
+                    try {
 
-                childProcess
-                    .once("error", error => { 
+                        await new Promise((resolve, reject) => {
 
-                        terminateChildProcesses.impl = ()=> Promise.resolve();
+                            const childProcess = child_process.exec(`${node_path} ${installer_js_path} update`);
 
-                        reject(error); 
+                            childProcess.stdout.on("data", data => childProcessDebug(data.toString()));
 
-                    })
-                    .once("close", code => {
+                            childProcess
+                                .once("error", error => reject(error) )
+                                .once("close", exitCode => {
 
-                        terminateChildProcesses.impl = () => Promise.resolve();
+                                    if( exitCode === 0 ){
 
-                        switch (code) {
-                            case 0:
-                                resolve();
-                                break;
-                            case 43:
-                                process.emit("beforeExit", process.exitCode = 0);
-                                break;
-                            default:
-                                //TODO: restart here because if the process is killed we will have an error here
-                                //At the same time if the process is killed we should not restart maybe.
-                                reject(new Error("Update failed"));
-                        }
+                                        resolve();
 
-                    })
-                    ;
+                                    }else{
 
-                terminateChildProcesses.impl = () => new Promise(resolve_ => {
+                                        reject(new Error([
+                                            `Updater returned with exitCode ${exitCode}`,
+                                            `( Normal if MAJOR update scheduled )`
+                                        ].join(" ")));
 
-                    resolve = () => resolve_();
+                                    }
 
-                    childProcess.kill("SIGKILL");
-
-                });
+                                })
+                                ;
 
 
-            })
+                        });
+
+
+                    } catch (error) {
+
+                        debug("Ann error occurred while updating, scheduling retry", error);
+
+                        await new Promise(resolve => setTimeout(resolve, 30000));
+
+                    }
+
+                    break;
+
+                }
+
+            }
         };
 
     },
@@ -74,7 +84,7 @@ scriptLib.createService({
             fs,
             { working_directory_path },
             logger,
-            { launch }
+            { launch, beforeExit }
         ] = await Promise.all([
             import("path"),
             import("fs"),
@@ -99,20 +109,26 @@ scriptLib.createService({
 
                     logger.log(error);
 
-
                 }
 
-                await logger.file.terminate();
+                await Promise.all([
+                    logger.file.terminate().then(() => {
 
-                if (!!error) {
+                        if (!!error) {
 
-                    scriptLib.execSync(`mv ${logfile_path} ${path.join(path.dirname(logfile_path), "previous_crash.log")}`);
+                            scriptLib.execSync(
+                                `mv ${logfile_path} ${path.join(path.dirname(logfile_path), "previous_crash.log")}`
+                            );
 
-                } else {
+                        } else {
 
-                    fs.unlinkSync(logfile_path);
+                            fs.unlinkSync(logfile_path);
 
-                }
+                        }
+
+                    }),
+                    beforeExit(3000)
+                ]);
 
             }
         };

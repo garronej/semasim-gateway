@@ -6,7 +6,7 @@ import { ini } from "ini-extended";
 export const module_dir_path = path.join(__dirname, "..", "..");
 
 export const unix_user = "semasim";
-const srv_name = "semasim";
+export const srv_name = "semasim";
 
 export const installer_js_path = __filename;
 export const working_directory_path = path.join(module_dir_path, "working_directory");
@@ -43,7 +43,6 @@ export const ld_library_path_for_asterisk = [
     path.join(working_directory_path, "speexdsp", "lib"),
     path.join(working_directory_path, "speex", "lib")
 ].join(":");
-
 
 export function getIsProd(): boolean {
 
@@ -311,7 +310,6 @@ async function program_action_tarball() {
 
 }
 
-
 async function install() {
 
     scriptLib.unixUser.create(unix_user, working_directory_path);
@@ -458,7 +456,6 @@ async function install() {
         );
 
         scriptLib.execSync(`chmod 640 ${ast_etc_dir_path}/*`);
-
 
         await (async function generate_dtls_certs() {
 

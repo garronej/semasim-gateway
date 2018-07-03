@@ -1,0 +1,221 @@
+import * as scriptLib from "scripting-tools";
+import * as i from "../bin/installer";
+import * as path from "path";
+import * as fs from "fs";
+import * as child_process from "child_process";
+import * as logger from "logger";
+
+const debug= logger.debugFactory();
+
+function doSpawn(args: string[]): child_process.ChildProcess {
+
+    const home_path = path.join(i.ast_dir_path, "var", "lib", "asterisk");
+
+    return child_process.spawn(
+        i.ast_path,
+        ["-C", i.ast_main_conf_path, ...args],
+        {
+            "cwd": home_path,
+            "env": {
+                "HOME": home_path,
+                "LD_LIBRARY_PATH": i.ld_library_path_for_asterisk
+            }
+        }
+
+    );
+
+}
+
+const ast_pidfile_path = path.join(i.ast_dir_path, "var", "run", "asterisk", "asterisk.pid");
+
+const cleanupRunfiles = () => {
+
+    for (const file_path of [
+        ast_pidfile_path,
+        path.join(path.dirname(ast_pidfile_path), "asterisk.ctl")
+    ]) {
+
+        if (fs.existsSync(file_path)) {
+
+            debug(`Cleaning up asterisk garbage file ${path.basename(file_path)}`);
+
+            fs.unlinkSync(file_path);
+
+        }
+
+    }
+
+}
+
+export function spawnAsterisk(): {
+    prFullyBooted: Promise<void>,
+    stop: (delay_before_kill: number) => Promise<void>;
+} {
+
+    scriptLib.stopProcessSync.log = debug;
+
+    scriptLib.stopProcessSync.stopProcessAsapSync(ast_pidfile_path);
+
+    cleanupRunfiles();
+
+    let astProcess_isTerminated = false;
+
+    const astProcess = doSpawn(["-fvvvv"]);
+
+    (() => {
+
+        const onTerminated = (errorOrCode: number | null | Error) => {
+
+            astProcess_isTerminated = true;
+
+            cleanupRunfiles();
+
+            if (errorOrCode instanceof Error) {
+                const error = errorOrCode;
+                debug("Asterisk could not be spawned", error);
+            } else {
+                const exitCode = errorOrCode;
+                debug(`Asterisk unexpectedly terminated with code ${exitCode}`);
+            }
+
+            throw new Error(`Asterisk error`);
+
+        };
+
+        //Only if can't spawn
+        astProcess.once("error", onTerminated);
+
+        astProcess.once("close", onTerminated);
+
+
+    })();
+
+    const prFullyBooted = new Promise<void>(resolve => {
+
+        const onData = (data: Buffer | string) => {
+
+            if (!!(data as Buffer).toString("utf8").match(/Asterisk\ Ready\./)) {
+
+                debug("Asterisk fully booted");
+
+                astProcess.stdout.removeListener("data", onData);
+
+                resolve();
+
+            }
+
+        };
+
+        astProcess.stdout.on("data", onData);
+
+    });
+
+    const stop = (delay_before_kill: number) => new Promise<void>(resolve => {
+
+        if (astProcess_isTerminated) {
+
+            debug("No need to stop Asterisk process it's already dead");
+
+            resolve();
+
+            return;
+
+        }
+
+        debug("Terminating Asterisk process");
+
+        astProcess.removeAllListeners("close");
+
+        let processCoreStopNow_isTerminated = false;
+        let processCoreStopNow_hadOutput= false;
+
+        const processCoreStopNow = doSpawn(["-rx", "core stop now"]);
+
+        processCoreStopNow.stdout.once("data", ()=> processCoreStopNow_hadOutput= true ); 
+
+        processCoreStopNow.stderr.once("data", ()=> processCoreStopNow_hadOutput= true );
+
+        //Can't spawn
+        processCoreStopNow.once("error", () => {
+
+            debug("CLI command 'core stop now' could not be spawned");
+
+            processCoreStopNow.emit("close", 1)
+
+        });
+
+        processCoreStopNow.once("close", exitCode => {
+
+            processCoreStopNow_isTerminated = true
+
+            if (
+                exitCode !== 0 ||
+                processCoreStopNow_hadOutput
+            ) {
+
+                debug("CLI command 'core stop now' failed");
+
+                doResolve("KILL ASTERISK");
+
+            }else{
+
+                debug("CLI command 'core stop now' success");
+
+            }
+
+        });
+
+        const timer = setTimeout(() => {
+
+            debug(logger.colors.red("Asterisk did NOT terminate gracefully in time, sending KILL signal."));
+
+            doResolve("KILL ASTERISK");
+
+        }, delay_before_kill);
+
+        astProcess.once("close", exitCode => {
+
+            debug(`Asterisk process terminated (exit code: ${exitCode})`);
+
+            doResolve();
+
+        });
+
+        const doResolve = (doKillAsterisk: undefined | "KILL ASTERISK" = undefined) => {
+
+            astProcess.removeAllListeners("close");
+
+            clearTimeout(timer);
+
+            if (!processCoreStopNow_isTerminated) {
+                processCoreStopNow.removeAllListeners("close");
+                processCoreStopNow.kill("SIGKILL");
+            }
+
+            if (!!doKillAsterisk) {
+
+                debug("Sending KILL signal to Asterisk");
+
+                scriptLib.stopProcessSync.stopProcessAsapSync(astProcess.pid);
+
+            }
+
+            cleanupRunfiles();
+
+            resolve();
+
+        };
+
+    });
+
+    astProcess.stdout.on("data", (data: Buffer) => logger.log(
+        `(asterisk) ${data.toString("utf8")}`
+    ));
+
+    astProcess.stderr.on("data", (data: Buffer) => logger.log(
+        `(asterisk) ${logger.colors.red(data.toString("utf8"))}`
+    ));
+
+    return { prFullyBooted, stop };
+
+}

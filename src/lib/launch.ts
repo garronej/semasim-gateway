@@ -8,51 +8,41 @@ import * as sipProxy from "./sipProxy";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 import { SyncEvent } from "ts-events-extended";
-import * as child_process from "child_process";
-import { 
-    ast_dir_path,ast_path, 
-    ast_etc_dir_path, 
-    ast_main_conf_path, 
-    ld_library_path_for_asterisk
-} from "../bin/installer";
-import * as path from "path";
+import * as i from "../bin/installer";
+import { spawnAsterisk } from "./asteriskProcess";
+
 import * as logger from "logger";
 
 const debug = logger.debugFactory();
 
-debug("Starting semasim gateway");
-
 let dc!: Dc;
+
+export function beforeExit(delay_before_kill: number) {
+    return beforeExit.impl(delay_before_kill);
+}
+
+export namespace beforeExit {
+    export let impl: (delay_before_kill: number) => Promise<void> =
+        () => Promise.resolve();
+}
 
 export async function launch() {
 
-    debug("Launching...");
+    debug("Starting semasim gateway...");
 
-    await new Promise<void>(
-        resolve => spawn_asterisk(message => {
+    const {
+        prFullyBooted: prAsteriskFullyBooted,
+        stop: stopAsterisk
+    } = await spawnAsterisk()
 
-            debug(`asterisk: ${message}`)
+    beforeExit.impl = delay_before_exit => stopAsterisk(delay_before_exit);
 
-            if (!!message.match(/Asterisk\ Ready\./)) {
+    await prAsteriskFullyBooted;
 
-                resolve();
-
-            }
-
-        }).catch((error) => {
-            debug(error.message);
-            process.exit(-1);
-        })
-    );
-
-    Ami.getInstance(undefined, ast_etc_dir_path)
-        .evtTcpConnectionClosed.attachOnce(() => {
-
-            debug("Asterisk TCP connection closed");
-
-            process.exit(-1);
-
-        });
+    Ami.getInstance(undefined, i.ast_etc_dir_path)
+        .evtTcpConnectionClosed.attachOnce(
+            () => Promise.reject(new Error("Asterisk TCP connection closed"))
+        );
 
     await launchDongleController();
 
@@ -70,32 +60,6 @@ export async function launch() {
 
 }
 
-export async function spawn_asterisk(
-    log: (message: string) => void
-): Promise<never> {
-
-    const home_path = path.join(ast_dir_path, "var", "lib", "asterisk")
-
-    const asterisk_child_process = child_process.spawn(
-        ast_path,
-        ["-fvvvv", "-C", ast_main_conf_path],
-        {
-            "cwd": home_path,
-            "env": {
-                "HOME": home_path,
-                "LD_LIBRARY_PATH": ld_library_path_for_asterisk
-            }
-        }
-    );
-
-    asterisk_child_process.stdout.on("data", data => log(data.toString()))
-    asterisk_child_process.stderr.on("data", data => log(data.toString().red))
-
-    return new Promise<never>(
-        (resolve, reject) => asterisk_child_process.once("close", code => reject(new Error(`Asterisk terminated with code ${code}`)))
-    );
-
-}
 
 async function launchDongleController() {
 
@@ -121,27 +85,23 @@ async function launchDongleController() {
 
     }
 
-    dc.evtClose.attachOnce(() => {
-
-        debug("chan-dongle-extended service stopped");
-
-        process.exit(-1);
-
-    });
+    dc.evtClose.attachOnce(
+        () => Promise.reject(new Error("chan-dongle-extended closed"))
+    );
 
 }
 
 async function init() {
 
-    for (let dongle of dc.usableDongles.values()) {
+    for (const dongle of dc.usableDongles.values()) {
 
         messagesDispatcher.sendMessagesOfDongle(dongle)
 
     }
 
-    let lastMessageReceivedDateBySim = await db.semasim.lastMessageReceivedDateBySim();
+    const lastMessageReceivedDateBySim = await db.semasim.lastMessageReceivedDateBySim();
 
-    for (let imsi in lastMessageReceivedDateBySim) {
+    for (const imsi in lastMessageReceivedDateBySim) {
 
         //NOTE: should not throw but if it does it is the expected behavior.
         const messages = await dc.getMessages({
