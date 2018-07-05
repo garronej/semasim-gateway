@@ -32,7 +32,6 @@
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
     "network": "^0.3.2",
-    "sip": "github:garronej/sip.js#no-websocket",
     "sqlite": "^2.9.1",
     "scripting-tools": "github:garronej/scripting-tools",
     "sqlite-custom": "github:garronej/sqlite-custom",
