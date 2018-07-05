@@ -16,7 +16,7 @@ export function sendMessagesOfDongle(
 
     sendMessagesOfDongle.lock.acquire(dongle.imei, async () => {
 
-        let dc = Dc.getInstance();
+        const dc = Dc.getInstance();
 
         for (
             let [message, { onSent, onStatusReport }] of

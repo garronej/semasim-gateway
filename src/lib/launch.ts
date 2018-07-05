@@ -1,8 +1,5 @@
 import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-client";
 import { Ami } from "ts-ami";
-import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
-//TODO: Create issue on Typescript repository.
-dcMisc;
 import * as db from "./db";
 import * as sipProxy from "./sipProxy";
 import * as messagesDispatcher from "./messagesDispatcher";
@@ -10,20 +7,17 @@ import * as voiceCallBridge from "./voiceCallBridge";
 import { SyncEvent } from "ts-events-extended";
 import * as i from "../bin/installer";
 import { spawnAsterisk } from "./asteriskProcess";
-
+import { spawnChanDongleExtended } from "./chanDongleExtendedProcess";
 import * as logger from "logger";
 
 const debug = logger.debugFactory();
 
-let dc!: Dc;
-
-export function beforeExit(delay_before_kill: number) {
-    return beforeExit.impl(delay_before_kill);
+export function beforeExit() {
+    return beforeExit.impl();
 }
 
 export namespace beforeExit {
-    export let impl: (delay_before_kill: number) => Promise<void> =
-        () => Promise.resolve();
+    export let impl: () => Promise<void> = () => Promise.resolve();
 }
 
 export async function launch() {
@@ -33,9 +27,9 @@ export async function launch() {
     const {
         prFullyBooted: prAsteriskFullyBooted,
         stop: stopAsterisk
-    } = await spawnAsterisk()
+    } = spawnAsterisk()
 
-    beforeExit.impl = delay_before_exit => stopAsterisk(delay_before_exit);
+    beforeExit.impl = () => stopAsterisk();
 
     await prAsteriskFullyBooted;
 
@@ -44,7 +38,28 @@ export async function launch() {
             () => Promise.reject(new Error("Asterisk TCP connection closed"))
         );
 
-    await launchDongleController();
+    const {
+        prDongleControllerInitialized,
+        stop: stopChanDongleExtended,
+    }= spawnChanDongleExtended();
+
+    //TODO: Leave some delay between stop dongle and stop asterisk?
+    beforeExit.impl = async () => {
+
+        const prStopChanDongleExtended= stopChanDongleExtended();
+
+        await Promise.race([
+            prStopChanDongleExtended,
+            new Promise(resolve=> setTimeout(resolve, 3000))
+        ]);
+
+        await stopAsterisk();
+
+        await prStopChanDongleExtended;
+
+    };
+
+    await prDongleControllerInitialized;
 
     await db.launch();
 
@@ -60,38 +75,9 @@ export async function launch() {
 
 }
 
-
-async function launchDongleController() {
-
-    while (true) {
-
-        dc = Dc.getInstance("127.0.0.1", dcMisc.port);
-
-        try {
-
-            await dc.prInitialization;
-
-        } catch{
-
-            debug("dongle-extended not initialized yet, scheduling retry...");
-
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            continue;
-
-        }
-
-        break;
-
-    }
-
-    dc.evtClose.attachOnce(
-        () => Promise.reject(new Error("chan-dongle-extended closed"))
-    );
-
-}
-
 async function init() {
+
+    const dc = Dc.getInstance();
 
     for (const dongle of dc.usableDongles.values()) {
 
@@ -121,6 +107,8 @@ async function init() {
 }
 
 function registerListeners() {
+
+    const dc = Dc.getInstance();
 
     sipProxy.backendSocket.evtNewBackendConnection.attach(
         async () => {

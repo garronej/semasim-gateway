@@ -1,7 +1,5 @@
 import * as scriptLib from "scripting-tools";
 
-const stop_timeout= 8000;
-
 scriptLib.createService({
     "rootProcess": async () => {
 
@@ -21,7 +19,7 @@ scriptLib.createService({
         return {
             pidfile_path,
             srv_name,
-            stop_timeout,
+            "stop_timeout": 6000, /* NOTE: Should be greater than the one of chan-dongle-extended */
             "assert_unix_user": "root",
             "daemon_unix_user": unix_user,
             "daemon_node_path": node_path,
@@ -127,7 +125,7 @@ scriptLib.createService({
                         }
 
                     }),
-                    beforeExit(3000)
+                    beforeExit()
                 ]);
 
             }

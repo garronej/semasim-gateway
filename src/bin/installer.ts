@@ -14,7 +14,9 @@ export const node_path = path.join(module_dir_path, "node");
 const installed_pkg_record_path = path.join(module_dir_path, "pkg_installed.json");
 export const ast_dir_path = path.join(working_directory_path, "asterisk");
 export const ast_path = path.join(ast_dir_path, "sbin", "asterisk");
-const dongle_dir_path = path.join(working_directory_path, "dongle");
+export const dongle_dir_path = path.join(working_directory_path, "dongle");
+export const dongle_node_path = path.join(dongle_dir_path, "node");
+export const dongle_bin_dir_path = path.join(dongle_dir_path, "dist", "bin");
 export const ast_etc_dir_path = path.join(ast_dir_path, "etc", "asterisk");
 export const ast_main_conf_path = path.join(ast_etc_dir_path, "asterisk.conf");
 export const ast_db_path = path.join(working_directory_path, "asterisk.db");
@@ -660,7 +662,8 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
 namespace dongle {
 
-    export const installer_cmd = `${path.join(dongle_dir_path, "node")} ${path.join(dongle_dir_path, "dist", "bin", "installer.js")}`;
+
+    export const installer_cmd = `${dongle_node_path} ${path.join(dongle_bin_dir_path, "installer.js")}`;
 
     export function install() {
 
@@ -670,8 +673,9 @@ namespace dongle {
             `--disable_sms_dialplan`,
             `--ast_include_dir_path ${path.join(ast_dir_path, "include")}`,
             `--enable_ast_ami_on_port 48397`,
-            getIsProd() ? "--assume_chan_dongle_installed" : "",
-            `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
+            `--unix_user ${unix_user}`,
+            `--do_not_create_systemd_conf`,
+            getIsProd() ? "--assume_chan_dongle_installed" : ""
         ].join(" "));
 
         (function merge_installed_pkg() {
