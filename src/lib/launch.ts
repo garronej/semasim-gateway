@@ -6,60 +6,42 @@ import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 import { SyncEvent } from "ts-events-extended";
 import * as i from "../bin/installer";
-import { spawnAsterisk } from "./asteriskProcess";
-import { spawnChanDongleExtended } from "./chanDongleExtendedProcess";
+import { spawnAsterisk, beforeExit as spawnAsteriskBeforeExit } from "./asteriskProcess";
+import { spawnChanDongleExtended, beforeExit as  spawnChanDongleExtendedBeforeExit } from "./chanDongleExtendedProcess";
+import { safePr } from "scripting-tools";
 import * as logger from "logger";
 
 const debug = logger.debugFactory();
 
-export function beforeExit() {
-    return beforeExit.impl();
+export async function beforeExit(): Promise<void> {
+
+    await Promise.all([
+        safePr(db.beforeExit()),
+        sipProxy.beforeExit(),
+        (async () => {
+
+            await safePr(spawnChanDongleExtendedBeforeExit(), 2500);
+
+            await safePr(spawnAsteriskBeforeExit());
+
+        })()
+    ]);
+
 }
 
-export namespace beforeExit {
-    export let impl: () => Promise<void> = () => Promise.resolve();
-}
 
 export async function launch() {
 
     debug("Starting semasim gateway...");
 
-    const {
-        prFullyBooted: prAsteriskFullyBooted,
-        stop: stopAsterisk
-    } = spawnAsterisk()
-
-    beforeExit.impl = () => stopAsterisk();
-
-    await prAsteriskFullyBooted;
+    await spawnAsterisk();
 
     Ami.getInstance(undefined, i.ast_etc_dir_path)
         .evtTcpConnectionClosed.attachOnce(
             () => Promise.reject(new Error("Asterisk TCP connection closed"))
         );
-
-    const {
-        prDongleControllerInitialized,
-        stop: stopChanDongleExtended,
-    }= spawnChanDongleExtended();
-
-    //TODO: Leave some delay between stop dongle and stop asterisk?
-    beforeExit.impl = async () => {
-
-        const prStopChanDongleExtended= stopChanDongleExtended();
-
-        await Promise.race([
-            prStopChanDongleExtended,
-            new Promise(resolve=> setTimeout(resolve, 3000))
-        ]);
-
-        await stopAsterisk();
-
-        await prStopChanDongleExtended;
-
-    };
-
-    await prDongleControllerInitialized;
+    
+    await spawnChanDongleExtended();
 
     await db.launch();
 

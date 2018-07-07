@@ -1,5 +1,6 @@
 import * as semasim from "./semasim";
 import * as asterisk from "./asterisk";
+import { safePr } from "scripting-tools";
 
 async function launch(): Promise<void> {
 
@@ -10,4 +11,13 @@ async function launch(): Promise<void> {
 
 }
 
-export { launch, semasim, asterisk };
+async function beforeExit() {
+
+    return Promise.all([
+        safePr(semasim.beforeExit()),
+        safePr(asterisk.beforeExit())
+    ]);
+
+}
+
+export { launch, beforeExit, semasim, asterisk };

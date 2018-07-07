@@ -8,10 +8,19 @@ import * as logger from "logger";
 
 const debug= logger.debugFactory();
 
-export function spawnChanDongleExtended(): {
-    prDongleControllerInitialized: Promise<void>;
-    stop: () => Promise<void>;
-} {
+export function beforeExit(){
+    return beforeExit.impl();
+}
+
+export namespace beforeExit {
+    export let impl = ()=> Promise.resolve();
+}
+
+/** 
+ * Return a promise that resolve whent chan-dongle-extended client is initialized 
+ * (can access getInstance() )
+ */
+export function spawnChanDongleExtended(): Promise<void> {
 
     const dongle_pidfile_path= path.join(i.dongle_dir_path, "working_directory", "pid");
 
@@ -93,7 +102,7 @@ export function spawnChanDongleExtended(): {
 
     });
 
-    const stop = () => new Promise<void>(resolve => {
+    beforeExit.impl = () => new Promise<void>(resolve => {
 
         if (dongleProcess_isTerminated) {
 
@@ -139,6 +148,6 @@ export function spawnChanDongleExtended(): {
         `(dongle) ${logger.colors.red(data.toString("utf8"))}`
     ));
 
-    return { prDongleControllerInitialized, stop };
+    return prDongleControllerInitialized;
 
 }

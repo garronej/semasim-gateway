@@ -47,10 +47,16 @@ const cleanupRunfiles = () => {
 
 }
 
-export function spawnAsterisk(): {
-    prFullyBooted: Promise<void>,
-    stop: () => Promise<void>;
-} {
+export function beforeExit(){
+    return beforeExit.impl();
+}
+
+export namespace beforeExit {
+    export let impl = ()=> Promise.resolve();
+}
+
+/** Return a promise that resolve when Asterisk is fully booted */
+export function spawnAsterisk(): Promise<void>{
 
     scriptLib.stopProcessSync.log = debug;
 
@@ -112,7 +118,7 @@ export function spawnAsterisk(): {
 
     });
 
-    const stop = () => new Promise<void>(resolve => {
+    beforeExit.impl = () => new Promise<void>(resolve => {
 
         if (astProcess_isTerminated) {
 
@@ -184,7 +190,7 @@ export function spawnAsterisk(): {
         `(asterisk) ${logger.colors.red(data.toString("utf8"))}`
     ));
 
-    return { prFullyBooted, stop };
+    return prFullyBooted;
 
 }
 

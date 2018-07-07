@@ -6,19 +6,29 @@ import * as logger from "logger";
 
 const debug = logger.debugFactory();
 
-let isFistLaunch= true;
+let isFistLaunch = true;
 
-export async function launch(){
+export function beforeExit() {
+    return beforeExit.impl();
+}
 
-    if( isFistLaunch ){
+export namespace beforeExit {
+    export let impl = () => Promise.resolve();
+}
 
-        isFistLaunch=false;
+export async function launch() {
+
+    if (isFistLaunch) {
+
+        isFistLaunch = false;
 
         await messages.init();
 
     }
 
-    let backendSocketInst= await router.createBackendSocket();
+    const backendSocketInst = await router.createBackendSocket();
+
+    beforeExit.impl = async () => backendSocketInst.destroy();
 
     backendSocketInst.evtClose.attachOnce(async () => {
 
@@ -26,7 +36,7 @@ export async function launch(){
 
         await new Promise(resolve => setTimeout(resolve, genRetryDelay()));
 
-        if( "UP TO DATE" !== await getVersionStatus() ){
+        if ("UP TO DATE" !== await getVersionStatus()) {
 
             debug("Need update, restarting ...");
 

@@ -12,6 +12,14 @@ export let esc: sqliteCustom.Api["esc"];
 export let buildInsertQuery: sqliteCustom.Api["buildInsertQuery"];
 export let buildInsertOrUpdateQueries: sqliteCustom.Api["buildInsertOrUpdateQueries"];
 
+export function beforeExit() {
+    return beforeExit.impl();
+}
+
+export namespace beforeExit {
+    export let impl= ()=> Promise.resolve();
+}
+
 export async function launch(): Promise<void> {
 
     let api = await sqliteCustom.connectAndGetApi(ast_db_path);
@@ -22,6 +30,8 @@ export async function launch(): Promise<void> {
     esc = api.esc;
     buildInsertQuery = api.buildInsertQuery;
     buildInsertOrUpdateQueries= api.buildInsertOrUpdateQueries;
+
+    beforeExit.impl= ()=> api.close(); 
 
 }
 

@@ -9,6 +9,14 @@ const JSON_CUSTOM = ttJC.get();
 
 export let _: sqliteCustom.Api;
 
+export function beforeExit() {
+    return beforeExit.impl();
+}
+
+export namespace beforeExit {
+    export let impl= ()=> Promise.resolve();
+}
+
 /** Must be called and awaited before use */
 export async function launch(): Promise<void> {
 
@@ -17,6 +25,8 @@ export async function launch(): Promise<void> {
     _ = await sqliteCustom.connectAndGetApi( 
         semasim_db_path, "HANDLE STRING ENCODING"
     );
+
+    beforeExit.impl= ()=> _.close(); 
 
 }
 

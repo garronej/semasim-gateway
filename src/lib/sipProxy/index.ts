@@ -2,7 +2,7 @@ import * as backendSocket from "./backendSocket";
 import { evtContactRegistration, getContacts, discardContactsRegisteredToSim } from "./contactsRegistrationMonitor";
 import { dialplanContext as messagesDialplanContext, sendMessage, evtMessage } from "./messages";
 
-import { launch } from "./launch";
+import { launch, beforeExit } from "./launch";
 
 export { 
     backendSocket, 
@@ -12,5 +12,6 @@ export {
     sendMessage,
     evtMessage,
     discardContactsRegisteredToSim, 
-    launch 
+    launch,
+    beforeExit
 };
