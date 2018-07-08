@@ -10,7 +10,8 @@
     "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
     "start": "sudo ./node ./dist/bin/main.js",
     "test": "sudo ./node ./dist/test/main.js",
-    "tarball": "sudo node dist/bin/installer tarball"
+    "tarball": "sudo node dist/bin/installer tarball",
+    "build-sqlite": "(cd ./node_modules/sqlite3/ && ./node_modules/node-pre-gyp/bin/node-pre-gyp install --fallback-to-build)"
   },
   "repository": {
     "type": "git",
