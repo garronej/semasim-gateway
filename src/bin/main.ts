@@ -4,16 +4,14 @@ scriptLib.createService({
     "rootProcess": async () => {
 
         const [
-            { node_path, pidfile_path, unix_user, installer_js_path, srv_name },
-            child_process,
+            { node_path, pidfile_path, unix_user, srv_name, program_action_update },
             logger,
         ] = await Promise.all([
             import("./installer"),
-            import("child_process"),
             import("logger")
         ]);
 
-        const childProcessDebug = logger.debugFactory("updater");
+        //const childProcessDebug = logger.debugFactory("updater");
         const debug= logger.debugFactory("root process");
 
         return {
@@ -27,47 +25,37 @@ scriptLib.createService({
 
                 while (true) {
 
+                    let action: "LAUNCH" | "EXIT";
+
                     try {
 
-                        await new Promise((resolve, reject) => {
-
-                            const childProcess = child_process.exec(`${node_path} ${installer_js_path} update`);
-
-                            childProcess.stdout.on("data", data => childProcessDebug(data.toString()));
-
-                            childProcess
-                                .once("error", error => reject(error) )
-                                .once("close", exitCode => {
-
-                                    if( exitCode === 0 ){
-
-                                        resolve();
-
-                                    }else{
-
-                                        reject(new Error([
-                                            `Updater returned with exitCode ${exitCode}`,
-                                            `( Normal if MAJOR update scheduled )`
-                                        ].join(" ")));
-
-                                    }
-
-                                })
-                                ;
-
-
-                        });
-
+                        action = await program_action_update();
 
                     } catch (error) {
 
-                        debug("Ann error occurred while updating, scheduling retry", error);
+                        logger.log("Update error: ", error);
 
-                        await new Promise(resolve => setTimeout(resolve, 30000));
+                        debug("Waiting and retying...");
+
+                        await new Promise(resolve=> setTimeout(resolve, 30000));
+
+                        continue;
 
                     }
 
-                    break;
+                    if (action === "EXIT") {
+
+                        debug("Exiting now");
+
+                        process.emit("beforeExit", process.exitCode = 0);
+
+                        return;
+
+                    } else {
+
+                        break;
+
+                    }
 
                 }
 

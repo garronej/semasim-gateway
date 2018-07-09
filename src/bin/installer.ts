@@ -8,7 +8,6 @@ export const module_dir_path = path.join(__dirname, "..", "..");
 export const unix_user = "semasim";
 export const srv_name = "semasim";
 
-export const installer_js_path = __filename;
 export const working_directory_path = path.join(module_dir_path, "working_directory");
 export const node_path = path.join(module_dir_path, "node");
 const installed_pkg_record_path = path.join(module_dir_path, "pkg_installed.json");
@@ -136,7 +135,7 @@ function program_action_uninstall() {
 
 }
 
-async function program_action_update() {
+export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
 
     scriptLib.enableCmdTrace();
 
@@ -144,19 +143,18 @@ async function program_action_update() {
 
     const versionStatus = await getVersionStatus();
 
+
     if (!getIsProd()) {
 
         console.log({ versionStatus });
 
-        process.exit(0);
+        return "LAUNCH";
 
     }
 
     if (versionStatus === "UP TO DATE") {
 
-        console.log("Up to date");
-
-        process.exit(0);
+        console.log("Semasim is UP TO DATE");
 
     } else if (versionStatus === "MINOR" || versionStatus === "PATCH") {
 
@@ -216,7 +214,6 @@ async function program_action_update() {
 
         console.log(scriptLib.colorize("Update success", "GREEN"));
 
-        process.exit(0);
 
     } else if (versionStatus === "MAJOR") {
 
@@ -227,9 +224,8 @@ async function program_action_update() {
         scriptLib.createScript(reinstall_script_path, [
             `#!/bin/bash`,
             ``,
-            `SCRIPT_PATH=${reinstall_script_path}`,
             `CRON_FILE_PATH=/tmp/root_cron`,
-            `CRON_LINE="@reboot $SCRIPT_PATH"`,
+            `CRON_LINE="@reboot ${reinstall_script_path}"`,
             ``,
             `cron_add () {`,
             `   cron_remove`,
@@ -255,11 +251,13 @@ async function program_action_update() {
             ``
         ].join("\n"));
 
-        scriptLib.execSync(`nohup ${reinstall_script_path} > /tmp/semasim_reinstall.log`);
+        scriptLib.spawnAndDetach("/bin/bash", [reinstall_script_path], undefined, "/tmp/semasim_reinstall.log");
 
-        process.exit(43);
+        return "EXIT";
 
     }
+
+    return "LAUNCH";
 
 }
 
@@ -644,7 +642,7 @@ function uninstall(verbose: false | "VERBOSE" = false) {
 /** Create dir if does not exist, keep the files in it if it does */
 async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
-    const arch= scriptLib.sh_eval("uname -m");
+    const arch = scriptLib.sh_eval("uname -m");
 
     await scriptLib.download_and_extract_tarball(
         `https://github.com/garronej/asterisk/releases/download/latest/asterisk_${arch}.tar.gz`,
