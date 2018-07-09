@@ -104,7 +104,27 @@ async function program_action_install() {
 
     }
 
-    console.log("---DONE---");
+    const { onSuccess, exec }=  scriptLib.start_long_running_process("Starting Semasim");
+
+    while (true) {
+
+        try{
+
+            await exec("dongle list")
+
+        }catch{
+
+            continue;
+
+        }
+
+        break;
+
+    }
+
+    onSuccess("Started!");
+
+    console.log(scriptLib.colorize("Semasim is now running, you can go to semasim.com to register your SIM cards.", "GREEN"));
 
     process.exit(0);
 
