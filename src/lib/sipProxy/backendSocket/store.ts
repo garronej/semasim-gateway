@@ -1,6 +1,7 @@
 import * as sipLibrary from "ts-sip";
 import { VoidSyncEvent } from "ts-events-extended";
 import { handlers as localApiHandlers } from "./localApiHandlers";
+import * as logger from "logger";
 
 let currentBackendSocketInst: sipLibrary.Socket | undefined = undefined;
 
@@ -12,6 +13,7 @@ const server = new sipLibrary.api.Server(
     localApiHandlers, 
     sipLibrary.api.Server.getDefaultLogger({
         idString,
+        "log": logger.log,
         "hideKeepAlive": true
     })
 );
@@ -24,7 +26,10 @@ export function set(backendSocketInst: sipLibrary.Socket) {
 
     sipLibrary.api.client.enableErrorLogging(
         backendSocketInst, 
-        sipLibrary.api.client.getDefaultErrorLogger({ idString })
+        sipLibrary.api.client.getDefaultErrorLogger({ 
+            idString,
+            "log": logger.log
+        })
     );
 
     backendSocketInst.evtConnect.attachOnce(() =>
