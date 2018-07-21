@@ -47,6 +47,18 @@ export namespace unlockDongle {
 
 }
 
+export namespace rebootDongle {
+
+    export const methodName = "rebootDongle";
+
+    export type Params = {
+        imsi: string;
+    };
+
+    export type Response = { isSuccess: boolean; };
+
+}
+
 export namespace reNotifySimOnline {
 
     export const methodName= "reNotifySimOnline";

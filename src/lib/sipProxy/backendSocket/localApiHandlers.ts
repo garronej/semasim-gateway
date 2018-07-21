@@ -91,7 +91,45 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
         }
     };
 
-    handlers[methodName]= handler;
+    handlers[methodName] = handler;
+
+})();
+
+(() => {
+
+    const methodName = apiDeclaration.rebootDongle.methodName;
+    type Params = apiDeclaration.rebootDongle.Params;
+    type Response = apiDeclaration.rebootDongle.Response;
+
+    const handler: sipLibrary.api.Server.Handler<Params, Response> = {
+        "handler": async ({ imsi }) => {
+
+            const dc= Dc.getInstance();
+
+            const dongle = Array.from(dc.usableDongles.values()).find(({ sim })=> sim.imsi === imsi);
+
+            if( !dongle ){
+
+                return { "isSuccess": false };
+
+            }
+
+            try {
+
+                await Dc.getInstance().rebootDongle(dongle.imei);
+
+            } catch{ 
+
+                return { "isSuccess": false };
+
+            } 
+
+            return { "isSuccess": true };
+
+        }
+    };
+
+    handlers[methodName] = handler;
 
 })();
 
@@ -120,7 +158,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
         }
     };
 
-    handlers[methodName]= handler;
+    handlers[methodName] = handler;
 
 })();
 
@@ -142,13 +180,13 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
                 return undefined;
             }
 
-            let contact : dcTypes.Sim.Contact;
+            let contact: dcTypes.Sim.Contact;
 
-            try{
+            try {
 
                 contact = await dc.createContact(imsi, number, name)
 
-            }catch{
+            } catch{
 
                 return undefined;
 
@@ -163,7 +201,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
         }
     };
 
-    handlers[methodName]= handler;
+    handlers[methodName] = handler;
 
 })();
 
@@ -185,13 +223,13 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
                 return undefined;
             }
 
-            let contact : dcTypes.Sim.Contact;
+            let contact: dcTypes.Sim.Contact;
 
-            try{
+            try {
 
                 contact = await dc.updateContact(imsi, mem_index, newName, undefined);
 
-            }catch{
+            } catch{
 
                 return undefined;
 
@@ -205,7 +243,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
         }
     };
 
-    handlers[methodName]= handler;
+    handlers[methodName] = handler;
 
 })();
 
@@ -227,11 +265,11 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
                 return undefined;
             }
 
-            try{
+            try {
 
                 await dc.deleteContact(imsi, mem_index);
 
-            }catch{
+            } catch{
 
                 return undefined;
 
@@ -242,7 +280,7 @@ export const handlers: sipLibrary.api.Server.Handlers = {};
         }
     };
 
-    handlers[methodName]= handler;
+    handlers[methodName] = handler;
 
 })();
 
