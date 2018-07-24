@@ -1,5 +1,5 @@
 import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-client";
-import * as apiDeclaration from "./../../sipApiDeclarations/semasimGateway/backendSocket";
+import * as apiDeclaration from "../../../sip_api_declarations/backendSocket";
 import * as sipLibrary from "ts-sip";
 import * as remoteApi from "./remoteApiCaller";
 import * as db from "../../db";
