@@ -28,7 +28,7 @@ export async function launch() {
 
     const backendSocketInst = await router.createBackendSocket();
 
-    beforeExit.impl = async () => backendSocketInst.destroy();
+    beforeExit.impl = async () => backendSocketInst.destroy("Exiting the program");
 
     backendSocketInst.evtClose.attachOnce(async () => {
 

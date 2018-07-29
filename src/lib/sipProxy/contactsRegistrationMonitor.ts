@@ -1,13 +1,9 @@
 import * as sipLibrary from "ts-sip";
-import { asterisk as dbAsterisk} from "../db";
+import { asterisk as dbAsterisk } from "../db";
 import * as types from "../types";
 import * as backendSocket from "./backendSocket";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import { readImsi, cid } from "./misc";
-
-import * as logger from "logger";
-
-const debug = logger.debugFactory();
 
 //TODO: create proxy
 export const evtContactRegistration = new SyncEvent<types.Contact>();
@@ -25,7 +21,10 @@ export function discardContactsRegisteredToSim(imsi: string): void {
 
         if (contact.uaSim.imsi === imsi) {
 
-            asteriskSocket.destroy();
+            asteriskSocket.destroy([
+                "need password renewal or sim not registered, closing all ast",
+                `sockets that have a contact registered to imsi: ${imsi}`
+            ].join(" "));
 
         }
 
@@ -97,9 +96,7 @@ namespace contacts {
 contacts.evtExpiredContact.attach(
     ({ contact, asteriskSocket }) => {
 
-        debug("expired contact");
-
-        asteriskSocket.destroy();
+        asteriskSocket.destroy(`Contact associated to connection expired`);
 
         backendSocket.remoteApi.forceContactToRegister(contact);
 
@@ -122,14 +119,12 @@ function onContactRegistered(
 
     contacts.get().find(entry => {
 
-        if ( 
-            entry.contact !== contact && 
+        if (
+            entry.contact !== contact &&
             types.misc.areSameUaSims(contact.uaSim, entry.contact.uaSim)
         ) {
 
-            debug("ua re-register with an other connection");
-
-            entry.asteriskSocket.destroy();
+            entry.asteriskSocket.destroy("Same UA re-registered with an other connection");
 
             return true;
 
@@ -284,7 +279,7 @@ export function onNewAsteriskSocket(
         resolve => evtRegistered
             .waitFor(6001)
             .then(() => resolve(contact))
-            .catch(() => asteriskSocket.destroy())
+            .catch(() => asteriskSocket.destroy("This connection did not register a contact in time"))
     );
 
 }

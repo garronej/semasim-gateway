@@ -47,7 +47,9 @@ export function flush(){
             continue;
         }
 
-        asteriskSocket.destroy();
+        asteriskSocket.destroy(
+            "flush called, destroying all ast sockets ( probably due to connection lost with backend)"
+        );
 
     }
 
