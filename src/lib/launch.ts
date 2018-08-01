@@ -214,14 +214,14 @@ function registerListeners() {
 
             debug("FROM SIP MESSAGE", { toNumber, text });
 
-            let { uaSim } = fromContact;
+            const { uaSim } = fromContact;
 
             await db.semasim.onSipMessage(
                 toNumber, text, uaSim, exactSendDate
             );
 
-            let dongle = Array.from(dc.usableDongles.values()).find(
-                ({ sim }) => sim.imsi === fromContact.uaSim.imsi
+            const dongle = Array.from(dc.usableDongles.values()).find(
+                ({ sim }) => sim.imsi === uaSim.imsi
             );
 
             if (!dongle) {

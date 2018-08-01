@@ -95,16 +95,14 @@ export namespace sendMessage {
 
 /** 
  * Must be called before the first connection to backend 
- * and after DongleController have been instantiated
- * 
- * not exported
+ * and after Ami have been instantiated.
  * 
  * */
 export async function init() {
 
-    let ami= Ami.getInstance();
+    const ami= Ami.getInstance();
 
-    let matchAllExt = "_.";
+    const matchAllExt = "_.";
 
     await ami.dialplanExtensionRemove(matchAllExt, dialplanContext);
 
@@ -150,7 +148,7 @@ export function onNewAsteriskSocket(
 }
 
 /** 
- * Need to be call by sipRouter when a SIP MESSAGE packet is emitted by asterisk.
+ * Need to be called when a SIP MESSAGE packet is emitted by asterisk.
  * 
  * @param sipRequestAsReceived Must be the sipRequest as sent by asterisk.
  * This calling this method will cause the message to be updated.
@@ -176,9 +174,9 @@ function onOutgoingSipMessage(
 
 /**
  * 
- * Must be called by sipProxy router when we received from backend a SIP MESSAGE.
+ * Must be called when we received from backend a SIP MESSAGE.
  * The sip message must have been accepted by asterisk and the content type
- * must be text/plain
+ * must be text/plain.
  * 
  * @param fromContact the contact the message come from
  * @param sipRequest the MESSAGE sipRequest 
@@ -190,18 +188,21 @@ function onIncomingSipMessage(
     sipRequest: sipLibrary.Request
 ) {
 
-    let content = sipLibrary.getPacketContent(sipRequest);
+    const content = sipLibrary.getPacketContent(sipRequest);
 
-    let text = content.toString("utf8");
+    const text = content.toString("utf8");
 
     if (!content.equals(Buffer.from(text, "utf8"))) {
         debug("Sip message content was not a valid UTF-8 string");
     }
 
-    let toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
+    const toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
 
     let exactSendDate: Date | undefined;
 
+    //TODO: For now we catch the errors as all the client apps does not 
+    //bundle the exact send date but eventually we should let it throw
+    //( user authentication is done before )
     try {
 
         exactSendDate = (types.misc.extractBundledDataFromHeaders(

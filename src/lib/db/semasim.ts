@@ -118,9 +118,13 @@ export async function removeUaSim(
  * @param toNumber phone number to send to
  * @param text 
  * @param uaSim uaSim that emitted the message
- * @param date when the message was emitted by the user (provided only by web ua)
+ * @param date this is the exactSendDate that was bundled 
+ * by the client app in the SIP MESSAGE header, it is used as an id
+ * so that the client find to witch message correspond the 
+ * sendReport and statusReport.
  * 
  * NOTE: no new sip message added to the queue.
+ * Queue a new messageTowardGsm
  * 
  */
 export async function onSipMessage(

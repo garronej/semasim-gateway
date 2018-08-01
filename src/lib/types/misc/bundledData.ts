@@ -1,26 +1,70 @@
-import * as ttJC from "transfer-tools/dist/lib/JSON_CUSTOM";
 import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
 import * as types from "../types";
 
-const JSON_CUSTOM= ttJC.get();
-export const urlSafeB64= stringTransform.transcode("base64", { "=": "_" });
+export const urlSafeB64 = stringTransform.transcode("base64", { "=": "_" });
 const header = (i: number) => `Bundled-Data-${i}`;
+
+/**
+ * 
+ * In order to ease the cross implementation in Java and Objective C 
+ * we use * this function to serialize Date instead of JSON_CUSTOM.
+ * We serialize by converting date into timestamp.
+ * 
+ * We enforce that any date property musk have as name a string
+ * that end with Date or date otherwise an error will be thrown.
+ * 
+ */
+function replacer_reviver(
+    isReplacer: boolean,
+    key: string,
+    value: any
+): any {
+
+    const cKey = !!key.match(/[Dd]ate$/);
+
+    const cVal = isReplacer ? (
+        typeof value === "string" &&
+        !!value.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/)
+    ) : typeof value === "number";
+
+
+    if (isReplacer ? (cKey !== cVal) : (cKey && !cVal)) {
+
+        throw new Error("Bundled data design error");
+
+    }
+
+    if (!cKey) {
+
+        return value;
+
+    }
+
+    const date = new Date(value);
+
+    return isReplacer ? date.getTime() : date;
+
+
+};
 
 export function smuggleBundledDataInHeaders(
     data: types.BundledData,
-    headers: Record<string, string>= {}
+    headers: Record<string, string> = {}
 ): Record<string, string> {
 
-    let split = stringTransform.textSplit(
+    const split = stringTransform.textSplit(
         125,
-        urlSafeB64.enc( 
-            JSON_CUSTOM.stringify(data)
+        urlSafeB64.enc(
+            JSON.stringify(
+                data, 
+                (key, value)=> replacer_reviver(true, key, value)
+            )
         )
     );
 
     for (let i = 0; i < split.length; i++) {
 
-        headers[header(i)]= split[i];
+        headers[header(i)] = split[i];
 
     }
 
@@ -29,36 +73,38 @@ export function smuggleBundledDataInHeaders(
 }
 
 /** assert there is data */
-export function extractBundledDataFromHeaders( 
+export function extractBundledDataFromHeaders(
     headers: Record<string, string>
 ): types.BundledData {
 
-    let split: string[]= [];
+    const split: string[] = [];
 
-    let i=0;
+    let i = 0;
 
-    while(true){
+    while (true) {
 
-        let key= header(i++);
+        const key = header(i++);
 
-        let part= headers[key] || headers[key.toLowerCase()];
+        const part = headers[key] || headers[key.toLowerCase()];
 
-        if( part ){
+        if (!!part) {
             split.push(part);
-        }else{
+        } else {
             break;
         }
 
     }
 
-    if( !split.length ){
+    if (!split.length) {
         throw new Error("No bundled data in header");
     }
 
-    return JSON_CUSTOM.parse(
+    return JSON.parse(
         urlSafeB64.dec(
             split.join("")
-        )
+
+        ),
+        (key, value) => replacer_reviver(false, key, value)
     );
 
 }
