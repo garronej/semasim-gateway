@@ -198,6 +198,8 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
 
                 scriptLib.fs_move("COPY", _db_schema_path, db_path);
 
+                scriptLib.execSync(`chown ${unix_user}:${unix_user} ${db_path}`);
+
             }
 
         }

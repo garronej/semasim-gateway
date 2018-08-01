@@ -32,6 +32,7 @@ export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINO
         try {
 
             //TODO: make sure that throw if backend is down
+            //TODO: apparently we may have a response that match to null
             serverVersion= await scriptLib.web_get("semasim.com/api/version");
 
         } catch{
