@@ -3,7 +3,7 @@
   "description": "Semasim server for gateways (raspberry pi)",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "version": "0.16.8",
+  "version": "0.16.9",
   "scripts": {
     "postinstall": "cp $(readlink -e $(which node)) ./node",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
