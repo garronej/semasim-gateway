@@ -104,13 +104,13 @@ async function program_action_install() {
 
     }
 
-    const { onSuccess, exec }=  scriptLib.start_long_running_process("Starting Semasim");
+    const { onSuccess }=  scriptLib.start_long_running_process("Starting Semasim");
 
     while (true) {
 
         try{
 
-            await exec("dongle list")
+            await scriptLib.exec("dongle list")
 
         }catch{
 
