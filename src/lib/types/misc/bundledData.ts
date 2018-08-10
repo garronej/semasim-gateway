@@ -10,8 +10,10 @@ const header = (i: number) => `Bundled-Data-${i}`;
  * we use * this function to serialize Date instead of JSON_CUSTOM.
  * We serialize by converting date into timestamp.
  * 
- * We enforce that any date property musk have as name a string
+ * We enforce that any date property must have as name a string
  * that end with Date or date otherwise an error will be thrown.
+ * 
+ * Date are allowed to be null.
  * 
  */
 function replacer_reviver(
@@ -19,6 +21,10 @@ function replacer_reviver(
     key: string,
     value: any
 ): any {
+
+    if( value === null ){
+        return value;
+    }
 
     const cKey = !!key.match(/[Dd]ate$/);
 
