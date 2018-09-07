@@ -1,13 +1,21 @@
+
 import * as types from "../lib/types";
+import { types as dcTypes } from "chan-dongle-extended-client";
 
 export namespace notifySimOnline {
 
     export const methodName= "notifySimOnline";
 
+    /** 
+     * replacementPassword is the sip password that will
+     * replace the current password if the server respond
+     * with status "REPLACE PASSWORD"
+     */
     export type Params = {
         imsi: string;
         storageDigest: string;
         password: string;
+        replacementPassword: string;
         simDongle: {
             imei: string;
             isVoiceEnabled: boolean | undefined;
@@ -22,17 +30,27 @@ export namespace notifySimOnline {
     } | {
         status: "NOT REGISTERED"
     } | {
-        status: "NEED PASSWORD RENEWAL";
+        status: "REPLACE PASSWORD";
         allowedUas: types.Ua[];
     };
     
 }
 
-export namespace notifySimOffline {
+export namespace notifyLockedDongle {
 
-    export const methodName= "notifySimOffline";
+    export const methodName= "notifyLockedDongle";
 
-    export type Params ={ imsi: string; };
+    export type Params = dcTypes.Dongle.Locked;
+
+    export type Response= undefined;
+
+}
+
+export namespace notifyDongleOffline {
+
+    export const methodName= "notifyDongleOffline";
+
+    export type Params ={ imsi: string; } | { imei: string; };
 
     export type Response= undefined;
 

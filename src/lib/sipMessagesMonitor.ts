@@ -4,7 +4,8 @@ import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
 //TODO: Create issue on Typescript repository.
 dcMisc;
 import * as sipLibrary from "ts-sip";
-import * as types from "../types";
+import * as types from "./types";
+import * as misc from "./misc";
 
 import * as logger from "logger";
 
@@ -96,7 +97,6 @@ export namespace sendMessage {
 /** 
  * Must be called before the first connection to backend 
  * and after Ami have been instantiated.
- * 
  * */
 export async function init() {
 
@@ -109,7 +109,13 @@ export async function init() {
     await ami.dialplanExtensionAdd(dialplanContext, matchAllExt, 1, "Hangup");
 }
 
-export function onNewAsteriskSocket(
+/** 
+ * Should be called against every new asterisk socket
+ * as soon as it is created.
+ * prContact should resolve to the sipContact
+ * associated to the socket.
+ *  */
+export function handleAsteriskSocket(
     asteriskSocket: sipLibrary.Socket, 
     prContact: Promise<types.Contact>
 ) {
@@ -159,7 +165,6 @@ export function onNewAsteriskSocket(
  * if no response have been received in a reasonable amount of time.
  * 
  */
-//export function onOutgoingSipMessage(
 function onOutgoingSipMessage(
     sipRequestAsReceived: sipLibrary.Request,
     prSipResponse: Promise<any>
@@ -205,7 +210,7 @@ function onIncomingSipMessage(
     //( user authentication is done before )
     try {
 
-        exactSendDate = (types.misc.extractBundledDataFromHeaders(
+        exactSendDate = (misc.extractBundledDataFromHeaders(
             sipRequest.headers
         ) as types.BundledData.ClientToServer.Message).exactSendDate;
 

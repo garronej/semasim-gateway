@@ -1,6 +1,6 @@
-import { asterisk as db } from "../lib/db";
+import * as db from "../lib/dbAsterisk";
 import * as types from "../lib/types";
-import { cid } from "../lib/sipProxy/misc";
+import * as misc from "../lib/misc";
 
 const contact: types.Contact = (() => {
 
@@ -29,7 +29,7 @@ const contact: types.Contact = (() => {
             "pn-silent=1;transport=tls"
         ].join(""),
         "path": "<sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>",
-        "connectionId": cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
+        "connectionId": misc.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
         "uaSim": { imsi, ua }
     };
 
@@ -38,13 +38,15 @@ const contact: types.Contact = (() => {
 
 export async function testDbAsterisk() {
 
-    console.assert(types.misc.sanityChecks.contact(contact));
+    console.assert(misc.sanityChecks.contact(contact));
 
     await db.launch();
 
     await db.flush();
 
-    let password = await db.createEndpointIfNeededAndGetPassword(contact.uaSim.imsi);
+    const password= await db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
+        contact.uaSim.imsi
+    );
 
     let rows = await db.query(
         `SELECT * FROM ps_aors WHERE id= ${db.esc(contact.uaSim.imsi)}`
@@ -61,16 +63,20 @@ export async function testDbAsterisk() {
     console.assert(rows[0]["password"] === password);
 
     console.assert(
-        await db.createEndpointIfNeededAndGetPassword(
+        password 
+        ===
+        await db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
             contact.uaSim.imsi
-        ) === password
+        )
     );
 
+    const newPassword= db.generateSipEndpointPassword();
+
     console.assert(
-        await db.createEndpointIfNeededAndGetPassword(
+        await db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
             contact.uaSim.imsi,
-            "RENEW PASSWORD"
-        ) !== password
+            newPassword
+        ) === newPassword
     );
 
     await db.flush();

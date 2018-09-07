@@ -2,12 +2,13 @@ import { SyncEvent } from "ts-events-extended";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Ami, agi } from "ts-ami";
 import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
-import * as sipProxy from "./sipProxy";
 import * as types from "./types";
-import { semasim as db} from "./db";
+import * as dbSemasim from "./dbSemasim";
 import * as messageDispatcher from "./messagesDispatcher";
 import * as sipLibrary from "ts-sip";
 import * as logger from "logger";
+import * as sipContactsMonitor from "./sipContactsMonitor";
+import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 
 const debug = logger.debugFactory();
 
@@ -55,15 +56,15 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     let evtReachableContact = new SyncEvent<types.Contact>();
 
-    sipProxy.evtContactRegistration.attach(
+    sipContactsMonitor.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
         evtReachableContact,
         contact => evtReachableContact.post(contact)
     );
 
-    for (let contact of sipProxy.getContacts(imsi)) {
+    for (let contact of sipContactsMonitor.getContacts(imsi)) {
 
-        sipProxy.backendSocket.remoteApi
+        backendRemoteApiCaller
             .wakeUpContact(contact)
             .then(status => {
 
@@ -88,7 +89,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         evtReachableContact.detach();
 
-        sipProxy.evtContactRegistration.detach(evtReachableContact);
+        sipContactsMonitor.evtContactRegistration.detach(evtReachableContact);
 
         for (let channelName of ringingChannels.values()) {
 
@@ -104,7 +105,7 @@ async function fromDongle(channel: agi.AGIChannel) {
             let ringingUas = Array.from(ringingChannels.keys())
                 .map(contact => contact.uaSim.ua);
 
-            await db.onCallAnswered(
+            await dbSemasim.onCallAnswered(
                 number,
                 imsi,
                 contact.uaSim.ua,
@@ -115,7 +116,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
             debug("Dongle channel hanged up but not answered");
 
-            await db.onMissedCall(imsi, number);
+            await dbSemasim.onMissedCall(imsi, number);
 
         }
 
@@ -202,7 +203,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     const call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
 
-    const contact = sipProxy.getContacts()
+    const contact = sipContactsMonitor.getContacts()
         .find(({ uri }) => uri === contact_uri)!
         ;
 
@@ -228,7 +229,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
         ), 30000
     )
         .then(
-            () => db.onTargetGsmRinging(contact, number, call_id)
+            () => dbSemasim.onTargetGsmRinging(contact, number, call_id)
                 .then(() => messageDispatcher.sendMessagesOfContact(contact))
         )
         .catch(() => { })

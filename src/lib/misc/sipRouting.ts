@@ -23,35 +23,54 @@ export function readImsi(sipPacket: sipLibrary.Packet): string {
 
 }
 
+/** 
+ * 
+ * connectionId: 
+ * 
+ * An uniq id of every UA connection to the backend 
+ * Should be included in every sip packet.
+ * The token enclose a timestamp of when the 
+ * UA connection to the backend was established,
+ * the public address of the UA and the source
+ * port the UA used to connect.
+ * 
+ * */
 export namespace cid {
 
     const { enc, dec } = stringTransform.transcode("base64", { "=": "_" });
 
-    /** on backend on client connection */
+    /** on backend when ua connect */
     export function generate(
-        clientSocket: { remoteAddress: string; remotePort: number; },
+        uaSocket: { remoteAddress: string; remotePort: number; },
         timestamp = Date.now()
     ): string {
         return enc(
-            `${timestamp}:${clientSocket.remoteAddress}:${clientSocket.remotePort}`
+            `${timestamp}:${uaSocket.remoteAddress}:${uaSocket.remotePort}`
         );
     }
 
     export function parse(connectionId: string) {
 
-        let [a, b, c] = dec(connectionId).split(":");
+        const [a, b, c] = dec(connectionId).split(":");
 
         return {
             "timestamp": parseInt(a),
-            "clientSocketRemoteAddress": b as string,
-            "clientSocketRemotePort": parseInt(c)
+            "uaSocket": { 
+                "remoteAddress": b, 
+                "remotePort": parseInt(c) 
+            }
         };
 
     }
 
     const key = "connection_id";
 
-    /** To set on request from asteriskSocket (gw) and from clientSocket (backend) */
+    /** 
+     * Include a connection id in a sipRequest.
+     * This must be applied to every new sip request.
+     * ( No need to include the connection id on sip response 
+     * as it is already present )
+     */
     export function set(sipRequestNextHop: sipLibrary.Request, connectionId: string): void {
 
         sipRequestNextHop.headers[
@@ -60,7 +79,7 @@ export namespace cid {
 
     }
 
-    /** read when ever we need to root a packet */
+    /** Read the connection id */
     export function read(sipPacket: sipLibrary.Packet): string {
 
         return sipPacket.headers[

@@ -1,4 +1,4 @@
-import { semasim as db} from "../lib/db";
+import * as db from "../lib/dbSemasim";
 import * as types from "../lib/types";
 import { types as dcTypes } from "chan-dongle-extended-client";
 

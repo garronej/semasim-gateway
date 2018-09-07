@@ -1,3 +1,4 @@
+
 import * as types from "../types";
 import * as dcSanityChecks from "chan-dongle-extended-client/dist/lib/sanityChecks";
 
@@ -53,20 +54,6 @@ export namespace sanityChecks {
 
 }
 
-export function generateUaId(o: types.Ua): string {
-    return JSON.stringify([o.instance, o.userEmail]);
-}
-
-export function generateUaSimId(o: types.UaSim): string {
-    return JSON.stringify([o.imsi, generateUaId(o.ua)]);
-}
-
-export function areSameUaSims(
-    o1: types.UaSim,
-    o2: types.UaSim
-): boolean {
-    return generateUaSimId(o1) === generateUaSimId(o2);
-}
 
 export function isValidEmail(
     email: string,

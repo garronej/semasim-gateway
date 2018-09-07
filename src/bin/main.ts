@@ -11,8 +11,7 @@ scriptLib.createService({
             import("logger")
         ]);
 
-        //const childProcessDebug = logger.debugFactory("updater");
-        const debug= logger.debugFactory("root process");
+        const debug= logger.debugFactory();
 
         return {
             pidfile_path,

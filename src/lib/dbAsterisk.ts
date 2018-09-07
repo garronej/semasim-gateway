@@ -1,10 +1,10 @@
 import * as sqliteCustom from "sqlite-custom";
-import * as types from "../types";
+import * as types from "./types";
 import * as md5 from "md5";
-import { ast_db_path, host_pem_path, ca_crt_path } from "../../bin/installer";
+import * as i from "../bin/installer";
 
-import { sipCallContext } from "../voiceCallBridge";
-import { messagesDialplanContext } from "../sipProxy";
+import { sipCallContext } from "./voiceCallBridge";
+import { dialplanContext as messagesDialplanContext} from "./sipMessagesMonitor";
 
 //Note: Exported only for tests.
 export let query: sqliteCustom.Api["query"];
@@ -22,7 +22,7 @@ export namespace beforeExit {
 
 export async function launch(): Promise<void> {
 
-    let api = await sqliteCustom.connectAndGetApi(ast_db_path);
+    let api = await sqliteCustom.connectAndGetApi(i.ast_db_path);
 
     await api.query("DELETE FROM ps_contacts");
 
@@ -60,40 +60,62 @@ export async function deleteContact(contact: types.Contact) {
 
 }
 
-export async function createEndpointIfNeededAndGetPassword(
+/** Helper function to generate a sip password */
+export function generateSipEndpointPassword(): string{
+    return md5(`${Math.random()}`);
+}
+
+/**
+ * 
+ * If endpoint does not exist it is created.
+ * If no password was provided one is generated.
+ * 
+ * If endpoint does exist and a password is 
+ * provided then the old password is replaced
+ * by the one provided. 
+ * If no password was provided nothing is updated.
+ * 
+ * return the current password
+ * 
+ * 
+ */
+export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
     imsi: string,
-    renewPassword: "RENEW PASSWORD" | undefined = undefined
+    newPassword?: string
 ): Promise<string> {
 
     let sql = "";
 
-    (() => {
+    {
 
-        let table = "ps_auths";
+        const table = "ps_auths";
 
-        let values = {
+        const values = {
             "id": imsi,
             "auth_type": "userpass",
             "username": imsi,
-            "password": md5(`${Date.now()}`),
             "realm": "semasim"
         };
 
-        if (!!renewPassword) {
+        if (newPassword !== undefined) {
+
+            values["password"]= newPassword;
 
             sql += buildInsertOrUpdateQueries(table, values, ["id"]);
 
         } else {
 
+            values["password"]= generateSipEndpointPassword();
+
             sql += buildInsertQuery(table, values, "IGNORE");
 
         }
 
-    })();
+    }
 
-    let [ps_endpoints_web, ps_endpoints_mobile] = (() => {
+    const [ps_endpoints_web, ps_endpoints_mobile] = (() => {
 
-        let ps_endpoints_base = {
+        const ps_endpoints_base = {
             "disallow": "all",
             "allow": "alaw,ulaw",
             "context": sipCallContext,
@@ -105,7 +127,7 @@ export async function createEndpointIfNeededAndGetPassword(
             "dtmf_mode": "info"
         };
 
-        let webId = `${imsi}-webRTC`;
+        const webId = `${imsi}-webRTC`;
 
         return [{
             "id": webId,
@@ -113,8 +135,8 @@ export async function createEndpointIfNeededAndGetPassword(
             ...ps_endpoints_base,
             "use_avpf": "yes",
             "media_encryption": "dtls",
-            "dtls_ca_file": ca_crt_path,
-            "dtls_cert_file": host_pem_path,
+            "dtls_ca_file": i.ca_crt_path,
+            "dtls_cert_file": i.host_pem_path,
             "dtls_verify": "fingerprint",
             "dtls_setup": "actpass",
             "media_use_received_transport": "yes",
@@ -127,7 +149,7 @@ export async function createEndpointIfNeededAndGetPassword(
 
     })();
 
-    for (let ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
+    for (const ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
 
         sql += buildInsertQuery("ps_aors", {
             "id": ps_endpoints.aors,
@@ -142,7 +164,7 @@ export async function createEndpointIfNeededAndGetPassword(
 
     sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
 
-    let { password } = (await query(sql)).pop()[0];
+    const { password } = (await query(sql)).pop()[0];
 
     return password;
 

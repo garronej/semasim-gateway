@@ -1,42 +1,35 @@
 
+//TODO: move in semasim-gateway
+
+
 import { types as dcTypes } from "chan-dongle-extended-client";
 
-export namespace getDongles {
+export namespace getDongle {
 
-    export const methodName = "getDongles";
-
-    export type Params= undefined;
-
-    export type Response=dcTypes.Dongle[];
-
-}
-
-export namespace whoHasLockedDongle {
-
-    export const methodName= "whoHasLockedDongle";
+    export const methodName = "getDongle";
 
     export type Params= { imei: string; };
 
-    export type Response= "I" | undefined;
+    export type Response=dcTypes.Dongle | undefined;
 
 }
 
-export namespace getSipPasswordAndDongle {
+export namespace getDongleAndSipPassword {
 
-    export const methodName= "getSipPasswordAndDongle";
+    export const methodName= "getUsableDongleAndSipPassword";
 
     export type Params= { imsi: string; };
 
-    export type Response= ({
+    export type Response= {
         dongle: dcTypes.Dongle.Usable;
         sipPassword: string;
-    }) | undefined;
+    } | undefined;
 
 }
 
-export namespace unlockDongle {
+export namespace unlockSim {
 
-    export const methodName = "unlockDongle";
+    export const methodName = "unlockSim";
 
     export type Params= {
         imei: string;
@@ -47,13 +40,12 @@ export namespace unlockDongle {
 
 }
 
+//TODO: Reboot dongle should be by IMEI
 export namespace rebootDongle {
 
     export const methodName = "rebootDongle";
 
-    export type Params = {
-        imsi: string;
-    };
+    export type Params = { imsi: string; };
 
     export type Response = { isSuccess: boolean; };
 
@@ -102,4 +94,6 @@ export namespace deleteContact {
     export type Response = { new_storage_digest: string; } | undefined;
 
 }
+
+
 

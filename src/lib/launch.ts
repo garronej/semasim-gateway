@@ -1,30 +1,38 @@
 import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-client";
 import { Ami } from "ts-ami";
-import * as db from "./db";
-import * as sipProxy from "./sipProxy";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
 import { SyncEvent } from "ts-events-extended";
 import * as i from "../bin/installer";
-import { spawnAsterisk, beforeExit as spawnAsteriskBeforeExit } from "./asteriskProcess";
-import { spawnChanDongleExtended, beforeExit as  spawnChanDongleExtendedBeforeExit } from "./chanDongleExtendedProcess";
+import * as procAsterisk from "./procAsterisk";
+import * as procChanDongleExtended from "./procChanDongleExtended";
 import { safePr } from "scripting-tools";
 import * as logger from "logger";
+import * as dbSemasim from "./dbSemasim";
+import * as dbAsterisk from "./dbAsterisk";
+import * as backendConnection from "./toBackend/connection";
+import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
+import * as sipContactsMonitor from "./sipContactsMonitor";
+import * as sipMessagesMonitor from "./sipMessagesMonitor";
 
 const debug = logger.debugFactory();
 
 export async function beforeExit(): Promise<void> {
 
+    const backendSocket = backendConnection.get();
+
+    if (!(backendSocket instanceof Promise)) {
+        backendSocket.destroy("Terminating the process");
+    }
+
+
     await Promise.all([
-        safePr(db.beforeExit()),
-        sipProxy.beforeExit(),
-        (async () => {
-
-            await safePr(spawnChanDongleExtendedBeforeExit(), 2500);
-
-            await safePr(spawnAsteriskBeforeExit());
-
-        })()
+        dbAsterisk.beforeExit().catch(() => { }),
+        dbSemasim.beforeExit().catch(() => { }),
+        //TODO sip proxy before exist.
+        safePr(procChanDongleExtended.beforeExit(), 2500)
+            .then(() => procAsterisk.beforeExit())
+            .catch(() => { })
     ]);
 
 }
@@ -34,18 +42,22 @@ export async function launch() {
 
     debug("Starting semasim gateway...");
 
-    await spawnAsterisk();
+    await procAsterisk.spawnAsterisk();
 
     Ami.getInstance(undefined, i.ast_etc_dir_path)
         .evtTcpConnectionClosed.attachOnce(
             () => Promise.reject(new Error("Asterisk TCP connection closed"))
         );
-    
-    await spawnChanDongleExtended();
 
-    await db.launch();
+    await procChanDongleExtended.spawnChanDongleExtended();
 
-    sipProxy.launch();
+    //TODO: rename init ? 
+    await dbAsterisk.launch();
+    await dbSemasim.launch();
+
+    await sipMessagesMonitor.init();
+
+    backendConnection.connect();
 
     voiceCallBridge.initAgi();
 
@@ -67,7 +79,7 @@ async function init() {
 
     }
 
-    const lastMessageReceivedDateBySim = await db.semasim.lastMessageReceivedDateBySim();
+    const lastMessageReceivedDateBySim = await dbSemasim.lastMessageReceivedDateBySim();
 
     for (const imsi in lastMessageReceivedDateBySim) {
 
@@ -78,9 +90,9 @@ async function init() {
             "flush": true
         });
 
-        for (let { number, text, date } of messages) {
+        for (const { number, text, date } of messages) {
 
-            await db.semasim.onDongleMessage(number, text, date, imsi);
+            await dbSemasim.onDongleMessage(number, text, date, imsi);
 
         }
 
@@ -92,44 +104,48 @@ function registerListeners() {
 
     const dc = Dc.getInstance();
 
-    sipProxy.backendSocket.evtNewBackendConnection.attach(
-        async () => {
+    backendConnection.evtConnect.attach(
+        () => {
 
             debug("Connection established with backend");
 
-            for (let dongle of dc.usableDongles.values()) {
+            for (const dongle of dc.dongles.values()) {
 
-                sipProxy.backendSocket.remoteApi.notifySimOnline(dongle);
+                if (dcTypes.Dongle.Locked.match(dongle)) {
+
+                    backendRemoteApiCaller.notifyLockedDongle(dongle);
+
+                } else {
+
+                    backendRemoteApiCaller.notifySimOnline(dongle);
+
+                }
 
             }
-
         }
     );
 
+
     dc.dongles.evtSet.attach(
-        async ([dongle]) => {
+        ([dongle]) => {
 
             if (dcTypes.Dongle.Locked.match(dongle)) {
-                return;
+
+                backendRemoteApiCaller.notifyLockedDongle(dongle);
+
+            } else {
+
+                messagesDispatcher.sendMessagesOfDongle(dongle);
+
+                backendRemoteApiCaller.notifySimOnline(dongle);
+
             }
-
-            messagesDispatcher.sendMessagesOfDongle(dongle);
-
-            sipProxy.backendSocket.remoteApi.notifySimOnline(dongle);
 
         }
     );
 
     dc.dongles.evtDelete.attach(
-        async ([dongle]) => {
-
-            if (dcTypes.Dongle.Locked.match(dongle)) {
-                return;
-            }
-
-            sipProxy.backendSocket.remoteApi.notifySimOffline(dongle.sim.imsi);
-
-        }
+        ([dongle]) => backendRemoteApiCaller.notifyDongleOffline(dongle)
     );
 
     dc.evtMessage.attach(
@@ -141,7 +157,7 @@ function registerListeners() {
 
             submitShouldSave(evtShouldSave.waitFor());
 
-            let wasAdded = await db.semasim.onDongleMessage(
+            const wasAdded = await dbSemasim.onDongleMessage(
                 message.number,
                 message.text,
                 message.date,
@@ -163,7 +179,7 @@ function registerListeners() {
         }
     );
 
-    sipProxy.evtContactRegistration.attach(
+    sipContactsMonitor.evtContactRegistration.attach(
         async contact => {
 
             debug(`Contact registered`, contact);
@@ -171,11 +187,11 @@ function registerListeners() {
             let {
                 isUaCreatedOrUpdated,
                 isFirstUaForSim
-            } = await db.semasim.addUaSim(contact.uaSim);
+            } = await dbSemasim.addUaSim(contact.uaSim);
 
             if (isUaCreatedOrUpdated) {
 
-                await sipProxy.backendSocket.remoteApi.notifyNewOrUpdatedUa(
+                await backendRemoteApiCaller.notifyNewOrUpdatedUa(
                     contact.uaSim.ua
                 );
 
@@ -185,16 +201,16 @@ function registerListeners() {
 
                 debug("First SIM UA");
 
-                let messages = await dc.getMessages({
+                const messages = await dc.getMessages({
                     "imsi": contact.uaSim.imsi,
                     "flush": true
                 });
 
-                let tasks: Promise<any>[] = [];
+                const tasks: Promise<any>[] = [];
 
-                for (let { number, text, date } of messages) {
+                for (const { number, text, date } of messages) {
 
-                    tasks[tasks.length] = db.semasim.onDongleMessage(
+                    tasks[tasks.length] = dbSemasim.onDongleMessage(
                         number, text, date, contact.uaSim.imsi
                     );
 
@@ -209,14 +225,15 @@ function registerListeners() {
         }
     );
 
-    sipProxy.evtMessage.attach(
+
+    sipMessagesMonitor.evtMessage.attach(
         async ({ fromContact, toNumber, text, exactSendDate }) => {
 
             debug("FROM SIP MESSAGE", { toNumber, text });
 
             const { uaSim } = fromContact;
 
-            await db.semasim.onSipMessage(
+            await dbSemasim.onSipMessage(
                 toNumber, text, uaSim, exactSendDate
             );
 

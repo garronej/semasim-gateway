@@ -7,7 +7,7 @@ const header = (i: number) => `Bundled-Data-${i}`;
 /**
  * 
  * In order to ease the cross implementation in Java and Objective C 
- * we use * this function to serialize Date instead of JSON_CUSTOM.
+ * we use this function to serialize Date instead of JSON_CUSTOM.
  * We serialize by converting date into timestamp.
  * 
  * We enforce that any date property must have as name a string
@@ -108,7 +108,6 @@ export function extractBundledDataFromHeaders(
     return JSON.parse(
         urlSafeB64.dec(
             split.join("")
-
         ),
         (key, value) => replacer_reviver(false, key, value)
     );

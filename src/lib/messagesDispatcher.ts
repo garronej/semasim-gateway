@@ -3,10 +3,13 @@ import {
     DongleController as Dc,
     types as dcTypes
 } from "chan-dongle-extended-client";
-import { semasim as db } from "./db";
-import * as sipProxy from "./sipProxy";
+import * as dbSemasim from "./dbSemasim";
 import * as types from "./types";
+import * as misc from "./misc";
 import * as logger from "logger";
+import * as sipContactsMonitor from "./sipContactsMonitor";
+import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
+import * as sipMessagesMonitor from "./sipMessagesMonitor";
 
 const debug = logger.debugFactory();
 
@@ -20,7 +23,7 @@ export function sendMessagesOfDongle(
 
         for (
             let [message, { onSent, onStatusReport }] of
-            await db.getUnsentMessagesTowardGsm(dongle.sim.imsi)
+            await dbSemasim.getUnsentMessagesTowardGsm(dongle.sim.imsi)
         ) {
 
             let sendMessageResult: dcTypes.SendMessageResult;
@@ -74,14 +77,14 @@ export async function notifyNewSipMessagesToSend(
     imsi: string
 ) {
 
-    for (let contact of sipProxy.getContacts(imsi)) {
+    for (const contact of sipContactsMonitor.getContacts(imsi)) {
 
-        if (!(await db.messageTowardSipUnsentCount(contact.uaSim))) {
+        if (!(await dbSemasim.messageTowardSipUnsentCount(contact.uaSim))) {
             continue;
         }
 
         if (
-            (await sipProxy.backendSocket.remoteApi.wakeUpContact(contact))
+            (await backendRemoteApiCaller.wakeUpContact(contact))
             ===
             "REACHABLE"
         ) {
@@ -96,20 +99,20 @@ export async function notifyNewSipMessagesToSend(
 export function sendMessagesOfContact(contact: types.Contact) {
 
     sendMessagesOfContact.lock.acquire(
-        types.misc.generateUaSimId(contact.uaSim),
+        misc.generateUaSimId(contact.uaSim),
         async () => {
 
             for (
                 let [message, onReceived] of
-                await db.getUnsentMessagesTowardSip(contact.uaSim)
+                await dbSemasim.getUnsentMessagesTowardSip(contact.uaSim)
             ) {
 
                 try {
 
-                    await sipProxy.sendMessage(
+                    await sipMessagesMonitor.sendMessage(
                         contact,
                         message.fromNumber,
-                        types.misc.smuggleBundledDataInHeaders(message.bundledData),
+                        misc.smuggleBundledDataInHeaders(message.bundledData),
                         message.text
                     );
 

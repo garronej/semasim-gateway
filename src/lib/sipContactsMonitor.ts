@@ -1,9 +1,9 @@
 import * as sipLibrary from "ts-sip";
-import { asterisk as dbAsterisk } from "../db";
-import * as types from "../types";
-import * as backendSocket from "./backendSocket";
+import * as types from "./types";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
-import { readImsi, cid } from "./misc";
+import * as misc from "./misc";
+import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
+import * as dbAsterisk from "./dbAsterisk";
 
 //TODO: create proxy
 export const evtContactRegistration = new SyncEvent<types.Contact>();
@@ -98,7 +98,7 @@ contacts.evtExpiredContact.attach(
 
         asteriskSocket.destroy(`Contact associated to connection expired`);
 
-        backendSocket.remoteApi.forceContactToRegister(contact);
+        backendRemoteApiCaller.forceContactToRegister(contact);
 
     }
 );
@@ -121,7 +121,7 @@ function onContactRegistered(
 
         if (
             entry.contact !== contact &&
-            types.misc.areSameUaSims(contact.uaSim, entry.contact.uaSim)
+            misc.areSameUaSims(contact.uaSim, entry.contact.uaSim)
         ) {
 
             entry.asteriskSocket.destroy("Same UA re-registered with an other connection");
@@ -141,7 +141,8 @@ function onContactRegistered(
 }
 
 
-export function onNewAsteriskSocket(
+/** should be called against every new asterisk socket */
+export function handleAsteriskSocket(
     asteriskSocket: sipLibrary.Socket
 ): Promise<types.Contact> {
 
@@ -152,8 +153,8 @@ export function onNewAsteriskSocket(
         sipLibrary.matchRequest,
         sipRequest => {
 
-            imsi = readImsi(sipRequest);
-            connectionId = cid.read(sipRequest);
+            imsi = misc.readImsi(sipRequest);
+            connectionId = misc.cid.read(sipRequest);
 
         }
     );
@@ -172,7 +173,7 @@ export function onNewAsteriskSocket(
             );
 
             parsedUri.params = {
-                "mk": `${cid.parse(connectionId).timestamp}`.match(/([0-9]{6})$/)![1]
+                "mk": `${misc.cid.parse(connectionId).timestamp}`.match(/([0-9]{6})$/)![1]
             };
 
             purgedContactUri = sipLibrary.stringifyUri(parsedUri);
@@ -209,7 +210,7 @@ export function onNewAsteriskSocket(
                     imsi,
                     "ua": {
                         "instance": aorParams["+sip.instance"]!,
-                        "userEmail": types.misc.urlSafeB64.dec((
+                        "userEmail": misc.urlSafeB64.dec((
                             sipLibrary.parseUri(sipRequestRegister.uri).params["enc_email"] ||
                             uriParams["enc_email"] ||
                             aorParams["enc_email"]
