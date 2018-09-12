@@ -37,6 +37,7 @@ export async function connect() {
             "host": "sip.semasim.com" , 
             "port": 80 
         }),
+        true
     );
 
     socket.evtClose.attachOnce(async ()=> {

@@ -27,7 +27,8 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
         net.connect({
             "host": backendSocket.localAddress, 
             "port": i.ast_sip_port
-        })
+        }),
+        true
     );
 
     backendSocket.evtClose.attachOnce(
@@ -41,8 +42,9 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
         "connection": false,
         "error": true,
         "close": true,
-        "incomingTraffic": false,
-        "outgoingTraffic": false,
+        "incomingTraffic": true,
+        "outgoingTraffic": true,
+        "colorizedTraffic": "IN",
         "ignoreApiTraffic": true
     }, logger.log);
 
