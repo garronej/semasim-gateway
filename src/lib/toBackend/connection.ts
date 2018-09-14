@@ -81,6 +81,7 @@ export async function connect() {
         "close": true,
         "incomingTraffic": false,
         "outgoingTraffic": false,
+        "colorizedTraffic": "IN",
         "ignoreApiTraffic": true
     }, logger.log);
 

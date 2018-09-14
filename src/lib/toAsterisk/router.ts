@@ -39,11 +39,30 @@ export function handle(socket: sip.Socket, connectionId: string) {
 
     };
 
+
+
     const onSipPacket= (sipPacket: sip.Packet): void => {
+
+        /*
+        Patch for a bug in Asterisk:
+        For some request ( CANCEL, BYE ... ) routes are included
+        two times. This remove the duplicates.
+        */
+        if (sip.matchRequest(sipPacket) && !!sipPacket.headers.route) {
+
+            sipPacket.headers.route = Array.from(
+                (new Map(
+                    sipPacket.headers.route.map(
+                        (route): [string, sip.AoRWithParsedUri] => [sip.stringifyPath([route]), route]
+                    )
+                )).values()
+            );
+
+        }
 
         const sipPacketNextHop = backendSocket.buildNextHopPacket(sipPacket);
 
-        if( sip.matchRequest(sipPacketNextHop) ){
+        if (sip.matchRequest(sipPacketNextHop)) {
 
             misc.cid.set(sipPacketNextHop, connectionId);
 

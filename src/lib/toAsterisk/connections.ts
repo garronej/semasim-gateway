@@ -42,9 +42,9 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
         "connection": false,
         "error": true,
         "close": true,
-        "incomingTraffic": true,
-        "outgoingTraffic": true,
-        "colorizedTraffic": "IN",
+        "incomingTraffic": false,
+        "outgoingTraffic": false,
+        "colorizedTraffic": "OUT",
         "ignoreApiTraffic": true
     }, logger.log);
 
