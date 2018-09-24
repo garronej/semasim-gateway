@@ -513,6 +513,7 @@ export namespace getUnsentMessagesTowardGsm {
 
     }
 
+    //TODO: Investigate why we have an unused param.
     export async function onStatusReport(
         messageTowardGsm_id: number,
         messageTowardGsm: types.MessageTowardGsm,

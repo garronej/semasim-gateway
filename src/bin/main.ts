@@ -11,7 +11,7 @@ scriptLib.createService({
             import("logger")
         ]);
 
-        const debug= logger.debugFactory();
+        const debug = logger.debugFactory();
 
         return {
             pidfile_path,
@@ -36,7 +36,7 @@ scriptLib.createService({
 
                         debug("Waiting and retying...");
 
-                        await new Promise(resolve=> setTimeout(resolve, 30000));
+                        await new Promise(resolve => setTimeout(resolve, 30000));
 
                         continue;
 
@@ -76,7 +76,10 @@ scriptLib.createService({
             import("./installer"),
             import("logger"),
             import("../lib/launch")
-        ]);
+        ]).catch(error=> {
+            console.log(error);
+            throw error;
+        });
 
         const logfile_path = path.join(working_directory_path, "log");
 

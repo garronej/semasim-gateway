@@ -1,11 +1,12 @@
 import { SyncEvent } from "ts-events-extended";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Ami, agi } from "ts-ami";
-import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
+//import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
+import { phoneNumber } from "phone-number";
 import * as types from "./types";
 import * as dbSemasim from "./dbSemasim";
 import * as messageDispatcher from "./messagesDispatcher";
-import * as sipLibrary from "ts-sip";
+import * as sip from "ts-sip";
 import * as logger from "logger";
 import * as sipContactsMonitor from "./sipContactsMonitor";
 import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
@@ -52,7 +53,11 @@ async function fromDongle(channel: agi.AGIChannel) {
         return;
     }
 
-    let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
+    //let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
+    const number = phoneNumber.build(
+        channel.request.callerid, 
+        !!dongle.sim.country?dongle.sim.country.iso:undefined
+    );
 
     let evtReachableContact = new SyncEvent<types.Contact>();
 
@@ -136,7 +141,7 @@ async function fromDongle(channel: agi.AGIChannel) {
         ami.postAction("Originate", {
             "channel": [
                 "PJSIP",
-                sipLibrary.parseUri(contact.uri).user!,
+                sip.parseUri(contact.uri).user!,
                 contact.uri
             ].join("/"),
             "application": "Bridge",
@@ -151,7 +156,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
             evtEstablishedOrEnded.post(contact);
 
-        }).catch((error) => ringingChannels.delete(contact));
+        }).catch(() => ringingChannels.delete(contact));
 
         ami.evt.attachOnce(
             ({ event, uniqueid }) => (
@@ -239,6 +244,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     await _.setVariable("AGC(rx)", gain);
 
+    //TODO: Dial with guessed from ( and only dial, even if not very important)
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
     await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
 

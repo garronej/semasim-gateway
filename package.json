@@ -19,6 +19,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "chan-dongle-extended-client": "github:garronej/chan-dongle-extended-client",
+    "phone-number": "github:garronej/phone-number",
     "transfer-tools": "garronej/transfer-tools"
   },
   "devDependencies": {

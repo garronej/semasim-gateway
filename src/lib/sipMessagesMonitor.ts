@@ -1,13 +1,12 @@
 import { SyncEvent } from "ts-events-extended";
 import { Ami } from "ts-ami";
-import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
-//TODO: Create issue on Typescript repository.
-dcMisc;
+
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
 import * as misc from "./misc";
 
 import * as logger from "logger";
+
 
 const debug= logger.debugFactory();
 
@@ -41,7 +40,7 @@ export function sendMessage(
 
         })();
 
-        fromNumber = dcMisc.toNationalNumber(fromNumber, contact.uaSim.imsi);
+
 
         Ami.getInstance().messageSend(
             `pjsip:${contact.uaSim.imsi}/${uri}`, fromNumber, actionId
@@ -100,7 +99,7 @@ export namespace sendMessage {
  * */
 export async function init() {
 
-    const ami= Ami.getInstance();
+    const ami = Ami.getInstance();
 
     const matchAllExt = "_.";
 
@@ -116,7 +115,7 @@ export async function init() {
  * associated to the socket.
  *  */
 export function handleAsteriskSocket(
-    asteriskSocket: sipLibrary.Socket, 
+    asteriskSocket: sipLibrary.Socket,
     prContact: Promise<types.Contact>
 ) {
 

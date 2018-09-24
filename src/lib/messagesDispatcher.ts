@@ -30,6 +30,7 @@ export function sendMessagesOfDongle(
 
             try {
 
+                //TODO: Dial with the number it was guessed from.
                 sendMessageResult = await dc.sendMessage(
                     dongle.imei, message.toNumber, message.text
                 );

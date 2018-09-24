@@ -14,6 +14,7 @@ import * as backendConnection from "./toBackend/connection";
 import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 import * as sipContactsMonitor from "./sipContactsMonitor";
 import * as sipMessagesMonitor from "./sipMessagesMonitor";
+import { phoneNumber } from "phone-number";
 
 const debug = logger.debugFactory();
 
@@ -158,7 +159,10 @@ function registerListeners() {
             submitShouldSave(evtShouldSave.waitFor());
 
             const wasAdded = await dbSemasim.onDongleMessage(
-                message.number,
+                phoneNumber.build(
+                    message.number, 
+                    !!dongle.sim.country?dongle.sim.country.iso:undefined
+                ),
                 message.text,
                 message.date,
                 dongle.sim.imsi
