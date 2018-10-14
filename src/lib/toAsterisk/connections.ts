@@ -82,7 +82,11 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
 
     }
 
-    router.handle(socket, connectionId);
+    router.handle(
+        socket,
+        connectionId,
+        prContact.then(({ uaSim }) => uaSim.ua.platform)
+    );
 
     return socket;
 
@@ -97,15 +101,15 @@ const byConnectionIdImsi = new Map<string, sip.Socket>();
  * to IMSI we can discard them and wait 
  * for the UA to re-register with a new connection.
  */
-const expiredRegistrations= new Set<string>();
+const expiredRegistrations = new Set<string>();
 
-export function get( 
-    connectionId: string, 
-    imsi: string 
+export function get(
+    connectionId: string,
+    imsi: string
 ): sip.Socket | undefined {
     return byConnectionIdImsi.get(`${connectionId}${imsi}`);
 }
 
-export function isExpiredRegistration(connectionId: string, imsi: string){
+export function isExpiredRegistration(connectionId: string, imsi: string) {
     return expiredRegistrations.has(`${connectionId}${imsi}`);
 }

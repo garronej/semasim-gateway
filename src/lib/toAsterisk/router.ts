@@ -2,46 +2,71 @@
 
 import * as sip from "ts-sip";
 import * as misc from "../misc";
+import * as types from "../types";
 import * as backendConnection from "../toBackend/connection";
 
 /** Assert we have an active backend connection */
-export function handle(socket: sip.Socket, connectionId: string) {
+export function handle(
+    socket: sip.Socket,
+    connectionId: string,
+    prPlatform: Promise<types.Ua.Platform>
+) {
+
+    let platform: types.Ua.Platform;
+
+    prPlatform.then(v => platform = v );
 
     //NOTE: when the backend disconnect the socket will be closed.
     const backendSocket = backendConnection.get() as sip.Socket;
 
-    const { uaSocket: { remoteAddress: uaAddress } }= misc.cid.parse(connectionId);
+    const { uaSocket: { remoteAddress: uaAddress } } = misc.cid.parse(connectionId);
 
-    //TODO: see if for webRtc it is desirable
-    /** Hot-fix to make linphone ICE implementation compatible with asterisk */
-    const fixSdp = (sipPacketNextHop: sip.Packet): void => {
+    const iceHacks = (sipPacketNextHop: sip.Packet): void => {
 
-        const sdp = sip.getPacketContent(sipPacketNextHop).toString("utf8");
+        if (sipPacketNextHop.headers["content-type"] !== "application/sdp") {
+            return;
+        }
 
-        const publicAddress = sip.readSrflxAddrInSdp(sdp);
+        //Platform will be set then.
+        switch (platform) {
+            case "android": {
 
-        if (
-            !publicAddress ||
-            (
-                !sip.matchRequest(sipPacketNextHop) &&
-                publicAddress === uaAddress
-            )
-        ) return;
+                const srvflx = sip.readSrflxAddrInSdp(
+                    sip.getPacketContent(sipPacketNextHop)
+                        .toString("utf8")
+                );
 
-        const parsedSdp = sip.parseSdp(sdp);
+                //If we stun resolution failed skip.
+                if (!srvflx) {
+                    break;
+                }
 
-        parsedSdp.m[0].c = { ...parsedSdp.c, "address": publicAddress };
+                if (uaAddress !== srvflx) {
 
-        sip.setPacketContent(
-            sipPacketNextHop,
-            sip.stringifySdp(parsedSdp)
-        );
+                    //=> The gateway and the UA are NOT on the same LAN.
+
+                    //Adding a c line with the public address.
+
+                    const parsedSdp = sip.parseSdp(
+                        sip.getPacketContent(sipPacketNextHop).toString("utf8")
+                    );
+
+                    parsedSdp["m"][0]["c"] = { ...parsedSdp["c"], "address": srvflx };
+
+                    sip.setPacketContent(
+                        sipPacketNextHop,
+                        sip.stringifySdp(parsedSdp)
+                    );
+
+                }
+
+            }
+            default: break;;
+        }
 
     };
 
-
-
-    const onSipPacket= (sipPacket: sip.Packet): void => {
+    const asteriskPatches = (sipPacket: sip.Packet) => {
 
         /*
         Patch for a bug in Asterisk:
@@ -60,6 +85,12 @@ export function handle(socket: sip.Socket, connectionId: string) {
 
         }
 
+    };
+
+    const onSipPacket = (sipPacket: sip.Packet): void => {
+
+        asteriskPatches(sipPacket);
+
         const sipPacketNextHop = backendSocket.buildNextHopPacket(sipPacket);
 
         if (sip.matchRequest(sipPacketNextHop)) {
@@ -68,11 +99,7 @@ export function handle(socket: sip.Socket, connectionId: string) {
 
         }
 
-        if (sipPacketNextHop.headers["content-type"] === "application/sdp") {
-
-            fixSdp(sipPacketNextHop);
-
-        }
+        iceHacks(sipPacketNextHop);
 
         backendSocket.write(sipPacketNextHop);
 

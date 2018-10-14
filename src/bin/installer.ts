@@ -399,7 +399,7 @@ async function install() {
                 [
                     `[general]`,
                     `icesupport=yes`,
-                    `stunaddr=stun.semasim.com:19302`,
+                    `stunaddr=turn.semasim.com:19302`,
                     ``
                 ].join("\n"), "utf8"
             )
