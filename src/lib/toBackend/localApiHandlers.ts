@@ -41,6 +41,8 @@ export const handlers: sip.api.Server.Handlers = {};
                 return undefined;
             }
 
+            console.log({ dongle });
+
             return {
                 dongle,
                 "sipPassword":

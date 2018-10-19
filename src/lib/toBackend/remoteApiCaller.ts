@@ -87,7 +87,6 @@ export const notifyLockedDongle= (()=>{
 
 })();
 
-//TODO: need to be called
 export const notifyDongleOffline= (()=>{
 
     const methodName = apiDeclaration.notifyDongleOffline.methodName;
@@ -119,7 +118,7 @@ export const notifyNewOrUpdatedUa= (()=>{
         await sendRequest<Params, Response>(methodName, ua)
         .catch(()=> new Promise(()=> {}));
 
-    }
+    };
 
 
 })();

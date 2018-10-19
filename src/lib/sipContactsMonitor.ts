@@ -191,7 +191,7 @@ export function handleAsteriskSocket(
         ),
         sipRequestRegister => {
 
-            let [aorParams, uriParams] = (() => {
+            const [aorParams, uriParams] = (() => {
 
                 let contactAor = sipLibrary.getContact(sipRequestRegister)!;
 
@@ -211,20 +211,15 @@ export function handleAsteriskSocket(
                     "ua": {
                         "instance": aorParams["+sip.instance"]!,
                         "userEmail": misc.urlSafeB64.dec((
-                            sipLibrary.parseUri(sipRequestRegister.uri).params["enc_email"] ||
                             uriParams["enc_email"] ||
                             aorParams["enc_email"]
                         )!),
                         "platform": (() => {
 
                             switch (uriParams["pn-type"]) {
-                                case "google":
-                                case "firebase":
-                                    return "android";
-                                case "apple":
-                                    return "iOS";
-                                default:
-                                    return "web";
+                                case "firebase": return "android";
+                                case "apple": return "iOS";
+                                default: return "web";
                             }
 
                         })(),
