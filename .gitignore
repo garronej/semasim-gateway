@@ -43,7 +43,5 @@ jspm_packages
 /pre_compiled
 /semasim_*.tar.gz
 /pkg_installed.json
-/dist
-
-
-
+/dist/bin
+/dist/test
