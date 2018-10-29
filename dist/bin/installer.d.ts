@@ -17,8 +17,9 @@ export declare const host_pem_path: string;
 export declare const pidfile_path: string;
 export declare const ast_sip_port = 48398;
 export declare const ld_library_path_for_asterisk: string;
-export declare function getIsProd(): boolean;
-export declare namespace getIsProd {
-    let value: boolean | undefined;
+export declare function getEnv(): "DEV" | "PROD";
+export declare namespace getEnv {
+    let value: "DEV" | "PROD" | undefined;
 }
+export declare function getBaseDomain(): "semasim.com" | "dev.semasim.com";
 export declare function program_action_update(): Promise<"LAUNCH" | "EXIT">;

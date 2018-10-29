@@ -6,6 +6,7 @@ import * as logger from "logger";
 import * as tls from "tls";
 import * as versionStatus from "../versionStatus";
 import * as router from "./router";
+import * as i from "../../bin/installer";
 
 //TODO: Implement before exit to close the socket.
 
@@ -34,7 +35,7 @@ export async function connect() {
     //ip
     const socket = new sip.Socket(
         tls.connect({ 
-            "host": "sip.semasim.com" , 
+            "host": `sip.${i.getBaseDomain()}` , 
             "port": 80 
         }),
         true

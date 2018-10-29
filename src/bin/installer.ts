@@ -45,22 +45,28 @@ export const ld_library_path_for_asterisk = [
     path.join(working_directory_path, "speex", "lib")
 ].join(":");
 
-export function getIsProd(): boolean {
+export function getEnv(): "DEV" | "PROD" {
 
-    if (getIsProd.value !== undefined) {
-        return getIsProd.value;
+    if( getEnv.value !== undefined ){
+        return getEnv.value;
     }
 
-    getIsProd.value = !fs.existsSync(path.join(module_dir_path, ".git"));
+    getEnv.value = fs.existsSync(path.join(module_dir_path, ".git")) ? 
+    "DEV" : "PROD";
 
-    return getIsProd();
+    return getEnv();
 
 }
 
-export namespace getIsProd {
+export namespace getEnv {
+    export let value: "DEV" | "PROD" | undefined = undefined;
+}
 
-    export let value: boolean | undefined = undefined;
-
+export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
+    switch(getEnv()){
+        case "DEV": return "dev.semasim.com";
+        case "PROD": return "semasim.com";
+    }
 }
 
 async function program_action_install() {
@@ -92,7 +98,7 @@ async function program_action_install() {
 
         uninstall();
 
-        if (getIsProd()) {
+        if (getEnv() === "PROD") {
 
             scriptLib.execSync(`rm -r ${module_dir_path}`);
 
@@ -124,7 +130,12 @@ async function program_action_install() {
 
     onSuccess("Started!");
 
-    console.log(scriptLib.colorize("Semasim is now running, you can go to semasim.com to register your SIM cards.", "GREEN"));
+    console.log(
+        scriptLib.colorize(
+            `Semasim is now running, you can go to ${getBaseDomain()} to register your SIM cards.`,
+            "GREEN"
+        )
+    );
 
     process.exit(0);
 
@@ -164,7 +175,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
     const versionStatus = await getVersionStatus();
 
 
-    if (!getIsProd()) {
+    if (getEnv() === "DEV") {
 
         console.log({ versionStatus });
 
@@ -183,7 +194,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
         const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
         await scriptLib.download_and_extract_tarball(
-            `semasim.com/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
+            `${getBaseDomain()}/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
             _module_dir_path,
             "OVERWRITE IF EXIST"
         );
@@ -267,7 +278,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
             ``,
             `cron_add`,
             `${uninstaller_link_path} run`,
-            `wget -q -O - semasim.com/installer.sh | sudo bash`,
+            `wget -q -O - ${getBaseDomain()}/installer.sh | sudo bash`,
             `cron_remove`,
             `rm ${reinstall_script_path}`,
             ``
@@ -336,10 +347,10 @@ async function install() {
 
     scriptLib.unixUser.create(unix_user, working_directory_path);
 
-    if (!getIsProd()) {
+    if (getEnv() === "DEV") {
 
         if (!fs.existsSync(node_path)) {
-            throw new Error("Missing copy of node");
+            throw new Error("Missing local copy of node");
         }
 
         scriptLib.enableCmdTrace();
@@ -399,7 +410,7 @@ async function install() {
                 [
                     `[general]`,
                     `icesupport=yes`,
-                    `stunaddr=turn.semasim.com:19302`,
+                    `stunaddr=turn.${getBaseDomain()}:19302`,
                     ``
                 ].join("\n"), "utf8"
             )
@@ -498,7 +509,7 @@ async function install() {
                         `prompt = no`,
                         ``,
                         `[req_distinguished_name]`,
-                        `CN=www.semasim.com`,
+                        `CN=www.${getBaseDomain()}`,
                         `O=Semasim user gateway`,
                         ``
                     ].join("\n"), "utf8"
@@ -653,7 +664,7 @@ function uninstall(verbose: false | "VERBOSE" = false) {
 
     runRecover("Deleting unix user ... ", () => scriptLib.unixUser.remove(unix_user));
 
-    if (!getIsProd()) {
+    if (getEnv() === "DEV") {
 
         runRecover("Deleting working directory ... ", () => scriptLib.execSyncQuiet(`rm -r ${working_directory_path}`));
 
@@ -695,7 +706,7 @@ namespace dongle {
             `--enable_ast_ami_on_port 48397`,
             `--unix_user ${unix_user}`,
             `--do_not_create_systemd_conf`,
-            getIsProd() ? "--assume_chan_dongle_installed" : ""
+            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : ""
         ].join(" "));
 
         (function merge_installed_pkg() {
@@ -762,7 +773,7 @@ namespace shellScripts {
                 `       exit 1`,
                 `   fi`,
                 `   ${node_path} ${__filename} uninstall`,
-                `   ${getIsProd() ? `rm -r ${module_dir_path}` : ""}`,
+                `   ${getEnv() === "PROD" ? `rm -r ${module_dir_path}` : ""}`,
                 `else`,
                 `   echo "If you wish to uninstall chan-dongle-extended call this script with 'run' as argument:"`,
                 `   echo "$0 run"`,

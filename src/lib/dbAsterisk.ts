@@ -121,7 +121,7 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
             "context": sipCallContext,
             "message_context": messagesDialplanContext,
             "auth": imsi,
-            "from_domain": "semasim.com",
+            "from_domain": i.getBaseDomain(),
             "ice_support": "yes",
             "transport": "transport-tcp",
             "dtmf_mode": "info"

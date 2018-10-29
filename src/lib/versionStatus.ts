@@ -1,4 +1,4 @@
-import { module_dir_path, getIsProd } from "../bin/installer";
+import { module_dir_path, getEnv, getBaseDomain } from "../bin/installer";
 import * as path from "path";
 import * as scriptLib from "scripting-tools";
 const localVersion: string = require(path.join(module_dir_path, "package.json"))["version"];
@@ -7,19 +7,18 @@ function genIntegerInRange(min, max): number {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-export function genRetryDelay(){
+export function genRetryDelay() {
 
-    if( getIsProd() ){
+    switch (getEnv()) {
+        case "PROD": 
+            return genIntegerInRange(1000, 20 * 1000);
+        case "DEV":
 
-        return genIntegerInRange(1000, 20*1000);
+            console.log("DEV env, waiting only one second");
 
-    }else{
-
-        console.log("Dev mode, waiting only one second");
-
-        return 1000;
-
+            return 1000;
     }
+
 
 }
 
@@ -33,11 +32,11 @@ export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINO
 
             //TODO: make sure that throw if backend is down
             //TODO: apparently we may have a response that match to null
-            serverVersion= await scriptLib.web_get("semasim.com/api/version");
+            serverVersion = await scriptLib.web_get(`${getBaseDomain()}/api/version`);
 
         } catch{
 
-            console.log("Semasim.com is down");
+            console.log(`${getBaseDomain()} is down`);
 
             await new Promise(
                 resolve => setTimeout(resolve, genRetryDelay())

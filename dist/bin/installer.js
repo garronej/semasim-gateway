@@ -49,17 +49,25 @@ exports.ld_library_path_for_asterisk = [
     path.join(exports.working_directory_path, "speexdsp", "lib"),
     path.join(exports.working_directory_path, "speex", "lib")
 ].join(":");
-function getIsProd() {
-    if (getIsProd.value !== undefined) {
-        return getIsProd.value;
+function getEnv() {
+    if (getEnv.value !== undefined) {
+        return getEnv.value;
     }
-    getIsProd.value = !fs.existsSync(path.join(exports.module_dir_path, ".git"));
-    return getIsProd();
+    getEnv.value = fs.existsSync(path.join(exports.module_dir_path, ".git")) ?
+        "DEV" : "PROD";
+    return getEnv();
 }
-exports.getIsProd = getIsProd;
-(function (getIsProd) {
-    getIsProd.value = undefined;
-})(getIsProd = exports.getIsProd || (exports.getIsProd = {}));
+exports.getEnv = getEnv;
+(function (getEnv) {
+    getEnv.value = undefined;
+})(getEnv = exports.getEnv || (exports.getEnv = {}));
+function getBaseDomain() {
+    switch (getEnv()) {
+        case "DEV": return "dev.semasim.com";
+        case "PROD": return "semasim.com";
+    }
+}
+exports.getBaseDomain = getBaseDomain;
 function program_action_install() {
     return __awaiter(this, void 0, void 0, function* () {
         console.log(`---Installing ${exports.srv_name}---`);
@@ -76,7 +84,7 @@ function program_action_install() {
         catch ({ message }) {
             console.log(scriptLib.colorize(`An error occurred: '${message}`, "RED"));
             uninstall();
-            if (getIsProd()) {
+            if (getEnv() === "PROD") {
                 scriptLib.execSync(`rm -r ${exports.module_dir_path}`);
             }
             process.exit(-1);
@@ -93,7 +101,7 @@ function program_action_install() {
             break;
         }
         onSuccess("Started!");
-        console.log(scriptLib.colorize("Semasim is now running, you can go to semasim.com to register your SIM cards.", "GREEN"));
+        console.log(scriptLib.colorize(`Semasim is now running, you can go to semasim.com to register your SIM cards.`, "GREEN"));
         process.exit(0);
     });
 }
@@ -118,7 +126,7 @@ function program_action_update() {
         scriptLib.enableCmdTrace();
         const { getVersionStatus } = yield Promise.resolve().then(() => require("../lib/versionStatus"));
         const versionStatus = yield getVersionStatus();
-        if (!getIsProd()) {
+        if (getEnv() === "DEV") {
             console.log({ versionStatus });
             return "LAUNCH";
         }
@@ -225,9 +233,9 @@ function program_action_tarball() {
 function install() {
     return __awaiter(this, void 0, void 0, function* () {
         scriptLib.unixUser.create(exports.unix_user, exports.working_directory_path);
-        if (!getIsProd()) {
+        if (getEnv() === "DEV") {
             if (!fs.existsSync(exports.node_path)) {
-                throw new Error("Missing copy of node");
+                throw new Error("Missing local copy of node");
             }
             scriptLib.enableCmdTrace();
             yield fetch_asterisk_and_dongle(exports.working_directory_path);
@@ -428,7 +436,7 @@ function uninstall(verbose = false) {
     runRecover("Removing uninstaller from path ...", () => shellScripts.remove_symbolic_links());
     runRecover("Deleting run link to internal asterisk ... ", () => scriptLib.execSyncQuiet(`rm -r ${ast_dir_link_path}`));
     runRecover("Deleting unix user ... ", () => scriptLib.unixUser.remove(exports.unix_user));
-    if (!getIsProd()) {
+    if (getEnv() === "DEV") {
         runRecover("Deleting working directory ... ", () => scriptLib.execSyncQuiet(`rm -r ${exports.working_directory_path}`));
     }
 }
@@ -452,7 +460,7 @@ var dongle;
             `--enable_ast_ami_on_port 48397`,
             `--unix_user ${exports.unix_user}`,
             `--do_not_create_systemd_conf`,
-            getIsProd() ? "--assume_chan_dongle_installed" : ""
+            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : ""
         ].join(" "));
         (function merge_installed_pkg() {
             const dongle_installed_pkg_record = path.join(exports.dongle_dir_path, path.basename(installed_pkg_record_path));
@@ -496,7 +504,7 @@ var shellScripts;
             `       exit 1`,
             `   fi`,
             `   ${exports.node_path} ${__filename} uninstall`,
-            `   ${getIsProd() ? `rm -r ${exports.module_dir_path}` : ""}`,
+            `   ${getEnv() === "PROD" ? `rm -r ${exports.module_dir_path}` : ""}`,
             `else`,
             `   echo "If you wish to uninstall chan-dongle-extended call this script with 'run' as argument:"`,
             `   echo "$0 run"`,

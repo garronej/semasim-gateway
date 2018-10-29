@@ -16,12 +16,12 @@ function genIntegerInRange(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 function genRetryDelay() {
-    if (installer_1.getIsProd()) {
-        return genIntegerInRange(1000, 20 * 1000);
-    }
-    else {
-        console.log("Dev mode, waiting only one second");
-        return 1000;
+    switch (installer_1.getEnv()) {
+        case "PROD":
+            return genIntegerInRange(1000, 20 * 1000);
+        case "DEV":
+            console.log("DEV env, waiting only one second");
+            return 1000;
     }
 }
 exports.genRetryDelay = genRetryDelay;
