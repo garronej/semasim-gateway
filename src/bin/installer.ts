@@ -26,16 +26,20 @@ export const host_pem_path = path.join(keys_dir_path, "host.pem");
 const ast_dir_link_path = "/usr/share/asterisk_semasim";
 const uninstaller_link_path = `/usr/sbin/${srv_name}_uninstaller`;
 export const pidfile_path = path.join(working_directory_path, "pid");
+const env_file_path= path.join(module_dir_path,"env");
 const to_distribute_rel_paths = [
     "LICENSE",
     "README.md",
     `res/${path.basename(ast_db_path)}`,
     `res/${path.basename(semasim_db_path)}`,
+    `res/${path.basename(env_file_path)}`,
     "dist",
     "node_modules",
     "package.json",
     path.basename(node_path)
 ];
+
+path.relative
 
 export const ast_sip_port = 48398;
 
@@ -51,8 +55,13 @@ export function getEnv(): "DEV" | "PROD" {
         return getEnv.value;
     }
 
-    getEnv.value = fs.existsSync(path.join(module_dir_path, ".git")) ? 
-    "DEV" : "PROD";
+    const env= fs.readFileSync(env_file_path)
+        .toString("utf8")
+        .replace(/\s/g, "") as any;
+
+    console.assert(env === "DEV" || env === "PROD");
+
+    getEnv.value= env;
 
     return getEnv();
 
@@ -63,7 +72,7 @@ export namespace getEnv {
 }
 
 export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
-    switch(getEnv()){
+    switch (getEnv()) {
         case "DEV": return "dev.semasim.com";
         case "PROD": return "semasim.com";
     }
@@ -110,15 +119,15 @@ async function program_action_install() {
 
     }
 
-    const { onSuccess }=  scriptLib.start_long_running_process("Starting Semasim");
+    const { onSuccess } = scriptLib.start_long_running_process("Starting Semasim");
 
     while (true) {
 
-        try{
+        try {
 
             await scriptLib.exec("dongle list")
 
-        }catch{
+        } catch{
 
             continue;
 
@@ -310,6 +319,11 @@ async function program_action_tarball() {
         scriptLib.fs_move("COPY", module_dir_path, _module_dir_path, name);
     }
 
+    fs.writeFileSync(
+        path.join(_module_dir_path, path.relative(module_dir_path, env_file_path)),
+        Buffer.from("PROD", "utf8")
+    );
+
     const _node_modules_path = path.join(_module_dir_path, "node_modules");
 
     for (const name of ["@types", "typescript"]) {
@@ -330,6 +344,7 @@ async function program_action_tarball() {
         _working_directory_path,
         "asterisk/lib/asterisk/modules/chan_dongle.so"
     );
+
 
     scriptLib.execSyncTrace([
         "tar -czf",

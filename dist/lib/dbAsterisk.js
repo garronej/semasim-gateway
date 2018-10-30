@@ -100,7 +100,7 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                 "context": voiceCallBridge_1.sipCallContext,
                 "message_context": sipMessagesMonitor_1.dialplanContext,
                 "auth": imsi,
-                "from_domain": "semasim.com",
+                "from_domain": i.getBaseDomain(),
                 "ice_support": "yes",
                 "transport": "transport-tcp",
                 "dtmf_mode": "info"

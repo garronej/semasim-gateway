@@ -33,16 +33,19 @@ exports.host_pem_path = path.join(keys_dir_path, "host.pem");
 const ast_dir_link_path = "/usr/share/asterisk_semasim";
 const uninstaller_link_path = `/usr/sbin/${exports.srv_name}_uninstaller`;
 exports.pidfile_path = path.join(exports.working_directory_path, "pid");
+const env_file_path = path.join(exports.module_dir_path, "env");
 const to_distribute_rel_paths = [
     "LICENSE",
     "README.md",
     `res/${path.basename(exports.ast_db_path)}`,
     `res/${path.basename(exports.semasim_db_path)}`,
+    `res/${path.basename(env_file_path)}`,
     "dist",
     "node_modules",
     "package.json",
     path.basename(exports.node_path)
 ];
+path.relative;
 exports.ast_sip_port = 48398;
 exports.ld_library_path_for_asterisk = [
     path.join(exports.ast_dir_path, "lib"),
@@ -53,8 +56,11 @@ function getEnv() {
     if (getEnv.value !== undefined) {
         return getEnv.value;
     }
-    getEnv.value = fs.existsSync(path.join(exports.module_dir_path, ".git")) ?
-        "DEV" : "PROD";
+    const env = fs.readFileSync(env_file_path)
+        .toString("utf8")
+        .replace(/\s/g, "");
+    console.assert(env === "DEV" || env === "PROD");
+    getEnv.value = env;
     return getEnv();
 }
 exports.getEnv = getEnv;
@@ -101,7 +107,7 @@ function program_action_install() {
             break;
         }
         onSuccess("Started!");
-        console.log(scriptLib.colorize(`Semasim is now running, you can go to semasim.com to register your SIM cards.`, "GREEN"));
+        console.log(scriptLib.colorize(`Semasim is now running, you can go to ${getBaseDomain()} to register your SIM cards.`, "GREEN"));
         process.exit(0);
     });
 }
@@ -136,7 +142,7 @@ function program_action_update() {
         else if (versionStatus === "MINOR" || versionStatus === "PATCH") {
             console.log(`Performing ${versionStatus} update...`);
             const _module_dir_path = path.join(exports.working_directory_path, path.basename(exports.module_dir_path));
-            yield scriptLib.download_and_extract_tarball(`semasim.com/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`, _module_dir_path, "OVERWRITE IF EXIST");
+            yield scriptLib.download_and_extract_tarball(`${getBaseDomain()}/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`, _module_dir_path, "OVERWRITE IF EXIST");
             for (const db_path of [exports.semasim_db_path, exports.ast_db_path]) {
                 const [db_schema_path, _db_schema_path] = [exports.module_dir_path, _module_dir_path].map(v => path.join(v, "res", path.basename(db_path)));
                 if (!scriptLib.fs_areSame(db_schema_path, _db_schema_path)) {
@@ -191,7 +197,7 @@ function program_action_update() {
                 ``,
                 `cron_add`,
                 `${uninstaller_link_path} run`,
-                `wget -q -O - semasim.com/installer.sh | sudo bash`,
+                `wget -q -O - ${getBaseDomain()}/installer.sh | sudo bash`,
                 `cron_remove`,
                 `rm ${reinstall_script_path}`,
                 ``
@@ -214,6 +220,7 @@ function program_action_tarball() {
         for (const name of to_distribute_rel_paths) {
             scriptLib.fs_move("COPY", exports.module_dir_path, _module_dir_path, name);
         }
+        fs.writeFileSync(path.join(_module_dir_path, path.relative(exports.module_dir_path, env_file_path)), Buffer.from("PROD", "utf8"));
         const _node_modules_path = path.join(_module_dir_path, "node_modules");
         for (const name of ["@types", "typescript"]) {
             scriptLib.execSyncTrace(`rm -r ${path.join(_node_modules_path, name)}`);
@@ -278,7 +285,7 @@ function install() {
                 fs.writeFileSync(path.join(exports.ast_etc_dir_path, "rtp.conf"), Buffer.from([
                     `[general]`,
                     `icesupport=yes`,
-                    `stunaddr=turn.semasim.com:19302`,
+                    `stunaddr=turn.${getBaseDomain()}:19302`,
                     ``
                 ].join("\n"), "utf8"));
                 fs.writeFileSync(path.join(exports.ast_etc_dir_path, "res_odbc.conf"), Buffer.from([
@@ -335,7 +342,7 @@ function install() {
                             `prompt = no`,
                             ``,
                             `[req_distinguished_name]`,
-                            `CN=www.semasim.com`,
+                            `CN=www.${getBaseDomain()}`,
                             `O=Semasim user gateway`,
                             ``
                         ].join("\n"), "utf8"));

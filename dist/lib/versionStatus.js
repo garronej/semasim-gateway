@@ -32,10 +32,10 @@ function getVersionStatus() {
             try {
                 //TODO: make sure that throw if backend is down
                 //TODO: apparently we may have a response that match to null
-                serverVersion = yield scriptLib.web_get("semasim.com/api/version");
+                serverVersion = yield scriptLib.web_get(`${installer_1.getBaseDomain()}/api/version`);
             }
             catch (_a) {
-                console.log("Semasim.com is down");
+                console.log(`${installer_1.getBaseDomain()} is down`);
                 yield new Promise(resolve => setTimeout(resolve, genRetryDelay()));
             }
         }

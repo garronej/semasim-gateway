@@ -15,6 +15,7 @@ const logger = require("logger");
 const tls = require("tls");
 const versionStatus = require("../versionStatus");
 const router = require("./router");
+const i = require("../../bin/installer");
 //TODO: Implement before exit to close the socket.
 const debug = logger.debugFactory();
 const idString = "gatewayToBackend";
@@ -31,7 +32,7 @@ function connect() {
         //TODO: see if local address is automatically set, if so avoid getting Active interface
         //ip
         const socket = new sip.Socket(tls.connect({
-            "host": "sip.semasim.com",
+            "host": `sip.${i.getBaseDomain()}`,
             "port": 80
         }), true);
         socket.evtClose.attachOnce(() => __awaiter(this, void 0, void 0, function* () {
