@@ -26,7 +26,7 @@ export const host_pem_path = path.join(keys_dir_path, "host.pem");
 const ast_dir_link_path = "/usr/share/asterisk_semasim";
 const uninstaller_link_path = `/usr/sbin/${srv_name}_uninstaller`;
 export const pidfile_path = path.join(working_directory_path, "pid");
-const env_file_path= path.join(module_dir_path,"env");
+const env_file_path= path.join(module_dir_path,"res","env");
 const to_distribute_rel_paths = [
     "LICENSE",
     "README.md",
