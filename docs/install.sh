@@ -20,7 +20,7 @@ if [ -d "$INSTALL_PATH" ]; then
 
 fi
 
-URL="https://garronej.github.io/semasim-gateway/releases/semasim_"$(uname -m)".tar.gz"
+URL="https://gw.semasim.com/semasim_"$(uname -m)".tar.gz"
 
 wget $URL -q --show-progress -O $TARBALL_PATH
 

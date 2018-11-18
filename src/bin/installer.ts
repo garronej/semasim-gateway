@@ -203,7 +203,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
         const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
         await scriptLib.download_and_extract_tarball(
-            `https://garronej.github.io/semasim-gateway/releases/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
+            `https://gw.semasim.com/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
             _module_dir_path,
             "OVERWRITE IF EXIST"
         );
@@ -287,7 +287,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
             ``,
             `cron_add`,
             `${uninstaller_link_path} run`,
-            `wget -q -O - http://garronej.github.io/semasim-gateway/install.sh | sudo bash`,
+            `wget -q -O - https://gw.semasim.com/install.sh | sudo bash`,
             `cron_remove`,
             `rm ${reinstall_script_path}`,
             ``
@@ -349,7 +349,7 @@ async function program_action_tarball() {
 
     scriptLib.execSyncTrace([
         "tar -czf",
-        path.join(module_dir_path, "docs", "releases", `semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`),
+        path.join(module_dir_path, "docs", `semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`),
         `-C ${_module_dir_path} .`
     ].join(" ")
     );

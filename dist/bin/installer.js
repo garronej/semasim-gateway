@@ -223,7 +223,7 @@ function program_action_update() {
                     if (!(versionStatus === "MINOR" || versionStatus === "PATCH")) return [3 /*break*/, 5];
                     console.log("Performing " + versionStatus + " update...");
                     _module_dir_path = path.join(exports.working_directory_path, path.basename(exports.module_dir_path));
-                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://garronej.github.io/semasim-gateway/releases/semasim_" + scriptLib.sh_eval("uname -m") + ".tar.gz", _module_dir_path, "OVERWRITE IF EXIST")];
+                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://gw.semasim.com/semasim_" + scriptLib.sh_eval("uname -m") + ".tar.gz", _module_dir_path, "OVERWRITE IF EXIST")];
                 case 4:
                     _h.sent();
                     _loop_1 = function (db_path) {
@@ -314,7 +314,7 @@ function program_action_update() {
                             "",
                             "cron_add",
                             uninstaller_link_path + " run",
-                            "wget -q -O - http://garronej.github.io/semasim-gateway/install.sh | sudo bash",
+                            "wget -q -O - https://gw.semasim.com/install.sh | sudo bash",
                             "cron_remove",
                             "rm " + reinstall_script_path,
                             ""
@@ -377,7 +377,7 @@ function program_action_tarball() {
                     scriptLib.fs_move("COPY", exports.working_directory_path, _working_directory_path, "asterisk/lib/asterisk/modules/chan_dongle.so");
                     scriptLib.execSyncTrace([
                         "tar -czf",
-                        path.join(exports.module_dir_path, "docs", "releases", "semasim_" + scriptLib.sh_eval("uname -m") + ".tar.gz"),
+                        path.join(exports.module_dir_path, "docs", "semasim_" + scriptLib.sh_eval("uname -m") + ".tar.gz"),
                         "-C " + _module_dir_path + " ."
                     ].join(" "));
                     scriptLib.execSyncTrace("rm -r " + _module_dir_path);
