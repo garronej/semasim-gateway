@@ -1,15 +1,45 @@
 "use strict";
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const scriptLib = require("scripting-tools");
-const i = require("../bin/installer");
-const path = require("path");
-const fs = require("fs");
-const child_process = require("child_process");
-const logger = require("logger");
-const debug = logger.debugFactory();
+var scriptLib = require("scripting-tools");
+var i = require("../bin/installer");
+var path = require("path");
+var fs = require("fs");
+var child_process = require("child_process");
+var logger = require("logger");
+var debug = logger.debugFactory();
 function doSpawn(args) {
-    const home_path = path.join(i.ast_dir_path, "var", "lib", "asterisk");
-    return child_process.spawn(i.ast_path, ["-C", i.ast_main_conf_path, ...args], {
+    var home_path = path.join(i.ast_dir_path, "var", "lib", "asterisk");
+    return child_process.spawn(i.ast_path, __spread(["-C", i.ast_main_conf_path], args), {
         "cwd": home_path,
         "env": {
             "HOME": home_path,
@@ -17,16 +47,27 @@ function doSpawn(args) {
         }
     });
 }
-const ast_pidfile_path = path.join(i.ast_dir_path, "var", "run", "asterisk", "asterisk.pid");
-const cleanupRunfiles = () => {
-    for (const file_path of [
-        ast_pidfile_path,
-        path.join(path.dirname(ast_pidfile_path), "asterisk.ctl")
-    ]) {
-        if (fs.existsSync(file_path)) {
-            debug(`Cleaning up asterisk garbage file ${path.basename(file_path)}`);
-            fs.unlinkSync(file_path);
+var ast_pidfile_path = path.join(i.ast_dir_path, "var", "run", "asterisk", "asterisk.pid");
+var cleanupRunfiles = function () {
+    var e_1, _a;
+    try {
+        for (var _b = __values([
+            ast_pidfile_path,
+            path.join(path.dirname(ast_pidfile_path), "asterisk.ctl")
+        ]), _c = _b.next(); !_c.done; _c = _b.next()) {
+            var file_path = _c.value;
+            if (fs.existsSync(file_path)) {
+                debug("Cleaning up asterisk garbage file " + path.basename(file_path));
+                fs.unlinkSync(file_path);
+            }
         }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+        }
+        finally { if (e_1) throw e_1.error; }
     }
 };
 function beforeExit() {
@@ -34,27 +75,27 @@ function beforeExit() {
 }
 exports.beforeExit = beforeExit;
 (function (beforeExit) {
-    beforeExit.impl = () => Promise.resolve();
+    beforeExit.impl = function () { return Promise.resolve(); };
 })(beforeExit = exports.beforeExit || (exports.beforeExit = {}));
 /** Return a promise that resolve when Asterisk is fully booted */
 function spawnAsterisk() {
     scriptLib.stopProcessSync.log = debug;
     scriptLib.stopProcessSync.stopProcessAsapSync(ast_pidfile_path);
     cleanupRunfiles();
-    let astProcess_isTerminated = false;
+    var astProcess_isTerminated = false;
     debug("spawning asterisk");
-    const astProcess = doSpawn(["-fvvvv"]);
-    (() => {
-        const onTerminated = (errorOrCode) => {
+    var astProcess = doSpawn(["-fvvvv"]);
+    (function () {
+        var onTerminated = function (errorOrCode) {
             astProcess_isTerminated = true;
             cleanupRunfiles();
             if (errorOrCode instanceof Error) {
-                const error = errorOrCode;
+                var error = errorOrCode;
                 debug("Asterisk could not be spawned", error);
             }
             else {
-                const exitCode = errorOrCode;
-                debug(`Asterisk unexpectedly terminated with code ${exitCode}`);
+                var exitCode = errorOrCode;
+                debug("Asterisk unexpectedly terminated with code " + exitCode);
             }
             throw new Error("asterisk not running");
         };
@@ -62,8 +103,8 @@ function spawnAsterisk() {
         astProcess.once("error", onTerminated);
         astProcess.once("close", onTerminated);
     })();
-    const prFullyBooted = new Promise(resolve => {
-        const onData = (data) => {
+    var prFullyBooted = new Promise(function (resolve) {
+        var onData = function (data) {
             if (!!data.toString("utf8").match(/Asterisk\ Ready\./)) {
                 debug("Asterisk fully booted");
                 astProcess.stdout.removeListener("data", onData);
@@ -72,7 +113,7 @@ function spawnAsterisk() {
         };
         astProcess.stdout.on("data", onData);
     });
-    beforeExit.impl = () => new Promise(resolve => {
+    beforeExit.impl = function () { return new Promise(function (resolve) {
         if (astProcess_isTerminated) {
             debug("No need to stop Asterisk process it's already dead");
             resolve();
@@ -80,16 +121,16 @@ function spawnAsterisk() {
         }
         debug("Terminating Asterisk process");
         astProcess.removeAllListeners("close");
-        let processCoreStopNow_hadOutput = false;
-        const processCoreStopNow = doSpawn(["-rx", "core stop now"]);
-        processCoreStopNow.stdout.once("data", () => processCoreStopNow_hadOutput = true);
-        processCoreStopNow.stderr.once("data", () => processCoreStopNow_hadOutput = true);
+        var processCoreStopNow_hadOutput = false;
+        var processCoreStopNow = doSpawn(["-rx", "core stop now"]);
+        processCoreStopNow.stdout.once("data", function () { return processCoreStopNow_hadOutput = true; });
+        processCoreStopNow.stderr.once("data", function () { return processCoreStopNow_hadOutput = true; });
         //Can't spawn
-        processCoreStopNow.once("error", () => {
+        processCoreStopNow.once("error", function () {
             debug("CLI command 'core stop now' could not be spawned");
             processCoreStopNow.emit("close", 1);
         });
-        processCoreStopNow.once("close", exitCode => {
+        processCoreStopNow.once("close", function (exitCode) {
             if (exitCode !== 0 ||
                 processCoreStopNow_hadOutput) {
                 debug("CLI command 'core stop now' failed, we let exit handler kill asterisk");
@@ -100,13 +141,13 @@ function spawnAsterisk() {
                 debug("CLI command 'core stop now' success");
             }
         });
-        astProcess.once("close", exitCode => {
-            debug(`Asterisk process terminated (exit code: ${exitCode})`);
+        astProcess.once("close", function (exitCode) {
+            debug("Asterisk process terminated (exit code: " + exitCode + ")");
             resolve();
         });
-    });
-    astProcess.stdout.on("data", (data) => logger.log(`(asterisk) ${data.toString("utf8")}`));
-    astProcess.stderr.on("data", (data) => logger.log(`(asterisk) ${logger.colors.red(data.toString("utf8"))}`));
+    }); };
+    astProcess.stdout.on("data", function (data) { return logger.log("(asterisk) " + data.toString("utf8")); });
+    astProcess.stderr.on("data", function (data) { return logger.log("(asterisk) " + logger.colors.red(data.toString("utf8"))); });
     return prFullyBooted;
 }
 exports.spawnAsterisk = spawnAsterisk;

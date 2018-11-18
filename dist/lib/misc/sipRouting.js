@@ -1,7 +1,26 @@
 "use strict";
+/* NOTE: Used in the browser. */
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const stringTransform = require("transfer-tools/dist/lib/stringTransform");
-const sipLibrary = require("ts-sip");
+//NOTE: Transpiled to ES3.
+var stringTransform = require("transfer-tools/dist/lib/stringTransform");
+//NOTE: Transpiled to ES5
+var sipLibrary = require("ts-sip");
 /**
  * Return true if it's a sipRequest originated of UA
  * or if it's a sipResponse of a request originated by UA.
@@ -27,14 +46,15 @@ exports.readImsi = readImsi;
  * */
 var cid;
 (function (cid) {
-    const { enc, dec } = stringTransform.transcode("base64", { "=": "_" });
+    var _a = stringTransform.transcode("base64", { "=": "_" }), enc = _a.enc, dec = _a.dec;
     /** on backend when ua connect */
-    function generate(uaSocket, timestamp = Date.now()) {
-        return enc(`${timestamp}:${uaSocket.remoteAddress}:${uaSocket.remotePort}`);
+    function generate(uaSocket, timestamp) {
+        if (timestamp === void 0) { timestamp = Date.now(); }
+        return enc(timestamp + ":" + uaSocket.remoteAddress + ":" + uaSocket.remotePort);
     }
     cid.generate = generate;
     function parse(connectionId) {
-        const [a, b, c] = dec(connectionId).split(":");
+        var _a = __read(dec(connectionId).split(":"), 3), a = _a[0], b = _a[1], c = _a[2];
         return {
             "timestamp": parseInt(a),
             "uaSocket": {
@@ -44,7 +64,7 @@ var cid;
         };
     }
     cid.parse = parse;
-    const key = "connection_id";
+    var key = "connection_id";
     /**
      * Include a connection id in a sipRequest.
      * This must be applied to every new sip request.

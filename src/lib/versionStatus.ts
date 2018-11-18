@@ -32,11 +32,11 @@ export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINO
 
             //TODO: make sure that throw if backend is down
             //TODO: apparently we may have a response that match to null
-            serverVersion = await scriptLib.web_get(`${getBaseDomain()}/api/version`);
+            serverVersion = await scriptLib.web_get(`web.${getBaseDomain()}/api/version`);
 
         } catch{
 
-            console.log(`${getBaseDomain()} is down`);
+            console.log(`web.${getBaseDomain()} is down`);
 
             await new Promise(
                 resolve => setTimeout(resolve, genRetryDelay())

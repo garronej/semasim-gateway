@@ -1,4 +1,9 @@
+/* NOTE: Used in the browser. */
+
+//NOTE: Transpiled to ES3.
 import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
+
+//NOTE: Transpiled to ES5
 import * as sipLibrary from "ts-sip";
 
 /** 

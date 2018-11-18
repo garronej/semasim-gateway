@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const dcSanityChecks = require("chan-dongle-extended-client/dist/lib/sanityChecks");
+var dcSanityChecks = require("chan-dongle-extended-client/dist/lib/sanityChecks");
 //TODO: rename sanityCheck.
 var sanityChecks;
 (function (sanityChecks) {
@@ -34,9 +34,10 @@ var sanityChecks;
     }
     sanityChecks.platform = platform;
 })(sanityChecks = exports.sanityChecks || (exports.sanityChecks = {}));
-function isValidEmail(email, mustBeLc = undefined) {
-    const regExpEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    const regExpLcEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-z\-0-9]+\.)+[a-z]{2,}))$/;
+function isValidEmail(email, mustBeLc) {
+    if (mustBeLc === void 0) { mustBeLc = undefined; }
+    var regExpEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    var regExpLcEmail = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-z\-0-9]+\.)+[a-z]{2,}))$/;
     return (typeof email === "string" &&
         email.match(mustBeLc ? regExpLcEmail : regExpEmail) !== null);
 }

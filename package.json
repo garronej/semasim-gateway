@@ -1,11 +1,10 @@
 {
   "name": "semasim-gateway",
   "description": "Semasim gateway",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "scripts": {
     "prepare": "cp $(readlink -e $(which node)) ./node",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
-    "tsc-w": "node ./node_modules/typescript/bin/tsc -w -p ./tsconfig.json",
     "start": "sudo ./node ./dist/bin/main.js",
     "test": "sudo ./node ./dist/test/main.js",
     "tarball": "sudo node dist/bin/installer tarball",

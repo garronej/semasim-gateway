@@ -203,7 +203,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
         const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
         await scriptLib.download_and_extract_tarball(
-            `${getBaseDomain()}/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
+            `https://garronej.github.io/semasim-gateway/releases/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
             _module_dir_path,
             "OVERWRITE IF EXIST"
         );
@@ -287,11 +287,13 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
             ``,
             `cron_add`,
             `${uninstaller_link_path} run`,
-            `wget -q -O - ${getBaseDomain()}/installer.sh | sudo bash`,
+            `wget -q -O - http://garronej.github.io/semasim-gateway/install.sh | sudo bash`,
             `cron_remove`,
             `rm ${reinstall_script_path}`,
             ``
         ].join("\n"));
+
+
 
         scriptLib.spawnAndDetach("/bin/bash", [reinstall_script_path], undefined, "/tmp/semasim_reinstall.log");
 
@@ -345,16 +347,14 @@ async function program_action_tarball() {
         "asterisk/lib/asterisk/modules/chan_dongle.so"
     );
 
-
     scriptLib.execSyncTrace([
         "tar -czf",
-        path.join(module_dir_path, `semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`),
+        path.join(module_dir_path, "docs", "releases", `semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`),
         `-C ${_module_dir_path} .`
     ].join(" ")
     );
 
     scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
-
 
 }
 
@@ -376,7 +376,7 @@ async function install() {
 
     await (async function configure_asterisk() {
 
-        for (let package_name of [
+        for (const package_name of [
             "libuuid1",
             "libjansson4",
             "libxml2",
@@ -524,7 +524,7 @@ async function install() {
                         `prompt = no`,
                         ``,
                         `[req_distinguished_name]`,
-                        `CN=www.${getBaseDomain()}`,
+                        `CN=web.${getBaseDomain()}`,
                         `O=Semasim user gateway`,
                         ``
                     ].join("\n"), "utf8"
@@ -699,7 +699,7 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
     );
 
     await scriptLib.download_and_extract_tarball(
-        `https://github.com/garronej/dongle/releases/download/latest/dongle_${arch}.tar.gz`,
+        `https://garronej.github.io/chan-dongle-extended/releases/dongle_${arch}.tar.gz`,
         path.join(dest_dir_path, path.basename(dongle_dir_path)),
         "OVERWRITE IF EXIST"
     );
@@ -721,6 +721,7 @@ namespace dongle {
             `--enable_ast_ami_on_port 48397`,
             `--unix_user ${unix_user}`,
             `--do_not_create_systemd_conf`,
+            `--allow_host_reboot_on_dongle_unrecoverable_crash`,
             getEnv() === "PROD" ? "--assume_chan_dongle_installed" : ""
         ].join(" "));
 

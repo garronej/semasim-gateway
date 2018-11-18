@@ -1,8 +1,10 @@
 "use strict";
+/* NOTE: Used in the browser. */
 Object.defineProperty(exports, "__esModule", { value: true });
-const stringTransform = require("transfer-tools/dist/lib/stringTransform");
+//NOTE: Transpiled to ES3.
+var stringTransform = require("transfer-tools/dist/lib/stringTransform");
 exports.urlSafeB64 = stringTransform.transcode("base64", { "=": "_" });
-const header = (i) => `Bundled-Data-${i}`;
+var header = function (i) { return "Bundled-Data-" + i; };
 /**
  *
  * In order to ease the cross implementation in Java and Objective C
@@ -19,8 +21,8 @@ function replacer_reviver(isReplacer, key, value) {
     if (value === null) {
         return value;
     }
-    const cKey = !!key.match(/[Dd]ate$/);
-    const cVal = isReplacer ? (typeof value === "string" &&
+    var cKey = !!key.match(/[Dd]ate$/);
+    var cVal = isReplacer ? (typeof value === "string" &&
         !!value.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/)) : typeof value === "number";
     if (isReplacer ? (cKey !== cVal) : (cKey && !cVal)) {
         throw new Error("Bundled data design error");
@@ -28,13 +30,14 @@ function replacer_reviver(isReplacer, key, value) {
     if (!cKey) {
         return value;
     }
-    const date = new Date(value);
+    var date = new Date(value);
     return isReplacer ? date.getTime() : date;
 }
 ;
-function smuggleBundledDataInHeaders(data, headers = {}) {
-    const split = stringTransform.textSplit(125, exports.urlSafeB64.enc(JSON.stringify(data, (key, value) => replacer_reviver(true, key, value))));
-    for (let i = 0; i < split.length; i++) {
+function smuggleBundledDataInHeaders(data, headers) {
+    if (headers === void 0) { headers = {}; }
+    var split = stringTransform.textSplit(125, exports.urlSafeB64.enc(JSON.stringify(data, function (key, value) { return replacer_reviver(true, key, value); })));
+    for (var i = 0; i < split.length; i++) {
         headers[header(i)] = split[i];
     }
     return headers;
@@ -42,11 +45,11 @@ function smuggleBundledDataInHeaders(data, headers = {}) {
 exports.smuggleBundledDataInHeaders = smuggleBundledDataInHeaders;
 /** assert there is data */
 function extractBundledDataFromHeaders(headers) {
-    const split = [];
-    let i = 0;
+    var split = [];
+    var i = 0;
     while (true) {
-        const key = header(i++);
-        const part = headers[key] || headers[key.toLowerCase()];
+        var key = header(i++);
+        var part = headers[key] || headers[key.toLowerCase()];
         if (!!part) {
             split.push(part);
         }
@@ -57,6 +60,6 @@ function extractBundledDataFromHeaders(headers) {
     if (!split.length) {
         throw new Error("No bundled data in header");
     }
-    return JSON.parse(exports.urlSafeB64.dec(split.join("")), (key, value) => replacer_reviver(false, key, value));
+    return JSON.parse(exports.urlSafeB64.dec(split.join("")), function (key, value) { return replacer_reviver(false, key, value); });
 }
 exports.extractBundledDataFromHeaders = extractBundledDataFromHeaders;

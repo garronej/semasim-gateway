@@ -1,4 +1,9 @@
+/* NOTE: Used in the browser. */
+
+//NOTE: Transpiled to ES3.
 import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
+
+//Should be only types def. striped.
 import * as types from "../types";
 
 export const urlSafeB64 = stringTransform.transcode("base64", { "=": "_" });
