@@ -25,18 +25,18 @@
     "@types/async-lock": "0.0.20",
     "@types/node": "^8.9.1",
     "@types/ws": "^4.0.0",
-    "typescript": "^3.0.1",
     "async-lock": "^1.0.0",
     "commander": "^2.11.0",
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
     "network": "^0.3.2",
-    "sqlite": "^2.9.1",
     "scripting-tools": "github:garronej/scripting-tools",
+    "sqlite": "^2.9.1",
     "sqlite-custom": "github:garronej/sqlite-custom",
     "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
     "ts-sip": "github:garronej/ts-sip",
+    "typescript": "^3.0.1",
     "ws": "^4.0.0"
   }
 }
