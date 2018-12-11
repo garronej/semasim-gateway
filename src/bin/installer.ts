@@ -425,7 +425,8 @@ async function install() {
                 [
                     `[general]`,
                     `icesupport=yes`,
-                    `stunaddr=turn.${getBaseDomain()}:19302`,
+                    //`stunaddr=turn.${getBaseDomain()}:19302`,
+                    `stunaddr=cname_stun_19302.semasim.com:19302`,
                     ``
                 ].join("\n"), "utf8"
             )

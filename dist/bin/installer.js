@@ -465,7 +465,8 @@ function install() {
                                         fs.writeFileSync(path.join(exports.ast_etc_dir_path, "rtp.conf"), Buffer.from([
                                             "[general]",
                                             "icesupport=yes",
-                                            "stunaddr=turn." + getBaseDomain() + ":19302",
+                                            //`stunaddr=turn.${getBaseDomain()}:19302`,
+                                            "stunaddr=cname_stun_19302.semasim.com:19302",
                                             ""
                                         ].join("\n"), "utf8"));
                                         fs.writeFileSync(path.join(exports.ast_etc_dir_path, "res_odbc.conf"), Buffer.from([
