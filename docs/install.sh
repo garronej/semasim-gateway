@@ -8,7 +8,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-echo "We will now download and install semasim, it may take some time."
+echo "We will now download and install semasim, it will take some time..."
 
 if [ -d "$INSTALL_PATH" ]; then
 

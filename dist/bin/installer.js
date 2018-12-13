@@ -402,7 +402,7 @@ function install() {
                     _a.label = 2;
                 case 2: return [4 /*yield*/, (function configure_asterisk() {
                         return __awaiter(this, void 0, void 0, function () {
-                            var e_6, _a, e_7, _b, _c, _d, package_name, e_6_1, arch, _e, _f, _g, package_name, dl_path, file_path, e_7_1;
+                            var e_6, _a, e_7, _b, _c, _d, package_name, e_6_1, debArch, _e, _f, _g, package_name, dl_path, file_path, e_7_1;
                             return __generator(this, function (_h) {
                                 switch (_h.label) {
                                     case 0:
@@ -438,13 +438,25 @@ function install() {
                                         finally { if (e_6) throw e_6.error; }
                                         return [7 /*endfinally*/];
                                     case 7:
-                                        arch = scriptLib.sh_eval("uname -m");
+                                        debArch = (function () {
+                                            var arch = scriptLib.sh_eval("uname -m");
+                                            if (arch === "i386") {
+                                                return arch;
+                                            }
+                                            if (arch === "x86_64") {
+                                                return "amd64";
+                                            }
+                                            if (!!arch.match(/^arm/)) {
+                                                return "armhf";
+                                            }
+                                            throw new Error(arch + " proc not supported");
+                                        })();
                                         _h.label = 8;
                                     case 8:
                                         _h.trys.push([8, 15, 16, 17]);
                                         _e = __values([
-                                            ["libssl1.0.2", "/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_" + arch + ".deb"],
-                                            ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + arch + ".deb"]
+                                            ["libssl1.0.2", "/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_" + debArch + ".deb"],
+                                            ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb"]
                                         ]), _f = _e.next();
                                         _h.label = 9;
                                     case 9:

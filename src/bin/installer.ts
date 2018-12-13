@@ -387,11 +387,29 @@ async function install() {
 
         }
 
-        const arch = scriptLib.sh_eval("uname -m");
+        const debArch = (()=>{
+
+            const arch = scriptLib.sh_eval("uname -m");
+
+            if( arch === "i386" ){
+                return arch;
+            }
+
+            if( arch === "x86_64" ){
+                return "amd64";
+            }
+
+            if( !!arch.match(/^arm/) ){
+                return "armhf";
+            }
+
+            throw new Error(`${arch} proc not supported`);
+
+        })();
 
         for (const [ package_name, dl_path ] of [
-            [ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${arch}.deb` ], 
-            [ "libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${arch}.deb`]
+            [ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
+            [ "libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`]
         ]) {
 
             if (scriptLib.sh_if(`apt-get install --dry-run ${package_name}`)) {
@@ -413,7 +431,6 @@ async function install() {
             }
 
         }
-
 
         fs.writeFileSync(
             ast_main_conf_path,
