@@ -98,7 +98,6 @@ var to_distribute_rel_paths = [
     "package.json",
     path.basename(exports.node_path)
 ];
-path.relative;
 exports.ast_sip_port = 48398;
 exports.ld_library_path_for_asterisk = [
     path.join(exports.ast_dir_path, "lib"),
@@ -403,43 +402,83 @@ function install() {
                     _a.label = 2;
                 case 2: return [4 /*yield*/, (function configure_asterisk() {
                         return __awaiter(this, void 0, void 0, function () {
-                            var e_6, _a, _b, _c, package_name, e_6_1;
-                            return __generator(this, function (_d) {
-                                switch (_d.label) {
+                            var e_6, _a, e_7, _b, _c, _d, package_name, e_6_1, arch, _e, _f, _g, package_name, dl_path, file_path, e_7_1;
+                            return __generator(this, function (_h) {
+                                switch (_h.label) {
                                     case 0:
-                                        _d.trys.push([0, 5, 6, 7]);
-                                        _b = __values([
+                                        _h.trys.push([0, 5, 6, 7]);
+                                        _c = __values([
                                             "libuuid1",
                                             "libjansson4",
                                             "libxml2",
                                             "libsqlite3-0",
                                             "unixodbc",
-                                            "libsrtp0",
-                                            "libsqliteodbc"
-                                        ]), _c = _b.next();
-                                        _d.label = 1;
+                                            "libsrtp0"
+                                        ]), _d = _c.next();
+                                        _h.label = 1;
                                     case 1:
-                                        if (!!_c.done) return [3 /*break*/, 4];
-                                        package_name = _c.value;
+                                        if (!!_d.done) return [3 /*break*/, 4];
+                                        package_name = _d.value;
                                         return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
                                     case 2:
-                                        _d.sent();
-                                        _d.label = 3;
+                                        _h.sent();
+                                        _h.label = 3;
                                     case 3:
-                                        _c = _b.next();
+                                        _d = _c.next();
                                         return [3 /*break*/, 1];
                                     case 4: return [3 /*break*/, 7];
                                     case 5:
-                                        e_6_1 = _d.sent();
+                                        e_6_1 = _h.sent();
                                         e_6 = { error: e_6_1 };
                                         return [3 /*break*/, 7];
                                     case 6:
                                         try {
-                                            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                                            if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
                                         }
                                         finally { if (e_6) throw e_6.error; }
                                         return [7 /*endfinally*/];
                                     case 7:
+                                        arch = scriptLib.sh_eval("uname -m");
+                                        _h.label = 8;
+                                    case 8:
+                                        _h.trys.push([8, 15, 16, 17]);
+                                        _e = __values([
+                                            ["libssl1.0.2", "/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_" + arch + ".deb"],
+                                            ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + arch + ".deb"]
+                                        ]), _f = _e.next();
+                                        _h.label = 9;
+                                    case 9:
+                                        if (!!_f.done) return [3 /*break*/, 14];
+                                        _g = __read(_f.value, 2), package_name = _g[0], dl_path = _g[1];
+                                        if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 11];
+                                        return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
+                                    case 10:
+                                        _h.sent();
+                                        return [3 /*break*/, 13];
+                                    case 11:
+                                        file_path = path.basename(dl_path);
+                                        return [4 /*yield*/, scriptLib.web_get("http://http.us.debian.org/debian/pool/main" + dl_path, file_path)];
+                                    case 12:
+                                        _h.sent();
+                                        scriptLib.execSync("dpkg -i " + file_path);
+                                        scriptLib.execSync("rm " + file_path);
+                                        scriptLib.apt_get_install.onInstallSuccess(package_name);
+                                        _h.label = 13;
+                                    case 13:
+                                        _f = _e.next();
+                                        return [3 /*break*/, 9];
+                                    case 14: return [3 /*break*/, 17];
+                                    case 15:
+                                        e_7_1 = _h.sent();
+                                        e_7 = { error: e_7_1 };
+                                        return [3 /*break*/, 17];
+                                    case 16:
+                                        try {
+                                            if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
+                                        }
+                                        finally { if (e_7) throw e_7.error; }
+                                        return [7 /*endfinally*/];
+                                    case 17:
                                         fs.writeFileSync(exports.ast_main_conf_path, Buffer.from([
                                             "[directories](!)",
                                             "astetcdir => " + ast_dir_link_path + "/etc/asterisk",
@@ -626,8 +665,8 @@ function install() {
                                                     });
                                                 });
                                             })()];
-                                    case 8:
-                                        _d.sent();
+                                    case 18:
+                                        _h.sent();
                                         odbc.configure();
                                         scriptLib.createSymlink(exports.ast_dir_path, ast_dir_link_path);
                                         scriptLib.fs_move("COPY", path.join(exports.module_dir_path, "res"), exports.working_directory_path, exports.ast_db_path);
@@ -709,7 +748,7 @@ var dongle;
             getEnv() === "PROD" ? "--assume_chan_dongle_installed" : ""
         ].join(" "));
         (function merge_installed_pkg() {
-            var e_7, _a;
+            var e_8, _a;
             var dongle_installed_pkg_record = path.join(exports.dongle_dir_path, path.basename(installed_pkg_record_path));
             if (fs.existsSync(dongle_installed_pkg_record)) {
                 var pkg_list = require(dongle_installed_pkg_record);
@@ -719,12 +758,12 @@ var dongle;
                         scriptLib.apt_get_install.record_installed_package(installed_pkg_record_path, pkg_name);
                     }
                 }
-                catch (e_7_1) { e_7 = { error: e_7_1 }; }
+                catch (e_8_1) { e_8 = { error: e_8_1 }; }
                 finally {
                     try {
                         if (pkg_list_1_1 && !pkg_list_1_1.done && (_a = pkg_list_1.return)) _a.call(pkg_list_1);
                     }
-                    finally { if (e_7) throw e_7.error; }
+                    finally { if (e_8) throw e_8.error; }
                 }
             }
         })();

@@ -39,8 +39,6 @@ const to_distribute_rel_paths = [
     path.basename(node_path)
 ];
 
-path.relative
-
 export const ast_sip_port = 48398;
 
 export const ld_library_path_for_asterisk = [
@@ -382,13 +380,40 @@ async function install() {
             "libxml2",
             "libsqlite3-0",
             "unixodbc",
-            "libsrtp0",
-            "libsqliteodbc"
+            "libsrtp0"
         ]) {
 
             await scriptLib.apt_get_install(package_name);
 
         }
+
+        const arch = scriptLib.sh_eval("uname -m");
+
+        for (const [ package_name, dl_path ] of [
+            [ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${arch}.deb` ], 
+            [ "libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${arch}.deb`]
+        ]) {
+
+            if (scriptLib.sh_if(`apt-get install --dry-run ${package_name}`)) {
+
+                await scriptLib.apt_get_install(package_name);
+
+            }else{
+
+                const file_path= path.basename(dl_path);
+
+                await scriptLib.web_get(`http://http.us.debian.org/debian/pool/main${dl_path}`, file_path);
+
+                scriptLib.execSync(`dpkg -i ${file_path}`);
+
+                scriptLib.execSync(`rm ${file_path}`);
+
+                scriptLib.apt_get_install.onInstallSuccess(package_name);
+
+            }
+
+        }
+
 
         fs.writeFileSync(
             ast_main_conf_path,
