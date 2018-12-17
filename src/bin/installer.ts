@@ -177,9 +177,9 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
 
     scriptLib.enableCmdTrace();
 
-    const { getVersionStatus } = await import("../lib/versionStatus");
+    const { getVersion } = await import("../lib/versionStatus");
 
-    const versionStatus = await getVersionStatus();
+    const { value: version, status: versionStatus } = await getVersion();
 
 
     if (getEnv() === "DEV") {
@@ -201,7 +201,10 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
         const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
         await scriptLib.download_and_extract_tarball(
-            `https://gw.semasim.com/semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`,
+            [
+                `https://gw.semasim.com/releases/`,
+                `semasim_${version}_${scriptLib.sh_eval("uname -m")}.tar.gz`
+            ].join(""),
             _module_dir_path,
             "OVERWRITE IF EXIST"
         );
@@ -345,9 +348,14 @@ async function program_action_tarball() {
         "asterisk/lib/asterisk/modules/chan_dongle.so"
     );
 
+    const { version } = require(path.join(module_dir_path, "package.json"));
+
     scriptLib.execSyncTrace([
         "tar -czf",
-        path.join(module_dir_path, "docs", `semasim_${scriptLib.sh_eval("uname -m")}.tar.gz`),
+        path.join(
+            module_dir_path, "docs", "releases",
+            `semasim_${version}_${scriptLib.sh_eval("uname -m")}.tar.gz`
+        ),
         `-C ${_module_dir_path} .`
     ].join(" ")
     );
@@ -387,19 +395,19 @@ async function install() {
 
         }
 
-        const debArch = (()=>{
+        const debArch = (() => {
 
             const arch = scriptLib.sh_eval("uname -m");
 
-            if( arch === "i386" ){
-                return arch;
+            if (arch === "i686") {
+                return "i386";
             }
 
-            if( arch === "x86_64" ){
+            if (arch === "x86_64") {
                 return "amd64";
             }
 
-            if( !!arch.match(/^arm/) ){
+            if (!!arch.match(/^arm/)) {
                 return "armhf";
             }
 
@@ -407,18 +415,19 @@ async function install() {
 
         })();
 
-        for (const [ package_name, dl_path ] of [
-            [ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
-            [ "libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`]
+        for (const [package_name, dl_path] of [
+            //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
+            ["libssl1.0.2", `/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_${debArch}.deb`],
+            ["libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`]
         ]) {
 
             if (scriptLib.sh_if(`apt-get install --dry-run ${package_name}`)) {
 
                 await scriptLib.apt_get_install(package_name);
 
-            }else{
+            } else {
 
-                const file_path= path.basename(dl_path);
+                const file_path = path.basename(dl_path);
 
                 await scriptLib.web_get(`http://http.us.debian.org/debian/pool/main${dl_path}`, file_path);
 
@@ -736,13 +745,13 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
     const arch = scriptLib.sh_eval("uname -m");
 
     await scriptLib.download_and_extract_tarball(
-        `https://github.com/garronej/asterisk/releases/download/latest/asterisk_${arch}.tar.gz`,
+        `https://garronej.github.io/asterisk/asterisk_${arch}.tar.gz`,
         dest_dir_path,
         "MERGE"
     );
 
     await scriptLib.download_and_extract_tarball(
-        `https://garronej.github.io/chan-dongle-extended/releases/dongle_${arch}.tar.gz`,
+        `https://garronej.github.io/chan-dongle-extended/releases/dongle_latest_${arch}.tar.gz`,
         path.join(dest_dir_path, path.basename(dongle_dir_path)),
         "OVERWRITE IF EXIST"
     );

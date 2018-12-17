@@ -8,8 +8,6 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-echo "We will now download and install semasim, it will take some time..."
-
 if [ -d "$INSTALL_PATH" ]; then
 
     echo "Directory $INSTALL_PATH already exsist, uninstalling previous install"
@@ -20,7 +18,7 @@ if [ -d "$INSTALL_PATH" ]; then
 
 fi
 
-URL="https://gw.semasim.com/semasim_"$(uname -m)".tar.gz"
+URL="https://gw.semasim.com/releases/semasim_"$(wget -qO- https://web.semasim.com/api/version)"_"$(uname -m)".tar.gz"
 
 wget $URL -q --show-progress -O $TARBALL_PATH
 
@@ -32,9 +30,4 @@ rm $TARBALL_PATH
 
 cd $INSTALL_PATH
 
-if [ -n "$FETCH_ONLY" ] 
-then
-        echo "cd $(pwd) && ./node dist/bin/installer install --help"
-else
-        ./node dist/bin/installer install
-fi
+./node dist/bin/installer install

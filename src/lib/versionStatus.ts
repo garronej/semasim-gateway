@@ -19,20 +19,22 @@ export function genRetryDelay() {
             return 1000;
     }
 
-
 }
 
-export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINOR" | "PATCH"> {
+export async function getVersion(): Promise<{ 
+    value: string; 
+    status: "UP TO DATE" | "MAJOR" | "MINOR" | "PATCH"; 
+}> {
 
-    let serverVersion = "";
+    let value = "";
 
-    while (!serverVersion) {
+    while (!value) {
 
         try {
 
             //TODO: make sure that throw if backend is down
             //TODO: apparently we may have a response that match to null
-            serverVersion = await scriptLib.web_get(`web.${getBaseDomain()}/api/version`);
+            value = await scriptLib.web_get(`web.${getBaseDomain()}/api/version`);
 
         } catch{
 
@@ -46,9 +48,9 @@ export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINO
 
     }
 
-    if (serverVersion === localVersion) {
+    if (value === localVersion) {
 
-        return "UP TO DATE";
+        return { value, "status": "UP TO DATE" };
 
     } else {
 
@@ -65,19 +67,19 @@ export async function getVersionStatus(): Promise<"UP TO DATE" | "MAJOR" | "MINO
         };
 
         const localVersionParsed = parseVersion(localVersion);
-        const serverVersionParsed = parseVersion(serverVersion);
+        const serverVersionParsed = parseVersion(value);
 
         if (serverVersionParsed.major !== localVersionParsed.major) {
 
-            return "MAJOR";
+            return { value, "status": "MAJOR" };
 
         } else if (serverVersionParsed.minor !== localVersionParsed.minor) {
 
-            return "MINOR";
+            return { value, "status": "MINOR" };
 
         } else {
 
-            return "PATCH";
+            return { value, "status": "PATCH" };
 
         }
 

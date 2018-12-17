@@ -68,9 +68,9 @@ function connect() {
                         case 0: return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, versionStatus.genRetryDelay()); })];
                         case 1:
                             _a.sent();
-                            return [4 /*yield*/, versionStatus.getVersionStatus()];
+                            return [4 /*yield*/, versionStatus.getVersion()];
                         case 2:
-                            if ((_a.sent()) !== "UP TO DATE") {
+                            if ((_a.sent()).status !== "UP TO DATE") {
                                 debug("Need update, restarting ...");
                                 process.emit("beforeExit", process.exitCode = 0);
                                 return [2 /*return*/];

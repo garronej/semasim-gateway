@@ -200,17 +200,17 @@ function program_action_uninstall() {
 }
 function program_action_update() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, e_2, _b, e_3, _c, getVersionStatus, versionStatus, _module_dir_path, _loop_1, _d, _e, db_path, _working_directory_path_1, _f, _g, name, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, reinstall_script_path;
-        return __generator(this, function (_h) {
-            switch (_h.label) {
+        var e_1, _a, e_2, _b, e_3, _c, getVersion, _d, version, versionStatus, _module_dir_path, _loop_1, _e, _f, db_path, _working_directory_path_1, _g, _h, name, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, reinstall_script_path;
+        return __generator(this, function (_j) {
+            switch (_j.label) {
                 case 0:
                     scriptLib.enableCmdTrace();
                     return [4 /*yield*/, Promise.resolve().then(function () { return require("../lib/versionStatus"); })];
                 case 1:
-                    getVersionStatus = (_h.sent()).getVersionStatus;
-                    return [4 /*yield*/, getVersionStatus()];
+                    getVersion = (_j.sent()).getVersion;
+                    return [4 /*yield*/, getVersion()];
                 case 2:
-                    versionStatus = _h.sent();
+                    _d = _j.sent(), version = _d.value, versionStatus = _d.status;
                     if (getEnv() === "DEV") {
                         console.log({ versionStatus: versionStatus });
                         return [2 /*return*/, "LAUNCH"];
@@ -222,9 +222,12 @@ function program_action_update() {
                     if (!(versionStatus === "MINOR" || versionStatus === "PATCH")) return [3 /*break*/, 5];
                     console.log("Performing " + versionStatus + " update...");
                     _module_dir_path = path.join(exports.working_directory_path, path.basename(exports.module_dir_path));
-                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://gw.semasim.com/semasim_" + scriptLib.sh_eval("uname -m") + ".tar.gz", _module_dir_path, "OVERWRITE IF EXIST")];
+                    return [4 /*yield*/, scriptLib.download_and_extract_tarball([
+                            "https://gw.semasim.com/releases/",
+                            "semasim_" + version + "_" + scriptLib.sh_eval("uname -m") + ".tar.gz"
+                        ].join(""), _module_dir_path, "OVERWRITE IF EXIST")];
                 case 4:
-                    _h.sent();
+                    _j.sent();
                     _loop_1 = function (db_path) {
                         var _a = __read([exports.module_dir_path, _module_dir_path].map(function (v) { return path.join(v, "res", path.basename(db_path)); }), 2), db_schema_path = _a[0], _db_schema_path = _a[1];
                         if (!scriptLib.fs_areSame(db_schema_path, _db_schema_path)) {
@@ -234,15 +237,15 @@ function program_action_update() {
                         }
                     };
                     try {
-                        for (_d = __values([exports.semasim_db_path, exports.ast_db_path]), _e = _d.next(); !_e.done; _e = _d.next()) {
-                            db_path = _e.value;
+                        for (_e = __values([exports.semasim_db_path, exports.ast_db_path]), _f = _e.next(); !_f.done; _f = _e.next()) {
+                            db_path = _f.value;
                             _loop_1(db_path);
                         }
                     }
                     catch (e_1_1) { e_1 = { error: e_1_1 }; }
                     finally {
                         try {
-                            if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
+                            if (_f && !_f.done && (_a = _e.return)) _a.call(_e);
                         }
                         finally { if (e_1) throw e_1.error; }
                     }
@@ -250,8 +253,8 @@ function program_action_update() {
                     scriptLib.execSyncTrace("chown -R " + exports.unix_user + ":" + exports.unix_user + " " + _working_directory_path_1);
                     scriptLib.fs_move("MOVE", exports.working_directory_path, _working_directory_path_1, "asterisk/etc");
                     try {
-                        for (_f = __values(scriptLib.fs_ls(_working_directory_path_1)), _g = _f.next(); !_g.done; _g = _f.next()) {
-                            name = _g.value;
+                        for (_g = __values(scriptLib.fs_ls(_working_directory_path_1)), _h = _g.next(); !_h.done; _h = _g.next()) {
+                            name = _h.value;
                             if (name === path.basename(exports.dongle_dir_path)) {
                                 continue;
                             }
@@ -261,7 +264,7 @@ function program_action_update() {
                     catch (e_2_1) { e_2 = { error: e_2_1 }; }
                     finally {
                         try {
-                            if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
+                            if (_h && !_h.done && (_b = _g.return)) _b.call(_g);
                         }
                         finally { if (e_2) throw e_2.error; }
                     }
@@ -321,7 +324,7 @@ function program_action_update() {
                         scriptLib.spawnAndDetach("/bin/bash", [reinstall_script_path], undefined, "/tmp/semasim_reinstall.log");
                         return [2 /*return*/, "EXIT"];
                     }
-                    _h.label = 6;
+                    _j.label = 6;
                 case 6: return [2 /*return*/, "LAUNCH"];
             }
         });
@@ -330,7 +333,7 @@ function program_action_update() {
 exports.program_action_update = program_action_update;
 function program_action_tarball() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, e_5, _b, _module_dir_path, to_distribute_rel_paths_2, to_distribute_rel_paths_2_1, name, _node_modules_path, _c, _d, name, _working_directory_path;
+        var e_4, _a, e_5, _b, _module_dir_path, to_distribute_rel_paths_2, to_distribute_rel_paths_2_1, name, _node_modules_path, _c, _d, name, _working_directory_path, version;
         return __generator(this, function (_e) {
             switch (_e.label) {
                 case 0:
@@ -374,9 +377,10 @@ function program_action_tarball() {
                 case 1:
                     _e.sent();
                     scriptLib.fs_move("COPY", exports.working_directory_path, _working_directory_path, "asterisk/lib/asterisk/modules/chan_dongle.so");
+                    version = require(path.join(exports.module_dir_path, "package.json")).version;
                     scriptLib.execSyncTrace([
                         "tar -czf",
-                        path.join(exports.module_dir_path, "docs", "semasim_" + scriptLib.sh_eval("uname -m") + ".tar.gz"),
+                        path.join(exports.module_dir_path, "docs", "releases", "semasim_" + version + "_" + scriptLib.sh_eval("uname -m") + ".tar.gz"),
                         "-C " + _module_dir_path + " ."
                     ].join(" "));
                     scriptLib.execSyncTrace("rm -r " + _module_dir_path);
@@ -440,8 +444,8 @@ function install() {
                                     case 7:
                                         debArch = (function () {
                                             var arch = scriptLib.sh_eval("uname -m");
-                                            if (arch === "i386") {
-                                                return arch;
+                                            if (arch === "i686") {
+                                                return "i386";
                                             }
                                             if (arch === "x86_64") {
                                                 return "amd64";
@@ -455,7 +459,8 @@ function install() {
                                     case 8:
                                         _h.trys.push([8, 15, 16, 17]);
                                         _e = __values([
-                                            ["libssl1.0.2", "/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_" + debArch + ".deb"],
+                                            //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
+                                            ["libssl1.0.2", "/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_" + debArch + ".deb"],
                                             ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb"]
                                         ]), _f = _e.next();
                                         _h.label = 9;
@@ -733,10 +738,10 @@ function fetch_asterisk_and_dongle(dest_dir_path) {
             switch (_a.label) {
                 case 0:
                     arch = scriptLib.sh_eval("uname -m");
-                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://github.com/garronej/asterisk/releases/download/latest/asterisk_" + arch + ".tar.gz", dest_dir_path, "MERGE")];
+                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://garronej.github.io/asterisk/asterisk_" + arch + ".tar.gz", dest_dir_path, "MERGE")];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://garronej.github.io/chan-dongle-extended/releases/dongle_" + arch + ".tar.gz", path.join(dest_dir_path, path.basename(exports.dongle_dir_path)), "OVERWRITE IF EXIST")];
+                    return [4 /*yield*/, scriptLib.download_and_extract_tarball("https://garronej.github.io/chan-dongle-extended/releases/dongle_latest_" + arch + ".tar.gz", path.join(dest_dir_path, path.basename(exports.dongle_dir_path)), "OVERWRITE IF EXIST")];
                 case 2:
                     _a.sent();
                     return [2 /*return*/];

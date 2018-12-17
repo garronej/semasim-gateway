@@ -1,7 +1,7 @@
 {
   "name": "semasim-gateway",
   "description": "Semasim gateway",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "scripts": {
     "prepare": "cp $(readlink -e $(which node)) ./node",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",

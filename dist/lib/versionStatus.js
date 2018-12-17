@@ -52,16 +52,16 @@ function genRetryDelay() {
     }
 }
 exports.genRetryDelay = genRetryDelay;
-function getVersionStatus() {
+function getVersion() {
     return __awaiter(this, void 0, void 0, function () {
-        var serverVersion, _a, parseVersion, localVersionParsed, serverVersionParsed;
+        var value, _a, parseVersion, localVersionParsed, serverVersionParsed;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    serverVersion = "";
+                    value = "";
                     _b.label = 1;
                 case 1:
-                    if (!!serverVersion) return [3 /*break*/, 7];
+                    if (!!value) return [3 /*break*/, 7];
                     _b.label = 2;
                 case 2:
                     _b.trys.push([2, 4, , 6]);
@@ -69,7 +69,7 @@ function getVersionStatus() {
                 case 3:
                     //TODO: make sure that throw if backend is down
                     //TODO: apparently we may have a response that match to null
-                    serverVersion = _b.sent();
+                    value = _b.sent();
                     return [3 /*break*/, 6];
                 case 4:
                     _a = _b.sent();
@@ -80,8 +80,8 @@ function getVersionStatus() {
                     return [3 /*break*/, 6];
                 case 6: return [3 /*break*/, 1];
                 case 7:
-                    if (serverVersion === localVersion) {
-                        return [2 /*return*/, "UP TO DATE"];
+                    if (value === localVersion) {
+                        return [2 /*return*/, { value: value, "status": "UP TO DATE" }];
                     }
                     else {
                         parseVersion = function (version) {
@@ -93,15 +93,15 @@ function getVersionStatus() {
                             };
                         };
                         localVersionParsed = parseVersion(localVersion);
-                        serverVersionParsed = parseVersion(serverVersion);
+                        serverVersionParsed = parseVersion(value);
                         if (serverVersionParsed.major !== localVersionParsed.major) {
-                            return [2 /*return*/, "MAJOR"];
+                            return [2 /*return*/, { value: value, "status": "MAJOR" }];
                         }
                         else if (serverVersionParsed.minor !== localVersionParsed.minor) {
-                            return [2 /*return*/, "MINOR"];
+                            return [2 /*return*/, { value: value, "status": "MINOR" }];
                         }
                         else {
-                            return [2 /*return*/, "PATCH"];
+                            return [2 /*return*/, { value: value, "status": "PATCH" }];
                         }
                     }
                     return [2 /*return*/];
@@ -109,4 +109,4 @@ function getVersionStatus() {
         });
     });
 }
-exports.getVersionStatus = getVersionStatus;
+exports.getVersion = getVersion;
