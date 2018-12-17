@@ -26,7 +26,7 @@ export const host_pem_path = path.join(keys_dir_path, "host.pem");
 const ast_dir_link_path = "/usr/share/asterisk_semasim";
 const uninstaller_link_path = `/usr/sbin/${srv_name}_uninstaller`;
 export const pidfile_path = path.join(working_directory_path, "pid");
-const env_file_path= path.join(module_dir_path,"res","env");
+const env_file_path = path.join(module_dir_path, "res", "env");
 const to_distribute_rel_paths = [
     "LICENSE",
     "README.md",
@@ -49,17 +49,17 @@ export const ld_library_path_for_asterisk = [
 
 export function getEnv(): "DEV" | "PROD" {
 
-    if( getEnv.value !== undefined ){
+    if (getEnv.value !== undefined) {
         return getEnv.value;
     }
 
-    const env= fs.readFileSync(env_file_path)
+    const env = fs.readFileSync(env_file_path)
         .toString("utf8")
         .replace(/\s/g, "") as any;
 
     console.assert(env === "DEV" || env === "PROD");
 
-    getEnv.value= env;
+    getEnv.value = env;
 
     return getEnv();
 
@@ -316,6 +316,19 @@ async function program_action_tarball() {
 
     const _module_dir_path = path.join("/tmp", path.basename(module_dir_path));
 
+    const _ify = (original_path) => path.join(
+        _module_dir_path,
+        path.relative(module_dir_path, original_path)
+    );
+
+    const _node_modules_path = path.join(_module_dir_path, "node_modules");
+    const _working_directory_path = _ify(working_directory_path);;
+    const _dongle_node_path = _ify(dongle_node_path);
+    const _dongle_bin_dir_path = _ify(dongle_bin_dir_path);
+    const _ast_main_conf_path = _ify(ast_main_conf_path);
+    const _ast_dir_path = _ify(ast_dir_path);
+    const _ld_library_path_for_asterisk = ld_library_path_for_asterisk.split(":").map(v => _ify(v)).join(":");
+
     scriptLib.execSyncTrace(`rm -rf ${_module_dir_path}`);
 
     for (const name of to_distribute_rel_paths) {
@@ -327,7 +340,6 @@ async function program_action_tarball() {
         Buffer.from("PROD", "utf8")
     );
 
-    const _node_modules_path = path.join(_module_dir_path, "node_modules");
 
     for (const name of ["@types", "typescript"]) {
 
@@ -337,16 +349,26 @@ async function program_action_tarball() {
 
     scriptLib.execSyncTrace(`find ${_node_modules_path} -type f -name "*.ts" -exec rm -rf {} \\;`);
 
-    const _working_directory_path = path.join(_module_dir_path, path.basename(working_directory_path));
-
     await fetch_asterisk_and_dongle(_working_directory_path);
 
-    scriptLib.fs_move(
-        "COPY",
-        working_directory_path,
-        _working_directory_path,
-        "asterisk/lib/asterisk/modules/chan_dongle.so"
+    await installAsteriskPrereq();
+
+    fs.writeFileSync(
+        _ast_main_conf_path,
+        Buffer.from(
+            buildAsteriskMainConfigFile(_ast_dir_path)
+        )
     );
+
+    scriptLib.execSyncTrace([
+        `${_dongle_node_path} ${path.join(_dongle_bin_dir_path, "installer.js")} build-asterisk-chan-dongle`,
+        `--dest_dir ${path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules")}`,
+        `--asterisk_main_conf ${_ast_main_conf_path}`,
+        `--ast_include_dir_path ${path.join(_ast_dir_path, "include")}`,
+        `--ld_library_path_for_asterisk ${_ld_library_path_for_asterisk}`
+    ].join(" "));
+
+    scriptLib.execSyncTrace(`rm ${_ast_main_conf_path}`);
 
     const { version } = require(path.join(module_dir_path, "package.json"));
 
@@ -380,95 +402,16 @@ async function install() {
 
     }
 
+    await installAsteriskPrereq();
+
     await (async function configure_asterisk() {
-
-        for (const package_name of [
-            "libuuid1",
-            "libjansson4",
-            "libxml2",
-            "libsqlite3-0",
-            "unixodbc",
-            "libsrtp0"
-        ]) {
-
-            await scriptLib.apt_get_install(package_name);
-
-        }
-
-        const debArch = (() => {
-
-            const arch = scriptLib.sh_eval("uname -m");
-
-            if (arch === "i686") {
-                return "i386";
-            }
-
-            if (arch === "x86_64") {
-                return "amd64";
-            }
-
-            if (!!arch.match(/^arm/)) {
-                return "armhf";
-            }
-
-            throw new Error(`${arch} proc not supported`);
-
-        })();
-
-        for (const [package_name, dl_path] of [
-            //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
-            ["libssl1.0.2", `/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_${debArch}.deb`],
-            ["libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`]
-        ]) {
-
-            if (scriptLib.sh_if(`apt-get install --dry-run ${package_name}`)) {
-
-                await scriptLib.apt_get_install(package_name);
-
-            } else {
-
-                const file_path = path.basename(dl_path);
-
-                await scriptLib.web_get(`http://http.us.debian.org/debian/pool/main${dl_path}`, file_path);
-
-                scriptLib.execSync(`dpkg -i ${file_path}`);
-
-                scriptLib.execSync(`rm ${file_path}`);
-
-                scriptLib.apt_get_install.onInstallSuccess(package_name);
-
-            }
-
-        }
 
         fs.writeFileSync(
             ast_main_conf_path,
             Buffer.from(
-                [
-                    `[directories](!)`,
-                    `astetcdir => ${ast_dir_link_path}/etc/asterisk`,
-                    `astmoddir => ${ast_dir_link_path}/lib/asterisk/modules`,
-                    `astvarlibdir => ${ast_dir_link_path}/var/lib/asterisk`,
-                    `astdbdir => ${ast_dir_link_path}/var/lib/asterisk`,
-                    `astkeydir => ${ast_dir_link_path}/var/lib/asterisk`,
-                    `astdatadir => ${ast_dir_link_path}/var/lib/asterisk`,
-                    `astagidir => ${ast_dir_link_path}/var/lib/asterisk/agi-bin`,
-                    `astspooldir => ${ast_dir_link_path}/var/spool/asterisk`,
-                    `astrundir => ${ast_dir_link_path}/var/run/asterisk`,
-                    `astlogdir => ${ast_dir_link_path}/var/log/asterisk`,
-                    `astsbindir => ${ast_dir_link_path}/sbin`,
-                    ``,
-                    `[options]`,
-                    `documentation_language = en_US`,
-                    ``,
-                    `[modules]`,
-                    `preload => res_odbc.so`,
-                    `preload => res_config_odbc.so`,
-                    ``
-                ].join("\n"), "utf8"
+                buildAsteriskMainConfigFile(ast_dir_link_path)
             )
         );
-
 
         fs.writeFileSync(
             path.join(ast_etc_dir_path, "rtp.conf"),
@@ -482,7 +425,6 @@ async function install() {
                 ].join("\n"), "utf8"
             )
         );
-
 
         fs.writeFileSync(
             path.join(ast_etc_dir_path, "res_odbc.conf"),
@@ -689,8 +631,13 @@ async function install() {
 
     dongle.install();
 
-    scriptLib.systemd.createConfigFile(srv_name, path.join(__dirname, "main.js"), node_path, "ENABLE", "START");
-
+    scriptLib.systemd.createConfigFile(
+        srv_name,
+        path.join(__dirname, "main.js"),
+        node_path,
+        "ENABLE",
+        "START"
+    );
 
 }
 
@@ -758,6 +705,139 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
 }
 
+async function installAsteriskPrereq() {
+
+    for (const package_name of [
+        "libuuid1",
+        "libjansson4",
+        "libxml2",
+        "libsqlite3-0",
+        "unixodbc",
+        "libsrtp0"
+    ]) {
+
+        await scriptLib.apt_get_install(package_name);
+
+    }
+
+    const debArch = (() => {
+
+        const arch = scriptLib.sh_eval("uname -m");
+
+        if (arch === "i686") {
+            return "i386";
+        }
+
+        if (arch === "x86_64") {
+            return "amd64";
+        }
+
+        if (!!arch.match(/^arm/)) {
+            return "armhf";
+        }
+
+        throw new Error(`${arch} proc not supported`);
+
+    })();
+
+    for (const [package_name, dl_path] of [
+        //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
+        ["libssl1.0.2", `/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_${debArch}.deb`],
+        ["libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`]
+    ]) {
+
+        if (scriptLib.sh_if(`apt-get install --dry-run ${package_name}`)) {
+
+            await scriptLib.apt_get_install(package_name);
+
+        } else {
+
+            const file_path = path.basename(dl_path);
+
+            await scriptLib.web_get(`http://http.us.debian.org/debian/pool/main${dl_path}`, file_path);
+
+            scriptLib.execSync(`dpkg -i ${file_path}`);
+
+            scriptLib.execSync(`rm ${file_path}`);
+
+            scriptLib.apt_get_install.onInstallSuccess(package_name);
+
+        }
+
+    }
+
+}
+
+export function buildAsteriskMainConfigFile(origin_dir_path: string): string {
+
+    return [
+        `[directories](!)`,
+        `astetcdir => ${origin_dir_path}/etc/asterisk`,
+        `astmoddir => ${origin_dir_path}/lib/asterisk/modules`,
+        `astvarlibdir => ${origin_dir_path}/var/lib/asterisk`,
+        `astdbdir => ${origin_dir_path}/var/lib/asterisk`,
+        `astkeydir => ${origin_dir_path}/var/lib/asterisk`,
+        `astdatadir => ${origin_dir_path}/var/lib/asterisk`,
+        `astagidir => ${origin_dir_path}/var/lib/asterisk/agi-bin`,
+        `astspooldir => ${origin_dir_path}/var/spool/asterisk`,
+        `astrundir => ${origin_dir_path}/var/run/asterisk`,
+        `astlogdir => ${origin_dir_path}/var/log/asterisk`,
+        `astsbindir => ${origin_dir_path}/sbin`,
+        ``,
+        `[options]`,
+        `documentation_language = en_US`,
+        ``,
+        `[modules]`,
+        `preload => res_odbc.so`,
+        `preload => res_config_odbc.so`,
+        ``
+    ].join("\n");
+
+}
+
+namespace odbc {
+
+    export const connection_name = "semasim_asterisk";
+
+    const odbc_config_path = "/etc/odbc.ini";
+
+    export function configure() {
+
+        const parsed_odbc_conf = ini.parseStripWhitespace(
+            fs.readFileSync(odbc_config_path).toString("utf8")
+        );
+
+        parsed_odbc_conf[connection_name] = {
+            "Description": 'SQLite3 connection to ‘asterisk’ database for semasim',
+            "Driver": 'SQLite3',
+            "Database": ast_db_path,
+            "Timeout": '2000'
+        };
+
+        fs.writeFileSync(
+            odbc_config_path,
+            Buffer.from(ini.stringify(parsed_odbc_conf), "utf8")
+        );
+
+    }
+
+    export function restore() {
+
+        const parsed_odbc_conf = ini.parseStripWhitespace(
+            fs.readFileSync(odbc_config_path).toString("utf8")
+        );
+
+        delete parsed_odbc_conf[connection_name];
+
+        fs.writeFileSync(
+            odbc_config_path,
+            Buffer.from(ini.stringify(parsed_odbc_conf), "utf8")
+        );
+
+    }
+
+}
+
 namespace dongle {
 
 
@@ -774,7 +854,8 @@ namespace dongle {
             `--unix_user ${unix_user}`,
             `--do_not_create_systemd_conf`,
             `--allow_host_reboot_on_dongle_unrecoverable_crash`,
-            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : ""
+            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : "",
+            `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
         ].join(" "));
 
         (function merge_installed_pkg() {
@@ -864,48 +945,6 @@ namespace shellScripts {
 
 }
 
-namespace odbc {
-
-    export const connection_name = "semasim_asterisk";
-
-    const odbc_config_path = "/etc/odbc.ini";
-
-    export function configure() {
-
-        const parsed_odbc_conf = ini.parseStripWhitespace(
-            fs.readFileSync(odbc_config_path).toString("utf8")
-        );
-
-        parsed_odbc_conf[connection_name] = {
-            "Description": 'SQLite3 connection to ‘asterisk’ database for semasim',
-            "Driver": 'SQLite3',
-            "Database": ast_db_path,
-            "Timeout": '2000'
-        };
-
-        fs.writeFileSync(
-            odbc_config_path,
-            Buffer.from(ini.stringify(parsed_odbc_conf), "utf8")
-        );
-
-    }
-
-    export function restore() {
-
-        const parsed_odbc_conf = ini.parseStripWhitespace(
-            fs.readFileSync(odbc_config_path).toString("utf8")
-        );
-
-        delete parsed_odbc_conf[connection_name];
-
-        fs.writeFileSync(
-            odbc_config_path,
-            Buffer.from(ini.stringify(parsed_odbc_conf), "utf8")
-        );
-
-    }
-
-}
 
 if (require.main === module) {
 

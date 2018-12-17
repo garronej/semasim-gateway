@@ -333,7 +333,7 @@ function program_action_update() {
 exports.program_action_update = program_action_update;
 function program_action_tarball() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, e_5, _b, _module_dir_path, to_distribute_rel_paths_2, to_distribute_rel_paths_2_1, name, _node_modules_path, _c, _d, name, _working_directory_path, version;
+        var e_4, _a, e_5, _b, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_2, to_distribute_rel_paths_2_1, name, _c, _d, name, version;
         return __generator(this, function (_e) {
             switch (_e.label) {
                 case 0:
@@ -342,6 +342,15 @@ function program_action_tarball() {
                         throw new Error("Missing node");
                     }
                     _module_dir_path = path.join("/tmp", path.basename(exports.module_dir_path));
+                    _ify = function (original_path) { return path.join(_module_dir_path, path.relative(exports.module_dir_path, original_path)); };
+                    _node_modules_path = path.join(_module_dir_path, "node_modules");
+                    _working_directory_path = _ify(exports.working_directory_path);
+                    ;
+                    _dongle_node_path = _ify(exports.dongle_node_path);
+                    _dongle_bin_dir_path = _ify(exports.dongle_bin_dir_path);
+                    _ast_main_conf_path = _ify(exports.ast_main_conf_path);
+                    _ast_dir_path = _ify(exports.ast_dir_path);
+                    _ld_library_path_for_asterisk = exports.ld_library_path_for_asterisk.split(":").map(function (v) { return _ify(v); }).join(":");
                     scriptLib.execSyncTrace("rm -rf " + _module_dir_path);
                     try {
                         for (to_distribute_rel_paths_2 = __values(to_distribute_rel_paths), to_distribute_rel_paths_2_1 = to_distribute_rel_paths_2.next(); !to_distribute_rel_paths_2_1.done; to_distribute_rel_paths_2_1 = to_distribute_rel_paths_2.next()) {
@@ -357,7 +366,6 @@ function program_action_tarball() {
                         finally { if (e_4) throw e_4.error; }
                     }
                     fs.writeFileSync(path.join(_module_dir_path, path.relative(exports.module_dir_path, env_file_path)), Buffer.from("PROD", "utf8"));
-                    _node_modules_path = path.join(_module_dir_path, "node_modules");
                     try {
                         for (_c = __values(["@types", "typescript"]), _d = _c.next(); !_d.done; _d = _c.next()) {
                             name = _d.value;
@@ -372,11 +380,21 @@ function program_action_tarball() {
                         finally { if (e_5) throw e_5.error; }
                     }
                     scriptLib.execSyncTrace("find " + _node_modules_path + " -type f -name \"*.ts\" -exec rm -rf {} \\;");
-                    _working_directory_path = path.join(_module_dir_path, path.basename(exports.working_directory_path));
                     return [4 /*yield*/, fetch_asterisk_and_dongle(_working_directory_path)];
                 case 1:
                     _e.sent();
-                    scriptLib.fs_move("COPY", exports.working_directory_path, _working_directory_path, "asterisk/lib/asterisk/modules/chan_dongle.so");
+                    return [4 /*yield*/, installAsteriskPrereq()];
+                case 2:
+                    _e.sent();
+                    fs.writeFileSync(_ast_main_conf_path, Buffer.from(buildAsteriskMainConfigFile(_ast_dir_path)));
+                    scriptLib.execSyncTrace([
+                        _dongle_node_path + " " + path.join(_dongle_bin_dir_path, "installer.js") + " build-asterisk-chan-dongle",
+                        "--dest_dir " + path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules"),
+                        "--asterisk_main_conf " + _ast_main_conf_path,
+                        "--ast_include_dir_path " + path.join(_ast_dir_path, "include"),
+                        "--ld_library_path_for_asterisk " + _ld_library_path_for_asterisk
+                    ].join(" "));
+                    scriptLib.execSyncTrace("rm " + _ast_main_conf_path);
                     version = require(path.join(exports.module_dir_path, "package.json")).version;
                     scriptLib.execSyncTrace([
                         "tar -czf",
@@ -404,295 +422,190 @@ function install() {
                 case 1:
                     _a.sent();
                     _a.label = 2;
-                case 2: return [4 /*yield*/, (function configure_asterisk() {
-                        return __awaiter(this, void 0, void 0, function () {
-                            var e_6, _a, e_7, _b, _c, _d, package_name, e_6_1, debArch, _e, _f, _g, package_name, dl_path, file_path, e_7_1;
-                            return __generator(this, function (_h) {
-                                switch (_h.label) {
-                                    case 0:
-                                        _h.trys.push([0, 5, 6, 7]);
-                                        _c = __values([
-                                            "libuuid1",
-                                            "libjansson4",
-                                            "libxml2",
-                                            "libsqlite3-0",
-                                            "unixodbc",
-                                            "libsrtp0"
-                                        ]), _d = _c.next();
-                                        _h.label = 1;
-                                    case 1:
-                                        if (!!_d.done) return [3 /*break*/, 4];
-                                        package_name = _d.value;
-                                        return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
-                                    case 2:
-                                        _h.sent();
-                                        _h.label = 3;
-                                    case 3:
-                                        _d = _c.next();
-                                        return [3 /*break*/, 1];
-                                    case 4: return [3 /*break*/, 7];
-                                    case 5:
-                                        e_6_1 = _h.sent();
-                                        e_6 = { error: e_6_1 };
-                                        return [3 /*break*/, 7];
-                                    case 6:
-                                        try {
-                                            if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-                                        }
-                                        finally { if (e_6) throw e_6.error; }
-                                        return [7 /*endfinally*/];
-                                    case 7:
-                                        debArch = (function () {
-                                            var arch = scriptLib.sh_eval("uname -m");
-                                            if (arch === "i686") {
-                                                return "i386";
-                                            }
-                                            if (arch === "x86_64") {
-                                                return "amd64";
-                                            }
-                                            if (!!arch.match(/^arm/)) {
-                                                return "armhf";
-                                            }
-                                            throw new Error(arch + " proc not supported");
-                                        })();
-                                        _h.label = 8;
-                                    case 8:
-                                        _h.trys.push([8, 15, 16, 17]);
-                                        _e = __values([
-                                            //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
-                                            ["libssl1.0.2", "/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_" + debArch + ".deb"],
-                                            ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb"]
-                                        ]), _f = _e.next();
-                                        _h.label = 9;
-                                    case 9:
-                                        if (!!_f.done) return [3 /*break*/, 14];
-                                        _g = __read(_f.value, 2), package_name = _g[0], dl_path = _g[1];
-                                        if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 11];
-                                        return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
-                                    case 10:
-                                        _h.sent();
-                                        return [3 /*break*/, 13];
-                                    case 11:
-                                        file_path = path.basename(dl_path);
-                                        return [4 /*yield*/, scriptLib.web_get("http://http.us.debian.org/debian/pool/main" + dl_path, file_path)];
-                                    case 12:
-                                        _h.sent();
-                                        scriptLib.execSync("dpkg -i " + file_path);
-                                        scriptLib.execSync("rm " + file_path);
-                                        scriptLib.apt_get_install.onInstallSuccess(package_name);
-                                        _h.label = 13;
-                                    case 13:
-                                        _f = _e.next();
-                                        return [3 /*break*/, 9];
-                                    case 14: return [3 /*break*/, 17];
-                                    case 15:
-                                        e_7_1 = _h.sent();
-                                        e_7 = { error: e_7_1 };
-                                        return [3 /*break*/, 17];
-                                    case 16:
-                                        try {
-                                            if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
-                                        }
-                                        finally { if (e_7) throw e_7.error; }
-                                        return [7 /*endfinally*/];
-                                    case 17:
-                                        fs.writeFileSync(exports.ast_main_conf_path, Buffer.from([
-                                            "[directories](!)",
-                                            "astetcdir => " + ast_dir_link_path + "/etc/asterisk",
-                                            "astmoddir => " + ast_dir_link_path + "/lib/asterisk/modules",
-                                            "astvarlibdir => " + ast_dir_link_path + "/var/lib/asterisk",
-                                            "astdbdir => " + ast_dir_link_path + "/var/lib/asterisk",
-                                            "astkeydir => " + ast_dir_link_path + "/var/lib/asterisk",
-                                            "astdatadir => " + ast_dir_link_path + "/var/lib/asterisk",
-                                            "astagidir => " + ast_dir_link_path + "/var/lib/asterisk/agi-bin",
-                                            "astspooldir => " + ast_dir_link_path + "/var/spool/asterisk",
-                                            "astrundir => " + ast_dir_link_path + "/var/run/asterisk",
-                                            "astlogdir => " + ast_dir_link_path + "/var/log/asterisk",
-                                            "astsbindir => " + ast_dir_link_path + "/sbin",
-                                            "",
-                                            "[options]",
-                                            "documentation_language = en_US",
-                                            "",
-                                            "[modules]",
-                                            "preload => res_odbc.so",
-                                            "preload => res_config_odbc.so",
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        fs.writeFileSync(path.join(exports.ast_etc_dir_path, "rtp.conf"), Buffer.from([
-                                            "[general]",
-                                            "icesupport=yes",
-                                            //`stunaddr=turn.${getBaseDomain()}:19302`,
-                                            "stunaddr=cname_stun_19302.semasim.com:19302",
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        fs.writeFileSync(path.join(exports.ast_etc_dir_path, "res_odbc.conf"), Buffer.from([
-                                            "[" + odbc.connection_name + "]",
-                                            "enabled => yes",
-                                            "dsn => " + odbc.connection_name,
-                                            "pre-connect => yes",
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        fs.writeFileSync(path.join(exports.ast_etc_dir_path, "sorcery.conf"), Buffer.from([
-                                            "[res_pjsip]",
-                                            "endpoint=realtime,ps_endpoints",
-                                            "auth=realtime,ps_auths",
-                                            "aor=realtime,ps_aors",
-                                            "domain_alias=realtime,ps_domain_aliases",
-                                            "contact=realtime,ps_contacts",
-                                            "",
-                                            "[res_pjsip_endpoint_identifier_ip]",
-                                            "identify=realtime,ps_endpoint_id_ips",
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        fs.writeFileSync(path.join(exports.ast_etc_dir_path, "extconfig.conf"), Buffer.from([
-                                            "[settings]",
-                                            "ps_endpoints => odbc," + odbc.connection_name,
-                                            "ps_auths => odbc," + odbc.connection_name,
-                                            "ps_aors => odbc," + odbc.connection_name,
-                                            "ps_domain_aliases => odbc," + odbc.connection_name,
-                                            "ps_endpoint_id_ips => odbc," + odbc.connection_name,
-                                            "ps_contacts => odbc," + odbc.connection_name,
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        fs.writeFileSync(path.join(exports.ast_etc_dir_path, "pjsip.conf"), Buffer.from([
-                                            "[transport-tcp]",
-                                            "type=transport",
-                                            "protocol=tcp",
-                                            "bind=0.0.0.0:" + exports.ast_sip_port,
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        fs.writeFileSync(path.join(exports.ast_etc_dir_path, "modules.conf"), Buffer.from([
-                                            "[modules]",
-                                            "autoload=yes",
-                                            ""
-                                        ].join("\n"), "utf8"));
-                                        scriptLib.execSync("chmod 640 " + exports.ast_etc_dir_path + "/*");
-                                        return [4 /*yield*/, (function generate_dtls_certs() {
-                                                return __awaiter(this, void 0, void 0, function () {
-                                                    var _a, exec, onSuccess, host_cfg_path, ca_cfg_path, passphrase, ca_key_path, validity_days, host_key_path, host_csr_path, host_crt_path;
-                                                    return __generator(this, function (_b) {
-                                                        switch (_b.label) {
-                                                            case 0: return [4 /*yield*/, scriptLib.apt_get_install("openssl")];
-                                                            case 1:
-                                                                _b.sent();
-                                                                _a = scriptLib.start_long_running_process("Generating TLS certificates"), exec = _a.exec, onSuccess = _a.onSuccess;
-                                                                return [4 /*yield*/, exec("mkdir " + keys_dir_path)];
-                                                            case 2:
-                                                                _b.sent();
-                                                                host_cfg_path = path.join(keys_dir_path, "host.cfg");
-                                                                fs.writeFileSync(host_cfg_path, Buffer.from([
-                                                                    "[req]",
-                                                                    "distinguished_name = req_distinguished_name",
-                                                                    "prompt = no",
-                                                                    "",
-                                                                    "[req_distinguished_name]",
-                                                                    "CN=web." + getBaseDomain(),
-                                                                    "O=Semasim user gateway",
-                                                                    ""
-                                                                ].join("\n"), "utf8"));
-                                                                ca_cfg_path = path.join(keys_dir_path, "ca.cfg");
-                                                                fs.writeFileSync(ca_cfg_path, Buffer.from([
-                                                                    "[req]",
-                                                                    "distinguished_name = req_distinguished_name",
-                                                                    "prompt = no",
-                                                                    "",
-                                                                    "[req_distinguished_name]",
-                                                                    "CN=Asterisk Private CA",
-                                                                    "O=Semasim user gateway",
-                                                                    "",
-                                                                    "[ext]",
-                                                                    "basicConstraints=CA:TRUE",
-                                                                    ""
-                                                                ].join("\n"), "utf8"));
-                                                                passphrase = "unsafe_ok_for_the_use_case";
-                                                                ca_key_path = path.join(keys_dir_path, "ca.key");
-                                                                return [4 /*yield*/, exec([
-                                                                        "openssl genrsa",
-                                                                        "-des3",
-                                                                        "-passout pass:" + passphrase,
-                                                                        "-out " + ca_key_path,
-                                                                        "4096"
-                                                                    ].join(" "))];
-                                                            case 3:
-                                                                _b.sent();
-                                                                validity_days = 24853;
-                                                                return [4 /*yield*/, exec([
-                                                                        "openssl req",
-                                                                        "-new",
-                                                                        "-config " + ca_cfg_path,
-                                                                        "-x509",
-                                                                        "-days " + validity_days,
-                                                                        "-key " + ca_key_path + " -passin pass:" + passphrase,
-                                                                        "-out " + exports.ca_crt_path
-                                                                    ].join(" "))];
-                                                            case 4:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("rm " + ca_cfg_path)];
-                                                            case 5:
-                                                                _b.sent();
-                                                                host_key_path = path.join(keys_dir_path, "host.key");
-                                                                return [4 /*yield*/, exec("openssl genrsa -out " + host_key_path + " 1024")];
-                                                            case 6:
-                                                                _b.sent();
-                                                                host_csr_path = path.join(keys_dir_path, "host.csr");
-                                                                return [4 /*yield*/, exec([
-                                                                        "openssl req",
-                                                                        "-batch",
-                                                                        "-new",
-                                                                        "-config " + host_cfg_path,
-                                                                        "-key " + host_key_path,
-                                                                        "-out " + host_csr_path
-                                                                    ].join(" "))];
-                                                            case 7:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("rm " + host_cfg_path)];
-                                                            case 8:
-                                                                _b.sent();
-                                                                host_crt_path = path.join(keys_dir_path, "host.crt");
-                                                                return [4 /*yield*/, exec([
-                                                                        "openssl x509",
-                                                                        "-req",
-                                                                        "-days " + validity_days,
-                                                                        "-in " + host_csr_path,
-                                                                        "-CA " + exports.ca_crt_path,
-                                                                        "-CAkey " + ca_key_path + " -passin pass:" + passphrase,
-                                                                        "-set_serial 01",
-                                                                        "-out " + host_crt_path
-                                                                    ].join(" "))];
-                                                            case 9:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("rm " + ca_key_path + " " + host_csr_path)];
-                                                            case 10:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("cat " + host_key_path + " > " + exports.host_pem_path)];
-                                                            case 11:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("cat " + host_crt_path + " >> " + exports.host_pem_path)];
-                                                            case 12:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("rm " + host_key_path + " " + host_crt_path)];
-                                                            case 13:
-                                                                _b.sent();
-                                                                return [4 /*yield*/, exec("chmod 600 " + exports.host_pem_path)];
-                                                            case 14:
-                                                                _b.sent();
-                                                                onSuccess();
-                                                                return [2 /*return*/];
-                                                        }
-                                                    });
-                                                });
-                                            })()];
-                                    case 18:
-                                        _h.sent();
-                                        odbc.configure();
-                                        scriptLib.createSymlink(exports.ast_dir_path, ast_dir_link_path);
-                                        scriptLib.fs_move("COPY", path.join(exports.module_dir_path, "res"), exports.working_directory_path, exports.ast_db_path);
-                                        return [2 /*return*/];
-                                }
-                            });
-                        });
-                    })()];
+                case 2: return [4 /*yield*/, installAsteriskPrereq()];
                 case 3:
+                    _a.sent();
+                    return [4 /*yield*/, (function configure_asterisk() {
+                            return __awaiter(this, void 0, void 0, function () {
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            fs.writeFileSync(exports.ast_main_conf_path, Buffer.from(buildAsteriskMainConfigFile(ast_dir_link_path)));
+                                            fs.writeFileSync(path.join(exports.ast_etc_dir_path, "rtp.conf"), Buffer.from([
+                                                "[general]",
+                                                "icesupport=yes",
+                                                //`stunaddr=turn.${getBaseDomain()}:19302`,
+                                                "stunaddr=cname_stun_19302.semasim.com:19302",
+                                                ""
+                                            ].join("\n"), "utf8"));
+                                            fs.writeFileSync(path.join(exports.ast_etc_dir_path, "res_odbc.conf"), Buffer.from([
+                                                "[" + odbc.connection_name + "]",
+                                                "enabled => yes",
+                                                "dsn => " + odbc.connection_name,
+                                                "pre-connect => yes",
+                                                ""
+                                            ].join("\n"), "utf8"));
+                                            fs.writeFileSync(path.join(exports.ast_etc_dir_path, "sorcery.conf"), Buffer.from([
+                                                "[res_pjsip]",
+                                                "endpoint=realtime,ps_endpoints",
+                                                "auth=realtime,ps_auths",
+                                                "aor=realtime,ps_aors",
+                                                "domain_alias=realtime,ps_domain_aliases",
+                                                "contact=realtime,ps_contacts",
+                                                "",
+                                                "[res_pjsip_endpoint_identifier_ip]",
+                                                "identify=realtime,ps_endpoint_id_ips",
+                                                ""
+                                            ].join("\n"), "utf8"));
+                                            fs.writeFileSync(path.join(exports.ast_etc_dir_path, "extconfig.conf"), Buffer.from([
+                                                "[settings]",
+                                                "ps_endpoints => odbc," + odbc.connection_name,
+                                                "ps_auths => odbc," + odbc.connection_name,
+                                                "ps_aors => odbc," + odbc.connection_name,
+                                                "ps_domain_aliases => odbc," + odbc.connection_name,
+                                                "ps_endpoint_id_ips => odbc," + odbc.connection_name,
+                                                "ps_contacts => odbc," + odbc.connection_name,
+                                                ""
+                                            ].join("\n"), "utf8"));
+                                            fs.writeFileSync(path.join(exports.ast_etc_dir_path, "pjsip.conf"), Buffer.from([
+                                                "[transport-tcp]",
+                                                "type=transport",
+                                                "protocol=tcp",
+                                                "bind=0.0.0.0:" + exports.ast_sip_port,
+                                                ""
+                                            ].join("\n"), "utf8"));
+                                            fs.writeFileSync(path.join(exports.ast_etc_dir_path, "modules.conf"), Buffer.from([
+                                                "[modules]",
+                                                "autoload=yes",
+                                                ""
+                                            ].join("\n"), "utf8"));
+                                            scriptLib.execSync("chmod 640 " + exports.ast_etc_dir_path + "/*");
+                                            return [4 /*yield*/, (function generate_dtls_certs() {
+                                                    return __awaiter(this, void 0, void 0, function () {
+                                                        var _a, exec, onSuccess, host_cfg_path, ca_cfg_path, passphrase, ca_key_path, validity_days, host_key_path, host_csr_path, host_crt_path;
+                                                        return __generator(this, function (_b) {
+                                                            switch (_b.label) {
+                                                                case 0: return [4 /*yield*/, scriptLib.apt_get_install("openssl")];
+                                                                case 1:
+                                                                    _b.sent();
+                                                                    _a = scriptLib.start_long_running_process("Generating TLS certificates"), exec = _a.exec, onSuccess = _a.onSuccess;
+                                                                    return [4 /*yield*/, exec("mkdir " + keys_dir_path)];
+                                                                case 2:
+                                                                    _b.sent();
+                                                                    host_cfg_path = path.join(keys_dir_path, "host.cfg");
+                                                                    fs.writeFileSync(host_cfg_path, Buffer.from([
+                                                                        "[req]",
+                                                                        "distinguished_name = req_distinguished_name",
+                                                                        "prompt = no",
+                                                                        "",
+                                                                        "[req_distinguished_name]",
+                                                                        "CN=web." + getBaseDomain(),
+                                                                        "O=Semasim user gateway",
+                                                                        ""
+                                                                    ].join("\n"), "utf8"));
+                                                                    ca_cfg_path = path.join(keys_dir_path, "ca.cfg");
+                                                                    fs.writeFileSync(ca_cfg_path, Buffer.from([
+                                                                        "[req]",
+                                                                        "distinguished_name = req_distinguished_name",
+                                                                        "prompt = no",
+                                                                        "",
+                                                                        "[req_distinguished_name]",
+                                                                        "CN=Asterisk Private CA",
+                                                                        "O=Semasim user gateway",
+                                                                        "",
+                                                                        "[ext]",
+                                                                        "basicConstraints=CA:TRUE",
+                                                                        ""
+                                                                    ].join("\n"), "utf8"));
+                                                                    passphrase = "unsafe_ok_for_the_use_case";
+                                                                    ca_key_path = path.join(keys_dir_path, "ca.key");
+                                                                    return [4 /*yield*/, exec([
+                                                                            "openssl genrsa",
+                                                                            "-des3",
+                                                                            "-passout pass:" + passphrase,
+                                                                            "-out " + ca_key_path,
+                                                                            "4096"
+                                                                        ].join(" "))];
+                                                                case 3:
+                                                                    _b.sent();
+                                                                    validity_days = 24853;
+                                                                    return [4 /*yield*/, exec([
+                                                                            "openssl req",
+                                                                            "-new",
+                                                                            "-config " + ca_cfg_path,
+                                                                            "-x509",
+                                                                            "-days " + validity_days,
+                                                                            "-key " + ca_key_path + " -passin pass:" + passphrase,
+                                                                            "-out " + exports.ca_crt_path
+                                                                        ].join(" "))];
+                                                                case 4:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("rm " + ca_cfg_path)];
+                                                                case 5:
+                                                                    _b.sent();
+                                                                    host_key_path = path.join(keys_dir_path, "host.key");
+                                                                    return [4 /*yield*/, exec("openssl genrsa -out " + host_key_path + " 1024")];
+                                                                case 6:
+                                                                    _b.sent();
+                                                                    host_csr_path = path.join(keys_dir_path, "host.csr");
+                                                                    return [4 /*yield*/, exec([
+                                                                            "openssl req",
+                                                                            "-batch",
+                                                                            "-new",
+                                                                            "-config " + host_cfg_path,
+                                                                            "-key " + host_key_path,
+                                                                            "-out " + host_csr_path
+                                                                        ].join(" "))];
+                                                                case 7:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("rm " + host_cfg_path)];
+                                                                case 8:
+                                                                    _b.sent();
+                                                                    host_crt_path = path.join(keys_dir_path, "host.crt");
+                                                                    return [4 /*yield*/, exec([
+                                                                            "openssl x509",
+                                                                            "-req",
+                                                                            "-days " + validity_days,
+                                                                            "-in " + host_csr_path,
+                                                                            "-CA " + exports.ca_crt_path,
+                                                                            "-CAkey " + ca_key_path + " -passin pass:" + passphrase,
+                                                                            "-set_serial 01",
+                                                                            "-out " + host_crt_path
+                                                                        ].join(" "))];
+                                                                case 9:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("rm " + ca_key_path + " " + host_csr_path)];
+                                                                case 10:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("cat " + host_key_path + " > " + exports.host_pem_path)];
+                                                                case 11:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("cat " + host_crt_path + " >> " + exports.host_pem_path)];
+                                                                case 12:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("rm " + host_key_path + " " + host_crt_path)];
+                                                                case 13:
+                                                                    _b.sent();
+                                                                    return [4 /*yield*/, exec("chmod 600 " + exports.host_pem_path)];
+                                                                case 14:
+                                                                    _b.sent();
+                                                                    onSuccess();
+                                                                    return [2 /*return*/];
+                                                            }
+                                                        });
+                                                    });
+                                                })()];
+                                        case 1:
+                                            _a.sent();
+                                            odbc.configure();
+                                            scriptLib.createSymlink(exports.ast_dir_path, ast_dir_link_path);
+                                            scriptLib.fs_move("COPY", path.join(exports.module_dir_path, "res"), exports.working_directory_path, exports.ast_db_path);
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            });
+                        })()];
+                case 4:
                     _a.sent();
                     scriptLib.fs_move("COPY", path.join(exports.module_dir_path, "res"), exports.working_directory_path, exports.semasim_db_path);
                     shellScripts.create();
@@ -749,6 +662,149 @@ function fetch_asterisk_and_dongle(dest_dir_path) {
         });
     });
 }
+function installAsteriskPrereq() {
+    return __awaiter(this, void 0, void 0, function () {
+        var e_6, _a, e_7, _b, _c, _d, package_name, e_6_1, debArch, _e, _f, _g, package_name, dl_path, file_path, e_7_1;
+        return __generator(this, function (_h) {
+            switch (_h.label) {
+                case 0:
+                    _h.trys.push([0, 5, 6, 7]);
+                    _c = __values([
+                        "libuuid1",
+                        "libjansson4",
+                        "libxml2",
+                        "libsqlite3-0",
+                        "unixodbc",
+                        "libsrtp0"
+                    ]), _d = _c.next();
+                    _h.label = 1;
+                case 1:
+                    if (!!_d.done) return [3 /*break*/, 4];
+                    package_name = _d.value;
+                    return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
+                case 2:
+                    _h.sent();
+                    _h.label = 3;
+                case 3:
+                    _d = _c.next();
+                    return [3 /*break*/, 1];
+                case 4: return [3 /*break*/, 7];
+                case 5:
+                    e_6_1 = _h.sent();
+                    e_6 = { error: e_6_1 };
+                    return [3 /*break*/, 7];
+                case 6:
+                    try {
+                        if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                    }
+                    finally { if (e_6) throw e_6.error; }
+                    return [7 /*endfinally*/];
+                case 7:
+                    debArch = (function () {
+                        var arch = scriptLib.sh_eval("uname -m");
+                        if (arch === "i686") {
+                            return "i386";
+                        }
+                        if (arch === "x86_64") {
+                            return "amd64";
+                        }
+                        if (!!arch.match(/^arm/)) {
+                            return "armhf";
+                        }
+                        throw new Error(arch + " proc not supported");
+                    })();
+                    _h.label = 8;
+                case 8:
+                    _h.trys.push([8, 15, 16, 17]);
+                    _e = __values([
+                        //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
+                        ["libssl1.0.2", "/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_" + debArch + ".deb"],
+                        ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb"]
+                    ]), _f = _e.next();
+                    _h.label = 9;
+                case 9:
+                    if (!!_f.done) return [3 /*break*/, 14];
+                    _g = __read(_f.value, 2), package_name = _g[0], dl_path = _g[1];
+                    if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 11];
+                    return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
+                case 10:
+                    _h.sent();
+                    return [3 /*break*/, 13];
+                case 11:
+                    file_path = path.basename(dl_path);
+                    return [4 /*yield*/, scriptLib.web_get("http://http.us.debian.org/debian/pool/main" + dl_path, file_path)];
+                case 12:
+                    _h.sent();
+                    scriptLib.execSync("dpkg -i " + file_path);
+                    scriptLib.execSync("rm " + file_path);
+                    scriptLib.apt_get_install.onInstallSuccess(package_name);
+                    _h.label = 13;
+                case 13:
+                    _f = _e.next();
+                    return [3 /*break*/, 9];
+                case 14: return [3 /*break*/, 17];
+                case 15:
+                    e_7_1 = _h.sent();
+                    e_7 = { error: e_7_1 };
+                    return [3 /*break*/, 17];
+                case 16:
+                    try {
+                        if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
+                    }
+                    finally { if (e_7) throw e_7.error; }
+                    return [7 /*endfinally*/];
+                case 17: return [2 /*return*/];
+            }
+        });
+    });
+}
+function buildAsteriskMainConfigFile(origin_dir_path) {
+    return [
+        "[directories](!)",
+        "astetcdir => " + origin_dir_path + "/etc/asterisk",
+        "astmoddir => " + origin_dir_path + "/lib/asterisk/modules",
+        "astvarlibdir => " + origin_dir_path + "/var/lib/asterisk",
+        "astdbdir => " + origin_dir_path + "/var/lib/asterisk",
+        "astkeydir => " + origin_dir_path + "/var/lib/asterisk",
+        "astdatadir => " + origin_dir_path + "/var/lib/asterisk",
+        "astagidir => " + origin_dir_path + "/var/lib/asterisk/agi-bin",
+        "astspooldir => " + origin_dir_path + "/var/spool/asterisk",
+        "astrundir => " + origin_dir_path + "/var/run/asterisk",
+        "astlogdir => " + origin_dir_path + "/var/log/asterisk",
+        "astsbindir => " + origin_dir_path + "/sbin",
+        "",
+        "[options]",
+        "documentation_language = en_US",
+        "",
+        "[modules]",
+        "preload => res_odbc.so",
+        "preload => res_config_odbc.so",
+        ""
+    ].join("\n");
+}
+exports.buildAsteriskMainConfigFile = buildAsteriskMainConfigFile;
+var odbc;
+(function (odbc) {
+    odbc.connection_name = "semasim_asterisk";
+    var odbc_config_path = "/etc/odbc.ini";
+    function configure() {
+        var parsed_odbc_conf = ini_extended_1.ini.parseStripWhitespace(fs.readFileSync(odbc_config_path).toString("utf8"));
+        parsed_odbc_conf[odbc.connection_name] = {
+            "Description": 'SQLite3 connection to ‘asterisk’ database for semasim',
+            "Driver": 'SQLite3',
+            "Database": exports.ast_db_path,
+            "Timeout": '2000'
+        };
+        fs.writeFileSync(odbc_config_path, Buffer.from(ini_extended_1.ini.stringify(parsed_odbc_conf), "utf8"));
+    }
+    odbc.configure = configure;
+    function restore() {
+        var parsed_odbc_conf = ini_extended_1.ini.parseStripWhitespace(fs.readFileSync(odbc_config_path).toString("utf8"));
+        delete parsed_odbc_conf[odbc.connection_name];
+        fs.writeFileSync(odbc_config_path, Buffer.from(ini_extended_1.ini.stringify(parsed_odbc_conf), "utf8"));
+    }
+    odbc.restore = restore;
+})(odbc || (odbc = {}));
 var dongle;
 (function (dongle) {
     dongle.installer_cmd = exports.dongle_node_path + " " + path.join(exports.dongle_bin_dir_path, "installer.js");
@@ -762,7 +818,8 @@ var dongle;
             "--unix_user " + exports.unix_user,
             "--do_not_create_systemd_conf",
             "--allow_host_reboot_on_dongle_unrecoverable_crash",
-            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : ""
+            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : "",
+            "--ld_library_path_for_asterisk " + exports.ld_library_path_for_asterisk
         ].join(" "));
         (function merge_installed_pkg() {
             var e_8, _a;
@@ -833,28 +890,6 @@ var shellScripts;
     }
     shellScripts.remove_symbolic_links = remove_symbolic_links;
 })(shellScripts || (shellScripts = {}));
-var odbc;
-(function (odbc) {
-    odbc.connection_name = "semasim_asterisk";
-    var odbc_config_path = "/etc/odbc.ini";
-    function configure() {
-        var parsed_odbc_conf = ini_extended_1.ini.parseStripWhitespace(fs.readFileSync(odbc_config_path).toString("utf8"));
-        parsed_odbc_conf[odbc.connection_name] = {
-            "Description": 'SQLite3 connection to ‘asterisk’ database for semasim',
-            "Driver": 'SQLite3',
-            "Database": exports.ast_db_path,
-            "Timeout": '2000'
-        };
-        fs.writeFileSync(odbc_config_path, Buffer.from(ini_extended_1.ini.stringify(parsed_odbc_conf), "utf8"));
-    }
-    odbc.configure = configure;
-    function restore() {
-        var parsed_odbc_conf = ini_extended_1.ini.parseStripWhitespace(fs.readFileSync(odbc_config_path).toString("utf8"));
-        delete parsed_odbc_conf[odbc.connection_name];
-        fs.writeFileSync(odbc_config_path, Buffer.from(ini_extended_1.ini.stringify(parsed_odbc_conf), "utf8"));
-    }
-    odbc.restore = restore;
-})(odbc || (odbc = {}));
 if (require.main === module) {
     process.once("unhandledRejection", function (error) { throw error; });
     scriptLib.exit_if_not_root();
