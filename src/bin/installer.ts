@@ -414,7 +414,8 @@ async function install() {
         fs.writeFileSync(
             ast_main_conf_path,
             Buffer.from(
-                buildAsteriskMainConfigFile(ast_dir_link_path)
+                buildAsteriskMainConfigFile(ast_dir_link_path),
+                "utf8"
             )
         );
 
@@ -745,17 +746,17 @@ async function installAsteriskPrereq() {
 
     })();
 
-    for (const [package_name, dl_path] of [
-        //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
-        ["libssl1.0.2", `/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_${debArch}.deb`],
-        ["libsqliteodbc", `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`]
-    ]) {
+    {
+
+        const package_name = "libsqliteodbc";
 
         if (scriptLib.sh_if(`apt-get install --dry-run ${package_name}`)) {
 
             await scriptLib.apt_get_install(package_name);
 
         } else {
+
+            const dl_path = `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`;
 
             const file_path = path.basename(dl_path);
 

@@ -433,7 +433,7 @@ function install() {
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
-                                            fs.writeFileSync(exports.ast_main_conf_path, Buffer.from(buildAsteriskMainConfigFile(ast_dir_link_path)));
+                                            fs.writeFileSync(exports.ast_main_conf_path, Buffer.from(buildAsteriskMainConfigFile(ast_dir_link_path), "utf8"));
                                             fs.writeFileSync(path.join(exports.ast_etc_dir_path, "rtp.conf"), Buffer.from([
                                                 "[general]",
                                                 "icesupport=yes",
@@ -667,38 +667,38 @@ function fetch_asterisk_and_dongle(dest_dir_path) {
 }
 function installAsteriskPrereq() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_6, _a, e_7, _b, _c, _d, package_name, e_6_1, debArch, _e, _f, _g, package_name, dl_path, file_path, e_7_1;
-        return __generator(this, function (_h) {
-            switch (_h.label) {
+        var e_6, _a, _b, _c, package_name, e_6_1, debArch, package_name, dl_path, file_path;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    _h.trys.push([0, 5, 6, 7]);
-                    _c = __values([
+                    _d.trys.push([0, 5, 6, 7]);
+                    _b = __values([
                         "libuuid1",
                         "libjansson4",
                         "libxml2",
                         "libsqlite3-0",
                         "unixodbc",
                         "libsrtp0"
-                    ]), _d = _c.next();
-                    _h.label = 1;
+                    ]), _c = _b.next();
+                    _d.label = 1;
                 case 1:
-                    if (!!_d.done) return [3 /*break*/, 4];
-                    package_name = _d.value;
+                    if (!!_c.done) return [3 /*break*/, 4];
+                    package_name = _c.value;
                     return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
                 case 2:
-                    _h.sent();
-                    _h.label = 3;
+                    _d.sent();
+                    _d.label = 3;
                 case 3:
-                    _d = _c.next();
+                    _c = _b.next();
                     return [3 /*break*/, 1];
                 case 4: return [3 /*break*/, 7];
                 case 5:
-                    e_6_1 = _h.sent();
+                    e_6_1 = _d.sent();
                     e_6 = { error: e_6_1 };
                     return [3 /*break*/, 7];
                 case 6:
                     try {
-                        if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                     }
                     finally { if (e_6) throw e_6.error; }
                     return [7 /*endfinally*/];
@@ -716,47 +716,23 @@ function installAsteriskPrereq() {
                         }
                         throw new Error(arch + " proc not supported");
                     })();
-                    _h.label = 8;
-                case 8:
-                    _h.trys.push([8, 15, 16, 17]);
-                    _e = __values([
-                        //[ "libssl1.0.2", `/o/openssl1.0/libssl1.0.2_1.0.2l-2+deb9u3_${debArch}.deb` ], 
-                        ["libssl1.0.2", "/o/openssl/libssl1.0.0_1.0.2l-1~bpo8+1_" + debArch + ".deb"],
-                        ["libsqliteodbc", "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb"]
-                    ]), _f = _e.next();
-                    _h.label = 9;
-                case 9:
-                    if (!!_f.done) return [3 /*break*/, 14];
-                    _g = __read(_f.value, 2), package_name = _g[0], dl_path = _g[1];
-                    if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 11];
+                    package_name = "libsqliteodbc";
+                    if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 9];
                     return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
-                case 10:
-                    _h.sent();
-                    return [3 /*break*/, 13];
-                case 11:
+                case 8:
+                    _d.sent();
+                    return [3 /*break*/, 11];
+                case 9:
+                    dl_path = "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb";
                     file_path = path.basename(dl_path);
                     return [4 /*yield*/, scriptLib.web_get("http://http.us.debian.org/debian/pool/main" + dl_path, file_path)];
-                case 12:
-                    _h.sent();
+                case 10:
+                    _d.sent();
                     scriptLib.execSync("dpkg -i " + file_path);
                     scriptLib.execSync("rm " + file_path);
                     scriptLib.apt_get_install.onInstallSuccess(package_name);
-                    _h.label = 13;
-                case 13:
-                    _f = _e.next();
-                    return [3 /*break*/, 9];
-                case 14: return [3 /*break*/, 17];
-                case 15:
-                    e_7_1 = _h.sent();
-                    e_7 = { error: e_7_1 };
-                    return [3 /*break*/, 17];
-                case 16:
-                    try {
-                        if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
-                    }
-                    finally { if (e_7) throw e_7.error; }
-                    return [7 /*endfinally*/];
-                case 17: return [2 /*return*/];
+                    _d.label = 11;
+                case 11: return [2 /*return*/];
             }
         });
     });
@@ -825,7 +801,7 @@ var dongle;
             "--ld_library_path_for_asterisk " + exports.ld_library_path_for_asterisk
         ].join(" "));
         (function merge_installed_pkg() {
-            var e_8, _a;
+            var e_7, _a;
             var dongle_installed_pkg_record = path.join(exports.dongle_dir_path, path.basename(installed_pkg_record_path));
             if (fs.existsSync(dongle_installed_pkg_record)) {
                 var pkg_list = require(dongle_installed_pkg_record);
@@ -835,12 +811,12 @@ var dongle;
                         scriptLib.apt_get_install.record_installed_package(installed_pkg_record_path, pkg_name);
                     }
                 }
-                catch (e_8_1) { e_8 = { error: e_8_1 }; }
+                catch (e_7_1) { e_7 = { error: e_7_1 }; }
                 finally {
                     try {
                         if (pkg_list_1_1 && !pkg_list_1_1.done && (_a = pkg_list_1.return)) _a.call(pkg_list_1);
                     }
-                    finally { if (e_8) throw e_8.error; }
+                    finally { if (e_7) throw e_7.error; }
                 }
             }
         })();
