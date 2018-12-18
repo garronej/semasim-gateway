@@ -126,6 +126,9 @@ function getBaseDomain() {
     }
 }
 exports.getBaseDomain = getBaseDomain;
+function isFromTarball() {
+    return !fs.existsSync(path.join(exports.module_dir_path, ".git"));
+}
 function program_action_install() {
     return __awaiter(this, void 0, void 0, function () {
         var _a, message, onSuccess, _b;
@@ -413,7 +416,7 @@ function install() {
             switch (_a.label) {
                 case 0:
                     scriptLib.unixUser.create(exports.unix_user, exports.working_directory_path);
-                    if (!(getEnv() === "DEV")) return [3 /*break*/, 2];
+                    if (!!isFromTarball()) return [3 /*break*/, 2];
                     if (!fs.existsSync(exports.node_path)) {
                         throw new Error("Missing local copy of node");
                     }
@@ -818,7 +821,7 @@ var dongle;
             "--unix_user " + exports.unix_user,
             "--do_not_create_systemd_conf",
             "--allow_host_reboot_on_dongle_unrecoverable_crash",
-            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : "",
+            isFromTarball() ? "--assume_chan_dongle_installed" : "",
             "--ld_library_path_for_asterisk " + exports.ld_library_path_for_asterisk
         ].join(" "));
         (function merge_installed_pkg() {

@@ -66,7 +66,10 @@ export function getEnv(): "DEV" | "PROD" {
 }
 
 export namespace getEnv {
+
     export let value: "DEV" | "PROD" | undefined = undefined;
+
+
 }
 
 export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
@@ -74,6 +77,10 @@ export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
         case "DEV": return "dev.semasim.com";
         case "PROD": return "semasim.com";
     }
+}
+
+function isFromTarball(): boolean {
+    return !fs.existsSync(path.join(module_dir_path, ".git"));
 }
 
 async function program_action_install() {
@@ -294,8 +301,6 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
             ``
         ].join("\n"));
 
-
-
         scriptLib.spawnAndDetach("/bin/bash", [reinstall_script_path], undefined, "/tmp/semasim_reinstall.log");
 
         return "EXIT";
@@ -390,7 +395,7 @@ async function install() {
 
     scriptLib.unixUser.create(unix_user, working_directory_path);
 
-    if (getEnv() === "DEV") {
+    if (!isFromTarball()) {
 
         if (!fs.existsSync(node_path)) {
             throw new Error("Missing local copy of node");
@@ -854,7 +859,7 @@ namespace dongle {
             `--unix_user ${unix_user}`,
             `--do_not_create_systemd_conf`,
             `--allow_host_reboot_on_dongle_unrecoverable_crash`,
-            getEnv() === "PROD" ? "--assume_chan_dongle_installed" : "",
+            isFromTarball() ? "--assume_chan_dongle_installed" : "",
             `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
         ].join(" "));
 
