@@ -127,7 +127,7 @@ function getBaseDomain() {
 }
 exports.getBaseDomain = getBaseDomain;
 function isFromTarball() {
-    return !fs.existsSync(path.join(exports.module_dir_path, ".git"));
+    return !fs.existsSync(path.join(exports.module_dir_path, "src"));
 }
 function program_action_install() {
     return __awaiter(this, void 0, void 0, function () {
@@ -178,7 +178,7 @@ function program_action_install() {
                 case 9: return [3 /*break*/, 10];
                 case 10:
                     onSuccess("Started!");
-                    console.log(scriptLib.colorize("Semasim is now running, you can go to " + getBaseDomain() + " to register your SIM cards.", "GREEN"));
+                    console.log(scriptLib.colorize("Semasim is now up and running.", "GREEN"));
                     process.exit(0);
                     return [2 /*return*/];
             }
@@ -336,7 +336,7 @@ function program_action_update() {
 exports.program_action_update = program_action_update;
 function program_action_tarball() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, e_5, _b, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_2, to_distribute_rel_paths_2_1, name, _c, _d, name, version;
+        var e_4, _a, e_5, _b, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_2, to_distribute_rel_paths_2_1, name, _c, _d, name, tarball_file_path;
         return __generator(this, function (_e) {
             switch (_e.label) {
                 case 0:
@@ -398,12 +398,15 @@ function program_action_tarball() {
                         "--ld_library_path_for_asterisk " + _ld_library_path_for_asterisk
                     ].join(" "));
                     scriptLib.execSyncTrace("rm " + _ast_main_conf_path);
-                    version = require(path.join(exports.module_dir_path, "package.json")).version;
-                    scriptLib.execSyncTrace([
-                        "tar -czf",
-                        path.join(exports.module_dir_path, "docs", "releases", "semasim_" + version + "_" + scriptLib.sh_eval("uname -m") + ".tar.gz"),
-                        "-C " + _module_dir_path + " ."
-                    ].join(" "));
+                    tarball_file_path = path.join("/tmp", [
+                        "semasim",
+                        require(path.join(exports.module_dir_path, "package.json"))["version"],
+                        scriptLib.sh_eval("uname -m") + ".tar.gz"
+                    ].join("_"));
+                    scriptLib.execSyncTrace("tar -czf " + tarball_file_path + " -C " + _module_dir_path + " .");
+                    /*NOTE: We do not right away create the tarball to docs/releases
+                    as it make resilio-sync choke on the file*/
+                    scriptLib.execSyncTrace("mv " + tarball_file_path + " " + path.join(exports.module_dir_path, "docs", "releases"));
                     scriptLib.execSyncTrace("rm -r " + _module_dir_path);
                     return [2 /*return*/];
             }
@@ -642,7 +645,7 @@ function uninstall(verbose) {
     runRecover("Removing uninstaller from path ...", function () { return shellScripts.remove_symbolic_links(); });
     runRecover("Deleting run link to internal asterisk ... ", function () { return scriptLib.execSyncQuiet("rm -r " + ast_dir_link_path); });
     runRecover("Deleting unix user ... ", function () { return scriptLib.unixUser.remove(exports.unix_user); });
-    if (getEnv() === "DEV") {
+    if (!isFromTarball()) {
         runRecover("Deleting working directory ... ", function () { return scriptLib.execSyncQuiet("rm -r " + exports.working_directory_path); });
     }
 }

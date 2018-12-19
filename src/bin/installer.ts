@@ -66,10 +66,7 @@ export function getEnv(): "DEV" | "PROD" {
 }
 
 export namespace getEnv {
-
     export let value: "DEV" | "PROD" | undefined = undefined;
-
-
 }
 
 export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
@@ -80,7 +77,7 @@ export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
 }
 
 function isFromTarball(): boolean {
-    return !fs.existsSync(path.join(module_dir_path, ".git"));
+    return !fs.existsSync(path.join(module_dir_path, "src"));
 }
 
 async function program_action_install() {
@@ -146,7 +143,7 @@ async function program_action_install() {
 
     console.log(
         scriptLib.colorize(
-            `Semasim is now running, you can go to ${getBaseDomain()} to register your SIM cards.`,
+            `Semasim is now up and running.`,
             "GREEN"
         )
     );
@@ -375,17 +372,20 @@ async function program_action_tarball() {
 
     scriptLib.execSyncTrace(`rm ${_ast_main_conf_path}`);
 
-    const { version } = require(path.join(module_dir_path, "package.json"));
-
-    scriptLib.execSyncTrace([
-        "tar -czf",
-        path.join(
-            module_dir_path, "docs", "releases",
-            `semasim_${version}_${scriptLib.sh_eval("uname -m")}.tar.gz`
-        ),
-        `-C ${_module_dir_path} .`
-    ].join(" ")
+    const tarball_file_path = path.join(
+        "/tmp",
+        [
+            "semasim",
+            require(path.join(module_dir_path, "package.json"))["version"],
+            `${scriptLib.sh_eval("uname -m")}.tar.gz`
+        ].join("_")
     );
+
+    scriptLib.execSyncTrace(`tar -czf ${tarball_file_path} -C ${_module_dir_path} .`);
+
+    /*NOTE: We do not right away create the tarball to docs/releases
+    as it make resilio-sync choke on the file*/
+    scriptLib.execSyncTrace(`mv ${tarball_file_path} ${path.join(module_dir_path,"docs", "releases")}`);
 
     scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
 
@@ -684,7 +684,7 @@ function uninstall(verbose: false | "VERBOSE" = false) {
 
     runRecover("Deleting unix user ... ", () => scriptLib.unixUser.remove(unix_user));
 
-    if (getEnv() === "DEV") {
+    if (!isFromTarball()) {
 
         runRecover("Deleting working directory ... ", () => scriptLib.execSyncQuiet(`rm -r ${working_directory_path}`));
 
@@ -846,7 +846,6 @@ namespace odbc {
 
 namespace dongle {
 
-
     export const installer_cmd = `${dongle_node_path} ${path.join(dongle_bin_dir_path, "installer.js")}`;
 
     export function install() {
@@ -863,6 +862,7 @@ namespace dongle {
             isFromTarball() ? "--assume_chan_dongle_installed" : "",
             `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
         ].join(" "));
+
 
         (function merge_installed_pkg() {
 
