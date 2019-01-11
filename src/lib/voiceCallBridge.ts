@@ -15,9 +15,34 @@ const debug = logger.debugFactory();
 
 const gain = `${4000}`;
 
+/*
+//Work always but introduce delay
+const jitterBuffer = {
+    "type": "fixed",
+    "params": "default"
+};
+*/
+
+/*
+//Ultra long delay, to test
+const jitterBuffer = {
+    "type": "fixed",
+    "params": "2500,10000"
+};
+*/
+
+/*
+//Loss at the beginning of the call from linphone to ast
 const jitterBuffer = {
     "type": "adaptive",
     "params": "default"
+};
+*/
+
+//Work just fine
+const jitterBuffer = {
+    "type": "adaptive",
+    "params": "2000,1600,120"
 };
 
 export const sipCallContext = "from-sip-call";

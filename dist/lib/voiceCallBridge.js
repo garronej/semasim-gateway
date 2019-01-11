@@ -58,9 +58,31 @@ var sipContactsMonitor = require("./sipContactsMonitor");
 var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
 var debug = logger.debugFactory();
 var gain = "" + 4000;
-var jitterBuffer = {
+/*
+//Work always but introduce delay
+const jitterBuffer = {
+    "type": "fixed",
+    "params": "default"
+};
+*/
+/*
+//Ultra long delay, to test
+const jitterBuffer = {
+    "type": "fixed",
+    "params": "2500,10000"
+};
+*/
+/*
+//Loss at the beginning of the call from linphone to ast
+const jitterBuffer = {
     "type": "adaptive",
     "params": "default"
+};
+*/
+//Work just fine
+var jitterBuffer = {
+    "type": "adaptive",
+    "params": "2000,1600,120"
 };
 exports.sipCallContext = "from-sip-call";
 var dc;
