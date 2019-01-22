@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as scriptLib from "scripting-tools";
-import { ini } from "ini-extended";
 
 export const module_dir_path = path.join(__dirname, "..", "..");
 
@@ -34,9 +33,7 @@ const to_distribute_rel_paths = [
     `res/${path.basename(semasim_db_path)}`,
     `res/${path.basename(env_file_path)}`,
     "dist",
-    "node_modules",
-    "package.json",
-    path.basename(node_path)
+    "package.json"
 ];
 
 export const ast_sip_port = 48398;
@@ -177,7 +174,7 @@ function program_action_uninstall() {
 
 }
 
-export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
+export async function update(): Promise<"LAUNCH" | "EXIT"> {
 
     scriptLib.enableCmdTrace();
 
@@ -245,7 +242,7 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
 
         }
 
-        for (const name of to_distribute_rel_paths) {
+        for (const name of [...to_distribute_rel_paths, "node_modules", "node"]) {
             scriptLib.fs_move("MOVE", _module_dir_path, module_dir_path, name);
         }
 
@@ -260,7 +257,6 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
         scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
 
         console.log(scriptLib.colorize("Update success", "GREEN"));
-
 
     } else if (versionStatus === "MAJOR") {
 
@@ -308,13 +304,9 @@ export async function program_action_update(): Promise<"LAUNCH" | "EXIT"> {
 
 }
 
-async function program_action_tarball() {
+async function program_action_release() {
 
     scriptLib.enableCmdTrace();
-
-    if (!fs.existsSync(node_path)) {
-        throw new Error(`Missing node`);
-    }
 
     const _module_dir_path = path.join("/tmp", path.basename(module_dir_path));
 
@@ -329,7 +321,11 @@ async function program_action_tarball() {
     const _dongle_bin_dir_path = _ify(dongle_bin_dir_path);
     const _ast_main_conf_path = _ify(ast_main_conf_path);
     const _ast_dir_path = _ify(ast_dir_path);
-    const _ld_library_path_for_asterisk = ld_library_path_for_asterisk.split(":").map(v => _ify(v)).join(":");
+    const _ld_library_path_for_asterisk = ld_library_path_for_asterisk
+        .split(":")
+        .map(v => _ify(v))
+        .join(":")
+        ;
 
     scriptLib.execSyncTrace(`rm -rf ${_module_dir_path}`);
 
@@ -342,52 +338,214 @@ async function program_action_tarball() {
         Buffer.from("PROD", "utf8")
     );
 
+    const arch = scriptLib.sh_eval("uname -m");
 
-    for (const name of ["@types", "typescript"]) {
+    const releases_file_path = path.join(module_dir_path, "docs", "releases.json");
 
-        scriptLib.execSyncTrace(`rm -r ${path.join(_node_modules_path, name)}`);
+    const releases = require(releases_file_path);
+
+    const deps_digest_filename = "dependencies.md5";
+
+    const deps_digest = (await import("crypto"))
+        .createHash("md5")
+        .update(
+            Buffer.from(
+                JSON.stringify(
+                    require(
+                        path.join(module_dir_path, "package-lock.json")
+                    )["dependencies"]
+                ),
+                "utf8"
+            )
+        )
+        .digest("hex")
+        ;
+
+    const previous_release_dir_path = path.join(_module_dir_path, "previous_release");
+
+    let node_modules_need_update: boolean;
+
+    const last_version = releases[arch];
+
+    if (last_version === undefined) {
+
+        node_modules_need_update = true;
+
+    } else {
+
+        await scriptLib.download_and_extract_tarball(
+            releases[last_version],
+            previous_release_dir_path,
+            "OVERWRITE IF EXIST"
+        );
+
+        node_modules_need_update = fs.readFileSync(
+            path.join(previous_release_dir_path, deps_digest_filename)
+        ).toString("utf8") !== deps_digest;
 
     }
 
-    scriptLib.execSyncTrace(`find ${_node_modules_path} -type f -name "*.ts" -exec rm -rf {} \\;`);
+    if (!node_modules_need_update) {
+
+        console.log("node_modules haven't change since last release");
+
+        for (let name of ["node_modules", "node", deps_digest_filename]) {
+
+            scriptLib.execSyncTrace(`mv ${name} ${_module_dir_path}`, { "cwd": previous_release_dir_path });
+
+        }
+
+    } else {
+
+        console.log("Need to update node_module");
+
+        scriptLib.execSyncTrace(
+            [
+                `sudo`,
+                `env "PATH=${path.dirname(process.argv[0])}:${process.env["PATH"]}"`,
+                `npm install --unsafe-perm`,
+            ].join(" "),
+            { "cwd": _module_dir_path }
+        );
+
+        scriptLib.execSyncTrace(`rm package-lock.json`, { "cwd": _module_dir_path });
+
+        for (const name of ["@types", "typescript"]) {
+
+            scriptLib.execSyncTrace(`rm -r ${path.join(_node_modules_path, name)}`);
+
+        }
+
+        fs.writeFileSync(
+            path.join(_module_dir_path, deps_digest_filename),
+            Buffer.from(deps_digest, "utf8")
+        );
+
+        scriptLib.execSyncTrace(`find ${_node_modules_path} -type f -name "*.ts" -exec rm -rf {} \\;`);
+
+        (function hide_auth_token() {
+
+            const files = scriptLib.execSync(`find . -name "package-lock.json" -o -name "package.json"`, { "cwd": _module_dir_path })
+                .slice(0, -1)
+                .split("\n")
+                .map(rp => path.join(_module_dir_path, rp));
+
+            for (let file of files) {
+
+                fs.writeFileSync(
+                    file,
+                    Buffer.from(
+                        fs.readFileSync(file)
+                            .toString("utf8")
+                            .replace(/[0-9a-f]+:x-oauth-basic/g, "xxxxxxxxxxxxxxxx"),
+                        "utf8"
+                    )
+                );
+
+            }
+
+        })();
+
+    }
 
     await fetch_asterisk_and_dongle(_working_directory_path);
 
-    await installAsteriskPrereq();
+    const module_file_path = path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules", "chan_dongle.so");
+
+    if (fs.existsSync(previous_release_dir_path)) {
+
+        console.log("Copying chan-dongle.so from previous release");
+
+        scriptLib.fs_move("MOVE", previous_release_dir_path, _working_directory_path, module_file_path);
+
+    } else {
+
+        console.log("Compiling chan-dongle.so");
+
+        await installAsteriskPrereq();
+
+        fs.writeFileSync(
+            _ast_main_conf_path,
+            Buffer.from(
+                buildAsteriskMainConfigFile(_ast_dir_path),
+                "utf8"
+            )
+        );
+
+        scriptLib.execSyncTrace([
+            `${_dongle_node_path} ${path.join(_dongle_bin_dir_path, "installer.js")} build-asterisk-chan-dongle`,
+            `--dest_dir ${path.dirname(module_file_path)}`,
+            `--asterisk_main_conf ${_ast_main_conf_path}`,
+            `--ast_include_dir_path ${path.join(_ast_dir_path, "include")}`,
+            `--ld_library_path_for_asterisk ${_ld_library_path_for_asterisk}`
+        ].join(" "));
+
+        scriptLib.execSyncTrace(`rm ${_ast_main_conf_path}`);
+
+
+    }
+
+    scriptLib.execSyncTrace(`rm -rf ${previous_release_dir_path}`);
+
+    const { version } = require(path.join(module_dir_path, "package.json"));
+
+    const tarball_file_path = path.join("/tmp", `semasim_${version}_${arch}.tar.gz`);
+
+    scriptLib.execSyncTrace([
+        "tar -czf",
+        tarball_file_path,
+        `-C ${_module_dir_path} .`
+    ].join(" "));
+
+    scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
+
+    const putasset_dir_path = path.join("/tmp", "node-putasset");
+
+    scriptLib.execSyncTrace(`rm -rf ${putasset_dir_path}`);
+
+    scriptLib.execSyncTrace(
+        `git clone https://github.com/garronej/node-putasset`,
+        { "cwd": path.join(putasset_dir_path, "..") }
+    );
+
+    scriptLib.execSyncTrace(
+        [
+            `sudo`,
+            `env "PATH=${path.dirname(process.argv[0])}:${process.env["PATH"]}"`,
+            `npm install --production --unsafe-perm`,
+        ].join(" "),
+        { "cwd": putasset_dir_path }
+    );
+
+    console.log("Start uploading...");
+
+    const dl_url = scriptLib.sh_eval(
+        [
+            `${process.argv[0]} ${path.join(putasset_dir_path, "bin", "putasset.js")}`,
+            `-k ` + fs.readFileSync(path.join(module_dir_path, "res", "PUTASSET_TOKEN"))
+                .toString("utf8")
+                .replace(/\s/g, ""),
+            `-r releases`,
+            `-o garronej`,
+            `-t semasim-gateway`,
+            `-f "${tarball_file_path}"`,
+            `--force`
+        ].join(" ")
+    );
+
+    scriptLib.execSyncTrace(`rm -r ${putasset_dir_path} ${tarball_file_path}`);
+
+    releases[releases[arch] = `${version}_${arch}`] = dl_url;
 
     fs.writeFileSync(
-        _ast_main_conf_path,
+        releases_file_path,
         Buffer.from(
-            buildAsteriskMainConfigFile(_ast_dir_path)
+            JSON.stringify(releases, null, 2),
+            "utf8"
         )
     );
 
-    scriptLib.execSyncTrace([
-        `${_dongle_node_path} ${path.join(_dongle_bin_dir_path, "installer.js")} build-asterisk-chan-dongle`,
-        `--dest_dir ${path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules")}`,
-        `--asterisk_main_conf ${_ast_main_conf_path}`,
-        `--ast_include_dir_path ${path.join(_ast_dir_path, "include")}`,
-        `--ld_library_path_for_asterisk ${_ld_library_path_for_asterisk}`
-    ].join(" "));
-
-    scriptLib.execSyncTrace(`rm ${_ast_main_conf_path}`);
-
-    const tarball_file_path = path.join(
-        "/tmp",
-        [
-            "semasim",
-            require(path.join(module_dir_path, "package.json"))["version"],
-            `${scriptLib.sh_eval("uname -m")}.tar.gz`
-        ].join("_")
-    );
-
-    scriptLib.execSyncTrace(`tar -czf ${tarball_file_path} -C ${_module_dir_path} .`);
-
-    /*NOTE: We do not right away create the tarball to docs/releases
-    as it make resilio-sync choke on the file*/
-    scriptLib.execSyncTrace(`mv ${tarball_file_path} ${path.join(module_dir_path,"docs", "releases")}`);
-
-    scriptLib.execSyncTrace(`rm -r ${_module_dir_path}`);
+    console.log("---DONE---");
 
 }
 
@@ -425,7 +583,6 @@ async function install() {
                 [
                     `[general]`,
                     `icesupport=yes`,
-                    //`stunaddr=turn.${getBaseDomain()}:19302`,
                     `stunaddr=cname_stun_19302.semasim.com:19302`,
                     ``
                 ].join("\n"), "utf8"
@@ -697,17 +854,29 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
     const arch = scriptLib.sh_eval("uname -m");
 
-    await scriptLib.download_and_extract_tarball(
-        `https://garronej.github.io/asterisk/asterisk_${arch}.tar.gz`,
-        dest_dir_path,
-        "MERGE"
-    );
+    const [release_asterisk, release_dongle] =
+        await Promise.all(
+            ["asterisk", "chan-dongle-extended"]
+                .map(repo => `https://garronej.github.io/${repo}/releases.json`)
+                .map(
+                    url => scriptLib.web_get(url)
+                        .then(json => JSON.parse(json))
+                        .then(release => release[release[arch]])
+                )
+        );
 
-    await scriptLib.download_and_extract_tarball(
-        `https://garronej.github.io/chan-dongle-extended/releases/dongle_latest_${arch}.tar.gz`,
-        path.join(dest_dir_path, path.basename(dongle_dir_path)),
-        "OVERWRITE IF EXIST"
-    );
+    await Promise.all([
+        scriptLib.download_and_extract_tarball(
+            release_asterisk[arch],
+            dest_dir_path,
+            "MERGE"
+        ),
+        scriptLib.download_and_extract_tarball(
+            release_dongle[release_dongle[arch]],
+            path.join(dest_dir_path, path.basename(dongle_dir_path)),
+            "OVERWRITE IF EXIST"
+        )
+    ]);
 
 }
 
@@ -774,7 +943,7 @@ async function installAsteriskPrereq() {
 
 }
 
-export function buildAsteriskMainConfigFile(origin_dir_path: string): string {
+function buildAsteriskMainConfigFile(origin_dir_path: string): string {
 
     return [
         `[directories](!)`,
@@ -809,6 +978,8 @@ namespace odbc {
 
     export function configure() {
 
+        const { ini } = require("ini-extended") as typeof import("ini-extended");
+
         const parsed_odbc_conf = ini.parseStripWhitespace(
             fs.readFileSync(odbc_config_path).toString("utf8")
         );
@@ -828,6 +999,8 @@ namespace odbc {
     }
 
     export function restore() {
+
+        const { ini } = require("ini-extended") as typeof import("ini-extended");
 
         const parsed_odbc_conf = ini.parseStripWhitespace(
             fs.readFileSync(odbc_config_path).toString("utf8")
@@ -968,21 +1141,14 @@ if (require.main === module) {
             .action(() => program_action_install())
             ;
 
-
         program
             .command("uninstall")
             .action(() => program_action_uninstall())
             ;
 
         program
-            .command("update")
-            .option(`--path [{path}]`)
-            .action(() => program_action_update())
-            ;
-
-        program
-            .command("tarball")
-            .action(() => program_action_tarball())
+            .command("release")
+            .action(() => program_action_release())
             ;
 
 

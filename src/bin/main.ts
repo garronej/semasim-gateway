@@ -4,7 +4,7 @@ scriptLib.createService({
     "rootProcess": async () => {
 
         const [
-            { node_path, pidfile_path, unix_user, srv_name, program_action_update },
+            { node_path, pidfile_path, unix_user, srv_name, update },
             logger,
         ] = await Promise.all([
             import("./installer"),
@@ -28,7 +28,7 @@ scriptLib.createService({
 
                     try {
 
-                        action = await program_action_update();
+                        action = await update();
 
                     } catch (error) {
 

@@ -190,7 +190,6 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                     _b = __read((function () {
                         var ps_endpoints_base = {
                             "disallow": "all",
-                            "allow": "alaw,ulaw",
                             "context": voiceCallBridge_1.sipCallContext,
                             "message_context": sipMessagesMonitor_1.dialplanContext,
                             "auth": imsi,
@@ -200,7 +199,7 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                             "dtmf_mode": "info"
                         };
                         var webId = imsi + "-webRTC";
-                        return [__assign({ "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "id": imsi, "aors": imsi }, ps_endpoints_base)];
+                        return [__assign({ "allow": "alaw,ulaw", "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "allow": "alaw,ulaw,gsm,speex", "id": imsi, "aors": imsi }, ps_endpoints_base)];
                     })(), 2), ps_endpoints_web = _b[0], ps_endpoints_mobile = _b[1];
                     try {
                         for (_c = __values([ps_endpoints_mobile, ps_endpoints_web]), _d = _c.next(); !_d.done; _d = _c.next()) {

@@ -117,7 +117,6 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
 
         const ps_endpoints_base = {
             "disallow": "all",
-            "allow": "alaw,ulaw",
             "context": sipCallContext,
             "message_context": messagesDialplanContext,
             "auth": imsi,
@@ -130,6 +129,7 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
         const webId = `${imsi}-webRTC`;
 
         return [{
+            "allow": "alaw,ulaw",
             "id": webId,
             "aors": webId,
             ...ps_endpoints_base,
@@ -142,6 +142,7 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
             "media_use_received_transport": "yes",
             "rtcp_mux": "yes"
         }, {
+            "allow": "alaw,ulaw,gsm,speex",
             "id": imsi,
             "aors": imsi,
             ...ps_endpoints_base

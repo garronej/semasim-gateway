@@ -55,7 +55,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var scriptLib = require("scripting-tools");
 scriptLib.createService({
     "rootProcess": function () { return __awaiter(_this, void 0, void 0, function () {
-        var _a, _b, node_path, pidfile_path, unix_user, srv_name, program_action_update, logger, debug;
+        var _a, _b, node_path, pidfile_path, unix_user, srv_name, update, logger, debug;
         var _this = this;
         return __generator(this, function (_c) {
             switch (_c.label) {
@@ -64,7 +64,7 @@ scriptLib.createService({
                         Promise.resolve().then(function () { return require("logger"); })
                     ])];
                 case 1:
-                    _a = __read.apply(void 0, [_c.sent(), 2]), _b = _a[0], node_path = _b.node_path, pidfile_path = _b.pidfile_path, unix_user = _b.unix_user, srv_name = _b.srv_name, program_action_update = _b.program_action_update, logger = _a[1];
+                    _a = __read.apply(void 0, [_c.sent(), 2]), _b = _a[0], node_path = _b.node_path, pidfile_path = _b.pidfile_path, unix_user = _b.unix_user, srv_name = _b.srv_name, update = _b.update, logger = _a[1];
                     debug = logger.debugFactory();
                     return [2 /*return*/, {
                             pidfile_path: pidfile_path,
@@ -83,7 +83,7 @@ scriptLib.createService({
                                             _a.label = 1;
                                         case 1:
                                             _a.trys.push([1, 3, , 5]);
-                                            return [4 /*yield*/, program_action_update()];
+                                            return [4 /*yield*/, update()];
                                         case 2:
                                             action = _a.sent();
                                             return [3 /*break*/, 5];

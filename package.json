@@ -3,11 +3,12 @@
   "description": "Semasim gateway",
   "version": "0.18.4",
   "scripts": {
-    "prepare": "cp $(readlink -e $(which node)) ./node",
+    "preinstall": "npm install --no-package-lock commander@2.11.0 garronej/scripting-tools",
+    "postinstall": "cp $(readlink -e $(which node)) ./node",
     "tsc": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json",
     "start": "sudo ./node ./dist/bin/main.js",
     "test": "sudo ./node ./dist/test/main.js",
-    "tarball": "sudo ./node dist/bin/installer tarball",
+    "release": "sudo $(which node) ./dist/bin/installer release",
     "build-sqlite": "(cd ./node_modules/sqlite3/ && ./node_modules/node-pre-gyp/bin/node-pre-gyp install --fallback-to-build)"
   },
   "repository": {
@@ -22,6 +23,7 @@
     "transfer-tools": "garronej/transfer-tools"
   },
   "devDependencies": {
+    "typescript": "^3.2.0",
     "@types/async-lock": "0.0.20",
     "@types/node": "^8.9.1",
     "@types/ws": "^4.0.0",
@@ -36,7 +38,6 @@
     "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
     "ts-sip": "github:garronej/ts-sip",
-    "typescript": "^3.0.1",
     "ws": "^4.0.0"
   }
 }

@@ -16,7 +16,8 @@
         "noUnusedParameters": false,
         "strictPropertyInitialization": true,
         "strictFunctionTypes": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "strictBindCallApply": true
     },
     "filesGlob": [
         "./src/**/*.ts"

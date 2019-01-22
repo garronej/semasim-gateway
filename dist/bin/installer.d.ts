@@ -22,5 +22,4 @@ export declare namespace getEnv {
     let value: "DEV" | "PROD" | undefined;
 }
 export declare function getBaseDomain(): "semasim.com" | "dev.semasim.com";
-export declare function program_action_update(): Promise<"LAUNCH" | "EXIT">;
-export declare function buildAsteriskMainConfigFile(origin_dir_path: string): string;
+export declare function update(): Promise<"LAUNCH" | "EXIT">;
