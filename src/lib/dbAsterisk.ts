@@ -142,11 +142,23 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
             "media_use_received_transport": "yes",
             "rtcp_mux": "yes"
         }, {
-            "allow": "alaw,ulaw,gsm,speex",
+            "allow": "alaw,ulaw", //See TODO below
             "id": imsi,
             "aors": imsi,
             ...ps_endpoints_base
         }];
+
+        /*
+        TODO: We have witnessed an often poor quality
+        of the audio from GSM to Linphone on galaxy 
+        S4 on Android lollipop but maybe it's just
+        a problem caused by the test units themselves
+        and not a general case. Do further investigations.
+        Changing the codec could solve the problem.
+        Asterisk is currently compiled with all free
+        audio codecs ( list displayed on Asterisk startup )
+        so we can perform tests easily.
+        */
 
     })();
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: Test if debian or ubuntu distribution comply to requirements.
+
 INSTALL_PATH=/usr/share/semasim
 TARBALL_PATH=/tmp/semasim.tar.gz
 
@@ -18,16 +20,22 @@ if [ -d "$INSTALL_PATH" ]; then
 
 fi
 
-URL="https://gw.semasim.com/releases/semasim_"$(wget -qO- https://web.semasim.com/api/version)"_"$(uname -m)".tar.gz"
+RELEASES=$(wget -qO- https://gw.semasim.com/releases.json)
 
-wget $URL -q --show-progress -O $TARBALL_PATH
+VERSION=$(echo $RELEASES | grep -Po "\"$(uname -m)\": *\K\"[^\"]*\"")
+
+DL_URL=$(echo $RELEASES | grep -Po "$VERSION: *\K\"[^\"]*\"" | sed 's/^"\(.*\)"$/\1/')
+
+wget $DL_URL -q --show-progress -O $TARBALL_PATH
 
 mkdir $INSTALL_PATH
 
-tar -xzf $TARBALL_PATH -C $INSTALL_PATH
+printf "Extracting"
+
+tar -xzf $TARBALL_PATH -C $INSTALL_PATH --checkpoint=.100
+
+echo -e "\nLaunching the installer..."
 
 rm $TARBALL_PATH
 
-cd $INSTALL_PATH
-
-./node dist/bin/installer install
+cd $INSTALL_PATH && ./node dist/bin/installer install

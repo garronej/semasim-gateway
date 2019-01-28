@@ -861,7 +861,6 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
                 .map(
                     url => scriptLib.web_get(url)
                         .then(json => JSON.parse(json))
-                        .then(release => release[release[arch]])
                 )
         );
 

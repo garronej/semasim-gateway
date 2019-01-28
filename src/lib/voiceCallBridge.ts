@@ -13,7 +13,7 @@ import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 
 const debug = logger.debugFactory();
 
-const gain = `${4000}`;
+const gain = "4000";
 
 /*
 //Work always but introduce delay
@@ -204,6 +204,9 @@ async function fromDongle(channel: agi.AGIChannel) {
                     sipChannelName
                 );
 
+                //To automatically increase the volume toward the softphone.
+                ami.setVar("AGC(tx)", "32768", sipChannelName);
+
             }
         );
 
@@ -268,6 +271,9 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
 
     await _.setVariable("AGC(rx)", gain);
+
+    //To automatically increase the volume toward the softphone.
+    await _.setVariable("AGC(tx)", "32768");
 
     //TODO: Dial with guessed from ( and only dial, even if not very important)
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
