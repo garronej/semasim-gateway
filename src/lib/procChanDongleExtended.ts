@@ -17,7 +17,7 @@ export namespace beforeExit {
 }
 
 /** 
- * Return a promise that resolve whent chan-dongle-extended client is initialized 
+ * Return a promise that resolve went chan-dongle-extended client is initialized 
  * (can access getInstance() )
  */
 export function spawnChanDongleExtended(): Promise<void> {

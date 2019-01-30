@@ -55,7 +55,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var scriptLib = require("scripting-tools");
 scriptLib.createService({
     "rootProcess": function () { return __awaiter(_this, void 0, void 0, function () {
-        var _a, _b, node_path, pidfile_path, unix_user, srv_name, update, logger, debug;
+        var _a, _b, node_path, pidfile_path, unix_user, srv_name, update, dongle, logger, debug;
         var _this = this;
         return __generator(this, function (_c) {
             switch (_c.label) {
@@ -64,7 +64,7 @@ scriptLib.createService({
                         Promise.resolve().then(function () { return require("logger"); })
                     ])];
                 case 1:
-                    _a = __read.apply(void 0, [_c.sent(), 2]), _b = _a[0], node_path = _b.node_path, pidfile_path = _b.pidfile_path, unix_user = _b.unix_user, srv_name = _b.srv_name, update = _b.update, logger = _a[1];
+                    _a = __read.apply(void 0, [_c.sent(), 2]), _b = _a[0], node_path = _b.node_path, pidfile_path = _b.pidfile_path, unix_user = _b.unix_user, srv_name = _b.srv_name, update = _b.update, dongle = _b.dongle, logger = _a[1];
                     debug = logger.debugFactory();
                     return [2 /*return*/, {
                             pidfile_path: pidfile_path,
@@ -78,34 +78,41 @@ scriptLib.createService({
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
-                                            if (!true) return [3 /*break*/, 6];
-                                            action = void 0;
-                                            _a.label = 1;
+                                            debug("Checking tty0tty...");
+                                            return [4 /*yield*/, scriptLib.exec(dongle.installer_cmd + " re-install-tty0tty-if-needed")];
                                         case 1:
-                                            _a.trys.push([1, 3, , 5]);
-                                            return [4 /*yield*/, update()];
+                                            _a.sent();
+                                            debug("OK");
+                                            _a.label = 2;
                                         case 2:
-                                            action = _a.sent();
-                                            return [3 /*break*/, 5];
+                                            if (!true) return [3 /*break*/, 8];
+                                            action = void 0;
+                                            _a.label = 3;
                                         case 3:
+                                            _a.trys.push([3, 5, , 7]);
+                                            return [4 /*yield*/, update()];
+                                        case 4:
+                                            action = _a.sent();
+                                            return [3 /*break*/, 7];
+                                        case 5:
                                             error_1 = _a.sent();
                                             logger.log("Update error: ", error_1);
                                             debug("Waiting and retying...");
                                             return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 30000); })];
-                                        case 4:
+                                        case 6:
                                             _a.sent();
-                                            return [3 /*break*/, 0];
-                                        case 5:
+                                            return [3 /*break*/, 2];
+                                        case 7:
                                             if (action === "EXIT") {
                                                 debug("Exiting now");
                                                 process.emit("beforeExit", process.exitCode = 0);
                                                 return [2 /*return*/];
                                             }
                                             else {
-                                                return [3 /*break*/, 6];
+                                                return [3 /*break*/, 8];
                                             }
-                                            return [3 /*break*/, 0];
-                                        case 6: return [2 /*return*/];
+                                            return [3 /*break*/, 2];
+                                        case 8: return [2 /*return*/];
                                     }
                                 });
                             }); }

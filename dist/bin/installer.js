@@ -937,7 +937,7 @@ var dongle;
         scriptLib.execSyncQuiet(dongle.installer_cmd + " uninstall");
     }
     dongle.uninstall = uninstall;
-})(dongle || (dongle = {}));
+})(dongle = exports.dongle || (exports.dongle = {}));
 var shellScripts;
 (function (shellScripts) {
     function create() {

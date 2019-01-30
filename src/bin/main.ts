@@ -4,7 +4,7 @@ scriptLib.createService({
     "rootProcess": async () => {
 
         const [
-            { node_path, pidfile_path, unix_user, srv_name, update },
+            { node_path, pidfile_path, unix_user, srv_name, update, dongle },
             logger,
         ] = await Promise.all([
             import("./installer"),
@@ -21,6 +21,12 @@ scriptLib.createService({
             "daemon_unix_user": unix_user,
             "daemon_node_path": node_path,
             "preForkTask": async () => {
+
+                debug("Checking tty0tty...");
+                
+                await scriptLib.exec(`${dongle.installer_cmd} re-install-tty0tty-if-needed`);
+
+                debug("OK");
 
                 while (true) {
 

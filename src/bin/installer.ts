@@ -1016,7 +1016,7 @@ namespace odbc {
 
 }
 
-namespace dongle {
+export namespace dongle {
 
     export const installer_cmd = `${dongle_node_path} ${path.join(dongle_bin_dir_path, "installer.js")}`;
 

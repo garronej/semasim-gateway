@@ -3,7 +3,7 @@ export declare namespace beforeExit {
     let impl: () => Promise<void>;
 }
 /**
- * Return a promise that resolve whent chan-dongle-extended client is initialized
+ * Return a promise that resolve went chan-dongle-extended client is initialized
  * (can access getInstance() )
  */
 export declare function spawnChanDongleExtended(): Promise<void>;
