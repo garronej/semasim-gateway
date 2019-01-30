@@ -4,5 +4,7 @@
   "i686": "1.0.1_i686",
   "1.0.1_i686": "https://github.com/garronej/releases/releases/download/semasim-gateway/semasim_1.0.1_i686.tar.gz",
   "x86_64": "1.0.1_x86_64",
-  "1.0.1_x86_64": "https://github.com/garronej/releases/releases/download/semasim-gateway/semasim_1.0.1_x86_64.tar.gz"
+  "1.0.1_x86_64": "https://github.com/garronej/releases/releases/download/semasim-gateway/semasim_1.0.1_x86_64.tar.gz",
+  "armv6l": "1.0.1_armv6l",
+  "1.0.1_armv6l": "https://github.com/garronej/releases/releases/download/semasim-gateway/semasim_1.0.1_armv6l.tar.gz"
 }
