@@ -459,7 +459,7 @@ function program_action_release() {
                     module_file_path = path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules", "chan_dongle.so");
                     if (!fs.existsSync(previous_release_dir_path)) return [3 /*break*/, 6];
                     console.log("Copying chan-dongle.so from previous release");
-                    scriptLib.fs_move("MOVE", previous_release_dir_path, _working_directory_path, module_file_path);
+                    scriptLib.fs_move("MOVE", path.join(previous_release_dir_path, "working_directory"), _working_directory_path, module_file_path);
                     return [3 /*break*/, 8];
                 case 6:
                     console.log("Compiling chan-dongle.so");

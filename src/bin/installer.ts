@@ -456,7 +456,12 @@ async function program_action_release() {
 
         console.log("Copying chan-dongle.so from previous release");
 
-        scriptLib.fs_move("MOVE", previous_release_dir_path, _working_directory_path, module_file_path);
+        scriptLib.fs_move(
+            "MOVE",
+            path.join(previous_release_dir_path, "working_directory"),
+            _working_directory_path,
+            module_file_path
+        );
 
     } else {
 
