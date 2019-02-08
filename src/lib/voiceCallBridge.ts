@@ -60,6 +60,21 @@ export function initAgi() {
     ami.startAgi({
         [sipCallContext]: { "_[+0-9].": fromSip },
         [dongleCallContext]: { "_[+0-9].": fromDongle }
+    }, undefined, (severity, message, error)=> {
+
+        if( severity === "WARNING" ){
+
+            debug(message, error);
+
+        }else{
+
+            debug(severity, message);
+
+            throw error;
+
+        }
+        
+
     });
 
 }

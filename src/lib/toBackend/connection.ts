@@ -47,7 +47,7 @@ export async function connect() {
             resolve => setTimeout(resolve,versionStatus.genRetryDelay() )
         );
 
-        if( (await versionStatus.getVersion()).status !== "UP TO DATE" ){
+        if( i.getEnv() === "PROD" && (await versionStatus.getVersion()).status !== "UP TO DATE" ){
 
             debug("Need update, restarting ...");
 

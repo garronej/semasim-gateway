@@ -95,7 +95,15 @@ function initAgi() {
     ami.startAgi((_a = {},
         _a[exports.sipCallContext] = { "_[+0-9].": fromSip },
         _a[dongleCallContext] = { "_[+0-9].": fromDongle },
-        _a));
+        _a), undefined, function (severity, message, error) {
+        if (severity === "WARNING") {
+            debug(message, error);
+        }
+        else {
+            debug(severity, message);
+            throw error;
+        }
+    });
 }
 exports.initAgi = initAgi;
 function fromDongle(channel) {

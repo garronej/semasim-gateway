@@ -63,14 +63,20 @@ function connect() {
                 "port": 80
             }), true);
             socket.evtClose.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0: return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, versionStatus.genRetryDelay()); })];
                         case 1:
-                            _a.sent();
+                            _b.sent();
+                            _a = i.getEnv() === "PROD";
+                            if (!_a) return [3 /*break*/, 3];
                             return [4 /*yield*/, versionStatus.getVersion()];
                         case 2:
-                            if ((_a.sent()).status !== "UP TO DATE") {
+                            _a = (_b.sent()).status !== "UP TO DATE";
+                            _b.label = 3;
+                        case 3:
+                            if (_a) {
                                 debug("Need update, restarting ...");
                                 process.emit("beforeExit", process.exitCode = 0);
                                 return [2 /*return*/];
