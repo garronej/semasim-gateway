@@ -204,7 +204,7 @@ function program_action_uninstall() {
 }
 function update() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, e_2, _b, e_3, _c, getVersion, _d, version, versionStatus, _module_dir_path, _loop_1, _e, _f, db_path, _working_directory_path_1, _g, _h, name, _j, _k, name, reinstall_script_path;
+        var e_1, _a, e_2, _b, e_3, _c, getVersion, _d, version, versionStatus, _module_dir_path, releases_index, url, _loop_1, _e, _f, db_path, _working_directory_path_1, _g, _h, name, _j, _k, name, reinstall_script_path;
         return __generator(this, function (_l) {
             switch (_l.label) {
                 case 0:
@@ -221,19 +221,24 @@ function update() {
                     }
                     if (!(versionStatus === "UP TO DATE")) return [3 /*break*/, 3];
                     console.log("Semasim is UP TO DATE");
-                    return [3 /*break*/, 6];
+                    return [3 /*break*/, 7];
                 case 3:
-                    if (!(versionStatus === "MINOR" || versionStatus === "PATCH")) return [3 /*break*/, 5];
+                    if (!(versionStatus === "MINOR" || versionStatus === "PATCH")) return [3 /*break*/, 6];
                     console.log("Performing " + versionStatus + " update...");
                     _module_dir_path = path.join(exports.working_directory_path, path.basename(exports.module_dir_path));
-                    return [4 /*yield*/, scriptLib.download_and_extract_tarball([
-                            "https://gw.semasim.com/releases/",
-                            "semasim_" + version + "_" + scriptLib.sh_eval("uname -m") + ".tar.gz"
-                        ].join(""), _module_dir_path, "OVERWRITE IF EXIST")];
+                    return [4 /*yield*/, program_action_release.fetch_releases_index()];
                 case 4:
+                    releases_index = _l.sent();
+                    url = releases_index[version + "_" + scriptLib.sh_eval("uname -m")];
+                    if (!url) {
+                        throw new Error("Release " + version + " not published for arch");
+                    }
+                    return [4 /*yield*/, scriptLib.download_and_extract_tarball(url, _module_dir_path, "OVERWRITE IF EXIST")];
+                case 5:
                     _l.sent();
                     _loop_1 = function (db_path) {
-                        var _a = __read([exports.module_dir_path, _module_dir_path].map(function (v) { return path.join(v, "res", path.basename(db_path)); }), 2), db_schema_path = _a[0], _db_schema_path = _a[1];
+                        var _a = __read([exports.module_dir_path, _module_dir_path]
+                            .map(function (v) { return path.join(v, "res", path.basename(db_path)); }), 2), db_schema_path = _a[0], _db_schema_path = _a[1];
                         if (!scriptLib.fs_areSame(db_schema_path, _db_schema_path)) {
                             console.log("Need db update " + db_path);
                             scriptLib.fs_move("COPY", _db_schema_path, db_path);
@@ -291,8 +296,8 @@ function update() {
                     })();
                     scriptLib.execSyncTrace("rm -r " + _module_dir_path);
                     console.log(scriptLib.colorize("Update success", "GREEN"));
-                    return [3 /*break*/, 6];
-                case 5:
+                    return [3 /*break*/, 7];
+                case 6:
                     if (versionStatus === "MAJOR") {
                         console.log("Major update needed, re-installing semasim...");
                         reinstall_script_path = "/var/tmp/reinstall_semasim.sh";
@@ -328,8 +333,8 @@ function update() {
                         scriptLib.spawnAndDetach("/bin/bash", [reinstall_script_path], undefined, "/tmp/semasim_reinstall.log");
                         return [2 /*return*/, "EXIT"];
                     }
-                    _l.label = 6;
-                case 6: return [2 /*return*/, "LAUNCH"];
+                    _l.label = 7;
+                case 7: return [2 /*return*/, "LAUNCH"];
             }
         });
     });
@@ -337,12 +342,14 @@ function update() {
 exports.update = update;
 function program_action_release() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, e_5, _b, e_6, _c, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, releases_file_path, releases, deps_digest_filename, deps_digest, previous_release_dir_path, node_modules_need_update, last_version, _d, _e, name, _f, _g, name, module_file_path, version, tarball_file_path, putasset_dir_path, dl_url;
+        var e_4, _a, e_5, _b, e_6, _c, tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, last_version, previous_release_dir_path, _d, _e, name, _f, _g, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0:
                     scriptLib.enableCmdTrace();
-                    _module_dir_path = path.join("/tmp", path.basename(exports.module_dir_path));
+                    tmp_dir_path = path.join("/tmp", "semasim_release_" + Date.now());
+                    scriptLib.execSyncTrace("rm -rf " + tmp_dir_path + " && mkdir " + tmp_dir_path);
+                    _module_dir_path = path.join(tmp_dir_path, path.basename(exports.module_dir_path));
                     _ify = function (original_path) { return path.join(_module_dir_path, path.relative(exports.module_dir_path, original_path)); };
                     _node_modules_path = path.join(_module_dir_path, "node_modules");
                     _working_directory_path = _ify(exports.working_directory_path);
@@ -355,7 +362,6 @@ function program_action_release() {
                         .split(":")
                         .map(function (v) { return _ify(v); })
                         .join(":");
-                    scriptLib.execSyncTrace("rm -rf " + _module_dir_path);
                     try {
                         for (to_distribute_rel_paths_1 = __values(to_distribute_rel_paths), to_distribute_rel_paths_1_1 = to_distribute_rel_paths_1.next(); !to_distribute_rel_paths_1_1.done; to_distribute_rel_paths_1_1 = to_distribute_rel_paths_1.next()) {
                             name = to_distribute_rel_paths_1_1.value;
@@ -371,8 +377,6 @@ function program_action_release() {
                     }
                     fs.writeFileSync(path.join(_module_dir_path, path.relative(exports.module_dir_path, env_file_path)), Buffer.from("PROD", "utf8"));
                     arch = scriptLib.sh_eval("uname -m");
-                    releases_file_path = path.join(exports.module_dir_path, "docs", "releases.json");
-                    releases = require(releases_file_path);
                     deps_digest_filename = "dependencies.md5";
                     return [4 /*yield*/, Promise.resolve().then(function () { return require("crypto"); })];
                 case 1:
@@ -380,17 +384,21 @@ function program_action_release() {
                         .createHash("md5")
                         .update(Buffer.from(JSON.stringify(require(path.join(exports.module_dir_path, "package-lock.json"))["dependencies"]), "utf8"))
                         .digest("hex");
-                    previous_release_dir_path = path.join(_module_dir_path, "previous_release");
-                    last_version = releases[arch];
-                    if (!(last_version === undefined)) return [3 /*break*/, 2];
+                    releases_index_file_path = path.join(tmp_dir_path, path.basename(program_action_release.releases_index_file_url));
+                    return [4 /*yield*/, program_action_release.fetch_releases_index()];
+                case 2:
+                    releases_index = _h.sent();
+                    last_version = releases_index[arch];
+                    previous_release_dir_path = path.join(tmp_dir_path, "previous_release");
+                    if (!(last_version === undefined)) return [3 /*break*/, 3];
                     node_modules_need_update = true;
-                    return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, scriptLib.download_and_extract_tarball(releases[last_version], previous_release_dir_path, "OVERWRITE IF EXIST")];
-                case 3:
+                    return [3 /*break*/, 5];
+                case 3: return [4 /*yield*/, scriptLib.download_and_extract_tarball(releases_index[last_version], previous_release_dir_path, "OVERWRITE IF EXIST")];
+                case 4:
                     _h.sent();
                     node_modules_need_update = fs.readFileSync(path.join(previous_release_dir_path, deps_digest_filename)).toString("utf8") !== deps_digest;
-                    _h.label = 4;
-                case 4:
+                    _h.label = 5;
+                case 5:
                     if (!node_modules_need_update) {
                         console.log("node_modules haven't change since last release");
                         try {
@@ -454,17 +462,17 @@ function program_action_release() {
                         })();
                     }
                     return [4 /*yield*/, fetch_asterisk_and_dongle(_working_directory_path)];
-                case 5:
+                case 6:
                     _h.sent();
                     module_file_path = path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules", "chan_dongle.so");
-                    if (!fs.existsSync(previous_release_dir_path)) return [3 /*break*/, 6];
+                    if (!fs.existsSync(previous_release_dir_path)) return [3 /*break*/, 7];
                     console.log("Copying chan-dongle.so from previous release");
                     scriptLib.fs_move("MOVE", path.join(previous_release_dir_path, "working_directory"), _working_directory_path, module_file_path);
-                    return [3 /*break*/, 8];
-                case 6:
+                    return [3 /*break*/, 9];
+                case 7:
                     console.log("Compiling chan-dongle.so");
                     return [4 /*yield*/, installAsteriskPrereq()];
-                case 7:
+                case 8:
                     _h.sent();
                     fs.writeFileSync(_ast_main_conf_path, Buffer.from(buildAsteriskMainConfigFile(_ast_dir_path), "utf8"));
                     scriptLib.execSyncTrace([
@@ -475,46 +483,81 @@ function program_action_release() {
                         "--ld_library_path_for_asterisk " + _ld_library_path_for_asterisk
                     ].join(" "));
                     scriptLib.execSyncTrace("rm " + _ast_main_conf_path);
-                    _h.label = 8;
-                case 8:
-                    scriptLib.execSyncTrace("rm -rf " + previous_release_dir_path);
+                    _h.label = 9;
+                case 9:
                     version = require(path.join(exports.module_dir_path, "package.json")).version;
-                    tarball_file_path = path.join("/tmp", "semasim_" + version + "_" + arch + ".tar.gz");
+                    tarball_file_path = path.join(tmp_dir_path, "semasim_" + version + "_" + arch + ".tar.gz");
                     scriptLib.execSyncTrace([
                         "tar -czf",
                         tarball_file_path,
                         "-C " + _module_dir_path + " ."
                     ].join(" "));
-                    scriptLib.execSyncTrace("rm -r " + _module_dir_path);
-                    putasset_dir_path = path.join("/tmp", "node-putasset");
-                    scriptLib.execSyncTrace("rm -rf " + putasset_dir_path);
+                    putasset_dir_path = path.join(tmp_dir_path, "node-putasset");
                     scriptLib.execSyncTrace("git clone https://github.com/garronej/node-putasset", { "cwd": path.join(putasset_dir_path, "..") });
                     scriptLib.execSyncTrace([
                         "sudo",
                         "env \"PATH=" + path.dirname(process.argv[0]) + ":" + process.env["PATH"] + "\"",
                         "npm install --production --unsafe-perm",
                     ].join(" "), { "cwd": putasset_dir_path });
+                    uploadAsset = function (file_path) {
+                        var _a = program_action_release.putasset_target, repo = _a.repo, owner = _a.owner, tag = _a.tag;
+                        scriptLib.sh_eval([
+                            process.argv[0] + " " + path.join(putasset_dir_path, "bin", "putasset.js"),
+                            "-k " + fs.readFileSync(path.join(exports.module_dir_path, "res", "PUTASSET_TOKEN"))
+                                .toString("utf8")
+                                .replace(/\s/g, ""),
+                            "-r " + repo,
+                            "-o " + owner,
+                            "-t " + tag,
+                            "-f \"" + file_path + "\"",
+                            "--force"
+                        ].join(" "));
+                    };
                     console.log("Start uploading...");
-                    dl_url = scriptLib.sh_eval([
-                        process.argv[0] + " " + path.join(putasset_dir_path, "bin", "putasset.js"),
-                        "-k " + fs.readFileSync(path.join(exports.module_dir_path, "res", "PUTASSET_TOKEN"))
-                            .toString("utf8")
-                            .replace(/\s/g, ""),
-                        "-r releases",
-                        "-o garronej",
-                        "-t semasim-gateway",
-                        "-f \"" + tarball_file_path + "\"",
-                        "--force"
-                    ].join(" "));
-                    scriptLib.execSyncTrace("rm -r " + putasset_dir_path + " " + tarball_file_path);
-                    releases[releases[arch] = version + "_" + arch] = dl_url;
-                    fs.writeFileSync(releases_file_path, Buffer.from(JSON.stringify(releases, null, 2), "utf8"));
+                    tarball_file_url = uploadAsset(tarball_file_path);
+                    return [4 /*yield*/, program_action_release.fetch_releases_index()];
+                case 10:
+                    releases_index = _h.sent();
+                    releases_index[version + "_" + arch] = tarball_file_url;
+                    fs.writeFileSync(releases_index_file_path, Buffer.from(JSON.stringify(releases_index, null, 2), "utf8"));
+                    uploadAsset(releases_index_file_path);
+                    scriptLib.execSync("rm -r " + tmp_dir_path);
                     console.log("---DONE---");
                     return [2 /*return*/];
             }
         });
     });
 }
+(function (program_action_release) {
+    var _this = this;
+    //TODO: define global
+    program_action_release.putasset_target = {
+        "owner": "garronej",
+        "repo": "releases",
+        "tag": "chan-dongle-extended"
+    };
+    //TODO: define global
+    program_action_release.releases_index_file_url = [
+        "https://github.com",
+        program_action_release.putasset_target.owner,
+        program_action_release.putasset_target.repo,
+        "releases",
+        "download",
+        program_action_release.putasset_target.tag,
+        "index.json"
+    ].join('/');
+    program_action_release.fetch_releases_index = function () { return __awaiter(_this, void 0, void 0, function () {
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _b = (_a = JSON).parse;
+                    return [4 /*yield*/, scriptLib.web_get(program_action_release.releases_index_file_url)];
+                case 1: return [2 /*return*/, _b.apply(_a, [_c.sent()])];
+            }
+        });
+    }); };
+})(program_action_release || (program_action_release = {}));
 function install() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
