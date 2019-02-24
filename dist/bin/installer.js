@@ -105,6 +105,36 @@ exports.ld_library_path_for_asterisk = [
     path.join(exports.working_directory_path, "speexdsp", "lib"),
     path.join(exports.working_directory_path, "speex", "lib")
 ].join(":");
+var github_releases;
+(function (github_releases) {
+    var _this = this;
+    github_releases.owner = "garronej";
+    github_releases.repo = "releases";
+    github_releases.project_tag = "semasim-gateway";
+    github_releases.get_releases_index_url = function (tag) {
+        if (tag === void 0) { tag = github_releases.project_tag; }
+        return [
+            "https://github.com",
+            github_releases.owner,
+            github_releases.repo,
+            "releases",
+            "download",
+            tag,
+            "index.json"
+        ].join('/');
+    };
+    github_releases.fetch_releases_index = function (tag) { return __awaiter(_this, void 0, void 0, function () {
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _b = (_a = JSON).parse;
+                    return [4 /*yield*/, scriptLib.web_get(github_releases.get_releases_index_url(tag))];
+                case 1: return [2 /*return*/, _b.apply(_a, [_c.sent()])];
+            }
+        });
+    }); };
+})(github_releases || (github_releases = {}));
 function getEnv() {
     if (getEnv.value !== undefined) {
         return getEnv.value;
@@ -226,7 +256,7 @@ function update() {
                     if (!(versionStatus === "MINOR" || versionStatus === "PATCH")) return [3 /*break*/, 6];
                     console.log("Performing " + versionStatus + " update...");
                     _module_dir_path = path.join(exports.working_directory_path, path.basename(exports.module_dir_path));
-                    return [4 /*yield*/, program_action_release.fetch_releases_index()];
+                    return [4 /*yield*/, github_releases.fetch_releases_index()];
                 case 4:
                     releases_index = _l.sent();
                     url = releases_index[version + "_" + scriptLib.sh_eval("uname -m")];
@@ -384,8 +414,8 @@ function program_action_release() {
                         .createHash("md5")
                         .update(Buffer.from(JSON.stringify(require(path.join(exports.module_dir_path, "package-lock.json"))["dependencies"]), "utf8"))
                         .digest("hex");
-                    releases_index_file_path = path.join(tmp_dir_path, path.basename(program_action_release.releases_index_file_url));
-                    return [4 /*yield*/, program_action_release.fetch_releases_index()];
+                    releases_index_file_path = path.join(tmp_dir_path, path.basename(github_releases.get_releases_index_url()));
+                    return [4 /*yield*/, github_releases.fetch_releases_index()];
                 case 2:
                     releases_index = _h.sent();
                     last_version = releases_index[arch];
@@ -499,23 +529,20 @@ function program_action_release() {
                         "env \"PATH=" + path.dirname(process.argv[0]) + ":" + process.env["PATH"] + "\"",
                         "npm install --production --unsafe-perm",
                     ].join(" "), { "cwd": putasset_dir_path });
-                    uploadAsset = function (file_path) {
-                        var _a = program_action_release.putasset_target, repo = _a.repo, owner = _a.owner, tag = _a.tag;
-                        scriptLib.sh_eval([
-                            process.argv[0] + " " + path.join(putasset_dir_path, "bin", "putasset.js"),
-                            "-k " + fs.readFileSync(path.join(exports.module_dir_path, "res", "PUTASSET_TOKEN"))
-                                .toString("utf8")
-                                .replace(/\s/g, ""),
-                            "-r " + repo,
-                            "-o " + owner,
-                            "-t " + tag,
-                            "-f \"" + file_path + "\"",
-                            "--force"
-                        ].join(" "));
-                    };
+                    uploadAsset = function (file_path) { return scriptLib.sh_eval([
+                        process.argv[0] + " " + path.join(putasset_dir_path, "bin", "putasset.js"),
+                        "-k " + fs.readFileSync(path.join(exports.module_dir_path, "res", "PUTASSET_TOKEN"))
+                            .toString("utf8")
+                            .replace(/\s/g, ""),
+                        "-r " + github_releases.repo,
+                        "-o " + github_releases.owner,
+                        "-t " + github_releases.project_tag,
+                        "-f \"" + file_path + "\"",
+                        "--force"
+                    ].join(" ")); };
                     console.log("Start uploading...");
                     tarball_file_url = uploadAsset(tarball_file_path);
-                    return [4 /*yield*/, program_action_release.fetch_releases_index()];
+                    return [4 /*yield*/, github_releases.fetch_releases_index()];
                 case 10:
                     releases_index = _h.sent();
                     releases_index[version + "_" + arch] = tarball_file_url;
@@ -528,36 +555,6 @@ function program_action_release() {
         });
     });
 }
-(function (program_action_release) {
-    var _this = this;
-    //TODO: define global
-    program_action_release.putasset_target = {
-        "owner": "garronej",
-        "repo": "releases",
-        "tag": "chan-dongle-extended"
-    };
-    //TODO: define global
-    program_action_release.releases_index_file_url = [
-        "https://github.com",
-        program_action_release.putasset_target.owner,
-        program_action_release.putasset_target.repo,
-        "releases",
-        "download",
-        program_action_release.putasset_target.tag,
-        "index.json"
-    ].join('/');
-    program_action_release.fetch_releases_index = function () { return __awaiter(_this, void 0, void 0, function () {
-        var _a, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    _b = (_a = JSON).parse;
-                    return [4 /*yield*/, scriptLib.web_get(program_action_release.releases_index_file_url)];
-                case 1: return [2 /*return*/, _b.apply(_a, [_c.sent()])];
-            }
-        });
-    }); };
-})(program_action_release || (program_action_release = {}));
 function install() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -796,20 +793,20 @@ function uninstall(verbose) {
 /** Create dir if does not exist, keep the files in it if it does */
 function fetch_asterisk_and_dongle(dest_dir_path) {
     return __awaiter(this, void 0, void 0, function () {
-        var arch, _a, release_asterisk, release_dongle;
+        var _a, releases_index_asterisk, releases_index_dongle, arch;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0:
-                    arch = scriptLib.sh_eval("uname -m");
-                    return [4 /*yield*/, Promise.all(["asterisk", "chan-dongle-extended"]
-                            .map(function (repo) { return "https://garronej.github.io/" + repo + "/releases.json"; })
-                            .map(function (url) { return scriptLib.web_get(url)
-                            .then(function (json) { return JSON.parse(json); }); }))];
+                case 0: return [4 /*yield*/, Promise.all((function () {
+                        var tags = ["asterisk", "chan-dongle-extended"];
+                        return tags;
+                    })()
+                        .map(function (tag) { return github_releases.fetch_releases_index(tag); }))];
                 case 1:
-                    _a = __read.apply(void 0, [_b.sent(), 2]), release_asterisk = _a[0], release_dongle = _a[1];
+                    _a = __read.apply(void 0, [_b.sent(), 2]), releases_index_asterisk = _a[0], releases_index_dongle = _a[1];
+                    arch = scriptLib.sh_eval("uname -m");
                     return [4 /*yield*/, Promise.all([
-                            scriptLib.download_and_extract_tarball(release_asterisk[arch], dest_dir_path, "MERGE"),
-                            scriptLib.download_and_extract_tarball(release_dongle[release_dongle[arch]], path.join(dest_dir_path, path.basename(exports.dongle_dir_path)), "OVERWRITE IF EXIST")
+                            scriptLib.download_and_extract_tarball(releases_index_asterisk[arch], dest_dir_path, "MERGE"),
+                            scriptLib.download_and_extract_tarball(releases_index_dongle[releases_index_dongle[arch]], path.join(dest_dir_path, path.basename(exports.dongle_dir_path)), "OVERWRITE IF EXIST")
                         ])];
                 case 2:
                     _b.sent();

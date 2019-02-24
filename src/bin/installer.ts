@@ -44,6 +44,34 @@ export const ld_library_path_for_asterisk = [
     path.join(working_directory_path, "speex", "lib")
 ].join(":");
 
+namespace github_releases {
+
+    export type Tag = "semasim-gateway" | "chan-dongle-extended" | "asterisk";
+
+    export const owner = "garronej";
+    export const repo = "releases";
+
+    export const project_tag: Tag = "semasim-gateway";
+
+    export const get_releases_index_url = (tag: Tag = project_tag) => [
+        "https://github.com",
+        owner,
+        repo,
+        "releases",
+        "download",
+        tag,
+        "index.json"
+    ].join('/');
+
+    export const fetch_releases_index =
+        async (tag?: Tag) => JSON.parse(
+            await scriptLib.web_get(
+                get_releases_index_url(tag)
+            )
+        );
+
+}
+
 export function getEnv(): "DEV" | "PROD" {
 
     if (getEnv.value !== undefined) {
@@ -201,7 +229,7 @@ export async function update(): Promise<"LAUNCH" | "EXIT"> {
 
         const _module_dir_path = path.join(working_directory_path, path.basename(module_dir_path));
 
-        const releases_index = await program_action_release.fetch_releases_index();
+        const releases_index = await github_releases.fetch_releases_index();
 
         const url = releases_index[`${version}_${scriptLib.sh_eval("uname -m")}`];
 
@@ -369,12 +397,14 @@ async function program_action_release() {
 
     let node_modules_need_update: boolean;
 
+    
+
     const releases_index_file_path = path.join(
         tmp_dir_path, 
-        path.basename(program_action_release.releases_index_file_url)
+        path.basename(github_releases.get_releases_index_url())
         );
 
-    let releases_index = await program_action_release.fetch_releases_index();
+    let releases_index = await github_releases.fetch_releases_index();
 
     const last_version = releases_index[arch];
 
@@ -529,31 +559,25 @@ async function program_action_release() {
         { "cwd": putasset_dir_path }
     );
 
-    const uploadAsset = (file_path: string) => {
-
-        const { repo, owner, tag } = program_action_release.putasset_target;
-
-        scriptLib.sh_eval(
+    const uploadAsset = (file_path: string) => scriptLib.sh_eval(
             [
                 `${process.argv[0]} ${path.join(putasset_dir_path, "bin", "putasset.js")}`,
                 `-k ` + fs.readFileSync(path.join(module_dir_path, "res", "PUTASSET_TOKEN"))
                     .toString("utf8")
                     .replace(/\s/g, ""),
-                `-r ${repo}`,
-                `-o ${owner}`,
-                `-t ${tag}`,
+                `-r ${github_releases.repo}`,
+                `-o ${github_releases.owner}`,
+                `-t ${github_releases.project_tag}`,
                 `-f "${file_path}"`,
                 `--force`
             ].join(" ")
         );
 
-    };
-
     console.log("Start uploading...");
 
     const tarball_file_url = uploadAsset(tarball_file_path);
 
-    releases_index = await program_action_release.fetch_releases_index();
+    releases_index = await github_releases.fetch_releases_index();
 
     releases_index[`${version}_${arch}`] = tarball_file_url;
 
@@ -573,32 +597,6 @@ async function program_action_release() {
 
 }
 
-namespace program_action_release {
-
-    //TODO: define global
-    export const putasset_target = {
-        "owner": "garronej",
-        "repo": "releases",
-        "tag": "chan-dongle-extended"
-    };
-
-    //TODO: define global
-    export const releases_index_file_url = [
-        "https://github.com",
-        putasset_target.owner,
-        putasset_target.repo,
-        "releases",
-        "download",
-        putasset_target.tag,
-        "index.json"
-    ].join('/');
-
-    export const fetch_releases_index = async () =>
-        JSON.parse(
-            await scriptLib.web_get(releases_index_file_url)
-        );
-
-}
 
 
 async function install() {
@@ -904,26 +902,26 @@ function uninstall(verbose: false | "VERBOSE" = false) {
 /** Create dir if does not exist, keep the files in it if it does */
 async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
-    const arch = scriptLib.sh_eval("uname -m");
-
-    const [release_asterisk, release_dongle] =
+    const [releases_index_asterisk, releases_index_dongle] =
         await Promise.all(
-            ["asterisk", "chan-dongle-extended"]
-                .map(repo => `https://garronej.github.io/${repo}/releases.json`)
-                .map(
-                    url => scriptLib.web_get(url)
-                        .then(json => JSON.parse(json))
-                )
+                (()=>{
+                    const tags: [github_releases.Tag, github_releases.Tag]= 
+                        ["asterisk", "chan-dongle-extended"];
+                    return tags;
+                })()
+                .map( tag => github_releases.fetch_releases_index(tag))
         );
+
+    const arch = scriptLib.sh_eval("uname -m");
 
     await Promise.all([
         scriptLib.download_and_extract_tarball(
-            release_asterisk[arch],
+            releases_index_asterisk[arch],
             dest_dir_path,
             "MERGE"
         ),
         scriptLib.download_and_extract_tarball(
-            release_dongle[release_dongle[arch]],
+            releases_index_dongle[releases_index_dongle[arch]],
             path.join(dest_dir_path, path.basename(dongle_dir_path)),
             "OVERWRITE IF EXIST"
         )
