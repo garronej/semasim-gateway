@@ -10,7 +10,7 @@ function genIntegerInRange(min, max): number {
 export function genRetryDelay() {
 
     switch (getEnv()) {
-        case "PROD": 
+        case "PROD":
             return genIntegerInRange(1000, 20 * 1000);
         case "DEV":
 
@@ -21,9 +21,59 @@ export function genRetryDelay() {
 
 }
 
-export async function getVersion(): Promise<{ 
-    value: string; 
-    status: "UP TO DATE" | "MAJOR" | "MINOR" | "PATCH"; 
+export type Version = {
+    major: number;
+    minor: number;
+    patch: number;
+};
+
+export namespace Version {
+
+    export function parse(version: string): Version {
+
+        const match = version.match(/^([0-9]+)\.([0-9]+)\.([0-9]+)$/)!;
+
+        return {
+            "major": parseInt(match[1]),
+            "minor": parseInt(match[2]),
+            "patch": parseInt(match[3])
+        };
+
+    };
+
+    export function stringify(v: Version) {
+        return `${v.major}.${v.minor}.${v.patch}`;
+    }
+
+    /**
+     * 
+     * v1  <  v2  => -1
+     * v1 === v2  => 0
+     * v1  >  v2  => 1
+     * 
+     */
+    export function compare(v1: Version, v2: Version): -1 | 0 | 1 {
+
+        const sign = (n: number): -1 | 0 | 1 => n === 0 ? 0 : (n < 0 ? -1 : 1);
+
+        if (v1.major === v2.major) {
+            if (v1.minor === v2.minor) {
+                return sign(v1.patch - v2.patch);
+            } else {
+                return sign(v1.minor - v2.minor);
+            }
+        } else {
+            return sign(v1.major - v2.major);
+        }
+
+    }
+
+}
+
+
+export async function getVersion(): Promise<{
+    value: string;
+    status: "UP TO DATE" | "MAJOR" | "MINOR" | "PATCH";
 }> {
 
     let value = "";
@@ -54,20 +104,8 @@ export async function getVersion(): Promise<{
 
     } else {
 
-        const parseVersion = (version: string) => {
-
-            const match = version.match(/^([0-9]+)\.([0-9]+)\.([0-9]+)$/)!;
-
-            return {
-                "major": parseInt(match[1]),
-                "minor": parseInt(match[2]),
-                "patch": parseInt(match[3])
-            };
-
-        };
-
-        const localVersionParsed = parseVersion(localVersion);
-        const serverVersionParsed = parseVersion(value);
+        const localVersionParsed = Version.parse(localVersion);
+        const serverVersionParsed = Version.parse(value);
 
         if (serverVersionParsed.major !== localVersionParsed.major) {
 

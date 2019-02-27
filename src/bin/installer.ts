@@ -44,33 +44,6 @@ export const ld_library_path_for_asterisk = [
     path.join(working_directory_path, "speex", "lib")
 ].join(":");
 
-namespace github_releases {
-
-    export type Tag = "semasim-gateway" | "chan-dongle-extended" | "asterisk";
-
-    export const owner = "garronej";
-    export const repo = "releases";
-
-    export const project_tag: Tag = "semasim-gateway";
-
-    export const get_releases_index_url = (tag: Tag = project_tag) => [
-        "https://github.com",
-        owner,
-        repo,
-        "releases",
-        "download",
-        tag,
-        "index.json"
-    ].join('/');
-
-    export const fetch_releases_index =
-        async (tag?: Tag) => JSON.parse(
-            await scriptLib.web_get(
-                get_releases_index_url(tag)
-            )
-        );
-
-}
 
 export function getEnv(): "DEV" | "PROD" {
 
@@ -99,6 +72,34 @@ export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
         case "DEV": return "dev.semasim.com";
         case "PROD": return "semasim.com";
     }
+}
+
+namespace github_releases {
+
+    export type Tag = "semasim-gateway" | "chan-dongle-extended" | "asterisk";
+
+    export const owner = "garronej";
+    export const repo = "releases";
+
+    export const project_tag: Tag = "semasim-gateway";
+
+    export const get_releases_index_url = (tag: Tag = project_tag) => [
+        "https://github.com",
+        owner,
+        repo,
+        "releases",
+        "download",
+        tag,
+        "index.json"
+    ].join('/');
+
+    export const fetch_releases_index =
+        async (tag?: Tag) => JSON.parse(
+            await scriptLib.web_get(
+                get_releases_index_url(tag)
+            )
+        );
+
 }
 
 function isFromTarball(): boolean {
@@ -397,16 +398,24 @@ async function program_action_release() {
 
     let node_modules_need_update: boolean;
 
-    
-
     const releases_index_file_path = path.join(
-        tmp_dir_path, 
+        tmp_dir_path,
         path.basename(github_releases.get_releases_index_url())
-        );
+    );
 
     let releases_index = await github_releases.fetch_releases_index();
 
-    const last_version = releases_index[arch];
+    const { Version } = await import("../lib/versionStatus");
+
+    const last_version = Object.keys(releases_index)
+        .map(str => str.split("_"))
+        .filter(([_, arch_]) => arch_ === arch)
+        .map(([vStr]) => Version.parse(vStr))
+        .sort(Version.compare)
+        .pop()
+        ;
+
+    console.log({ last_version });
 
     const previous_release_dir_path = path.join(tmp_dir_path, "previous_release");
 
@@ -417,7 +426,7 @@ async function program_action_release() {
     } else {
 
         await scriptLib.download_and_extract_tarball(
-            releases_index[last_version],
+            releases_index[`${Version.stringify(last_version)}_${arch}`],
             previous_release_dir_path,
             "OVERWRITE IF EXIST"
         );
@@ -560,18 +569,18 @@ async function program_action_release() {
     );
 
     const uploadAsset = (file_path: string) => scriptLib.sh_eval(
-            [
-                `${process.argv[0]} ${path.join(putasset_dir_path, "bin", "putasset.js")}`,
-                `-k ` + fs.readFileSync(path.join(module_dir_path, "res", "PUTASSET_TOKEN"))
-                    .toString("utf8")
-                    .replace(/\s/g, ""),
-                `-r ${github_releases.repo}`,
-                `-o ${github_releases.owner}`,
-                `-t ${github_releases.project_tag}`,
-                `-f "${file_path}"`,
-                `--force`
-            ].join(" ")
-        );
+        [
+            `${process.argv[0]} ${path.join(putasset_dir_path, "bin", "putasset.js")}`,
+            `-k ` + fs.readFileSync(path.join(module_dir_path, "res", "PUTASSET_TOKEN"))
+                .toString("utf8")
+                .replace(/\s/g, ""),
+            `-r ${github_releases.repo}`,
+            `-o ${github_releases.owner}`,
+            `-t ${github_releases.project_tag}`,
+            `-f "${file_path}"`,
+            `--force`
+        ].join(" ")
+    );
 
     console.log("Start uploading...");
 
@@ -904,12 +913,12 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
 
     const [releases_index_asterisk, releases_index_dongle] =
         await Promise.all(
-                (()=>{
-                    const tags: [github_releases.Tag, github_releases.Tag]= 
-                        ["asterisk", "chan-dongle-extended"];
-                    return tags;
-                })()
-                .map( tag => github_releases.fetch_releases_index(tag))
+            (() => {
+                const tags: [github_releases.Tag, github_releases.Tag] =
+                    ["asterisk", "chan-dongle-extended"];
+                return tags;
+            })()
+                .map(tag => github_releases.fetch_releases_index(tag))
         );
 
     const arch = scriptLib.sh_eval("uname -m");

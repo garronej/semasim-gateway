@@ -52,9 +52,48 @@ function genRetryDelay() {
     }
 }
 exports.genRetryDelay = genRetryDelay;
+var Version;
+(function (Version) {
+    function parse(version) {
+        var match = version.match(/^([0-9]+)\.([0-9]+)\.([0-9]+)$/);
+        return {
+            "major": parseInt(match[1]),
+            "minor": parseInt(match[2]),
+            "patch": parseInt(match[3])
+        };
+    }
+    Version.parse = parse;
+    ;
+    function stringify(v) {
+        return v.major + "." + v.minor + "." + v.patch;
+    }
+    Version.stringify = stringify;
+    /**
+     *
+     * v1  <  v2  => -1
+     * v1 === v2  => 0
+     * v1  >  v2  => 1
+     *
+     */
+    function compare(v1, v2) {
+        var sign = function (n) { return n === 0 ? 0 : (n < 0 ? -1 : 1); };
+        if (v1.major === v2.major) {
+            if (v1.minor === v2.minor) {
+                return sign(v1.patch - v2.patch);
+            }
+            else {
+                return sign(v1.minor - v2.minor);
+            }
+        }
+        else {
+            return sign(v1.major - v2.major);
+        }
+    }
+    Version.compare = compare;
+})(Version = exports.Version || (exports.Version = {}));
 function getVersion() {
     return __awaiter(this, void 0, void 0, function () {
-        var value, _a, parseVersion, localVersionParsed, serverVersionParsed;
+        var value, _a, localVersionParsed, serverVersionParsed;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -84,16 +123,8 @@ function getVersion() {
                         return [2 /*return*/, { value: value, "status": "UP TO DATE" }];
                     }
                     else {
-                        parseVersion = function (version) {
-                            var match = version.match(/^([0-9]+)\.([0-9]+)\.([0-9]+)$/);
-                            return {
-                                "major": parseInt(match[1]),
-                                "minor": parseInt(match[2]),
-                                "patch": parseInt(match[3])
-                            };
-                        };
-                        localVersionParsed = parseVersion(localVersion);
-                        serverVersionParsed = parseVersion(value);
+                        localVersionParsed = Version.parse(localVersion);
+                        serverVersionParsed = Version.parse(value);
                         if (serverVersionParsed.major !== localVersionParsed.major) {
                             return [2 /*return*/, { value: value, "status": "MAJOR" }];
                         }

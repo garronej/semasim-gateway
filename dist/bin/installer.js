@@ -105,6 +105,28 @@ exports.ld_library_path_for_asterisk = [
     path.join(exports.working_directory_path, "speexdsp", "lib"),
     path.join(exports.working_directory_path, "speex", "lib")
 ].join(":");
+function getEnv() {
+    if (getEnv.value !== undefined) {
+        return getEnv.value;
+    }
+    var env = fs.readFileSync(env_file_path)
+        .toString("utf8")
+        .replace(/\s/g, "");
+    console.assert(env === "DEV" || env === "PROD");
+    getEnv.value = env;
+    return getEnv();
+}
+exports.getEnv = getEnv;
+(function (getEnv) {
+    getEnv.value = undefined;
+})(getEnv = exports.getEnv || (exports.getEnv = {}));
+function getBaseDomain() {
+    switch (getEnv()) {
+        case "DEV": return "dev.semasim.com";
+        case "PROD": return "semasim.com";
+    }
+}
+exports.getBaseDomain = getBaseDomain;
 var github_releases;
 (function (github_releases) {
     var _this = this;
@@ -135,28 +157,6 @@ var github_releases;
         });
     }); };
 })(github_releases || (github_releases = {}));
-function getEnv() {
-    if (getEnv.value !== undefined) {
-        return getEnv.value;
-    }
-    var env = fs.readFileSync(env_file_path)
-        .toString("utf8")
-        .replace(/\s/g, "");
-    console.assert(env === "DEV" || env === "PROD");
-    getEnv.value = env;
-    return getEnv();
-}
-exports.getEnv = getEnv;
-(function (getEnv) {
-    getEnv.value = undefined;
-})(getEnv = exports.getEnv || (exports.getEnv = {}));
-function getBaseDomain() {
-    switch (getEnv()) {
-        case "DEV": return "dev.semasim.com";
-        case "PROD": return "semasim.com";
-    }
-}
-exports.getBaseDomain = getBaseDomain;
 function isFromTarball() {
     return !fs.existsSync(path.join(exports.module_dir_path, "src"));
 }
@@ -372,7 +372,7 @@ function update() {
 exports.update = update;
 function program_action_release() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, e_5, _b, e_6, _c, tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, last_version, previous_release_dir_path, _d, _e, name, _f, _g, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
+        var e_4, _a, e_5, _b, e_6, _c, tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, Version, last_version, previous_release_dir_path, _d, _e, name, _f, _g, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0:
@@ -418,17 +418,32 @@ function program_action_release() {
                     return [4 /*yield*/, github_releases.fetch_releases_index()];
                 case 2:
                     releases_index = _h.sent();
-                    last_version = releases_index[arch];
+                    return [4 /*yield*/, Promise.resolve().then(function () { return require("../lib/versionStatus"); })];
+                case 3:
+                    Version = (_h.sent()).Version;
+                    last_version = Object.keys(releases_index)
+                        .map(function (str) { return str.split("_"); })
+                        .filter(function (_a) {
+                        var _b = __read(_a, 2), _ = _b[0], arch_ = _b[1];
+                        return arch_ === arch;
+                    })
+                        .map(function (_a) {
+                        var _b = __read(_a, 1), vStr = _b[0];
+                        return Version.parse(vStr);
+                    })
+                        .sort(Version.compare)
+                        .pop();
+                    console.log({ last_version: last_version });
                     previous_release_dir_path = path.join(tmp_dir_path, "previous_release");
-                    if (!(last_version === undefined)) return [3 /*break*/, 3];
+                    if (!(last_version === undefined)) return [3 /*break*/, 4];
                     node_modules_need_update = true;
-                    return [3 /*break*/, 5];
-                case 3: return [4 /*yield*/, scriptLib.download_and_extract_tarball(releases_index[last_version], previous_release_dir_path, "OVERWRITE IF EXIST")];
-                case 4:
+                    return [3 /*break*/, 6];
+                case 4: return [4 /*yield*/, scriptLib.download_and_extract_tarball(releases_index[Version.stringify(last_version) + "_" + arch], previous_release_dir_path, "OVERWRITE IF EXIST")];
+                case 5:
                     _h.sent();
                     node_modules_need_update = fs.readFileSync(path.join(previous_release_dir_path, deps_digest_filename)).toString("utf8") !== deps_digest;
-                    _h.label = 5;
-                case 5:
+                    _h.label = 6;
+                case 6:
                     if (!node_modules_need_update) {
                         console.log("node_modules haven't change since last release");
                         try {
@@ -492,17 +507,17 @@ function program_action_release() {
                         })();
                     }
                     return [4 /*yield*/, fetch_asterisk_and_dongle(_working_directory_path)];
-                case 6:
+                case 7:
                     _h.sent();
                     module_file_path = path.join(_working_directory_path, "asterisk", "lib", "asterisk", "modules", "chan_dongle.so");
-                    if (!fs.existsSync(previous_release_dir_path)) return [3 /*break*/, 7];
+                    if (!fs.existsSync(previous_release_dir_path)) return [3 /*break*/, 8];
                     console.log("Copying chan-dongle.so from previous release");
                     scriptLib.fs_move("MOVE", path.join(previous_release_dir_path, "working_directory"), _working_directory_path, module_file_path);
-                    return [3 /*break*/, 9];
-                case 7:
+                    return [3 /*break*/, 10];
+                case 8:
                     console.log("Compiling chan-dongle.so");
                     return [4 /*yield*/, installAsteriskPrereq()];
-                case 8:
+                case 9:
                     _h.sent();
                     fs.writeFileSync(_ast_main_conf_path, Buffer.from(buildAsteriskMainConfigFile(_ast_dir_path), "utf8"));
                     scriptLib.execSyncTrace([
@@ -513,8 +528,8 @@ function program_action_release() {
                         "--ld_library_path_for_asterisk " + _ld_library_path_for_asterisk
                     ].join(" "));
                     scriptLib.execSyncTrace("rm " + _ast_main_conf_path);
-                    _h.label = 9;
-                case 9:
+                    _h.label = 10;
+                case 10:
                     version = require(path.join(exports.module_dir_path, "package.json")).version;
                     tarball_file_path = path.join(tmp_dir_path, "semasim_" + version + "_" + arch + ".tar.gz");
                     scriptLib.execSyncTrace([
@@ -543,7 +558,7 @@ function program_action_release() {
                     console.log("Start uploading...");
                     tarball_file_url = uploadAsset(tarball_file_path);
                     return [4 /*yield*/, github_releases.fetch_releases_index()];
-                case 10:
+                case 11:
                     releases_index = _h.sent();
                     releases_index[version + "_" + arch] = tarball_file_url;
                     fs.writeFileSync(releases_index_file_path, Buffer.from(JSON.stringify(releases_index, null, 2), "utf8"));
