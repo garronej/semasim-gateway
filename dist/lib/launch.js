@@ -325,7 +325,7 @@ function registerListeners() {
         });
     }); });
     sipMessagesMonitor.evtMessage.attach(function (_a) {
-        var fromContact = _a.fromContact, toNumber = _a.toNumber, text = _a.text, exactSendDate = _a.exactSendDate;
+        var fromContact = _a.fromContact, toNumber = _a.toNumber, text = _a.text, exactSendDate = _a.exactSendDate, appendPromotionalMessage = _a.appendPromotionalMessage;
         return __awaiter(_this, void 0, void 0, function () {
             var uaSim, dongle;
             return __generator(this, function (_b) {
@@ -333,7 +333,7 @@ function registerListeners() {
                     case 0:
                         debug("FROM SIP MESSAGE", { toNumber: toNumber, text: text });
                         uaSim = fromContact.uaSim;
-                        return [4 /*yield*/, dbSemasim.onSipMessage(toNumber, text, uaSim, exactSendDate)];
+                        return [4 /*yield*/, dbSemasim.onSipMessage(toNumber, text, uaSim, exactSendDate, appendPromotionalMessage)];
                     case 1:
                         _b.sent();
                         dongle = Array.from(dc.usableDongles.values()).find(function (_a) {

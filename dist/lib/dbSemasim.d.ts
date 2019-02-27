@@ -31,7 +31,7 @@ export declare function removeUaSim(imsi: string, uasToKeep?: types.Ua[]): Promi
  * Queue a new messageTowardGsm
  *
  */
-export declare function onSipMessage(toNumber: string, text: string, uaSim: types.UaSim, date?: Date): Promise<void>;
+export declare function onSipMessage(toNumber: string, text: string, uaSim: types.UaSim, date: Date, appendPromotionalMessage: boolean): Promise<void>;
 /**
  * to call when a SMS is received by a dongle
  *

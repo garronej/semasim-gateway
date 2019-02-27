@@ -6,7 +6,8 @@ export declare const evtMessage: SyncEvent<{
     fromContact: types.Contact;
     toNumber: string;
     text: string;
-    exactSendDate: Date | undefined;
+    exactSendDate: Date;
+    appendPromotionalMessage: boolean;
 }>;
 export declare function sendMessage(contact: types.Contact, fromNumber: string, headers: Record<string, string>, text: string, fromNumberSimName?: string): Promise<void>;
 export declare namespace sendMessage {

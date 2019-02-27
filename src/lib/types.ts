@@ -31,6 +31,7 @@ export type MessageTowardGsm = {
     uaSim: UaSim;
     toNumber: string;
     text: string;
+    appendPromotionalMessage: boolean;
 };
 
 export type MessageTowardSip = {
@@ -58,6 +59,7 @@ export namespace BundledData {
         export type Message = {
             type: "MESSAGE";
             exactSendDate: Date;
+            appendPromotionalMessage?: true;
         }
 
     }

@@ -132,12 +132,21 @@ export async function onSipMessage(
     toNumber: string,
     text: string,
     uaSim: types.UaSim,
-    date = new Date()
+    date: Date,
+    appendPromotionalMessage: boolean
 ): Promise<void> {
 
     let sql = [
-        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date )",
-        `SELECT ${_.esc(date.getTime())}, ua_sim.id_, ${_.esc(toNumber)}, ${_.esc(text)}, NULL`,
+        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date, append_promotional_message)",
+        `SELECT`,
+        [
+            _.esc(date.getTime()),
+            "ua_sim.id_",
+            _.esc(toNumber),
+            _.esc(text),
+            "NULL",
+            sqliteCustom.bool.enc(appendPromotionalMessage)
+        ].join(", "),
         "FROM ua_sim",
         "INNER JOIN ua ON ua.id_= ua_sim.ua",
         "WHERE",
@@ -344,7 +353,7 @@ export async function getUnsentMessagesTowardSip(
         let message: types.MessageTowardSip = {
             "date": new Date(row["date"]),
             "fromNumber": row["from_number"],
-            "isFromDongle": row["is_from_dongle"] === 1,
+            "isFromDongle": sqliteCustom.bool.dec(row["is_from_dongle"]),
             "bundledData": JSON_CUSTOM.parse(row["bundled_data"]),
             "text": row["text"]
         };
@@ -386,6 +395,7 @@ export async function getUnsentMessagesTowardGsm(
             "message_toward_gsm.date,",
             "message_toward_gsm.to_number,",
             "message_toward_gsm.text,",
+            "message_toward_gsm.append_promotional_message,",
             "ua_sim.imsi,",
             "ua.instance,",
             "ua.user_email,",
@@ -421,7 +431,10 @@ export async function getUnsentMessagesTowardGsm(
                 "imsi": row["imsi"]
             },
             "toNumber": row["to_number"],
-            "text": row["text"]
+            "text": row["text"],
+            "appendPromotionalMessage": sqliteCustom.bool.dec(
+                row["append_promotional_message"]
+            )
         };
 
         let message_toward_gsm_id_ = row["id_"];
@@ -545,7 +558,7 @@ export namespace getUnsentMessagesTowardGsm {
         let sql = "";
 
         if (statusReport.isDelivered) {
-            
+
             sql += build(
                 `${checkMark}${checkMark}`,
                 {

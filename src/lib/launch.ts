@@ -229,16 +229,19 @@ function registerListeners() {
         }
     );
 
-
     sipMessagesMonitor.evtMessage.attach(
-        async ({ fromContact, toNumber, text, exactSendDate }) => {
+        async ({ fromContact, toNumber, text, exactSendDate, appendPromotionalMessage }) => {
 
             debug("FROM SIP MESSAGE", { toNumber, text });
 
             const { uaSim } = fromContact;
 
             await dbSemasim.onSipMessage(
-                toNumber, text, uaSim, exactSendDate
+                toNumber, 
+                text, 
+                uaSim, 
+                exactSendDate, 
+                appendPromotionalMessage
             );
 
             const dongle = Array.from(dc.usableDongles.values()).find(

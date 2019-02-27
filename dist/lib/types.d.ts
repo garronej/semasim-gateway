@@ -23,6 +23,7 @@ export declare type MessageTowardGsm = {
     uaSim: UaSim;
     toNumber: string;
     text: string;
+    appendPromotionalMessage: boolean;
 };
 export declare type MessageTowardSip = {
     isFromDongle: boolean;
@@ -38,6 +39,7 @@ export declare namespace BundledData {
         type Message = {
             type: "MESSAGE";
             exactSendDate: Date;
+            appendPromotionalMessage?: true;
         };
     }
     type ServerToClient = ServerToClient.Message | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;

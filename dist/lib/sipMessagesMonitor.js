@@ -182,20 +182,12 @@ function onIncomingSipMessage(fromContact, sipRequest) {
         debug("Sip message content was not a valid UTF-8 string");
     }
     var toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user;
-    var exactSendDate;
-    //TODO: For now we catch the errors as all the client apps does not 
-    //bundle the exact send date but eventually we should let it throw
-    //( user authentication is done before )
-    try {
-        exactSendDate = misc.extractBundledDataFromHeaders(sipRequest.headers).exactSendDate;
-    }
-    catch (_a) {
-        exactSendDate = undefined;
-    }
+    var _a = misc.extractBundledDataFromHeaders(sipRequest.headers), exactSendDate = _a.exactSendDate, appendPromotionalMessage = _a.appendPromotionalMessage;
     exports.evtMessage.post({
         fromContact: fromContact,
         toNumber: toNumber,
         text: text,
-        exactSendDate: exactSendDate
+        exactSendDate: exactSendDate,
+        "appendPromotionalMessage": !!appendPromotionalMessage
     });
 }

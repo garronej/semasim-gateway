@@ -87,9 +87,8 @@ function sendMessagesOfDongle(dongle) {
                                     _b.label = 1;
                                 case 1:
                                     _b.trys.push([1, 3, , 4]);
-                                    return [4 /*yield*/, dc.sendMessage(dongle.imei, message.toNumber, message.text)];
+                                    return [4 /*yield*/, dc.sendMessage(dongle.imei, message.toNumber, message.text + (message.appendPromotionalMessage ? "\n\nSent via Semasim.com" : ""))];
                                 case 2:
-                                    //TODO: Dial with the number it was guessed from.
                                     sendMessageResult = _b.sent();
                                     return [3 /*break*/, 4];
                                 case 3:

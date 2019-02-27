@@ -217,9 +217,10 @@ function t2() {
                         "uaSim": {
                             imsi: imsi,
                             "ua": sendingUa
-                        }
+                        },
+                        "appendPromotionalMessage": Date.now() % 2 === 0
                     };
-                    return [4 /*yield*/, db.onSipMessage(message.toNumber, message.text, message.uaSim, message.date)];
+                    return [4 /*yield*/, db.onSipMessage(message.toNumber, message.text, message.uaSim, message.date, message.appendPromotionalMessage)];
                 case 7:
                     _d.sent();
                     messagesTowardGsm.push(message);

@@ -16,7 +16,8 @@ export const evtMessage = new SyncEvent<{
     fromContact: types.Contact;
     toNumber: string;
     text: string;
-    exactSendDate: Date | undefined;
+    exactSendDate: Date;
+    appendPromotionalMessage: boolean;
 }>();
 
 export function sendMessage(
@@ -202,28 +203,17 @@ function onIncomingSipMessage(
 
     const toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
 
-    let exactSendDate: Date | undefined;
+    const { exactSendDate, appendPromotionalMessage } = (misc.extractBundledDataFromHeaders(
+        sipRequest.headers
+    ) as types.BundledData.ClientToServer.Message);
 
-    //TODO: For now we catch the errors as all the client apps does not 
-    //bundle the exact send date but eventually we should let it throw
-    //( user authentication is done before )
-    try {
-
-        exactSendDate = (misc.extractBundledDataFromHeaders(
-            sipRequest.headers
-        ) as types.BundledData.ClientToServer.Message).exactSendDate;
-
-    } catch{
-
-        exactSendDate = undefined;
-
-    }
 
     evtMessage.post({
         fromContact,
         toNumber,
         text,
-        exactSendDate
+        exactSendDate,
+        "appendPromotionalMessage": !!appendPromotionalMessage
     });
 
 }

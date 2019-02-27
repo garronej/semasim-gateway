@@ -125,14 +125,16 @@ async function t2() {
             "uaSim": {
                 imsi,
                 "ua": sendingUa
-            }
+            },
+            "appendPromotionalMessage": Date.now() % 2 === 0
         };
 
         await db.onSipMessage(
             message.toNumber,
             message.text,
             message.uaSim,
-            message.date
+            message.date,
+            message.appendPromotionalMessage
         );
 
         messagesTowardGsm.push(message);

@@ -175,16 +175,23 @@ exports.removeUaSim = removeUaSim;
  * Queue a new messageTowardGsm
  *
  */
-function onSipMessage(toNumber, text, uaSim, date) {
-    if (date === void 0) { date = new Date(); }
+function onSipMessage(toNumber, text, uaSim, date, appendPromotionalMessage) {
     return __awaiter(this, void 0, void 0, function () {
         var sql;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     sql = [
-                        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date )",
-                        "SELECT " + exports._.esc(date.getTime()) + ", ua_sim.id_, " + exports._.esc(toNumber) + ", " + exports._.esc(text) + ", NULL",
+                        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date, append_promotional_message)",
+                        "SELECT",
+                        [
+                            exports._.esc(date.getTime()),
+                            "ua_sim.id_",
+                            exports._.esc(toNumber),
+                            exports._.esc(text),
+                            "NULL",
+                            sqliteCustom.bool.enc(appendPromotionalMessage)
+                        ].join(", "),
                         "FROM ua_sim",
                         "INNER JOIN ua ON ua.id_= ua_sim.ua",
                         "WHERE",
@@ -387,7 +394,7 @@ function getUnsentMessagesTowardSip(uaSim) {
                         var message = {
                             "date": new Date(row["date"]),
                             "fromNumber": row["from_number"],
-                            "isFromDongle": row["is_from_dongle"] === 1,
+                            "isFromDongle": sqliteCustom.bool.dec(row["is_from_dongle"]),
                             "bundledData": JSON_CUSTOM.parse(row["bundled_data"]),
                             "text": row["text"]
                         };
@@ -444,6 +451,7 @@ function getUnsentMessagesTowardGsm(imsi) {
                         "message_toward_gsm.date,",
                         "message_toward_gsm.to_number,",
                         "message_toward_gsm.text,",
+                        "message_toward_gsm.append_promotional_message,",
                         "ua_sim.imsi,",
                         "ua.instance,",
                         "ua.user_email,",
@@ -474,7 +482,8 @@ function getUnsentMessagesTowardGsm(imsi) {
                                 "imsi": row["imsi"]
                             },
                             "toNumber": row["to_number"],
-                            "text": row["text"]
+                            "text": row["text"],
+                            "appendPromotionalMessage": sqliteCustom.bool.dec(row["append_promotional_message"])
                         };
                         var message_toward_gsm_id_ = row["id_"];
                         var setSentPr;
