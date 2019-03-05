@@ -163,8 +163,6 @@ export async function onSipMessage(
 
 }
 
-
-
 /** 
  * to call when a SMS is received by a dongle
  * 
@@ -187,13 +185,58 @@ export async function onDongleMessage(
     date: Date,
     imsi: string
 ): Promise<boolean> {
+    /*
+    PDU: 07913396050066F0440B913336766883F5000491303081422040890605040B8423F000060401BEAF848C8298493863596A44335A45656D41366F5350615767676467008D928918802B33333633363738363338352F545950453D504C4D4E0086818A808F818E02095F83687474703A2F2F3231332E3232382E332E35382F6D6D732E7068703F493863596A44335A45656D41366F5350615767676467008805810303F480, 1551633844946, Sun Mar 03 2019 18:24:04 GMT+0100 (CET)
+    {
+      "type": 0,
+      "text": "\u0000\u0006\u0004\u0001¾¯
+                                         \u0018+33636786385/TYPE=PLMN\u0000\u0002\t_http://213.228.3.58/mms.php?I8cYjD3ZEemA6oSPaWggdg\u0000\u0005\u0003\u0003ô",
+      "pid": 0,
+      "dcs": 4,
+      "csca": "+33695000660",
+      "number": "+33636786385",
+      "date": "2019-03-03T18:24:02.000Z",
+      "fmt": -1,
+      "_fmt": "UNKNOWN",
+      "_type": "SMS_DELIVER"
+    }
+    */
 
-    let bundledData: types.BundledData.ServerToClient.Message = {
-        "type": "MESSAGE",
-        "pduDate": date
-    };
+    let bundledData: types.BundledData.ServerToClient;
 
-    let sql = buildMessageTowardSipInsertQuery(
+    if (!!text.match(/^\0.+TYPE=.+http/)) {
+
+        const _bundledData: types.BundledData.ServerToClient.MmsNotification = {
+            "type": "MMS NOTIFICATION",
+            "pduDate": date,
+            "wapPushMessage": text
+        };
+
+        bundledData = _bundledData;
+
+        text = [
+            "======",
+            "MMS notification received.\n",
+            "Semasim does not support MMS yet.\n",
+            "Note that some phones automatically convert long SMS into MMS.",
+            "If you suspect it is what might have happen here you could ask your",
+            "contact to send the message again splitting it into smaller parts.",
+            "All apologies for the inconvenience.",
+            "======"
+        ].join(" ");
+
+    } else {
+
+        const _bundledData: types.BundledData.ServerToClient.Message = {
+            "type": "MESSAGE",
+            "pduDate": date
+        };
+
+        bundledData = _bundledData;
+
+    }
+
+    const sql = buildMessageTowardSipInsertQuery(
         true,
         fromNumber,
         text,
@@ -202,7 +245,7 @@ export async function onDongleMessage(
         { "target": "ALL UA REGISTERED TO SIM", imsi }
     );
 
-    let queryResults = await _.query(sql);
+    const queryResults = await _.query(sql);
 
     return queryResults[0].insertId !== 0;
 

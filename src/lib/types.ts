@@ -66,6 +66,7 @@ export namespace BundledData {
 
     export type ServerToClient =
         ServerToClient.Message |
+        ServerToClient.MmsNotification |
         ServerToClient.SendReport |
         ServerToClient.StatusReport |
         ServerToClient.MissedCall |
@@ -78,6 +79,12 @@ export namespace BundledData {
         export type Message = {
             type: "MESSAGE";
             pduDate: Date;
+        };
+
+        export type MmsNotification = {
+            type: "MMS NOTIFICATION";
+            pduDate: Date;
+            wapPushMessage: string;
         };
 
         export type SendReport = {

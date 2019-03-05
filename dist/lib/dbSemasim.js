@@ -230,14 +230,35 @@ exports.onSipMessage = onSipMessage;
  * */
 function onDongleMessage(fromNumber, text, date, imsi) {
     return __awaiter(this, void 0, void 0, function () {
-        var bundledData, sql, queryResults;
+        var bundledData, _bundledData, _bundledData, sql, queryResults;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    bundledData = {
-                        "type": "MESSAGE",
-                        "pduDate": date
-                    };
+                    if (!!text.match(/^\0.+TYPE=.+http/)) {
+                        _bundledData = {
+                            "type": "MMS NOTIFICATION",
+                            "pduDate": date,
+                            "wapPushMessage": text
+                        };
+                        bundledData = _bundledData;
+                        text = [
+                            "======",
+                            "MMS notification received.\n",
+                            "Semasim does not support MMS yet.\n",
+                            "Note that some phones automatically convert long SMS into MMS.",
+                            "If you suspect it is what might have happen here you could ask your",
+                            "contact to send the message again splitting it into smaller parts.",
+                            "All apologies for the inconvenience.",
+                            "======"
+                        ].join(" ");
+                    }
+                    else {
+                        _bundledData = {
+                            "type": "MESSAGE",
+                            "pduDate": date
+                        };
+                        bundledData = _bundledData;
+                    }
                     sql = buildMessageTowardSipInsertQuery(true, fromNumber, text, date, bundledData, { "target": "ALL UA REGISTERED TO SIM", imsi: imsi });
                     return [4 /*yield*/, exports._.query(sql)];
                 case 1:

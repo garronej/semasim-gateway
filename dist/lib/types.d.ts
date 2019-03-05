@@ -42,11 +42,16 @@ export declare namespace BundledData {
             appendPromotionalMessage?: true;
         };
     }
-    type ServerToClient = ServerToClient.Message | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
+    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
     namespace ServerToClient {
         type Message = {
             type: "MESSAGE";
             pduDate: Date;
+        };
+        type MmsNotification = {
+            type: "MMS NOTIFICATION";
+            pduDate: Date;
+            wapPushMessage: string;
         };
         type SendReport = {
             type: "SEND REPORT";
