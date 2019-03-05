@@ -422,7 +422,7 @@ function program_action_release() {
                 case 3:
                     Version = (_h.sent()).Version;
                     last_version = Object.keys(releases_index)
-                        .map(function (str) { return str.split("_"); })
+                        .map(function (str) { return str.match(/^([^_]+)_(.+)$/).slice(1); })
                         .filter(function (_a) {
                         var _b = __read(_a, 2), _ = _b[0], arch_ = _b[1];
                         return arch_ === arch;

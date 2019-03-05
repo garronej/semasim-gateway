@@ -408,7 +408,7 @@ async function program_action_release() {
     const { Version } = await import("../lib/versionStatus");
 
     const last_version = Object.keys(releases_index)
-        .map(str => str.split("_"))
+        .map(str => str.match(/^([^_]+)_(.+)$/)!.slice(1))
         .filter(([_, arch_]) => arch_ === arch)
         .map(([vStr]) => Version.parse(vStr))
         .sort(Version.compare)
