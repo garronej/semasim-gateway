@@ -27,42 +27,43 @@ export function handle(
             return;
         }
 
+        const parsedSdp = sip.parseSdp(
+            sip.getPacketContent(sipPacketNextHop).toString("utf8")
+        );
+
+        //Hack for Mozilla.
+        parsedSdp["m"][0]["a"] = [...parsedSdp["m"][0]["a"], "mid:0"];
+
         //Platform will be set then.
         switch (platform) {
-            case "android": {
+            case "android":
 
                 const srvflx = sip.readSrflxAddrInSdp(
                     sip.getPacketContent(sipPacketNextHop)
                         .toString("utf8")
                 );
 
-                //If we stun resolution failed skip.
                 if (!srvflx) {
+                    //stun resolution failed skip.
                     break;
                 }
 
                 if (uaAddress !== srvflx) {
-
-                    //=> The gateway and the UA are NOT on the same LAN.
+                    //The gateway and the UA are NOT on the same LAN.
 
                     //Adding a c line with the public address.
-
-                    const parsedSdp = sip.parseSdp(
-                        sip.getPacketContent(sipPacketNextHop).toString("utf8")
-                    );
-
                     parsedSdp["m"][0]["c"] = { ...parsedSdp["c"], "address": srvflx };
-
-                    sip.setPacketContent(
-                        sipPacketNextHop,
-                        sip.stringifySdp(parsedSdp)
-                    );
 
                 }
 
-            }
+                break;
             default: break;;
         }
+
+        sip.setPacketContent(
+            sipPacketNextHop,
+            sip.stringifySdp(parsedSdp)
+        );
 
     };
 
