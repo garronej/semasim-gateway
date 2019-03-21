@@ -13,7 +13,7 @@ export declare type Ua = {
     userEmail: string;
     platform: Ua.Platform;
     pushToken: string;
-    software: string;
+    messagesEnabled: boolean;
 };
 export declare namespace Ua {
     type Platform = "android" | "iOS" | "web";
@@ -27,7 +27,7 @@ export declare type MessageTowardGsm = {
 };
 export declare type MessageTowardSip = {
     isFromDongle: boolean;
-    bundledData: BundledData;
+    bundledData: BundledData.ServerToClient;
     date: Date;
     fromNumber: string;
     text: string;

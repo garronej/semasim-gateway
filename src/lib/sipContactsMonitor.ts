@@ -223,9 +223,8 @@ export function handleAsteriskSocket(
                             }
 
                         })(),
-
                         "pushToken": uriParams["pn-tok"] || "",
-                        "software": sipRequestRegister.headers["user-agent"]
+                        "messagesEnabled": !("no_messages" in uriParams)
 
                     }
                 }

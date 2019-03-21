@@ -35,7 +35,7 @@ export namespace sanityChecks {
             isValidEmail(o.userEmail, "MUST BE LOWER CASE") &&
             platform(o.platform) &&
             typeof o.pushToken === "string" &&
-            typeof o.software === "string"
+            typeof o.messagesEnabled === "boolean"
         );
 
     }

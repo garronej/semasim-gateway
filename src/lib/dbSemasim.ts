@@ -58,7 +58,7 @@ export async function addUaSim(
         "user_email": ua.userEmail,
         "platform": ua.platform,
         "push_token": ua.pushToken,
-        "software": ua.software
+        "messages_enabled": sqliteCustom.bool.enc(ua.messagesEnabled)
     }, [ "instance", "user_email"]);
 
     sql+= [
@@ -215,14 +215,12 @@ export async function onDongleMessage(
         bundledData = _bundledData;
 
         text = [
-            "======",
             "MMS notification received.\n",
             "Semasim does not support MMS yet.\n",
             "Note that some phones automatically convert long SMS into MMS.",
             "If you suspect it is what might have happen here you could ask your",
             "contact to send the message again splitting it into smaller parts.",
             "All apologies for the inconvenience.",
-            "======"
         ].join(" ");
 
     } else {
@@ -242,7 +240,11 @@ export async function onDongleMessage(
         text,
         date,
         bundledData,
-        { "target": "ALL UA REGISTERED TO SIM", imsi }
+        { 
+            "target": "ALL UA REGISTERED TO SIM", 
+            imsi, 
+            "alsoSendToUasWithMessageDisabled": false 
+        }
     );
 
     const queryResults = await _.query(sql);
@@ -274,7 +276,8 @@ export async function onMissedCall(imsi: string, number: string) {
         bundledData,
         {
             "target": "ALL UA REGISTERED TO SIM",
-            imsi
+            imsi,
+            "alsoSendToUasWithMessageDisabled": false
         }
     );
 
@@ -320,7 +323,8 @@ export async function onCallAnswered(
             bundledData,
             {
                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                "uaSim": { ua, imsi }
+                "uaSim": { ua, imsi },
+                "alsoSendToUasWithMessageDisabled": false
             }
         );
 
@@ -444,7 +448,7 @@ export async function getUnsentMessagesTowardGsm(
             "ua.user_email,",
             "ua.platform,",
             "ua.push_token,",
-            "ua.software",
+            "ua.messages_enabled",
             "FROM message_toward_gsm",
             "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
             "INNER JOIN ua ON ua.id_ = ua_sim.ua",
@@ -469,7 +473,7 @@ export async function getUnsentMessagesTowardGsm(
                     "userEmail": row["user_email"],
                     "platform": row["platform"],
                     "pushToken": row["push_token"],
-                    "software": row["software"]
+                    "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
                 },
                 "imsi": row["imsi"]
             },
@@ -561,7 +565,8 @@ export namespace getUnsentMessagesTowardGsm {
             bundledData,
             {
                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                "uaSim": messageTowardGsm.uaSim
+                "uaSim": messageTowardGsm.uaSim,
+                "alsoSendToUasWithMessageDisabled": false
             }
         );
 
@@ -600,13 +605,16 @@ export namespace getUnsentMessagesTowardGsm {
 
         let sql = "";
 
+        const alsoSendToUasWithMessageDisabled= false;
+
         if (statusReport.isDelivered) {
 
             sql += build(
                 `${checkMark}${checkMark}`,
                 {
                     "target": "SPECIFIC UA REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim
+                    "uaSim": messageTowardGsm.uaSim,
+                    alsoSendToUasWithMessageDisabled
                 }
             );
 
@@ -614,7 +622,8 @@ export namespace getUnsentMessagesTowardGsm {
                 `Me: ${messageTowardGsm.text}`,
                 {
                     "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim
+                    "uaSim": messageTowardGsm.uaSim,
+                    alsoSendToUasWithMessageDisabled
                 }
             );
 
@@ -622,7 +631,8 @@ export namespace getUnsentMessagesTowardGsm {
                 `${messageTowardGsm.uaSim.ua.userEmail}: ${messageTowardGsm.text}`,
                 {
                     "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim
+                    "uaSim": messageTowardGsm.uaSim,
+                    alsoSendToUasWithMessageDisabled
                 }
             );
 
@@ -632,7 +642,8 @@ export namespace getUnsentMessagesTowardGsm {
                 crossMark,
                 {
                     "target": "SPECIFIC UA REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim
+                    "uaSim": messageTowardGsm.uaSim,
+                    alsoSendToUasWithMessageDisabled
                 }
             );
 
@@ -715,7 +726,7 @@ function buildMessageTowardSipInsertQuery(
     let sqlSelectionUaSim = [
         "FROM ua_sim",
         "INNER JOIN ua ON ua.id_= ua_sim.ua",
-        "WHERE ua_sim.imsi= "
+        `WHERE ${target.alsoSendToUasWithMessageDisabled?"":`ua.messages_enabled= 1 `}AND ua_sim.imsi= `
     ].join("\n");
 
     switch (target.target) {
@@ -774,7 +785,7 @@ function buildMessageTowardSipInsertQuery(
 namespace buildMessageTowardSipInsertQuery {
 
     export type Target =
-        {
+        ({
             target: "SPECIFIC UA REGISTERED TO SIM";
             uaSim: types.UaSim;
         } | {
@@ -786,7 +797,7 @@ namespace buildMessageTowardSipInsertQuery {
         } | {
             target: "ALL UA OF OTHER USERS REGISTERED TO SIM";
             uaSim: types.UaSim;
-        };
+        }) & { alsoSendToUasWithMessageDisabled: boolean; };
 
 }
 
@@ -827,7 +838,8 @@ export async function onTargetGsmRinging(
         bundledData,
         {
             "target": "SPECIFIC UA REGISTERED TO SIM",
-            "uaSim": contact.uaSim
+            "uaSim": contact.uaSim,
+            "alsoSendToUasWithMessageDisabled": true
         }
     );
 

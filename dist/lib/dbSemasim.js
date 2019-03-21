@@ -105,7 +105,7 @@ function addUaSim(uaSim) {
                         "user_email": ua.userEmail,
                         "platform": ua.platform,
                         "push_token": ua.pushToken,
-                        "software": ua.software
+                        "messages_enabled": sqliteCustom.bool.enc(ua.messagesEnabled)
                     }, ["instance", "user_email"]);
                     sql += [
                         "INSERT OR IGNORE INTO ua_sim ( ua, imsi )",
@@ -242,14 +242,12 @@ function onDongleMessage(fromNumber, text, date, imsi) {
                         };
                         bundledData = _bundledData;
                         text = [
-                            "======",
                             "MMS notification received.\n",
                             "Semasim does not support MMS yet.\n",
                             "Note that some phones automatically convert long SMS into MMS.",
                             "If you suspect it is what might have happen here you could ask your",
                             "contact to send the message again splitting it into smaller parts.",
                             "All apologies for the inconvenience.",
-                            "======"
                         ].join(" ");
                     }
                     else {
@@ -259,7 +257,11 @@ function onDongleMessage(fromNumber, text, date, imsi) {
                         };
                         bundledData = _bundledData;
                     }
-                    sql = buildMessageTowardSipInsertQuery(true, fromNumber, text, date, bundledData, { "target": "ALL UA REGISTERED TO SIM", imsi: imsi });
+                    sql = buildMessageTowardSipInsertQuery(true, fromNumber, text, date, bundledData, {
+                        "target": "ALL UA REGISTERED TO SIM",
+                        imsi: imsi,
+                        "alsoSendToUasWithMessageDisabled": false
+                    });
                     return [4 /*yield*/, exports._.query(sql)];
                 case 1:
                     queryResults = _a.sent();
@@ -288,7 +290,8 @@ function onMissedCall(imsi, number) {
                     };
                     sql = buildMessageTowardSipInsertQuery(false, number, "Missed call", date, bundledData, {
                         "target": "ALL UA REGISTERED TO SIM",
-                        imsi: imsi
+                        imsi: imsi,
+                        "alsoSendToUasWithMessageDisabled": false
                     });
                     return [4 /*yield*/, exports._.query(sql)];
                 case 1:
@@ -327,7 +330,8 @@ function onCallAnswered(number, imsi, answeredByUa, ringingUas) {
                             }
                             sql += buildMessageTowardSipInsertQuery(false, number, "Call answered by " + answeredByUa.userEmail, date, bundledData, {
                                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                                "uaSim": { ua: ua, imsi: imsi }
+                                "uaSim": { ua: ua, imsi: imsi },
+                                "alsoSendToUasWithMessageDisabled": false
                             });
                         }
                     }
@@ -478,7 +482,7 @@ function getUnsentMessagesTowardGsm(imsi) {
                         "ua.user_email,",
                         "ua.platform,",
                         "ua.push_token,",
-                        "ua.software",
+                        "ua.messages_enabled",
                         "FROM message_toward_gsm",
                         "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
                         "INNER JOIN ua ON ua.id_ = ua_sim.ua",
@@ -498,7 +502,7 @@ function getUnsentMessagesTowardGsm(imsi) {
                                     "userEmail": row["user_email"],
                                     "platform": row["platform"],
                                     "pushToken": row["push_token"],
-                                    "software": row["software"]
+                                    "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
                                 },
                                 "imsi": row["imsi"]
                             },
@@ -587,7 +591,8 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                         };
                         sql += buildMessageTowardSipInsertQuery(false, messageTowardGsm.toNumber, isSuccess ? checkMark : crossMark, new Date(), bundledData, {
                             "target": "SPECIFIC UA REGISTERED TO SIM",
-                            "uaSim": messageTowardGsm.uaSim
+                            "uaSim": messageTowardGsm.uaSim,
+                            "alsoSendToUasWithMessageDisabled": false
                         });
                         return [4 /*yield*/, exports._.query(sql)];
                     case 1:
@@ -601,7 +606,7 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
     //TODO: Investigate why we have an unused param.
     function onStatusReport(messageTowardGsm_id, messageTowardGsm, statusReport) {
         return __awaiter(this, void 0, void 0, function () {
-            var bundledData, now, build, sql;
+            var bundledData, now, build, sql, alsoSendToUasWithMessageDisabled;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -619,24 +624,29 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                         now = new Date();
                         build = function (text, target) { return buildMessageTowardSipInsertQuery(false, messageTowardGsm.toNumber, text, now, bundledData, target); };
                         sql = "";
+                        alsoSendToUasWithMessageDisabled = false;
                         if (statusReport.isDelivered) {
                             sql += build("" + checkMark + checkMark, {
                                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                                "uaSim": messageTowardGsm.uaSim
+                                "uaSim": messageTowardGsm.uaSim,
+                                alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
                             sql += build("Me: " + messageTowardGsm.text, {
                                 "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
-                                "uaSim": messageTowardGsm.uaSim
+                                "uaSim": messageTowardGsm.uaSim,
+                                alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
                             sql += build(messageTowardGsm.uaSim.ua.userEmail + ": " + messageTowardGsm.text, {
                                 "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
-                                "uaSim": messageTowardGsm.uaSim
+                                "uaSim": messageTowardGsm.uaSim,
+                                alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
                         }
                         else {
                             sql += build(crossMark, {
                                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                                "uaSim": messageTowardGsm.uaSim
+                                "uaSim": messageTowardGsm.uaSim,
+                                alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
                         }
                         return [4 /*yield*/, exports._.query(sql)];
@@ -722,7 +732,7 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, text, date, 
     var sqlSelectionUaSim = [
         "FROM ua_sim",
         "INNER JOIN ua ON ua.id_= ua_sim.ua",
-        "WHERE ua_sim.imsi= "
+        "WHERE " + (target.alsoSendToUasWithMessageDisabled ? "" : "ua.messages_enabled= 1 ") + "AND ua_sim.imsi= "
     ].join("\n");
     switch (target.target) {
         case "SPECIFIC UA REGISTERED TO SIM":
@@ -800,7 +810,8 @@ function onTargetGsmRinging(contact, number, callId) {
                     };
                     sql = buildMessageTowardSipInsertQuery(false, number, "( notify ringback )", new Date(), bundledData, {
                         "target": "SPECIFIC UA REGISTERED TO SIM",
-                        "uaSim": contact.uaSim
+                        "uaSim": contact.uaSim,
+                        "alsoSendToUasWithMessageDisabled": true
                     });
                     return [4 /*yield*/, exports._.query(sql)];
                 case 1:

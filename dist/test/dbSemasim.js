@@ -68,14 +68,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var db = require("../lib/dbSemasim");
 var ttTesting = require("transfer-tools/dist/lib/testing");
 var assertSame = ttTesting.assertSame;
+var sqliteCustom = require("sqlite-custom");
 exports.generateUa = function (email) {
     if (email === void 0) { email = ttTesting.genHexStr(10) + "@foo.com"; }
     return ({
         "instance": "\"<urn:uuid:" + ttTesting.genHexStr(30) + ">\"",
         "platform": Date.now() % 2 ? "android" : "iOS",
         "pushToken": ttTesting.genHexStr(60),
-        "software": ttTesting.genHexStr(20),
-        "userEmail": email
+        "userEmail": email,
+        "messagesEnabled": true
     });
 };
 function testDbSemasim() {
@@ -143,7 +144,7 @@ function t1() {
                 case 4:
                     _d.apply(void 0, [_j.sent(),
                         { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false }]);
-                    uaSim.ua.software = "...";
+                    uaSim.ua.pushToken = ttTesting.genHexStr(60);
                     _e = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 5:
@@ -627,7 +628,8 @@ function t4() {
                                 "userEmail": row["user_email"],
                                 "platform": row["platform"],
                                 "pushToken": row["push_token"],
-                                "software": row["software"]
+                                "software": row["software"],
+                                "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
                             };
                             if (row["imsi"] === imsi) {
                                 remainingUas.push(ua);

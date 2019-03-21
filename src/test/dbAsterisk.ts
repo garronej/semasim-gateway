@@ -16,7 +16,7 @@ const contact: types.Contact = (() => {
             "4-XxcSmyKj_Hr-XY_-LefF3RhHsSekVsSeYN95PAtwR",
             "Cpz-i1ytnc5DyMY8je4n69G"
         ].join(""),
-        "software": "LinphoneAndroid/3.2.8 (belle-sip/1.6.3)"
+        "messagesEnabled": true
     };
 
     return {
@@ -32,7 +32,6 @@ const contact: types.Contact = (() => {
         "connectionId": misc.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
         "uaSim": { imsi, ua }
     };
-
 
 })();
 

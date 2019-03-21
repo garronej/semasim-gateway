@@ -110,7 +110,7 @@ function launch() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    debug("Starting semasim gateway...");
+                    debug("Starting semasim gateway ...");
                     return [4 /*yield*/, procAsterisk.spawnAsterisk()];
                 case 1:
                     _a.sent();

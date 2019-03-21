@@ -4,13 +4,14 @@ import { types as dcTypes } from "chan-dongle-extended-client";
 
 import * as ttTesting from "transfer-tools/dist/lib/testing";
 import assertSame = ttTesting.assertSame;
+import * as sqliteCustom from "sqlite-custom";
 
 export const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`): types.Ua => ({
     "instance": `"<urn:uuid:${ttTesting.genHexStr(30)}>"`,
     "platform": Date.now() % 2 ? "android" : "iOS",
     "pushToken": ttTesting.genHexStr(60),
-    "software": ttTesting.genHexStr(20),
-    "userEmail": email
+    "userEmail": email,
+    "messagesEnabled": true
 });
 
 export async  function testDbSemasim(){
@@ -56,7 +57,7 @@ async function t1() {
         { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false }
     );
 
-    uaSim.ua.software = "...";
+    uaSim.ua.pushToken= ttTesting.genHexStr(60);
 
     assertSame(
         await db.addUaSim(uaSim),
@@ -505,7 +506,8 @@ async function t4() {
             "userEmail": row["user_email"],
             "platform": row["platform"],
             "pushToken": row["push_token"],
-            "software": row["software"]
+            "software": row["software"],
+            "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
         };
 
         if (row["imsi"] === imsi) {

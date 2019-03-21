@@ -105,7 +105,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
         async () => {
 
             for (
-                let [message, onReceived] of
+                const [message, onReceived] of
                 await dbSemasim.getUnsentMessagesTowardSip(contact.uaSim)
             ) {
 
@@ -121,6 +121,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
                 } catch (error) {
 
                     debug("sip Send Message error:", error.message);
+
                     return;
 
                 }

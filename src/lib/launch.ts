@@ -41,7 +41,7 @@ export async function beforeExit(): Promise<void> {
 
 export async function launch() {
 
-    debug("Starting semasim gateway...");
+    debug("Starting semasim gateway ...");
 
     await procAsterisk.spawnAsterisk();
 
