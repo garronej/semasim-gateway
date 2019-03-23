@@ -726,7 +726,7 @@ function buildMessageTowardSipInsertQuery(
     let sqlSelectionUaSim = [
         "FROM ua_sim",
         "INNER JOIN ua ON ua.id_= ua_sim.ua",
-        `WHERE ${target.alsoSendToUasWithMessageDisabled?"":`ua.messages_enabled= 1 `}AND ua_sim.imsi= `
+        `WHERE ${target.alsoSendToUasWithMessageDisabled?"":`ua.messages_enabled= 1 AND `}ua_sim.imsi= `
     ].join("\n");
 
     switch (target.target) {
