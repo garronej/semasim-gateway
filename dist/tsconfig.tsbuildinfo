@@ -1,0 +1,1148 @@
+{
+  "program": {
+    "fileInfos": {
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es5.d.ts": {
+        "version": "c8665e66018917580e71792b91022bcaf53fb946fab4aaf8dfb0738ed564db88",
+        "signature": "c8665e66018917580e71792b91022bcaf53fb946fab4aaf8dfb0738ed564db88"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.d.ts": {
+        "version": "7994d44005046d1413ea31d046577cdda33b8b2470f30281fd9c8b3c99fe2d96",
+        "signature": "7994d44005046d1413ea31d046577cdda33b8b2470f30281fd9c8b3c99fe2d96"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.core.d.ts": {
+        "version": "384f66a3422d80014c51de2682159bb26f1e35854029880ccd5f6d1f00e6a36d",
+        "signature": "384f66a3422d80014c51de2682159bb26f1e35854029880ccd5f6d1f00e6a36d"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.collection.d.ts": {
+        "version": "dd94d8ef48c562389eb58af8df3a3a34d11367f7c818192aa5f16470d469e3f0",
+        "signature": "dd94d8ef48c562389eb58af8df3a3a34d11367f7c818192aa5f16470d469e3f0"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.generator.d.ts": {
+        "version": "828413486bdcaa342558e8e4570b1b287b776cb61b4b70b0214bd10c5d9a94c3",
+        "signature": "828413486bdcaa342558e8e4570b1b287b776cb61b4b70b0214bd10c5d9a94c3"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.iterable.d.ts": {
+        "version": "4d1f39313a169b8599b8817688f504b56ba8204c2ebafd03f66ff77ddb1899a4",
+        "signature": "4d1f39313a169b8599b8817688f504b56ba8204c2ebafd03f66ff77ddb1899a4"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.promise.d.ts": {
+        "version": "7c07d934680d0e33275a44d22fb11a4ff31d46c8c26a8d056828a478753f1efe",
+        "signature": "7c07d934680d0e33275a44d22fb11a4ff31d46c8c26a8d056828a478753f1efe"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.proxy.d.ts": {
+        "version": "5e72f949a89717db444e3bd9433468890068bb21a5638d8ab15a1359e05e54fe",
+        "signature": "5e72f949a89717db444e3bd9433468890068bb21a5638d8ab15a1359e05e54fe"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.reflect.d.ts": {
+        "version": "f5b242136ae9bfb1cc99a5971cccc44e99947ae6b5ef6fd8aa54b5ade553b976",
+        "signature": "f5b242136ae9bfb1cc99a5971cccc44e99947ae6b5ef6fd8aa54b5ade553b976"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.symbol.d.ts": {
+        "version": "9ae2860252d6b5f16e2026d8a2c2069db7b2a3295e98b6031d01337b96437230",
+        "signature": "9ae2860252d6b5f16e2026d8a2c2069db7b2a3295e98b6031d01337b96437230"
+      },
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts": {
+        "version": "3e0a459888f32b42138d5a39f706ff2d55d500ab1031e0988b5568b0f67c2303",
+        "signature": "3e0a459888f32b42138d5a39f706ff2d55d500ab1031e0988b5568b0f67c2303"
+      },
+      "/home/pi/semasim/gateway/node_modules/@types/events/index.d.ts": {
+        "version": "400db42c3a46984118bff14260d60cec580057dc1ab4c2d7310beb643e4f5935",
+        "signature": "400db42c3a46984118bff14260d60cec580057dc1ab4c2d7310beb643e4f5935"
+      },
+      "/home/pi/semasim/gateway/node_modules/@types/node/inspector.d.ts": {
+        "version": "312541b24bc94fa90916b9197028248f633554269363610207868e37103b7fee",
+        "signature": "312541b24bc94fa90916b9197028248f633554269363610207868e37103b7fee"
+      },
+      "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts": {
+        "version": "f030183028c84cd0b562fbdb1fee2416b8ea140304d441783674be8e262ce819",
+        "signature": "f030183028c84cd0b562fbdb1fee2416b8ea140304d441783674be8e262ce819"
+      },
+      "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts": {
+        "version": "e64648c5d646fde7e056578ade957887b730713df1723afdfb40a4ddcf235f8c",
+        "signature": "e64648c5d646fde7e056578ade957887b730713df1723afdfb40a4ddcf235f8c"
+      },
+      "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts": {
+        "version": "136824b23161cc778dbe946e929036241396711e2b6a32ff1f9ea002af65e7cf",
+        "signature": "136824b23161cc778dbe946e929036241396711e2b6a32ff1f9ea002af65e7cf"
+      },
+      "/home/pi/semasim/gateway/src/lib/versionStatus.ts": {
+        "version": "fe175f218452e853af62f320a7f1619e61dabe43c921db32c43856157b6b8c53",
+        "signature": "27f1fbaeab05a1dc6608fada48f55456d99cf01174ccac227cd2d7c3cf941dba"
+      },
+      "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/iniExt.d.ts": {
+        "version": "dc7f6f5d90fb0afb5bdd2b71a9c6503c2013ce48f71e9dda534597167e6b0360",
+        "signature": "dc7f6f5d90fb0afb5bdd2b71a9c6503c2013ce48f71e9dda534597167e6b0360"
+      },
+      "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts": {
+        "version": "059678f96fa46caecad6a0830cf4cec37d6ef135eae1ff590914e3d79b4aa3cf",
+        "signature": "059678f96fa46caecad6a0830cf4cec37d6ef135eae1ff590914e3d79b4aa3cf"
+      },
+      "/home/pi/semasim/gateway/node_modules/commander/typings/index.d.ts": {
+        "version": "ce0594a0432dce2f4e9f6130d538a52d6292ca323e729b75d8e0febd9134dc65",
+        "signature": "ce0594a0432dce2f4e9f6130d538a52d6292ca323e729b75d8e0febd9134dc65"
+      },
+      "/home/pi/semasim/gateway/src/bin/installer.ts": {
+        "version": "00e70537b6bdccd593b6e63582485a5d9e821e744bdda0329fbb4685f5af6c6d",
+        "signature": "8dd729849b1afe4c692fa97824503c5efe8987b7a3ae07f6482179f8119f55a9"
+      },
+      "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts": {
+        "version": "cc21c0b7073453a547d8e111eb2765ed3b3b651d584c9f6ebf3afa7ebcfeb37b",
+        "signature": "cc21c0b7073453a547d8e111eb2765ed3b3b651d584c9f6ebf3afa7ebcfeb37b"
+      },
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/MapExtended.d.ts": {
+        "version": "6a07833157a0666fd38334d998d90f9c892f2e690a4d3c458ec5bd6472330f25",
+        "signature": "6a07833157a0666fd38334d998d90f9c892f2e690a4d3c458ec5bd6472330f25"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts": {
+        "version": "6c144ddf006b0b9daf44748bde17033681faa30f1b4c84953aa2debdc24ccba8",
+        "signature": "6c144ddf006b0b9daf44748bde17033681faa30f1b4c84953aa2debdc24ccba8"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBaseProtected.d.ts": {
+        "version": "2112857f35474eb6b4034addcded0356bb2c2ac8f85f5bd2c0f896946223729a",
+        "signature": "2112857f35474eb6b4034addcded0356bb2c2ac8f85f5bd2c0f896946223729a"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBase.d.ts": {
+        "version": "9f764e87e1ed4647647712656a2c47997172a084bddce704b191146463b5f76c",
+        "signature": "9f764e87e1ed4647647712656a2c47997172a084bddce704b191146463b5f76c"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEvent.d.ts": {
+        "version": "92c65bf0b6a632d7537ed3f233d304ca34b06d9d24ffdcfc99e0d8858c010c21",
+        "signature": "92c65bf0b6a632d7537ed3f233d304ca34b06d9d24ffdcfc99e0d8858c010c21"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts": {
+        "version": "bc2aa2a3e1a5a6bb6366f9a9427632197796d75658ce9ef545ec829738850e45",
+        "signature": "bc2aa2a3e1a5a6bb6366f9a9427632197796d75658ce9ef545ec829738850e45"
+      },
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/TrackableMap.d.ts": {
+        "version": "277b001754fad4bce2a2b13160ab02923bac1c949046ea7184dca14833e968ca",
+        "signature": "277b001754fad4bce2a2b13160ab02923bac1c949046ea7184dca14833e968ca"
+      },
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts": {
+        "version": "14f4abfe97246d072d3f72dcfac183f4437cc4ea5bd1cf8a17bb8772ec86c3b7",
+        "signature": "14f4abfe97246d072d3f72dcfac183f4437cc4ea5bd1cf8a17bb8772ec86c3b7"
+      },
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": {
+        "version": "d8898dc85d3265607b22738d86dc27ce9d7933416b4688099452f0244e94e09e",
+        "signature": "d8898dc85d3265607b22738d86dc27ce9d7933416b4688099452f0244e94e09e"
+      },
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts": {
+        "version": "40247753bd63fa526db644d7e5d5ce7ce9b807e450666de73bd293d6ebe283a0",
+        "signature": "40247753bd63fa526db644d7e5d5ce7ce9b807e450666de73bd293d6ebe283a0"
+      },
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/DongleController.d.ts": {
+        "version": "046fe43ce63de914044f6d176aa34ac96ac3eba4b6703e4a188a78a023d3fe09",
+        "signature": "046fe43ce63de914044f6d176aa34ac96ac3eba4b6703e4a188a78a023d3fe09"
+      },
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": {
+        "version": "6d6ca69eb06f3b6a9ab9c47a8eb0bb2d1dd86f45619c60e861d41a1861806a2c",
+        "signature": "6d6ca69eb06f3b6a9ab9c47a8eb0bb2d1dd86f45619c60e861d41a1861806a2c"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Credential.d.ts": {
+        "version": "4b2bf1cd9b7d5db96344f52464e197e6d4ba2bb7d809233bd980d220db8de638",
+        "signature": "4b2bf1cd9b7d5db96344f52464e197e6d4ba2bb7d809233bd980d220db8de638"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts": {
+        "version": "97b8b34b42ab1f4a00587e1c70e99863302bd9aec51220302730b959e2afb497",
+        "signature": "97b8b34b42ab1f4a00587e1c70e99863302bd9aec51220302730b959e2afb497"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-async-agi/index.d.ts": {
+        "version": "91c6521cd87b4931a36ceaedd7a50f6d19f70a91cfad5518692a7758961e59b3",
+        "signature": "91c6521cd87b4931a36ceaedd7a50f6d19f70a91cfad5518692a7758961e59b3"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts": {
+        "version": "5b518d0a32274f29ef7de63cc8b6ec784e666123976059069333fd87883588b8",
+        "signature": "5b518d0a32274f29ef7de63cc8b6ec784e666123976059069333fd87883588b8"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts": {
+        "version": "ce8e8075c2dea187763026de7e62eee6c64ba32b0cfb2b0c51216482a5d9f4de",
+        "signature": "ce8e8075c2dea187763026de7e62eee6c64ba32b0cfb2b0c51216482a5d9f4de"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts": {
+        "version": "4dc0986f7e327c3aee52d371aba04210e9a9f2dfc8b26c7b8bd7e4ec8ee47be1",
+        "signature": "4dc0986f7e327c3aee52d371aba04210e9a9f2dfc8b26c7b8bd7e4ec8ee47be1"
+      },
+      "/home/pi/semasim/gateway/node_modules/@types/async-lock/index.d.ts": {
+        "version": "a0de6442a82c62dfee1bd588a1fba1fbc53c26e2616e08f6d0bcc384f07c9799",
+        "signature": "a0de6442a82c62dfee1bd588a1fba1fbc53c26e2616e08f6d0bcc384f07c9799"
+      },
+      "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts": {
+        "version": "89305cb8a9c0d323a759b816eea0579729727c7ad7cf0c6cac752a91b05abb06",
+        "signature": "89305cb8a9c0d323a759b816eea0579729727c7ad7cf0c6cac752a91b05abb06"
+      },
+      "/home/pi/semasim/gateway/src/lib/types.ts": {
+        "version": "6be63317a40f443b2b96ac8b6e7adb98d4f0e6a37de77aacc81318b0485f1d33",
+        "signature": "52778da6a9cc675430d7776e57f8c5562982310fa114d0edd50ddf888d62e001"
+      },
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/JSON_CUSTOM.d.ts": {
+        "version": "c5b52409ab13729e63743505f73f148d598f14ed04616615ad0f66bc53946c8e",
+        "signature": "c5b52409ab13729e63743505f73f148d598f14ed04616615ad0f66bc53946c8e"
+      },
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransform.d.ts": {
+        "version": "0efcf10d28e9dfb1cb6ecd192337de56e7b930cf23a47434cf284502cd4992a1",
+        "signature": "0efcf10d28e9dfb1cb6ecd192337de56e7b930cf23a47434cf284502cd4992a1"
+      },
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransformExt.d.ts": {
+        "version": "1f48e0e3418daa53fb7b52a149584422b360a549e34941964a7d09104e47c3ed",
+        "signature": "1f48e0e3418daa53fb7b52a149584422b360a549e34941964a7d09104e47c3ed"
+      },
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": {
+        "version": "141da8dd8b67d615f37e947bbe98e896bac12ba6252136f1e1675cc5841ecfa8",
+        "signature": "141da8dd8b67d615f37e947bbe98e896bac12ba6252136f1e1675cc5841ecfa8"
+      },
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/index.d.ts": {
+        "version": "a5dc9b5ab207accb1b518bed92bf2f93d9a4881ca6899ee7e074dfd75031b5dd",
+        "signature": "a5dc9b5ab207accb1b518bed92bf2f93d9a4881ca6899ee7e074dfd75031b5dd"
+      },
+      "/home/pi/semasim/gateway/src/lib/dbSemasim.ts": {
+        "version": "ce08aa031f5683757b32576eaad0ae31dfbe0cd9927f3ac2e621a5dab915b139",
+        "signature": "857e995e964da702afdb5a6c3838746319f911aeadc26c8464c566121f6afb43"
+      },
+      "/home/pi/semasim/gateway/src/lib/misc/bundledData.ts": {
+        "version": "34283db0ef79e5148b5a72e4303a99db593e5f926c9144bae71ba4132dca9d67",
+        "signature": "04f84056cb591f0e569ed1ab926ad0ef267a677466b57214c1884196e97a4725"
+      },
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanityChecks.d.ts": {
+        "version": "8d62e7593f6165641411d6ce2c7a8654aeb994baeb8ecf61f4ce90fd53da9739",
+        "signature": "8d62e7593f6165641411d6ce2c7a8654aeb994baeb8ecf61f4ce90fd53da9739"
+      },
+      "/home/pi/semasim/gateway/src/lib/misc/sanityChecks.ts": {
+        "version": "9ca57af41d2fba18639754ee6f0bf6f721dcbedd7000386e72a98924cc86fdc8",
+        "signature": "bb7185b5fd44e24a535f49bb2aa8a0da9f3cc2eaeacc5e8d8830b0d2048e4a30"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts": {
+        "version": "7a150bc951faafabece4b248c55473bb8c397cddcc86d7245c527df91f29ba88",
+        "signature": "7a150bc951faafabece4b248c55473bb8c397cddcc86d7245c527df91f29ba88"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts": {
+        "version": "149a1f9eb1ecb318b90bb8de231c3d659d5a277bdb8ebce854ad0f162a40fe35",
+        "signature": "149a1f9eb1ecb318b90bb8de231c3d659d5a277bdb8ebce854ad0f162a40fe35"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/IConnection.d.ts": {
+        "version": "104455f7800a8ef4c185b9d4b7fbbd4332732dd2e45a671c8a9e6ec20bd3670a",
+        "signature": "104455f7800a8ef4c185b9d4b7fbbd4332732dd2e45a671c8a9e6ec20bd3670a"
+      },
+      "/home/pi/semasim/gateway/node_modules/colors/index.d.ts": {
+        "version": "a17e831d16c27cbe4d6f0bb238c1ded0d4a26c282009e431c68733be0b792f4f",
+        "signature": "a17e831d16c27cbe4d6f0bb238c1ded0d4a26c282009e431c68733be0b792f4f"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts": {
+        "version": "afd4f5293c97c649923a6482352bb14271a531d92a0e2a48d6ee77ac2fdc28a1",
+        "signature": "afd4f5293c97c649923a6482352bb14271a531d92a0e2a48d6ee77ac2fdc28a1"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts": {
+        "version": "8035f10dc68f2b26dc07a82ef887f6b985c27d599490d3bd0c80212c6cea952a",
+        "signature": "8035f10dc68f2b26dc07a82ef887f6b985c27d599490d3bd0c80212c6cea952a"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/Server.d.ts": {
+        "version": "06082f382f4ff101ab233a1b663e756668fb01fea3de6fb87611293912e5de47",
+        "signature": "06082f382f4ff101ab233a1b663e756668fb01fea3de6fb87611293912e5de47"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts": {
+        "version": "25be550fe4d1cea6624ee4b2e2b140ddadb91fac64cccd90766defe0a81d4530",
+        "signature": "25be550fe4d1cea6624ee4b2e2b140ddadb91fac64cccd90766defe0a81d4530"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts": {
+        "version": "7823d40e81c201868792880e87f141a4a2ef3fee47da15bed4a2f87c4ec3d3e1",
+        "signature": "7823d40e81c201868792880e87f141a4a2ef3fee47da15bed4a2f87c4ec3d3e1"
+      },
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts": {
+        "version": "c6f8105cd244b29f56e4f07e9cf203b8d2a3aa49d1f41b2c906185282336b4fd",
+        "signature": "c6f8105cd244b29f56e4f07e9cf203b8d2a3aa49d1f41b2c906185282336b4fd"
+      },
+      "/home/pi/semasim/gateway/src/lib/misc/sipRouting.ts": {
+        "version": "15f77d277057666a91a0846c4af6c7f5e227d3819b9874c87505c6888f0a8740",
+        "signature": "b18dc6985c36a5a32946df233fe31ba0b2da4d30150b3df54db864c29d825367"
+      },
+      "/home/pi/semasim/gateway/src/lib/misc/misc.ts": {
+        "version": "ab44bd1c41b70fe95b2e9328ec5d9fb3f659f2eb2a98be73512ea32637717546",
+        "signature": "474550ac68d62a2a43059a1c7178a5e5f83c4af89bd35cf8db9286110a0df33a"
+      },
+      "/home/pi/semasim/gateway/src/lib/misc/index.ts": {
+        "version": "9dfc4dd6e802fa7e2a71d11460fa94a9dbf23be1e112b3dd21272a272cddbcbd",
+        "signature": "5c5d514b83b1c4544cabae64a3d5fbef6cc859eecbf5648a5a749afc5599cb8b"
+      },
+      "/home/pi/semasim/gateway/src/sip_api_declarations/backendToGateway.ts": {
+        "version": "a8d00ce26e6ebc70eddbb76748df60395133fe3cc6cd674e9f0298fdb12aa05c",
+        "signature": "16867bdc37324fff277533dde65838ec0d77da8060f16b34a1f565c890f82aa2"
+      },
+      "/home/pi/semasim/gateway/src/sip_api_declarations/gatewayToBackend.ts": {
+        "version": "22274ba2575d29f4d32170c9e98e492736bd4fb7cf919fb8e43552daced3e591",
+        "signature": "6cd5675bde823131e9fd9588ce1ff819091a04f5aa1831b5e30a281aa70421ac"
+      },
+      "/home/pi/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts": {
+        "version": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e",
+        "signature": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e"
+      },
+      "/home/pi/semasim/gateway/src/lib/voiceCallBridge.ts": {
+        "version": "199dbf475777de033b626c61d04ed349c06df5017af691666d91b2ac76595e70",
+        "signature": "d01f1f4d09b8ceadaa0740e1e9c2a8c1cd888abe98b8b05936b0a2300c8f67bf"
+      },
+      "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts": {
+        "version": "840cac14c72d9c57a17205edf8ba1a3bb90ce7acd3dfa4c00c8f13d718257707",
+        "signature": "4560ee62224feac3b638f8847f789555821d064d447c0f9b4b4c99c4be7de1e3"
+      },
+      "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts": {
+        "version": "c264a53f4066eec5f323c225e35a477f5530e347680a3e561ed8c83c0f87e0a7",
+        "signature": "6892dab29e3ba10c51e14a598317c40c162403ac380c6e727f00f5746738a8a9"
+      },
+      "/home/pi/semasim/gateway/src/lib/toBackend/localApiHandlers.ts": {
+        "version": "3eb5ea49fb6838bd204e632a44c5dd551b92b9c7a2eb672dd5b374e13cd546ae",
+        "signature": "8b0ec6557a38ce2aee60b8ffa85bc48e70959e336ad9e4ce1183a64ea35691d1"
+      },
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/router.ts": {
+        "version": "5ea6cd5ace535b34224bc9260b86e6a7006aa24e5ac19952a2c14fea22b99f92",
+        "signature": "e1183b2f81b120ffd059fb41fbe78d679860170f16503028b0ca5f3480533bbf"
+      },
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/connections.ts": {
+        "version": "bba43cebfc4008196eecbf8d7bb1d97ab184c8383a6a9533ace984f7d51a3e22",
+        "signature": "772aa36d98cf950a6ef40427939156afb12648797b2a1044ef6613fdc3faada5"
+      },
+      "/home/pi/semasim/gateway/src/lib/toBackend/router.ts": {
+        "version": "382306e53ad0dd5b2b7aadd78cd413a1925452cef24868939381aa377bd4758f",
+        "signature": "9e0f76272378be7e65fb540bdef847a1bbe23693978e91805de805b79d6d5283"
+      },
+      "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts": {
+        "version": "c55b9c3e56b8c09cc37a60fd473aa031714c0db78a4a281842daae525399c1f6",
+        "signature": "1377bf2c336dde90763c48abb74442cd541e23493569a10c86ce6a4d6d3327a9"
+      },
+      "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts": {
+        "version": "c85459cd940b5a032bfda9333e8321ada630acebf391408eb76c66b46243dedc",
+        "signature": "d04a174d31ae21d7a9fc8de8602c4fca5b7760f011cfc0aff5142e2f496422dc"
+      },
+      "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts": {
+        "version": "86e0f8b34aff888af0253d9cec6affe6a61b8d1e275499e8fd5a9e8482f47b45",
+        "signature": "042d299e3dec984722ce3e5504c11c25e0cab66c476b63151956c5e271c9e3f9"
+      },
+      "/home/pi/semasim/gateway/src/lib/messagesDispatcher.ts": {
+        "version": "b19918709a1fcab7003dfb171fdbb3564230dde60d0f173eaa709b0949cd0b24",
+        "signature": "80ea4a090359e4e8c3d734da2a93fcc6986c3d00fc2471f314ed89af951c4e63"
+      },
+      "/home/pi/semasim/gateway/src/lib/procAsterisk.ts": {
+        "version": "e7f7646adfb829d09adbe0015666c9f72cad33491b4340b30c03bf0b31929026",
+        "signature": "d86afa40b232b433824845db30c907b4691ccb1501cc0f9f333e8385d6101c52"
+      },
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": {
+        "version": "b29b97f871986793b5398c581650235202eba60ed9ed600aa46c0eae77b5cc84",
+        "signature": "b29b97f871986793b5398c581650235202eba60ed9ed600aa46c0eae77b5cc84"
+      },
+      "/home/pi/semasim/gateway/src/lib/procChanDongleExtended.ts": {
+        "version": "7075fcd9aad6b84ec3f835db736f43c45e0e4f367c7fdcb01ba1e523eb15fc62",
+        "signature": "63721742bb9c27a03ae540f50e2ba11aeeb401bc0d9dabdd5ec44466c6a9460a"
+      },
+      "/home/pi/semasim/gateway/src/lib/launch.ts": {
+        "version": "4708f40c5ab1a05841d77467c6ce42fa5e0cb01289928be4b2d69e34c382111b",
+        "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
+      },
+      "/home/pi/semasim/gateway/src/bin/main.ts": {
+        "version": "f5f27904d14d96f3a2f8c2407af551ec389179e8974963422a588d7870e7a6e2",
+        "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+      },
+      "/home/pi/semasim/gateway/src/test/dbAsterisk.ts": {
+        "version": "959309ab1b504a64a9761320be45acd0980ba98eadcb831e88fb2213edd19487",
+        "signature": "36c87b2f17ce1bee5e20596f2598cf0164bd3a2abc60179b428b1b00213ed126"
+      },
+      "/home/pi/semasim/gateway/src/test/dbSemasim.ts": {
+        "version": "8a9318d02cef8c548d749665bd54cc7c0095ba851f2d08fd119b01c272207c06",
+        "signature": "f0eb87d9af2d8d6cd869b7a441612de4a4ac6482490f9db43899e0aa4328bde2"
+      },
+      "/home/pi/semasim/gateway/src/test/main.ts": {
+        "version": "3f20fbe7da3fff76836a7fe14c331b353d915894f8d732c19f16484372f5f962",
+        "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts": {
+        "version": "6e2333ef99353f173fa394a3ccccb69873f235562a64f0778f67708338988704",
+        "signature": "6e2333ef99353f173fa394a3ccccb69873f235562a64f0778f67708338988704"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/cli.d.ts": {
+        "version": "c306019896de71c17120d32b3459d64c805108d841deb822fb19325ed8b147f0",
+        "signature": "c306019896de71c17120d32b3459d64c805108d841deb822fb19325ed8b147f0"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/installer.d.ts": {
+        "version": "c2cce45e460e470d7ad0873459d02727361f8d75b2011feb5ae7692d9801e0f5",
+        "signature": "c2cce45e460e470d7ad0873459d02727361f8d75b2011feb5ae7692d9801e0f5"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/main.d.ts": {
+        "version": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+        "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/AmiCredential.d.ts": {
+        "version": "7420c63d263603e8d4c80a86ac68928b998165b729212736d78d6674d4f2c5a4",
+        "signature": "7420c63d263603e8d4c80a86ac68928b998165b729212736d78d6674d4f2c5a4"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/Astdirs.d.ts": {
+        "version": "c8bc61e694370227dbbe93d57408cf492747ffc8a5c7117934f17119c98d034c",
+        "signature": "c8bc61e694370227dbbe93d57408cf492747ffc8a5c7117934f17119c98d034c"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/InstallOptions.d.ts": {
+        "version": "1936914810f6b3483e2358579ebd221d24738e90cbea0218dbd1ee5c6aa7a4ba",
+        "signature": "1936914810f6b3483e2358579ebd221d24738e90cbea0218dbd1ee5c6aa7a4ba"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/Tty0tty.d.ts": {
+        "version": "d77d9425a2ff44607634ffdc236eb992a572008fcd0c79f9fa1700b40bad98d1",
+        "signature": "d77d9425a2ff44607634ffdc236eb992a572008fcd0c79f9fa1700b40bad98d1"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts": {
+        "version": "4a1380906a08dcba86d4361bde1a4fa2ba1aee8e39abb823217ef81c36f788aa",
+        "signature": "4a1380906a08dcba86d4361bde1a4fa2ba1aee8e39abb823217ef81c36f788aa"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/api.d.ts": {
+        "version": "ffb0bdc2d984a8e22b00f442efdc5eaf43059878f489a538060c88149f86f1bc",
+        "signature": "ffb0bdc2d984a8e22b00f442efdc5eaf43059878f489a538060c88149f86f1bc"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/confManager.d.ts": {
+        "version": "f9d2236b9c42367cb0897c57d5592fbbdb22cad438d37bd83090394b863de560",
+        "signature": "f9d2236b9c42367cb0897c57d5592fbbdb22cad438d37bd83090394b863de560"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/atBridge.d.ts": {
+        "version": "5a797f5ee6c2759a81598642dd95018d028166c8b0e180ada8c74f6be674e278",
+        "signature": "5a797f5ee6c2759a81598642dd95018d028166c8b0e180ada8c74f6be674e278"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/db.d.ts": {
+        "version": "ebc911e05577e24d84488272fac5317e287daab9ff01e78580f89ed7db638f1e",
+        "signature": "ebc911e05577e24d84488272fac5317e287daab9ff01e78580f89ed7db638f1e"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/dialplan.d.ts": {
+        "version": "477c99db1e4befa86af9ff3ddfa7c249bb039f645cb78e97d39935d0d7850e00",
+        "signature": "477c99db1e4befa86af9ff3ddfa7c249bb039f645cb78e97d39935d0d7850e00"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/hostRebootScheduler.d.ts": {
+        "version": "604c0c9d928269842eeb766ba1dfd1817cca185a6db96b18f5e72c2740cce71b",
+        "signature": "604c0c9d928269842eeb766ba1dfd1817cca185a6db96b18f5e72c2740cce71b"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/launch.d.ts": {
+        "version": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2",
+        "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
+      },
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/test/db.d.ts": {
+        "version": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+        "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+      },
+      "/home/pi/semasim/gateway/node_modules/@types/ws/index.d.ts": {
+        "version": "f222721b31f8150d845bdee0a70e26244cc4116b4bc998aad12206419c582ebb",
+        "signature": "f222721b31f8150d845bdee0a70e26244cc4116b4bc998aad12206419c582ebb"
+      }
+    },
+    "options": {
+      "module": 1,
+      "target": 1,
+      "lib": [
+        "lib.es5.d.ts",
+        "lib.es2015.d.ts"
+      ],
+      "declaration": true,
+      "outDir": "/home/pi/semasim/gateway/dist",
+      "strictNullChecks": true,
+      "sourceMap": false,
+      "newLine": 1,
+      "downlevelIteration": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": false,
+      "strictPropertyInitialization": true,
+      "strictFunctionTypes": true,
+      "resolveJsonModule": true,
+      "strictBindCallApply": true,
+      "incremental": true,
+      "project": "./tsconfig.json",
+      "configFilePath": "/home/pi/semasim/gateway/tsconfig.json"
+    },
+    "referencedMap": {
+      "/home/pi/semasim/gateway/node_modules/@types/node/inspector.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/inspector.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/versionStatus.ts": [
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/iniExt.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/bin/installer.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/versionStatus.ts",
+        "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/commander/typings/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBaseProtected.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBase.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBaseProtected.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEvent.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBase.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEvent.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/TrackableMap.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/MapExtended.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/MapExtended.d.ts",
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/TrackableMap.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/DongleController.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/DongleController.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-async-agi/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Credential.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/JSON_CUSTOM.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransform.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransformExt.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/dbSemasim.ts": [
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/bundledData.ts": [
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransform.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanityChecks.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/sanityChecks.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanityChecks.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/IConnection.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/IConnection.d.ts",
+        "/home/pi/semasim/gateway/node_modules/colors/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/Server.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/colors/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/Server.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/sipRouting.ts": [
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransform.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/misc.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/index.ts": [
+        "/home/pi/semasim/gateway/src/lib/misc/bundledData.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/sanityChecks.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/sipRouting.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/misc.ts"
+      ],
+      "/home/pi/semasim/gateway/src/sip_api_declarations/backendToGateway.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/sip_api_declarations/gatewayToBackend.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/voiceCallBridge.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/lib/dbSemasim.ts",
+        "/home/pi/semasim/gateway/src/lib/messagesDispatcher.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/index.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts": [
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/src/lib/voiceCallBridge.ts",
+        "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/localApiHandlers.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/sip_api_declarations/gatewayToBackend.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts",
+        "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/router.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/index.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/connections.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts",
+        "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts",
+        "/home/pi/semasim/gateway/src/lib/toAsterisk/router.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/router.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/index.ts",
+        "/home/pi/semasim/gateway/src/lib/toAsterisk/connections.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/localApiHandlers.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/versionStatus.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/router.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/sip_api_declarations/backendToGateway.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts",
+        "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts",
+        "/home/pi/semasim/gateway/src/lib/dbSemasim.ts",
+        "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/index.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts",
+        "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/messagesDispatcher.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/dbSemasim.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/index.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts",
+        "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/procAsterisk.ts": [
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/procChanDongleExtended.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/launch.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/messagesDispatcher.ts",
+        "/home/pi/semasim/gateway/src/lib/voiceCallBridge.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/src/lib/procAsterisk.ts",
+        "/home/pi/semasim/gateway/src/lib/procChanDongleExtended.ts",
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/dbSemasim.ts",
+        "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts",
+        "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts",
+        "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts",
+        "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts",
+        "/home/pi/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/bin/main.ts": [
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/bin/installer.ts",
+        "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/launch.ts"
+      ],
+      "/home/pi/semasim/gateway/src/test/dbAsterisk.ts": [
+        "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/index.ts"
+      ],
+      "/home/pi/semasim/gateway/src/test/dbSemasim.ts": [
+        "/home/pi/semasim/gateway/src/lib/dbSemasim.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts",
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/test/main.ts": [
+        "/home/pi/semasim/gateway/src/test/dbAsterisk.ts",
+        "/home/pi/semasim/gateway/src/test/dbSemasim.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/cli.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/colors/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/AmiCredential.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/api.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/confManager.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/atBridge.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/confManager.d.ts",
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/db.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts",
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/dialplan.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/@types/ws/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts"
+      ]
+    },
+    "exportedModulesMap": {
+      "/home/pi/semasim/gateway/node_modules/@types/node/inspector.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/node/inspector.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/iniExt.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBaseProtected.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBase.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBaseProtected.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEvent.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBase.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEvent.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/TrackableMap.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/MapExtended.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/MapExtended.d.ts",
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/TrackableMap.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/DongleController.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/DongleController.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-async-agi/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Credential.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/JSON_CUSTOM.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransform.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransformExt.d.ts",
+        "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/dbSemasim.ts": [
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/bundledData.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanityChecks.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/sanityChecks.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/IConnection.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/IConnection.d.ts",
+        "/home/pi/semasim/gateway/node_modules/colors/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/Server.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/colors/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/Server.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/sipRouting.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/misc.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/misc/index.ts": [
+        "/home/pi/semasim/gateway/src/lib/misc/bundledData.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/sanityChecks.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/sipRouting.ts",
+        "/home/pi/semasim/gateway/src/lib/misc/misc.ts"
+      ],
+      "/home/pi/semasim/gateway/src/sip_api_declarations/backendToGateway.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/sip_api_declarations/gatewayToBackend.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts": [
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/localApiHandlers.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/router.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/connections.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/router.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/src/sip_api_declarations/backendToGateway.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/lib/messagesDispatcher.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/src/test/dbSemasim.ts": [
+        "/home/pi/semasim/gateway/src/lib/types.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
+        "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/cli.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/colors/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/AmiCredential.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/api.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/confManager.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/atBridge.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/confManager.d.ts",
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts",
+        "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/db.d.ts": [
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts",
+        "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts"
+      ],
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/dialplan.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
+        "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts"
+      ],
+      "/home/pi/semasim/gateway/node_modules/@types/ws/index.d.ts": [
+        "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts"
+      ]
+    },
+    "semanticDiagnosticsPerFile": [
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es5.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.core.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.collection.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.generator.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.iterable.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.promise.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.proxy.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.reflect.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.symbol.d.ts",
+      "/home/pi/semasim/gateway/node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
+      "/home/pi/semasim/gateway/node_modules/@types/events/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/@types/node/inspector.d.ts",
+      "/home/pi/semasim/gateway/node_modules/@types/node/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts",
+      "/home/pi/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/src/lib/versionStatus.ts",
+      "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/iniExt.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/commander/typings/index.d.ts",
+      "/home/pi/semasim/gateway/src/bin/installer.ts",
+      "/home/pi/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/MapExtended.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBaseProtected.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEventBase.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/SyncEvent.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/TrackableMap.d.ts",
+      "/home/pi/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apiDeclaration.d.ts",
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/DongleController.d.ts",
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Credential.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/amiApi.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-async-agi/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/Ami.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/src/lib/types.ts",
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/JSON_CUSTOM.d.ts",
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransform.d.ts",
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/stringTransformExt.d.ts",
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts",
+      "/home/pi/semasim/gateway/node_modules/transfer-tools/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/src/lib/dbSemasim.ts",
+      "/home/pi/semasim/gateway/src/lib/misc/bundledData.ts",
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanityChecks.d.ts",
+      "/home/pi/semasim/gateway/src/lib/misc/sanityChecks.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/IConnection.d.ts",
+      "/home/pi/semasim/gateway/node_modules/colors/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/Socket.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/Server.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts",
+      "/home/pi/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/src/lib/misc/sipRouting.ts",
+      "/home/pi/semasim/gateway/src/lib/misc/misc.ts",
+      "/home/pi/semasim/gateway/src/lib/misc/index.ts",
+      "/home/pi/semasim/gateway/src/sip_api_declarations/backendToGateway.ts",
+      "/home/pi/semasim/gateway/src/sip_api_declarations/gatewayToBackend.ts",
+      "/home/pi/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts",
+      "/home/pi/semasim/gateway/src/lib/voiceCallBridge.ts",
+      "/home/pi/semasim/gateway/src/lib/sipMessagesMonitor.ts",
+      "/home/pi/semasim/gateway/src/lib/dbAsterisk.ts",
+      "/home/pi/semasim/gateway/src/lib/toBackend/localApiHandlers.ts",
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/router.ts",
+      "/home/pi/semasim/gateway/src/lib/toAsterisk/connections.ts",
+      "/home/pi/semasim/gateway/src/lib/toBackend/router.ts",
+      "/home/pi/semasim/gateway/src/lib/toBackend/connection.ts",
+      "/home/pi/semasim/gateway/src/lib/toBackend/remoteApiCaller.ts",
+      "/home/pi/semasim/gateway/src/lib/sipContactsMonitor.ts",
+      "/home/pi/semasim/gateway/src/lib/messagesDispatcher.ts",
+      "/home/pi/semasim/gateway/src/lib/procAsterisk.ts",
+      "/home/pi/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
+      "/home/pi/semasim/gateway/src/lib/procChanDongleExtended.ts",
+      "/home/pi/semasim/gateway/src/lib/launch.ts",
+      "/home/pi/semasim/gateway/src/bin/main.ts",
+      "/home/pi/semasim/gateway/src/test/dbAsterisk.ts",
+      "/home/pi/semasim/gateway/src/test/dbSemasim.ts",
+      "/home/pi/semasim/gateway/src/test/main.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/chan-dongle-extended-client.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/cli.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/installer.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/bin/main.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/AmiCredential.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/Astdirs.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/InstallOptions.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/Tty0tty.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/types.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/api.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/confManager.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/atBridge.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/db.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/dialplan.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/hostRebootScheduler.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/lib/launch.d.ts",
+      "/home/pi/semasim/gateway/working_directory/dongle/dist/test/db.d.ts",
+      "/home/pi/semasim/gateway/node_modules/@types/ws/index.d.ts"
+    ]
+  },
+  "version": "3.4.1"
+}
