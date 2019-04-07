@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as assert from "assert";
 import * as scriptLib from "scripting-tools";
 
 export const module_dir_path = path.join(__dirname, "..", "..");
@@ -55,7 +56,7 @@ export function getEnv(): "DEV" | "PROD" {
         .toString("utf8")
         .replace(/\s/g, "") as any;
 
-    console.assert(env === "DEV" || env === "PROD");
+    assert(env === "DEV" || env === "PROD");
 
     getEnv.value = env;
 

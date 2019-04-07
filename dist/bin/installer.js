@@ -67,6 +67,7 @@ var __spread = (this && this.__spread) || function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
 var path = require("path");
+var assert = require("assert");
 var scriptLib = require("scripting-tools");
 exports.module_dir_path = path.join(__dirname, "..", "..");
 exports.unix_user = "semasim";
@@ -112,7 +113,7 @@ function getEnv() {
     var env = fs.readFileSync(env_file_path)
         .toString("utf8")
         .replace(/\s/g, "");
-    console.assert(env === "DEV" || env === "PROD");
+    assert(env === "DEV" || env === "PROD");
     getEnv.value = env;
     return getEnv();
 }

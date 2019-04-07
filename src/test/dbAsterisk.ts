@@ -1,6 +1,7 @@
 import * as db from "../lib/dbAsterisk";
 import * as types from "../lib/types";
 import * as misc from "../lib/misc";
+import * as assert from "assert";
 
 const contact: types.Contact = (() => {
 
@@ -37,7 +38,7 @@ const contact: types.Contact = (() => {
 
 export async function testDbAsterisk() {
 
-    console.assert(misc.sanityChecks.contact(contact));
+    assert(misc.sanityChecks.contact(contact));
 
     await db.launch();
 
@@ -51,17 +52,17 @@ export async function testDbAsterisk() {
         `SELECT * FROM ps_aors WHERE id= ${db.esc(contact.uaSim.imsi)}`
     );
 
-    console.assert(rows.length === 1);
+    assert(rows.length === 1);
 
     rows= await db.query(`SELECT * FROM ps_auths WHERE id= ${db.esc(contact.uaSim.imsi)}`);
 
-    console.assert(rows.length === 1);
+    assert(rows.length === 1);
 
-    console.assert(rows[0]["username"] === contact.uaSim.imsi);
+    assert(rows[0]["username"] === contact.uaSim.imsi);
 
-    console.assert(rows[0]["password"] === password);
+    assert(rows[0]["password"] === password);
 
-    console.assert(
+    assert(
         password 
         ===
         await db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
@@ -71,7 +72,7 @@ export async function testDbAsterisk() {
 
     const newPassword= db.generateSipEndpointPassword();
 
-    console.assert(
+    assert(
         await db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
             contact.uaSim.imsi,
             newPassword

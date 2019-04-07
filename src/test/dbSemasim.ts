@@ -1,3 +1,4 @@
+import * as assert from "assert";
 import * as db from "../lib/dbSemasim";
 import * as types from "../lib/types";
 import { types as dcTypes } from "chan-dongle-extended-client";
@@ -301,7 +302,7 @@ async function t2() {
 
         }
 
-        console.assert(__in);
+        assert(__in);
 
         __in= false;
 
@@ -334,7 +335,7 @@ async function t2() {
 
         }
 
-        console.assert(__in);
+        assert(__in);
 
     }
 

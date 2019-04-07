@@ -65,6 +65,7 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var assert = require("assert");
 var db = require("../lib/dbSemasim");
 var ttTesting = require("transfer-tools/dist/lib/testing");
 var assertSame = ttTesting.assertSame;
@@ -386,7 +387,7 @@ function t2() {
                                     finally { if (e_1) throw e_1.error; }
                                     return [7 /*endfinally*/];
                                 case 15:
-                                    console.assert(__in);
+                                    assert(__in);
                                     __in = false;
                                     _p.label = 16;
                                 case 16:
@@ -428,7 +429,7 @@ function t2() {
                                     finally { if (e_2) throw e_2.error; }
                                     return [7 /*endfinally*/];
                                 case 24:
-                                    console.assert(__in);
+                                    assert(__in);
                                     return [2 /*return*/];
                             }
                         });

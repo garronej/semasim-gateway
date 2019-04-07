@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var db = require("../lib/dbAsterisk");
 var misc = require("../lib/misc");
+var assert = require("assert");
 var contact = (function () {
     var imsi = "208150113995832";
     var ua = {
@@ -67,44 +68,44 @@ var contact = (function () {
 })();
 function testDbAsterisk() {
     return __awaiter(this, void 0, void 0, function () {
-        var password, rows, _a, _b, _c, newPassword, _d, _e;
-        return __generator(this, function (_f) {
-            switch (_f.label) {
+        var password, rows, _a, _b, newPassword, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
-                    console.assert(misc.sanityChecks.contact(contact));
+                    assert(misc.sanityChecks.contact(contact));
                     return [4 /*yield*/, db.launch()];
                 case 1:
-                    _f.sent();
+                    _d.sent();
                     return [4 /*yield*/, db.flush()];
                 case 2:
-                    _f.sent();
+                    _d.sent();
                     return [4 /*yield*/, db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(contact.uaSim.imsi)];
                 case 3:
-                    password = _f.sent();
+                    password = _d.sent();
                     return [4 /*yield*/, db.query("SELECT * FROM ps_aors WHERE id= " + db.esc(contact.uaSim.imsi))];
                 case 4:
-                    rows = _f.sent();
-                    console.assert(rows.length === 1);
+                    rows = _d.sent();
+                    assert(rows.length === 1);
                     return [4 /*yield*/, db.query("SELECT * FROM ps_auths WHERE id= " + db.esc(contact.uaSim.imsi))];
                 case 5:
-                    rows = _f.sent();
-                    console.assert(rows.length === 1);
-                    console.assert(rows[0]["username"] === contact.uaSim.imsi);
-                    console.assert(rows[0]["password"] === password);
-                    _b = (_a = console).assert;
-                    _c = password;
+                    rows = _d.sent();
+                    assert(rows.length === 1);
+                    assert(rows[0]["username"] === contact.uaSim.imsi);
+                    assert(rows[0]["password"] === password);
+                    _a = assert;
+                    _b = password;
                     return [4 /*yield*/, db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(contact.uaSim.imsi)];
                 case 6:
-                    _b.apply(_a, [_c ===
-                            (_f.sent())]);
+                    _a.apply(void 0, [_b ===
+                            (_d.sent())]);
                     newPassword = db.generateSipEndpointPassword();
-                    _e = (_d = console).assert;
+                    _c = assert;
                     return [4 /*yield*/, db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(contact.uaSim.imsi, newPassword)];
                 case 7:
-                    _e.apply(_d, [(_f.sent()) === newPassword]);
+                    _c.apply(void 0, [(_d.sent()) === newPassword]);
                     return [4 /*yield*/, db.flush()];
                 case 8:
-                    _f.sent();
+                    _d.sent();
                     console.log("PASS ASTERISK");
                     return [2 /*return*/];
             }
