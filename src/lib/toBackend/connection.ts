@@ -25,6 +25,9 @@ const apiServer = new sip.api.Server(
 
 let socketCurrent: sip.Socket | undefined = undefined;
 
+//TODO: Because of the load balancer even if the Backend is down
+//the connect event is posted. Maybe wait until we have a successful 
+//ping response before posting this.
 export const evtConnect = new SyncEvent<sip.Socket>();
 
 export async function connect() {
