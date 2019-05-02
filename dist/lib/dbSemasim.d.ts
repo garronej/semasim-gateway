@@ -63,7 +63,7 @@ export declare function onMissedCall(imsi: string, number: string): Promise<void
  * will inform ua of other users that the call have been taken.
  *
 */
-export declare function onCallAnswered(number: string, imsi: any, answeredByUa: types.Ua, ringingUas: Iterable<types.Ua>): Promise<void>;
+export declare function onCallAnswered(number: string, imsi: string, answeredByUa: types.Ua, otherUasReachedForTheCall: Iterable<types.Ua>): Promise<void>;
 /** Check if a ua registration have message pending */
 export declare function messageTowardSipUnsentCount(uaSim: types.UaSim): Promise<number>;
 /** Return array of tuples [ MessageTowardSip, <method to set the message as received> ] */

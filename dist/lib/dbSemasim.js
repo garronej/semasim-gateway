@@ -309,9 +309,9 @@ exports.onMissedCall = onMissedCall;
  * will inform ua of other users that the call have been taken.
  *
 */
-function onCallAnswered(number, imsi, answeredByUa, ringingUas) {
+function onCallAnswered(number, imsi, answeredByUa, otherUasReachedForTheCall) {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, sql, date, bundledData, ringingUas_1, ringingUas_1_1, ua;
+        var e_1, _a, sql, date, bundledData, otherUasReachedForTheCall_1, otherUasReachedForTheCall_1_1, ua;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -323,8 +323,8 @@ function onCallAnswered(number, imsi, answeredByUa, ringingUas) {
                         "ua": answeredByUa
                     };
                     try {
-                        for (ringingUas_1 = __values(ringingUas), ringingUas_1_1 = ringingUas_1.next(); !ringingUas_1_1.done; ringingUas_1_1 = ringingUas_1.next()) {
-                            ua = ringingUas_1_1.value;
+                        for (otherUasReachedForTheCall_1 = __values(otherUasReachedForTheCall), otherUasReachedForTheCall_1_1 = otherUasReachedForTheCall_1.next(); !otherUasReachedForTheCall_1_1.done; otherUasReachedForTheCall_1_1 = otherUasReachedForTheCall_1.next()) {
+                            ua = otherUasReachedForTheCall_1_1.value;
                             if (ua.userEmail === answeredByUa.userEmail) {
                                 continue;
                             }
@@ -338,7 +338,7 @@ function onCallAnswered(number, imsi, answeredByUa, ringingUas) {
                     catch (e_1_1) { e_1 = { error: e_1_1 }; }
                     finally {
                         try {
-                            if (ringingUas_1_1 && !ringingUas_1_1.done && (_a = ringingUas_1.return)) _a.call(ringingUas_1);
+                            if (otherUasReachedForTheCall_1_1 && !otherUasReachedForTheCall_1_1.done && (_a = otherUasReachedForTheCall_1.return)) _a.call(otherUasReachedForTheCall_1);
                         }
                         finally { if (e_1) throw e_1.error; }
                     }

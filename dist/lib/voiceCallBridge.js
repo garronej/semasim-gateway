@@ -44,6 +44,22 @@ var __values = (this && this.__values) || function (o) {
         }
     };
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var ts_events_extended_1 = require("ts-events-extended");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
@@ -108,7 +124,7 @@ function initAgi() {
 exports.initAgi = initAgi;
 function fromDongle(channel) {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, imsi, dongle, number, evtReachableContact, _loop_1, _b, _c, contact, ringingChannels, evtEstablishedOrEnded, dongleChannelName;
+        var e_1, _a, imsi, dongle, number, evtReachableContact, _loop_1, _b, _c, contact, channels, evtAnsweredOrEnded, dongleChannelName;
         var _this = this;
         return __generator(this, function (_d) {
             switch (_d.label) {
@@ -152,45 +168,50 @@ function fromDongle(channel) {
                         }
                         finally { if (e_1) throw e_1.error; }
                     }
-                    ringingChannels = new Map();
-                    evtEstablishedOrEnded = new ts_events_extended_1.SyncEvent();
-                    evtEstablishedOrEnded.attachOnce(function (contact) { return __awaiter(_this, void 0, void 0, function () {
-                        var e_2, _a, _b, _c, channelName, ringingUas;
-                        return __generator(this, function (_d) {
-                            switch (_d.label) {
+                    channels = new Map();
+                    evtAnsweredOrEnded = new ts_events_extended_1.VoidSyncEvent();
+                    evtAnsweredOrEnded.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
+                        var _a, answeredByContact;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
                                 case 0:
                                     debug("evtEstablishedOrEnded");
                                     evtReachableContact.detach();
                                     sipContactsMonitor.evtContactRegistration.detach(evtReachableContact);
-                                    try {
-                                        for (_b = __values(ringingChannels.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
-                                            channelName = _c.value;
-                                            ami.postAction("hangup", {
-                                                "channel": channelName,
-                                                "cause": "1"
-                                            }).catch(function () { });
-                                        }
-                                    }
-                                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                                    finally {
-                                        try {
-                                            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                                        }
-                                        finally { if (e_2) throw e_2.error; }
-                                    }
-                                    if (!!!contact) return [3 /*break*/, 2];
-                                    ringingUas = Array.from(ringingChannels.keys())
-                                        .map(function (contact) { return contact.uaSim.ua; });
-                                    return [4 /*yield*/, dbSemasim.onCallAnswered(number, imsi, contact.uaSim.ua, ringingUas)];
+                                    Array.from(channels.values())
+                                        .filter(function (_a) {
+                                        var state = _a.state;
+                                        return state === "RINGING";
+                                    })
+                                        .forEach(function (_a) {
+                                        var channelName = _a.channelName;
+                                        return ami.postAction("hangup", {
+                                            "channel": channelName,
+                                            "cause": "1"
+                                        }).catch(function () { });
+                                    });
+                                    _a = __read(Array.from(channels)
+                                        .filter(function (_a) {
+                                        var _b = __read(_a, 2), _ = _b[0], state = _b[1].state;
+                                        return state === "ANSWERED";
+                                    })
+                                        .map(function (_a) {
+                                        var _b = __read(_a, 1), contact = _b[0];
+                                        return contact;
+                                    }), 1), answeredByContact = _a[0];
+                                    if (!!!answeredByContact) return [3 /*break*/, 2];
+                                    return [4 /*yield*/, dbSemasim.onCallAnswered(number, imsi, answeredByContact.uaSim.ua, Array.from(channels.keys())
+                                            .filter(function (_contact) { return _contact !== answeredByContact; })
+                                            .map(function (contact) { return contact.uaSim.ua; }))];
                                 case 1:
-                                    _d.sent();
+                                    _b.sent();
                                     return [3 /*break*/, 4];
                                 case 2:
                                     debug("Dongle channel hanged up but not answered");
                                     return [4 /*yield*/, dbSemasim.onMissedCall(imsi, number)];
                                 case 3:
-                                    _d.sent();
-                                    _d.label = 4;
+                                    _b.sent();
+                                    _b.label = 4;
                                 case 4:
                                     messageDispatcher.notifyNewSipMessagesToSend(imsi);
                                     return [2 /*return*/];
@@ -213,21 +234,23 @@ function fromDongle(channel) {
                             "channelid": sipChannelId
                         }).then(function () {
                             debug("Answered");
-                            ringingChannels.delete(contact);
-                            evtEstablishedOrEnded.post(contact);
-                        }).catch(function () { return ringingChannels.delete(contact); });
+                            channels.get(contact).state = "ANSWERED";
+                            evtAnsweredOrEnded.post();
+                        }).catch(function () {
+                            channels.get(contact).state = "REJECTED";
+                        });
                         ami.evt.attachOnce(function (_a) {
                             var event = _a.event, uniqueid = _a.uniqueid;
                             return (event === "Newchannel" &&
                                 uniqueid === sipChannelId);
                         }, function (data) {
-                            var sipChannelName = data.channel;
-                            debug("New sip channel: ", sipChannelName);
-                            ringingChannels.set(contact, sipChannelName);
-                            ami.setVar("AGC(rx)", gain, sipChannelName);
-                            ami.setVar("JITTERBUFFER(" + jitterBuffer.type + ")", jitterBuffer.params, sipChannelName);
+                            var channelName = data.channel;
+                            debug("New sip channel: ", channelName);
+                            channels.set(contact, { channelName: channelName, "state": "RINGING" });
+                            ami.setVar("AGC(rx)", gain, channelName);
+                            ami.setVar("JITTERBUFFER(" + jitterBuffer.type + ")", jitterBuffer.params, channelName);
                             //To automatically increase the volume toward the softphone.
-                            ami.setVar("AGC(tx)", "32768", sipChannelName);
+                            ami.setVar("AGC(tx)", "32768", channelName);
                         });
                     });
                     return [4 /*yield*/, ami.evt.waitFor(function (_a) {
@@ -238,7 +261,7 @@ function fromDongle(channel) {
                 case 2:
                     _d.sent();
                     /** no problem we can emit as long as we attach once */
-                    evtEstablishedOrEnded.post(undefined);
+                    evtAnsweredOrEnded.post();
                     debug("Call ended");
                     return [2 /*return*/];
             }

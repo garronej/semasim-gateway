@@ -1,4 +1,4 @@
-import { SyncEvent } from "ts-events-extended";
+import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Ami, agi } from "ts-ami";
 //import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
@@ -83,9 +83,9 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     debug("Call originated from dongle");
 
-    let imsi = (await channel.relax.getVariable("DONGLEIMSI"))!;
+    const imsi = (await channel.relax.getVariable("DONGLEIMSI"))!;
 
-    let dongle = Array.from(dc.usableDongles.values()).find(
+    const dongle = Array.from(dc.usableDongles.values()).find(
         ({ sim }) => sim.imsi === imsi
     );
 
@@ -93,13 +93,12 @@ async function fromDongle(channel: agi.AGIChannel) {
         return;
     }
 
-    //let number = dcMisc.toNationalNumber(channel.request.callerid, imsi);
     const number = phoneNumber.build(
         channel.request.callerid, 
         !!dongle.sim.country?dongle.sim.country.iso:undefined
     );
 
-    let evtReachableContact = new SyncEvent<types.Contact>();
+    const evtReachableContact = new SyncEvent<types.Contact>();
 
     sipContactsMonitor.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
@@ -124,11 +123,14 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     }
 
-    let ringingChannels = new Map<types.Contact, string>();
+    const channels = new Map<types.Contact, { 
+        channelName: string; 
+        state: "RINGING" | "REJECTED" | "ANSWERED" 
+    }>();
 
-    let evtEstablishedOrEnded = new SyncEvent<types.Contact | undefined>();
+    const evtAnsweredOrEnded = new VoidSyncEvent();
 
-    evtEstablishedOrEnded.attachOnce(async contact => {
+    evtAnsweredOrEnded.attachOnce(async () => {
 
         debug("evtEstablishedOrEnded");
 
@@ -136,25 +138,29 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         sipContactsMonitor.evtContactRegistration.detach(evtReachableContact);
 
-        for (let channelName of ringingChannels.values()) {
-
-            ami.postAction("hangup", {
+        Array.from(channels.values())
+            .filter(({ state }) => state === "RINGING")
+            .forEach(({ channelName }) => ami.postAction("hangup", {
                 "channel": channelName,
                 "cause": "1"
-            }).catch(() => { });
+            }).catch(() => { }))
+            ;
 
-        }
+        const [answeredByContact] = Array.from(channels)
+            .filter(([_, { state }]) => state === "ANSWERED")
+            .map(([contact]) => contact)
+            ;
 
-        if (!!contact) {
-
-            let ringingUas = Array.from(ringingChannels.keys())
-                .map(contact => contact.uaSim.ua);
+        if (!!answeredByContact) {
 
             await dbSemasim.onCallAnswered(
                 number,
                 imsi,
-                contact.uaSim.ua,
-                ringingUas
+                answeredByContact.uaSim.ua,
+                Array.from(channels.keys())
+                    .filter(_contact => _contact !== answeredByContact)
+                    .map(contact => contact.uaSim.ua)
+
             );
 
         } else {
@@ -170,7 +176,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     });
 
-    let dongleChannelName = channel.request.channel;
+    const dongleChannelName = channel.request.channel;
 
     evtReachableContact.attach(contact => {
 
@@ -192,11 +198,15 @@ async function fromDongle(channel: agi.AGIChannel) {
 
             debug("Answered");
 
-            ringingChannels.delete(contact);
+            channels.get(contact)!.state = "ANSWERED";
 
-            evtEstablishedOrEnded.post(contact);
+            evtAnsweredOrEnded.post();
 
-        }).catch(() => ringingChannels.delete(contact));
+        }).catch(() => {
+
+            channels.get(contact)!.state = "REJECTED";
+
+        });
 
         ami.evt.attachOnce(
             ({ event, uniqueid }) => (
@@ -205,22 +215,22 @@ async function fromDongle(channel: agi.AGIChannel) {
             ),
             data => {
 
-                let sipChannelName = data.channel;
+                const channelName = data.channel;
 
-                debug("New sip channel: ", sipChannelName);
+                debug("New sip channel: ", channelName);
 
-                ringingChannels.set(contact, sipChannelName);
+                channels.set(contact, { channelName, "state": "RINGING" });
 
-                ami.setVar("AGC(rx)", gain, sipChannelName);
+                ami.setVar("AGC(rx)", gain, channelName);
 
                 ami.setVar(
                     `JITTERBUFFER(${jitterBuffer.type})`,
                     jitterBuffer.params,
-                    sipChannelName
+                    channelName
                 );
 
                 //To automatically increase the volume toward the softphone.
-                ami.setVar("AGC(tx)", "32768", sipChannelName);
+                ami.setVar("AGC(tx)", "32768", channelName);
 
             }
         );
@@ -235,7 +245,7 @@ async function fromDongle(channel: agi.AGIChannel) {
     );
 
     /** no problem we can emit as long as we attach once */
-    evtEstablishedOrEnded.post(undefined);
+    evtAnsweredOrEnded.post();
 
     debug("Call ended");
 

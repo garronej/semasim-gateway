@@ -294,22 +294,22 @@ export async function onMissedCall(imsi: string, number: string) {
 */
 export async function onCallAnswered(
     number: string,
-    imsi,
+    imsi: string,
     answeredByUa: types.Ua,
-    ringingUas: Iterable<types.Ua>
+    otherUasReachedForTheCall: Iterable<types.Ua>
 ): Promise<void> {
 
     let sql = "";
 
-    let date = new Date();
+    const date = new Date();
 
-    let bundledData: types.BundledData.ServerToClient.CallAnsweredBy = {
+    const bundledData: types.BundledData.ServerToClient.CallAnsweredBy = {
         "type": "CALL ANSWERED BY",
         date,
         "ua": answeredByUa
     };
 
-    for (let ua of ringingUas) {
+    for (const ua of otherUasReachedForTheCall) {
 
         if (ua.userEmail === answeredByUa.userEmail) {
             continue;
@@ -337,8 +337,6 @@ export async function onCallAnswered(
     await _.query(sql);
 
 }
-
-
 
 /** Check if a ua registration have message pending */
 export async function messageTowardSipUnsentCount(

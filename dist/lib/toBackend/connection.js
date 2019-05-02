@@ -52,6 +52,9 @@ var apiServer = new sip.api.Server(localApiHandlers.handlers, sip.api.Server.get
     "hideKeepAlive": true
 }));
 var socketCurrent = undefined;
+//TODO: Because of the load balancer even if the Backend is down
+//the connect event is posted. Maybe wait until we have a successful 
+//ping response before posting this.
 exports.evtConnect = new ts_events_extended_1.SyncEvent();
 function connect() {
     return __awaiter(this, void 0, void 0, function () {
