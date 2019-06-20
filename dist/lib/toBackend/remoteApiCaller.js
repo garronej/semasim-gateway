@@ -46,41 +46,50 @@ exports.notifySimOnline = (function () {
     var methodName = apiDeclaration.notifySimOnline.methodName;
     return function (dongle) {
         return __awaiter(this, void 0, void 0, function () {
-            var password, replacementPassword, response;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(dongle.sim.imsi)];
-                    case 1:
-                        password = _a.sent();
+            var imsi, replacementPassword, response, _a, _b, _c, _d, _e;
+            return __generator(this, function (_f) {
+                switch (_f.label) {
+                    case 0:
+                        imsi = dongle.sim.imsi;
                         replacementPassword = dbAsterisk.generateSipEndpointPassword();
-                        return [4 /*yield*/, sendRequest(methodName, {
-                                "imsi": dongle.sim.imsi,
-                                "storageDigest": dongle.sim.storage.digest,
-                                password: password,
-                                replacementPassword: replacementPassword,
-                                "simDongle": {
+                        _a = sendRequest;
+                        _b = [methodName];
+                        _c = {
+                            imsi: imsi,
+                            "storageDigest": dongle.sim.storage.digest
+                        };
+                        _d = "password";
+                        return [4 /*yield*/, dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi)];
+                    case 1:
+                        _c[_d] = _f.sent(),
+                            _c.replacementPassword = replacementPassword;
+                        _e = "towardSimEncryptKeyStr";
+                        return [4 /*yield*/, dbSemasim.getTowardSimKeys(imsi)];
+                    case 2: return [4 /*yield*/, _a.apply(void 0, _b.concat([(_c[_e] = (_f.sent()).encryptKeyStr,
+                                _c["simDongle"] = {
                                     "imei": dongle.imei,
                                     "isVoiceEnabled": dongle.isVoiceEnabled,
                                     "manufacturer": dongle.manufacturer,
                                     "model": dongle.model,
                                     "firmwareVersion": dongle.firmwareVersion
-                                }
-                            }).catch(function () { return undefined; })];
-                    case 2:
-                        response = _a.sent();
+                                },
+                                _c)])).catch(function () { return undefined; })];
+                    case 3:
+                        response = _f.sent();
                         if (!response) {
                             return [2 /*return*/];
                         }
                         switch (response.status) {
                             case "OK": break;
                             case "NOT REGISTERED":
-                                sipContactsMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
-                                dbSemasim.removeUaSim(dongle.sim.imsi);
+                                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
+                                dbSemasim.removeUaSim(imsi);
                                 break;
                             case "REPLACE PASSWORD":
-                                sipContactsMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
-                                dbSemasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
-                                dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(dongle.sim.imsi, replacementPassword);
+                                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
+                                dbSemasim.removeUaSim(imsi, response.allowedUas);
+                                dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, replacementPassword);
+                                break;
                         }
                         return [2 /*return*/];
                 }

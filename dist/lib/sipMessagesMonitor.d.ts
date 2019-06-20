@@ -9,7 +9,7 @@ export declare const evtMessage: SyncEvent<{
     exactSendDate: Date;
     appendPromotionalMessage: boolean;
 }>;
-export declare function sendMessage(contact: types.Contact, fromNumber: string, headers: Record<string, string>, text: string, fromNumberSimName?: string): Promise<void>;
+export declare function sendMessage(contact: types.Contact, fromNumber: string, headers: Record<string, string>): Promise<void>;
 export declare namespace sendMessage {
     const evtOutgoingMessage: SyncEvent<{
         sipRequest: sipLibrary.Request;

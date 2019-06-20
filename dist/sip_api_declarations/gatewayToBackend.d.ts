@@ -6,14 +6,15 @@ export declare namespace getDongle {
     };
     type Response = dcTypes.Dongle | undefined;
 }
-export declare namespace getDongleAndSipPassword {
-    const methodName = "getUsableDongleAndSipPassword";
+export declare namespace getDongleSipPasswordAndTowardSimEncryptKeyStr {
+    const methodName = "getDongleSipPasswordAndTowardSimEncryptKeyStr";
     type Params = {
         imsi: string;
     };
     type Response = {
         dongle: dcTypes.Dongle.Usable;
         sipPassword: string;
+        towardSimEncryptKeyStr: string;
     } | undefined;
 }
 export declare namespace unlockSim {

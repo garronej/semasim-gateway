@@ -235,7 +235,8 @@ function program_action_uninstall() {
 }
 function update() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, e_2, _b, e_3, _c, getVersion, _d, version, versionStatus, _module_dir_path, releases_index, url, _loop_1, _e, _f, db_path, _working_directory_path_1, _g, _h, name, _j, _k, name, reinstall_script_path;
+        var getVersion, _a, version, versionStatus, _module_dir_path, releases_index, url, _loop_1, _b, _c, db_path, _working_directory_path_1, _d, _e, name, _f, _g, name, reinstall_script_path;
+        var e_1, _h, e_2, _j, e_3, _k;
         return __generator(this, function (_l) {
             switch (_l.label) {
                 case 0:
@@ -245,7 +246,7 @@ function update() {
                     getVersion = (_l.sent()).getVersion;
                     return [4 /*yield*/, getVersion()];
                 case 2:
-                    _d = _l.sent(), version = _d.value, versionStatus = _d.status;
+                    _a = _l.sent(), version = _a.value, versionStatus = _a.status;
                     if (getEnv() === "DEV") {
                         console.log({ versionStatus: versionStatus });
                         return [2 /*return*/, "LAUNCH"];
@@ -277,15 +278,15 @@ function update() {
                         }
                     };
                     try {
-                        for (_e = __values([exports.semasim_db_path, exports.ast_db_path]), _f = _e.next(); !_f.done; _f = _e.next()) {
-                            db_path = _f.value;
+                        for (_b = __values([exports.semasim_db_path, exports.ast_db_path]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                            db_path = _c.value;
                             _loop_1(db_path);
                         }
                     }
                     catch (e_1_1) { e_1 = { error: e_1_1 }; }
                     finally {
                         try {
-                            if (_f && !_f.done && (_a = _e.return)) _a.call(_e);
+                            if (_c && !_c.done && (_h = _b.return)) _h.call(_b);
                         }
                         finally { if (e_1) throw e_1.error; }
                     }
@@ -293,8 +294,8 @@ function update() {
                     scriptLib.execSyncTrace("chown -R " + exports.unix_user + ":" + exports.unix_user + " " + _working_directory_path_1);
                     scriptLib.fs_move("MOVE", exports.working_directory_path, _working_directory_path_1, "asterisk/etc");
                     try {
-                        for (_g = __values(scriptLib.fs_ls(_working_directory_path_1)), _h = _g.next(); !_h.done; _h = _g.next()) {
-                            name = _h.value;
+                        for (_d = __values(scriptLib.fs_ls(_working_directory_path_1)), _e = _d.next(); !_e.done; _e = _d.next()) {
+                            name = _e.value;
                             if (name === path.basename(exports.dongle_dir_path)) {
                                 continue;
                             }
@@ -304,20 +305,20 @@ function update() {
                     catch (e_2_1) { e_2 = { error: e_2_1 }; }
                     finally {
                         try {
-                            if (_h && !_h.done && (_b = _g.return)) _b.call(_g);
+                            if (_e && !_e.done && (_j = _d.return)) _j.call(_d);
                         }
                         finally { if (e_2) throw e_2.error; }
                     }
                     try {
-                        for (_j = __values(__spread(to_distribute_rel_paths, ["node_modules", "node"])), _k = _j.next(); !_k.done; _k = _j.next()) {
-                            name = _k.value;
+                        for (_f = __values(__spread(to_distribute_rel_paths, ["node_modules", "node"])), _g = _f.next(); !_g.done; _g = _f.next()) {
+                            name = _g.value;
                             scriptLib.fs_move("MOVE", _module_dir_path, exports.module_dir_path, name);
                         }
                     }
                     catch (e_3_1) { e_3 = { error: e_3_1 }; }
                     finally {
                         try {
-                            if (_k && !_k.done && (_c = _j.return)) _c.call(_j);
+                            if (_g && !_g.done && (_k = _f.return)) _k.call(_f);
                         }
                         finally { if (e_3) throw e_3.error; }
                     }
@@ -373,7 +374,8 @@ function update() {
 exports.update = update;
 function program_action_release() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, e_5, _b, e_6, _c, tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, Version, last_version, previous_release_dir_path, _d, _e, name, _f, _g, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
+        var tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, Version, last_version, previous_release_dir_path, _a, _b, name, _c, _d, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
+        var e_4, _e, e_5, _f, e_6, _g;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0:
@@ -402,7 +404,7 @@ function program_action_release() {
                     catch (e_4_1) { e_4 = { error: e_4_1 }; }
                     finally {
                         try {
-                            if (to_distribute_rel_paths_1_1 && !to_distribute_rel_paths_1_1.done && (_a = to_distribute_rel_paths_1.return)) _a.call(to_distribute_rel_paths_1);
+                            if (to_distribute_rel_paths_1_1 && !to_distribute_rel_paths_1_1.done && (_e = to_distribute_rel_paths_1.return)) _e.call(to_distribute_rel_paths_1);
                         }
                         finally { if (e_4) throw e_4.error; }
                     }
@@ -448,15 +450,15 @@ function program_action_release() {
                     if (!node_modules_need_update) {
                         console.log("node_modules haven't change since last release");
                         try {
-                            for (_d = __values(["node_modules", "node", deps_digest_filename]), _e = _d.next(); !_e.done; _e = _d.next()) {
-                                name = _e.value;
+                            for (_a = __values(["node_modules", "node", deps_digest_filename]), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                name = _b.value;
                                 scriptLib.execSyncTrace("mv " + name + " " + _module_dir_path, { "cwd": previous_release_dir_path });
                             }
                         }
                         catch (e_5_1) { e_5 = { error: e_5_1 }; }
                         finally {
                             try {
-                                if (_e && !_e.done && (_b = _d.return)) _b.call(_d);
+                                if (_b && !_b.done && (_f = _a.return)) _f.call(_a);
                             }
                             finally { if (e_5) throw e_5.error; }
                         }
@@ -470,15 +472,15 @@ function program_action_release() {
                         ].join(" "), { "cwd": _module_dir_path });
                         scriptLib.execSyncTrace("rm package-lock.json", { "cwd": _module_dir_path });
                         try {
-                            for (_f = __values(["@types", "typescript"]), _g = _f.next(); !_g.done; _g = _f.next()) {
-                                name = _g.value;
+                            for (_c = __values(["@types", "typescript"]), _d = _c.next(); !_d.done; _d = _c.next()) {
+                                name = _d.value;
                                 scriptLib.execSyncTrace("rm -r " + path.join(_node_modules_path, name));
                             }
                         }
                         catch (e_6_1) { e_6 = { error: e_6_1 }; }
                         finally {
                             try {
-                                if (_g && !_g.done && (_c = _f.return)) _c.call(_f);
+                                if (_d && !_d.done && (_g = _c.return)) _g.call(_c);
                             }
                             finally { if (e_6) throw e_6.error; }
                         }
@@ -833,29 +835,30 @@ function fetch_asterisk_and_dongle(dest_dir_path) {
 }
 function installAsteriskPrereq() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_8, _a, _b, _c, package_name, e_8_1, debArch, package_name, dl_path, file_path;
+        var _a, _b, package_name, e_8_1, debArch, package_name, dl_path, file_path;
+        var e_8, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
                     _d.trys.push([0, 5, 6, 7]);
-                    _b = __values([
+                    _a = __values([
                         "libuuid1",
                         "libjansson4",
                         "libxml2",
                         "libsqlite3-0",
                         "unixodbc",
                         "libsrtp0"
-                    ]), _c = _b.next();
+                    ]), _b = _a.next();
                     _d.label = 1;
                 case 1:
-                    if (!!_c.done) return [3 /*break*/, 4];
-                    package_name = _c.value;
+                    if (!!_b.done) return [3 /*break*/, 4];
+                    package_name = _b.value;
                     return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
                 case 2:
                     _d.sent();
                     _d.label = 3;
                 case 3:
-                    _c = _b.next();
+                    _b = _a.next();
                     return [3 /*break*/, 1];
                 case 4: return [3 /*break*/, 7];
                 case 5:
@@ -864,7 +867,7 @@ function installAsteriskPrereq() {
                     return [3 /*break*/, 7];
                 case 6:
                     try {
-                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
                     }
                     finally { if (e_8) throw e_8.error; }
                     return [7 /*endfinally*/];

@@ -10,6 +10,11 @@ export declare namespace beforeExit {
 export declare function launch(): Promise<void>;
 /** Only for test purpose */
 export declare function flush(): Promise<void>;
+export declare function getTowardSimKeys(imsi: string): Promise<{
+    encryptKeyStr: string;
+    decryptKeyStr: string;
+} | undefined>;
+export declare function setTowardSimKeys(imsi: string, encryptKeyStr: string, decryptKeyStr: string): Promise<void>;
 export declare function addUaSim(uaSim: types.UaSim): Promise<{
     isUaCreatedOrUpdated: boolean;
     isFirstUaForSim: boolean;
@@ -90,7 +95,7 @@ export declare namespace getUnsentMessagesTowardGsm {
      *
     */
     function onSent(messageTowardGsm_id: number, messageTowardGsm: types.MessageTowardGsm, sendDate: Date | null): Promise<void>;
-    function onStatusReport(messageTowardGsm_id: number, messageTowardGsm: types.MessageTowardGsm, statusReport: dcTypes.StatusReport): Promise<void>;
+    function onStatusReport(messageTowardGsm: types.MessageTowardGsm, statusReport: dcTypes.StatusReport): Promise<void>;
 }
 /**
  *

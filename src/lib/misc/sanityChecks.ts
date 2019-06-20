@@ -30,6 +30,15 @@ export namespace sanityChecks {
     export function ua(o: types.Ua): boolean {
 
         return (
+            uaWithoutUserKeys(o) &&
+            typeof o.towardUserEncryptKeyStr === "string"
+        );
+
+    }
+
+    export function uaWithoutUserKeys(o: Omit<types.Ua, "towardUserEncryptKeyStr">): boolean {
+
+        return (
             o instanceof Object &&
             typeof o.instance === "string" &&
             isValidEmail(o.userEmail, "MUST BE LOWER CASE") &&

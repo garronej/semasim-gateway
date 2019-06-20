@@ -1,7 +1,12 @@
 import * as sqliteCustom from "sqlite-custom";
 import * as types from "./types";
-import * as md5 from "md5";
 import * as i from "../bin/installer";
+/*
+import * as logger from "logger";
+const debug = logger.debugFactory();
+*/
+import * as crypto from "crypto";
+
 
 import { sipCallContext } from "./voiceCallBridge";
 import { dialplanContext as messagesDialplanContext} from "./sipMessagesMonitor";
@@ -27,6 +32,42 @@ export async function launch(): Promise<void> {
     await api.query("DELETE FROM ps_contacts");
 
     query= api.query;
+
+    /*
+    //TODO: Fix db related crash witnessed on pi zero
+
+    query = async (...args)=>{
+
+        while(true){
+
+            let out: any;
+
+            try{
+
+                out = await api.query.apply(api, args);
+
+            }catch(error){
+
+                debug([
+                    "",
+                    "",
+                    error.stack,
+                    "",
+                    ""
+                ].join("\n"));
+
+                continue;
+            }
+
+
+            return out;
+
+
+        }
+
+    };
+    */
+
     esc = api.esc;
     buildInsertQuery = api.buildInsertQuery;
     buildInsertOrUpdateQueries= api.buildInsertOrUpdateQueries;
@@ -62,7 +103,7 @@ export async function deleteContact(contact: types.Contact) {
 
 /** Helper function to generate a sip password */
 export function generateSipEndpointPassword(): string{
-    return md5(`${Math.random()}`);
+    return crypto.randomBytes(16).toString("hex");
 }
 
 /**

@@ -2,16 +2,18 @@ import * as assert from "assert";
 import * as db from "../lib/dbSemasim";
 import * as types from "../lib/types";
 import { types as dcTypes } from "chan-dongle-extended-client";
+import * as crypto from "crypto";
 
 import * as ttTesting from "transfer-tools/dist/lib/testing";
 import assertSame = ttTesting.assertSame;
 import * as sqliteCustom from "sqlite-custom";
 
-export const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`): types.Ua => ({
+const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`): types.Ua => ({
     "instance": `"<urn:uuid:${ttTesting.genHexStr(30)}>"`,
     "platform": Date.now() % 2 ? "android" : "iOS",
     "pushToken": ttTesting.genHexStr(60),
     "userEmail": email,
+    "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary"),
     "messagesEnabled": true
 });
 
@@ -186,13 +188,13 @@ async function t2() {
                 mts,
                 {
                     "fromNumber": messageTowardGsm.toNumber,
-                    "text": sendDate?checkMark:crossMark,
                     "date": mts.date,
                     "isFromDongle": false,
                     "bundledData": {
                         "type": "SEND REPORT",
                         "messageTowardGsm": messageTowardGsm,
-                        "sendDate": sendDate
+                        "sendDate": sendDate,
+                        "text": sendDate?checkMark:crossMark
                     }
                 }
             );
@@ -232,10 +234,11 @@ async function t2() {
 
         await onStatusReport(statusReport);
 
-        let bundledData: types.BundledData.ServerToClient.StatusReport = {
+        const bundledData: types.BundledData.ServerToClient.StatusReport = {
             "type": "STATUS REPORT",
             messageTowardGsm,
-            statusReport
+            statusReport,
+            "text": statusReport.isDelivered ? `${checkMark}${checkMark}` : crossMark,
         };
 
         let __i=0;
@@ -252,10 +255,9 @@ async function t2() {
                 mts,
                 {
                     "fromNumber": messageTowardGsm.toNumber,
-                    "text": statusReport.isDelivered ? `${checkMark}${checkMark}` : crossMark,
                     "date": mts.date,
                     "isFromDongle": false,
-                    "bundledData": bundledData
+                    bundledData
                 }
             );
 
@@ -291,10 +293,12 @@ async function t2() {
                 mts,
                 {
                     "fromNumber": messageTowardGsm.toNumber,
-                    "text": `Me: ${messageTowardGsm.text}`,
                     "date": mts.date,
                     "isFromDongle": false,
-                    "bundledData": bundledData
+                    "bundledData": { 
+                        ...bundledData, 
+                        "text": `Me: ${messageTowardGsm.text}` 
+                    }
                 }
             );
 
@@ -324,10 +328,12 @@ async function t2() {
                 mts,
                 {
                     "fromNumber": messageTowardGsm.toNumber,
-                    "text": `${messageTowardGsm.uaSim.ua.userEmail}: ${messageTowardGsm.text}`,
                     "date": mts.date,
                     "isFromDongle": false,
-                    "bundledData": bundledData
+                    "bundledData": { 
+                        ...bundledData, 
+                        "text": `${messageTowardGsm.uaSim.ua.userEmail}: ${messageTowardGsm.text}` 
+                    }
                 }
             );
 
@@ -384,21 +390,21 @@ async function t3() {
 
         let pduDate = new Date();
 
-        let messageTowardSip: types.MessageTowardSip = {
+        const messageTowardSip: types.MessageTowardSip = {
             "bundledData": {
                 "type": "MESSAGE",
-                "pduDate": pduDate
+                "pduDate": pduDate,
+                "text": ttTesting.genUtf8Str(400)
             },
             "date": pduDate,
             "fromNumber": ttTesting.genDigits(10),
             "isFromDongle": true,
-            "text": ttTesting.genUtf8Str(400)
         };
 
         assertSame(
             await db.onDongleMessage(
                 messageTowardSip.fromNumber,
-                messageTowardSip.text,
+                messageTowardSip.bundledData.text,
                 messageTowardSip.date,
                 imsi
             ),
@@ -508,6 +514,7 @@ async function t4() {
             "platform": row["platform"],
             "pushToken": row["push_token"],
             "software": row["software"],
+            "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
             "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
         };
 
@@ -580,12 +587,12 @@ async function t5() {
             {
                 "bundledData": {
                     "type": "MISSED CALL",
-                    "date": messagesTowardSip.date
+                    "date": messagesTowardSip.date,
+                    "text": "Missed call"
                 },
                 "date": messagesTowardSip.date,
                 "fromNumber": missedCallNumber,
-                "isFromDongle": false,
-                "text": "Missed call"
+                "isFromDongle": false
             }
         );
 
@@ -648,11 +655,11 @@ async function t6() {
                 "bundledData": {
                     "type": "CALL ANSWERED BY",
                     "date": messagesTowardSip.date,
-                    "ua": answeringUa
+                    "ua": answeringUa,
+                    "text": `Call answered by ${answeringUa.userEmail}`
                 },
                 "date": messagesTowardSip.date,
                 "fromNumber": number,
-                "text": `Call answered by ${answeringUa.userEmail}`,
                 "isFromDongle": false
             }
         );

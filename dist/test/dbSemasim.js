@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -67,16 +78,18 @@ var __spread = (this && this.__spread) || function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var assert = require("assert");
 var db = require("../lib/dbSemasim");
+var crypto = require("crypto");
 var ttTesting = require("transfer-tools/dist/lib/testing");
 var assertSame = ttTesting.assertSame;
 var sqliteCustom = require("sqlite-custom");
-exports.generateUa = function (email) {
+var generateUa = function (email) {
     if (email === void 0) { email = ttTesting.genHexStr(10) + "@foo.com"; }
     return ({
         "instance": "\"<urn:uuid:" + ttTesting.genHexStr(30) + ">\"",
         "platform": Date.now() % 2 ? "android" : "iOS",
         "pushToken": ttTesting.genHexStr(60),
         "userEmail": email,
+        "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary"),
         "messagesEnabled": true
     });
 };
@@ -120,7 +133,8 @@ function testDbSemasim() {
 exports.testDbSemasim = testDbSemasim;
 function t1() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, uaSim, _b, _c, _d, _e, imsi2, _f, _g, _h;
+        var uaSim, _a, _b, _c, _d, imsi2, _e, _f, _g;
+        var _h;
         return __generator(this, function (_j) {
             switch (_j.label) {
                 case 0: return [4 /*yield*/, db.flush()];
@@ -128,49 +142,49 @@ function t1() {
                     _j.sent();
                     uaSim = {
                         "imsi": ttTesting.genDigits(15),
-                        "ua": exports.generateUa()
+                        "ua": generateUa()
                     };
-                    _b = assertSame;
+                    _a = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 2:
-                    _b.apply(void 0, [_j.sent(),
+                    _a.apply(void 0, [_j.sent(),
                         {}]);
-                    _c = assertSame;
+                    _b = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 3:
-                    _c.apply(void 0, [_j.sent(),
+                    _b.apply(void 0, [_j.sent(),
                         { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true }]);
-                    _d = assertSame;
+                    _c = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 4:
-                    _d.apply(void 0, [_j.sent(),
+                    _c.apply(void 0, [_j.sent(),
                         { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false }]);
                     uaSim.ua.pushToken = ttTesting.genHexStr(60);
-                    _e = assertSame;
+                    _d = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 5:
-                    _e.apply(void 0, [_j.sent(),
+                    _d.apply(void 0, [_j.sent(),
                         { "isFirstUaForSim": false, "isUaCreatedOrUpdated": true }]);
                     imsi2 = "123456789123456";
-                    _f = assertSame;
+                    _e = assertSame;
                     return [4 /*yield*/, db.addUaSim({
                             "imsi": imsi2,
                             "ua": uaSim.ua
                         })];
                 case 6:
-                    _f.apply(void 0, [_j.sent(),
+                    _e.apply(void 0, [_j.sent(),
                         { "isFirstUaForSim": true, "isUaCreatedOrUpdated": false }]);
-                    _g = assertSame;
+                    _f = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 7:
-                    _g.apply(void 0, [_j.sent(), (_a = {},
-                            _a[uaSim.imsi] = new Date(0),
-                            _a[imsi2] = new Date(0),
-                            _a)]);
-                    _h = assertSame;
+                    _f.apply(void 0, [_j.sent(), (_h = {},
+                            _h[uaSim.imsi] = new Date(0),
+                            _h[imsi2] = new Date(0),
+                            _h)]);
+                    _g = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardGsm(uaSim.imsi)];
                 case 8:
-                    _h.apply(void 0, [_j.sent(),
+                    _g.apply(void 0, [_j.sent(),
                         []]);
                     console.log("ADD UA PASS");
                     return [2 /*return*/];
@@ -180,7 +194,8 @@ function t1() {
 }
 function t2() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, imsi, email, messagesTowardGsm, uas, i, ua, _b, sendingUa, i, message, _c, checkMark, crossMark, _loop_1;
+        var imsi, email, messagesTowardGsm, uas, i, ua, _a, sendingUa, i, message, _b, checkMark, crossMark, _loop_1;
+        var _c;
         var _this = this;
         return __generator(this, function (_d) {
             switch (_d.label) {
@@ -195,11 +210,11 @@ function t2() {
                     _d.label = 2;
                 case 2:
                     if (!(i < 10)) return [3 /*break*/, 5];
-                    ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-                    _b = assertSame;
+                    ua = generateUa((i % 4 === 0) ? email : undefined);
+                    _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _b.apply(void 0, [_d.sent(),
+                    _a.apply(void 0, [_d.sent(),
                         { "isFirstUaForSim": i === 0, "isUaCreatedOrUpdated": true }]);
                     uas.push(ua);
                     _d.label = 4;
@@ -231,27 +246,28 @@ function t2() {
                     i++;
                     return [3 /*break*/, 6];
                 case 9:
-                    _c = assertSame;
+                    _b = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 10:
-                    _c.apply(void 0, [_d.sent(), (_a = {},
-                            _a[imsi] = new Date(0),
-                            _a)]);
+                    _b.apply(void 0, [_d.sent(), (_c = {},
+                            _c[imsi] = new Date(0),
+                            _c)]);
                     checkMark = Buffer.from("e29c94", "hex").toString("utf8");
                     crossMark = Buffer.from("e29d8c", "hex").toString("utf8");
                     _loop_1 = function () {
-                        var e_1, _a, e_2, _b, _c, _d, messageTowardGsm, _e, onSent, onStatusReport, sendDate, statusReport, bundledData, __i, __in, _f, _g, ua, o, _h, _j, mts, setSent, e_1_1, _k, _l, ua, o, _m, _o, mts, setSent, e_2_1;
+                        var _a, _b, messageTowardGsm, _c, onSent, onStatusReport, sendDate, statusReport, bundledData, __i, __in, _d, _e, ua, o, _f, _g, mts, setSent, e_1_1, _h, _j, ua, o, _k, _l, mts, setSent, e_2_1;
+                        var e_1, _m, e_2, _o;
                         return __generator(this, function (_p) {
                             switch (_p.label) {
                                 case 0:
-                                    _c = assertSame;
+                                    _a = assertSame;
                                     return [4 /*yield*/, db.getUnsentMessagesTowardGsm(imsi)];
                                 case 1:
-                                    _c.apply(void 0, [(_p.sent()).map(function (v) { return v[0]; }),
+                                    _a.apply(void 0, [(_p.sent()).map(function (v) { return v[0]; }),
                                         messagesTowardGsm]);
                                     return [4 /*yield*/, db.getUnsentMessagesTowardGsm(imsi)];
                                 case 2:
-                                    _d = __read.apply(void 0, [(_p.sent())[0], 2]), messageTowardGsm = _d[0], _e = _d[1], onSent = _e.onSent, onStatusReport = _e.onStatusReport;
+                                    _b = __read.apply(void 0, [(_p.sent())[0], 2]), messageTowardGsm = _b[0], _c = _b[1], onSent = _c.onSent, onStatusReport = _c.onStatusReport;
                                     assertSame(messageTowardGsm, messagesTowardGsm[0]);
                                     sendDate = (messagesTowardGsm.length % 3 === 0) ? null : new Date();
                                     return [4 /*yield*/, onSent(sendDate)];
@@ -269,13 +285,13 @@ function t2() {
                                                         _a = __read(o, 1), _b = __read(_a[0], 2), mts = _b[0], setSent = _b[1];
                                                         assertSame(mts, {
                                                             "fromNumber": messageTowardGsm.toNumber,
-                                                            "text": sendDate ? checkMark : crossMark,
                                                             "date": mts.date,
                                                             "isFromDongle": false,
                                                             "bundledData": {
                                                                 "type": "SEND REPORT",
                                                                 "messageTowardGsm": messageTowardGsm,
-                                                                "sendDate": sendDate
+                                                                "sendDate": sendDate,
+                                                                "text": sendDate ? checkMark : crossMark
                                                             }
                                                         });
                                                         return [4 /*yield*/, setSent()];
@@ -290,6 +306,7 @@ function t2() {
                                     if (!sendDate) {
                                         return [2 /*return*/, "continue"];
                                     }
+                                    statusReport = void 0;
                                     if (messagesTowardGsm.length % 3) {
                                         statusReport = {
                                             "dischargeDate": new Date(),
@@ -314,7 +331,8 @@ function t2() {
                                     bundledData = {
                                         "type": "STATUS REPORT",
                                         messageTowardGsm: messageTowardGsm,
-                                        statusReport: statusReport
+                                        statusReport: statusReport,
+                                        "text": statusReport.isDelivered ? "" + checkMark + checkMark : crossMark,
                                     };
                                     __i = 0;
                                     return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
@@ -328,10 +346,9 @@ function t2() {
                                                         _a = __read(o, 1), _b = __read(_a[0], 2), mts = _b[0], setSent = _b[1];
                                                         assertSame(mts, {
                                                             "fromNumber": messageTowardGsm.toNumber,
-                                                            "text": statusReport.isDelivered ? "" + checkMark + checkMark : crossMark,
                                                             "date": mts.date,
                                                             "isFromDongle": false,
-                                                            "bundledData": bundledData
+                                                            bundledData: bundledData
                                                         });
                                                         return [4 /*yield*/, setSent()];
                                                     case 2:
@@ -349,31 +366,30 @@ function t2() {
                                     _p.label = 7;
                                 case 7:
                                     _p.trys.push([7, 13, 14, 15]);
-                                    _f = __values(uas.filter(function (ua) { return (ua.userEmail === messageTowardGsm.uaSim.ua.userEmail &&
-                                        ua.instance !== messageTowardGsm.uaSim.ua.instance); })), _g = _f.next();
+                                    _d = (e_1 = void 0, __values(uas.filter(function (ua) { return (ua.userEmail === messageTowardGsm.uaSim.ua.userEmail &&
+                                        ua.instance !== messageTowardGsm.uaSim.ua.instance); }))), _e = _d.next();
                                     _p.label = 8;
                                 case 8:
-                                    if (!!_g.done) return [3 /*break*/, 12];
-                                    ua = _g.value;
+                                    if (!!_e.done) return [3 /*break*/, 12];
+                                    ua = _e.value;
                                     __in = true;
                                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ ua: ua, imsi: imsi })];
                                 case 9:
                                     o = _p.sent();
                                     assertSame(o.length, 1);
-                                    _h = __read(o, 1), _j = __read(_h[0], 2), mts = _j[0], setSent = _j[1];
+                                    _f = __read(o, 1), _g = __read(_f[0], 2), mts = _g[0], setSent = _g[1];
                                     assertSame(mts, {
                                         "fromNumber": messageTowardGsm.toNumber,
-                                        "text": "Me: " + messageTowardGsm.text,
                                         "date": mts.date,
                                         "isFromDongle": false,
-                                        "bundledData": bundledData
+                                        "bundledData": __assign({}, bundledData, { "text": "Me: " + messageTowardGsm.text })
                                     });
                                     return [4 /*yield*/, setSent()];
                                 case 10:
                                     _p.sent();
                                     _p.label = 11;
                                 case 11:
-                                    _g = _f.next();
+                                    _e = _d.next();
                                     return [3 /*break*/, 8];
                                 case 12: return [3 /*break*/, 15];
                                 case 13:
@@ -382,7 +398,7 @@ function t2() {
                                     return [3 /*break*/, 15];
                                 case 14:
                                     try {
-                                        if (_g && !_g.done && (_a = _f.return)) _a.call(_f);
+                                        if (_e && !_e.done && (_m = _d.return)) _m.call(_d);
                                     }
                                     finally { if (e_1) throw e_1.error; }
                                     return [7 /*endfinally*/];
@@ -392,30 +408,29 @@ function t2() {
                                     _p.label = 16;
                                 case 16:
                                     _p.trys.push([16, 22, 23, 24]);
-                                    _k = __values(uas.filter(function (ua) { return ua.userEmail !== messageTowardGsm.uaSim.ua.userEmail; })), _l = _k.next();
+                                    _h = (e_2 = void 0, __values(uas.filter(function (ua) { return ua.userEmail !== messageTowardGsm.uaSim.ua.userEmail; }))), _j = _h.next();
                                     _p.label = 17;
                                 case 17:
-                                    if (!!_l.done) return [3 /*break*/, 21];
-                                    ua = _l.value;
+                                    if (!!_j.done) return [3 /*break*/, 21];
+                                    ua = _j.value;
                                     __in = true;
                                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ ua: ua, imsi: imsi })];
                                 case 18:
                                     o = _p.sent();
                                     assertSame(o.length, 1);
-                                    _m = __read(o, 1), _o = __read(_m[0], 2), mts = _o[0], setSent = _o[1];
+                                    _k = __read(o, 1), _l = __read(_k[0], 2), mts = _l[0], setSent = _l[1];
                                     assertSame(mts, {
                                         "fromNumber": messageTowardGsm.toNumber,
-                                        "text": messageTowardGsm.uaSim.ua.userEmail + ": " + messageTowardGsm.text,
                                         "date": mts.date,
                                         "isFromDongle": false,
-                                        "bundledData": bundledData
+                                        "bundledData": __assign({}, bundledData, { "text": messageTowardGsm.uaSim.ua.userEmail + ": " + messageTowardGsm.text })
                                     });
                                     return [4 /*yield*/, setSent()];
                                 case 19:
                                     _p.sent();
                                     _p.label = 20;
                                 case 20:
-                                    _l = _k.next();
+                                    _j = _h.next();
                                     return [3 /*break*/, 17];
                                 case 21: return [3 /*break*/, 24];
                                 case 22:
@@ -424,7 +439,7 @@ function t2() {
                                     return [3 /*break*/, 24];
                                 case 23:
                                     try {
-                                        if (_l && !_l.done && (_b = _k.return)) _b.call(_k);
+                                        if (_j && !_j.done && (_o = _h.return)) _o.call(_h);
                                     }
                                     finally { if (e_2) throw e_2.error; }
                                     return [7 /*endfinally*/];
@@ -451,16 +466,17 @@ function t2() {
 }
 function t3() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, e_3, _b, _c, imsi, email, uas, i, ua, _d, messagesTowardSipSrc, i, pduDate, messageTowardSip, _e, _f, uas_1, uas_1_1, ua, messagesTowardSip, _g, _h, _j, messageTowardSip, onSent, e_3_1;
+        var _a, imsi, email, uas, i, ua, _b, messagesTowardSipSrc, i, pduDate, messageTowardSip, _c, _d, uas_1, uas_1_1, ua, messagesTowardSip, _e, _f, _g, messageTowardSip, onSent, e_3_1;
+        var _h, e_3, _j;
         return __generator(this, function (_k) {
             switch (_k.label) {
                 case 0: return [4 /*yield*/, db.flush()];
                 case 1:
                     _k.sent();
-                    _c = assertSame;
+                    _a = assertSame;
                     return [4 /*yield*/, db.onDongleMessage(ttTesting.genDigits(10), ttTesting.genUtf8Str(100), new Date(), ttTesting.genDigits(15))];
                 case 2:
-                    _c.apply(void 0, [_k.sent(),
+                    _a.apply(void 0, [_k.sent(),
                         false]);
                     imsi = ttTesting.genDigits(15);
                     email = ttTesting.genHexStr(10) + "@foo.com";
@@ -469,11 +485,11 @@ function t3() {
                     _k.label = 3;
                 case 3:
                     if (!(i < 12)) return [3 /*break*/, 6];
-                    ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-                    _d = assertSame;
+                    ua = generateUa((i % 4 === 0) ? email : undefined);
+                    _b = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 4:
-                    _d.apply(void 0, [_k.sent(),
+                    _b.apply(void 0, [_k.sent(),
                         {
                             "isFirstUaForSim": i === 0,
                             "isUaCreatedOrUpdated": true
@@ -493,17 +509,17 @@ function t3() {
                     messageTowardSip = {
                         "bundledData": {
                             "type": "MESSAGE",
-                            "pduDate": pduDate
+                            "pduDate": pduDate,
+                            "text": ttTesting.genUtf8Str(400)
                         },
                         "date": pduDate,
                         "fromNumber": ttTesting.genDigits(10),
                         "isFromDongle": true,
-                        "text": ttTesting.genUtf8Str(400)
                     };
-                    _e = assertSame;
-                    return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.text, messageTowardSip.date, imsi)];
+                    _c = assertSame;
+                    return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.bundledData.text, messageTowardSip.date, imsi)];
                 case 8:
-                    _e.apply(void 0, [_k.sent(),
+                    _c.apply(void 0, [_k.sent(),
                         true]);
                     messagesTowardSipSrc.push(messageTowardSip);
                     _k.label = 9;
@@ -511,12 +527,12 @@ function t3() {
                     i++;
                     return [3 /*break*/, 7];
                 case 10:
-                    _f = assertSame;
+                    _d = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 11:
-                    _f.apply(void 0, [_k.sent(), (_a = {},
-                            _a[imsi] = messagesTowardSipSrc[messagesTowardSipSrc.length - 1].date,
-                            _a)]);
+                    _d.apply(void 0, [_k.sent(), (_h = {},
+                            _h[imsi] = messagesTowardSipSrc[messagesTowardSipSrc.length - 1].date,
+                            _h)]);
                     _k.label = 12;
                 case 12:
                     _k.trys.push([12, 21, 22, 23]);
@@ -526,10 +542,10 @@ function t3() {
                     if (!!uas_1_1.done) return [3 /*break*/, 20];
                     ua = uas_1_1.value;
                     messagesTowardSip = __spread(messagesTowardSipSrc);
-                    _g = assertSame;
+                    _e = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 14:
-                    _g.apply(void 0, [(_k.sent())
+                    _e.apply(void 0, [(_k.sent())
                             .map(function (v) { return v[0]; }),
                         messagesTowardSip]);
                     _k.label = 15;
@@ -538,7 +554,7 @@ function t3() {
                     if (!(_k.sent()).length) return [3 /*break*/, 19];
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 17:
-                    _h = __read.apply(void 0, [_k.sent(), 1]), _j = __read(_h[0], 2), messageTowardSip = _j[0], onSent = _j[1];
+                    _f = __read.apply(void 0, [_k.sent(), 1]), _g = __read(_f[0], 2), messageTowardSip = _g[0], onSent = _g[1];
                     assertSame(messageTowardSip, messagesTowardSip[0]);
                     return [4 /*yield*/, onSent()];
                 case 18:
@@ -555,7 +571,7 @@ function t3() {
                     return [3 /*break*/, 23];
                 case 22:
                     try {
-                        if (uas_1_1 && !uas_1_1.done && (_b = uas_1.return)) _b.call(uas_1);
+                        if (uas_1_1 && !uas_1_1.done && (_j = uas_1.return)) _j.call(uas_1);
                     }
                     finally { if (e_3) throw e_3.error; }
                     return [7 /*endfinally*/];
@@ -568,7 +584,8 @@ function t3() {
 }
 function t4() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_4, _a, uaSimExt, _b, imsi, allowedUas, i, ua, _c, remainingUas, notAffectedUas, rows, rows_1, rows_1_1, row, ua;
+        var uaSimExt, _a, imsi, allowedUas, i, ua, _b, remainingUas, notAffectedUas, rows, rows_1, rows_1_1, row, ua;
+        var e_4, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0: return [4 /*yield*/, db.flush()];
@@ -576,12 +593,12 @@ function t4() {
                     _d.sent();
                     uaSimExt = {
                         "imsi": ttTesting.genDigits(15),
-                        "ua": exports.generateUa()
+                        "ua": generateUa()
                     };
-                    _b = assertSame;
+                    _a = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSimExt)];
                 case 2:
-                    _b.apply(void 0, [_d.sent(),
+                    _a.apply(void 0, [_d.sent(),
                         {
                             "isUaCreatedOrUpdated": true,
                             "isFirstUaForSim": true
@@ -592,14 +609,14 @@ function t4() {
                     _d.label = 3;
                 case 3:
                     if (!(i < 15)) return [3 /*break*/, 6];
-                    ua = exports.generateUa();
+                    ua = generateUa();
                     if (allowedUas.length < 10) {
                         allowedUas.push(ua);
                     }
-                    _c = assertSame;
+                    _b = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 4:
-                    _c.apply(void 0, [_d.sent(),
+                    _b.apply(void 0, [_d.sent(),
                         {
                             "isUaCreatedOrUpdated": true,
                             "isFirstUaForSim": allowedUas.length === 1
@@ -630,6 +647,7 @@ function t4() {
                                 "platform": row["platform"],
                                 "pushToken": row["push_token"],
                                 "software": row["software"],
+                                "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
                                 "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
                             };
                             if (row["imsi"] === imsi) {
@@ -643,7 +661,7 @@ function t4() {
                     catch (e_4_1) { e_4 = { error: e_4_1 }; }
                     finally {
                         try {
-                            if (rows_1_1 && !rows_1_1.done && (_a = rows_1.return)) _a.call(rows_1);
+                            if (rows_1_1 && !rows_1_1.done && (_c = rows_1.return)) _c.call(rows_1);
                         }
                         finally { if (e_4) throw e_4.error; }
                     }
@@ -657,7 +675,8 @@ function t4() {
 }
 function t5() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_5, _a, imsi, email, uas, i, ua, _b, missedCallNumber, uas_2, uas_2_1, ua, _c, _d, _e, messagesTowardSip, e_5_1;
+        var imsi, email, uas, i, ua, _a, missedCallNumber, uas_2, uas_2_1, ua, _b, _c, _d, messagesTowardSip, e_5_1;
+        var e_5, _e;
         return __generator(this, function (_f) {
             switch (_f.label) {
                 case 0: return [4 /*yield*/, db.flush()];
@@ -670,11 +689,11 @@ function t5() {
                     _f.label = 2;
                 case 2:
                     if (!(i < 12)) return [3 /*break*/, 5];
-                    ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-                    _b = assertSame;
+                    ua = generateUa((i % 4 === 0) ? email : undefined);
+                    _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _b.apply(void 0, [_f.sent(),
+                    _a.apply(void 0, [_f.sent(),
                         {
                             "isFirstUaForSim": i === 0,
                             "isUaCreatedOrUpdated": true
@@ -697,23 +716,23 @@ function t5() {
                 case 8:
                     if (!!uas_2_1.done) return [3 /*break*/, 12];
                     ua = uas_2_1.value;
-                    _c = assertSame;
+                    _b = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 9:
-                    _c.apply(void 0, [(_f.sent()).length,
+                    _b.apply(void 0, [(_f.sent()).length,
                         1]);
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 10:
-                    _d = __read.apply(void 0, [_f.sent(), 1]), _e = __read(_d[0], 1), messagesTowardSip = _e[0];
+                    _c = __read.apply(void 0, [_f.sent(), 1]), _d = __read(_c[0], 1), messagesTowardSip = _d[0];
                     assertSame(messagesTowardSip, {
                         "bundledData": {
                             "type": "MISSED CALL",
-                            "date": messagesTowardSip.date
+                            "date": messagesTowardSip.date,
+                            "text": "Missed call"
                         },
                         "date": messagesTowardSip.date,
                         "fromNumber": missedCallNumber,
-                        "isFromDongle": false,
-                        "text": "Missed call"
+                        "isFromDongle": false
                     });
                     _f.label = 11;
                 case 11:
@@ -726,7 +745,7 @@ function t5() {
                     return [3 /*break*/, 15];
                 case 14:
                     try {
-                        if (uas_2_1 && !uas_2_1.done && (_a = uas_2.return)) _a.call(uas_2);
+                        if (uas_2_1 && !uas_2_1.done && (_e = uas_2.return)) _e.call(uas_2);
                     }
                     finally { if (e_5) throw e_5.error; }
                     return [7 /*endfinally*/];
@@ -739,7 +758,8 @@ function t5() {
 }
 function t6() {
     return __awaiter(this, void 0, void 0, function () {
-        var e_6, _a, imsi, email, ringingUas, i, ua, _b, answeringUa, number, _c, _d, ua, _e, _f, _g, messagesTowardSip, e_6_1;
+        var imsi, email, ringingUas, i, ua, _a, answeringUa, number, _b, _c, ua, _d, _e, _f, messagesTowardSip, e_6_1;
+        var e_6, _g;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0: return [4 /*yield*/, db.flush()];
@@ -752,11 +772,11 @@ function t6() {
                     _h.label = 2;
                 case 2:
                     if (!(i < 12)) return [3 /*break*/, 5];
-                    ua = exports.generateUa((i % 4 === 0) ? email : undefined);
-                    _b = assertSame;
+                    ua = generateUa((i % 4 === 0) ? email : undefined);
+                    _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _b.apply(void 0, [_h.sent(),
+                    _a.apply(void 0, [_h.sent(),
                         {
                             "isFirstUaForSim": i === 0,
                             "isUaCreatedOrUpdated": true
@@ -775,36 +795,36 @@ function t6() {
                     _h.label = 7;
                 case 7:
                     _h.trys.push([7, 13, 14, 15]);
-                    _c = __values(ringingUas.filter(function (_a) {
+                    _b = __values(ringingUas.filter(function (_a) {
                         var userEmail = _a.userEmail;
                         return userEmail !== answeringUa.userEmail;
-                    })), _d = _c.next();
+                    })), _c = _b.next();
                     _h.label = 8;
                 case 8:
-                    if (!!_d.done) return [3 /*break*/, 12];
-                    ua = _d.value;
-                    _e = assertSame;
+                    if (!!_c.done) return [3 /*break*/, 12];
+                    ua = _c.value;
+                    _d = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 9:
-                    _e.apply(void 0, [(_h.sent()).length,
+                    _d.apply(void 0, [(_h.sent()).length,
                         1]);
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 10:
-                    _f = __read.apply(void 0, [_h.sent(), 1]), _g = __read(_f[0], 1), messagesTowardSip = _g[0];
+                    _e = __read.apply(void 0, [_h.sent(), 1]), _f = __read(_e[0], 1), messagesTowardSip = _f[0];
                     assertSame(messagesTowardSip, {
                         "bundledData": {
                             "type": "CALL ANSWERED BY",
                             "date": messagesTowardSip.date,
-                            "ua": answeringUa
+                            "ua": answeringUa,
+                            "text": "Call answered by " + answeringUa.userEmail
                         },
                         "date": messagesTowardSip.date,
                         "fromNumber": number,
-                        "text": "Call answered by " + answeringUa.userEmail,
                         "isFromDongle": false
                     });
                     _h.label = 11;
                 case 11:
-                    _d = _c.next();
+                    _c = _b.next();
                     return [3 /*break*/, 8];
                 case 12: return [3 /*break*/, 15];
                 case 13:
@@ -813,7 +833,7 @@ function t6() {
                     return [3 /*break*/, 15];
                 case 14:
                     try {
-                        if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                        if (_c && !_c.done && (_g = _b.return)) _g.call(_b);
                     }
                     finally { if (e_6) throw e_6.error; }
                     return [7 /*endfinally*/];

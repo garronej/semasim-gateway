@@ -4,6 +4,7 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./bundledData"));
+__export(require("./RegistrationParams"));
 __export(require("./sanityChecks"));
 __export(require("./sipRouting"));
 __export(require("./misc"));

@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __values = (this && this.__values) || function (o) {
     var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
@@ -165,20 +176,13 @@ function handleAsteriskSocket(asteriskSocket) {
             "path": sipLibrary.stringifyPath(sipRequestRegister.headers.path),
             "uaSim": {
                 imsi: imsi,
-                "ua": {
-                    "instance": aorParams["+sip.instance"],
-                    "userEmail": misc.urlSafeB64.dec((uriParams["enc_email"] ||
-                        aorParams["enc_email"])),
-                    "platform": (function () {
+                "ua": __assign({ "instance": aorParams["+sip.instance"], "platform": (function () {
                         switch (uriParams["pn-type"]) {
                             case "firebase": return "android";
                             case "apple": return "iOS";
                             default: return "web";
                         }
-                    })(),
-                    "pushToken": uriParams["pn-tok"] || "",
-                    "messagesEnabled": !("no_messages" in uriParams)
-                }
+                    })(), "pushToken": uriParams["pn-tok"] || "" }, misc.RegistrationParams.parse(aorParams, uriParams))
             }
         };
         expire = parseInt(sipRequestRegister.headers["expires"]);

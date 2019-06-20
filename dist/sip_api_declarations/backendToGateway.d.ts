@@ -12,6 +12,7 @@ export declare namespace notifySimOnline {
         storageDigest: string;
         password: string;
         replacementPassword: string;
+        towardSimEncryptKeyStr: string;
         simDongle: {
             imei: string;
             isVoiceEnabled: boolean | undefined;
@@ -45,7 +46,7 @@ export declare namespace notifyDongleOffline {
 }
 export declare namespace notifyNewOrUpdatedUa {
     const methodName = "notifyNewOrUpdatedUa";
-    type Params = types.Ua;
+    type Params = Omit<types.Ua, "towardUserEncryptKeyStr">;
     type Response = undefined;
 }
 export declare namespace wakeUpContact {

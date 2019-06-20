@@ -11,6 +11,7 @@ export declare type UaSim = {
 export declare type Ua = {
     instance: string;
     userEmail: string;
+    towardUserEncryptKeyStr: string;
     platform: Ua.Platform;
     pushToken: string;
     messagesEnabled: boolean;
@@ -30,7 +31,6 @@ export declare type MessageTowardSip = {
     bundledData: BundledData.ServerToClient;
     date: Date;
     fromNumber: string;
-    text: string;
 };
 export declare type BundledData = BundledData.ClientToServer | BundledData.ServerToClient;
 export declare namespace BundledData {
@@ -38,27 +38,31 @@ export declare namespace BundledData {
     namespace ClientToServer {
         type Message = {
             type: "MESSAGE";
+            text: string;
             exactSendDate: Date;
-            appendPromotionalMessage?: true;
+            appendPromotionalMessage: boolean;
         };
     }
     type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
     namespace ServerToClient {
-        type Message = {
+        type _Base = {
+            text: string;
+        };
+        type Message = _Base & {
             type: "MESSAGE";
             pduDate: Date;
         };
-        type MmsNotification = {
+        type MmsNotification = _Base & {
             type: "MMS NOTIFICATION";
             pduDate: Date;
             wapPushMessage: string;
         };
-        type SendReport = {
+        type SendReport = _Base & {
             type: "SEND REPORT";
             messageTowardGsm: MessageTowardGsm;
             sendDate: Date | null;
         };
-        type StatusReport = {
+        type StatusReport = _Base & {
             type: "STATUS REPORT";
             messageTowardGsm: MessageTowardGsm;
             statusReport: {
@@ -69,16 +73,16 @@ export declare namespace BundledData {
                 recipient: string;
             };
         };
-        type MissedCall = {
+        type MissedCall = _Base & {
             type: "MISSED CALL";
             date: Date;
         };
-        type CallAnsweredBy = {
+        type CallAnsweredBy = _Base & {
             type: "CALL ANSWERED BY";
             date: Date;
             ua: Ua;
         };
-        type Ringback = {
+        type Ringback = _Base & {
             type: "RINGBACK";
             callId: string;
         };

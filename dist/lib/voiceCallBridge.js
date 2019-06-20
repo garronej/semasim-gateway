@@ -124,7 +124,8 @@ function initAgi() {
 exports.initAgi = initAgi;
 function fromDongle(channel) {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, imsi, dongle, number, evtReachableContact, _loop_1, _b, _c, contact, channels, evtAnsweredOrEnded, dongleChannelName;
+        var imsi, dongle, number, evtReachableContact, _loop_1, _a, _b, contact, channels, evtAnsweredOrEnded, dongleChannelName;
+        var e_1, _c;
         var _this = this;
         return __generator(this, function (_d) {
             switch (_d.label) {
@@ -156,15 +157,15 @@ function fromDongle(channel) {
                         });
                     };
                     try {
-                        for (_b = __values(sipContactsMonitor.getContacts(imsi)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                            contact = _c.value;
+                        for (_a = __values(sipContactsMonitor.getContacts(imsi)), _b = _a.next(); !_b.done; _b = _a.next()) {
+                            contact = _b.value;
                             _loop_1(contact);
                         }
                     }
                     catch (e_1_1) { e_1 = { error: e_1_1 }; }
                     finally {
                         try {
-                            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
                         }
                         finally { if (e_1) throw e_1.error; }
                     }

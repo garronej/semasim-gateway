@@ -16,20 +16,18 @@ export const notifySimOnline = (() => {
 
     return async function (dongle: dcTypes.Dongle.Usable): Promise<void> {
 
-        const password =
-            await dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
-                dongle.sim.imsi
-            );
+        const { imsi } = dongle.sim;
 
         const replacementPassword = dbAsterisk.generateSipEndpointPassword();
 
         const response = await sendRequest<Params, Response>(
             methodName,
             {
-                "imsi": dongle.sim.imsi,
+                imsi,
                 "storageDigest": dongle.sim.storage.digest,
-                password,
+                "password": await dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi),
                 replacementPassword,
+                "towardSimEncryptKeyStr": (await dbSemasim.getTowardSimKeys(imsi))!.encryptKeyStr,
                 "simDongle": {
                     "imei": dongle.imei,
                     "isVoiceEnabled": dongle.isVoiceEnabled,
@@ -48,46 +46,44 @@ export const notifySimOnline = (() => {
             case "OK": break;
             case "NOT REGISTERED":
 
-                sipContactsMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
+                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
 
-                dbSemasim.removeUaSim(dongle.sim.imsi);
+                dbSemasim.removeUaSim(imsi);
 
                 break;
             case "REPLACE PASSWORD":
 
-                sipContactsMonitor.discardContactsRegisteredToSim(dongle.sim.imsi);
+                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
 
-                dbSemasim.removeUaSim(dongle.sim.imsi, response.allowedUas);
+                dbSemasim.removeUaSim(imsi, response.allowedUas);
 
-                dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(
-                    dongle.sim.imsi, replacementPassword
-                );
+                dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, replacementPassword);
 
-
+                break;
         }
 
     };
 
 })();
 
-export const notifyLockedDongle= (()=>{
+export const notifyLockedDongle = (() => {
 
     const methodName = apiDeclaration.notifyLockedDongle.methodName;
     type Params = apiDeclaration.notifyLockedDongle.Params;
     type Response = apiDeclaration.notifyLockedDongle.Response;
 
-    return async function (dongle: dcTypes.Dongle.Locked): Promise<void>{
+    return async function (dongle: dcTypes.Dongle.Locked): Promise<void> {
 
         await sendRequest<Params, Response>(
             methodName,
             dongle
-        ).catch(()=> {});
+        ).catch(() => { });
 
     };
 
 })();
 
-export const notifyDongleOffline= (()=>{
+export const notifyDongleOffline = (() => {
 
     const methodName = apiDeclaration.notifyDongleOffline.methodName;
     type Params = apiDeclaration.notifyDongleOffline.Params;
@@ -97,26 +93,26 @@ export const notifyDongleOffline= (()=>{
 
         await sendRequest<Params, Response>(
             methodName,
-            dcTypes.Dongle.Locked.match(dongle)?
-            { "imei": dongle.imei }:
-            { "imsi": dongle.sim.imsi }
-        ).catch(()=>{});
+            dcTypes.Dongle.Locked.match(dongle) ?
+                { "imei": dongle.imei } :
+                { "imsi": dongle.sim.imsi }
+        ).catch(() => { });
 
     };
 
 })();
 
-export const notifyNewOrUpdatedUa= (()=>{
+export const notifyNewOrUpdatedUa = (() => {
 
     let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
     type Params = apiDeclaration.notifyNewOrUpdatedUa.Params;
     type Response = apiDeclaration.notifyNewOrUpdatedUa.Response;
 
-    return async function(ua: types.Ua): Promise<void> {
+    return async function (ua: types.Ua): Promise<void> {
 
         //TODO: See if we really need to return that promise that never resolve
         await sendRequest<Params, Response>(methodName, ua)
-        .catch(()=> new Promise(()=> {}));
+            .catch(() => new Promise(() => { }));
 
     };
 

@@ -14,7 +14,7 @@ export function beforeExit() {
 }
 
 export namespace beforeExit {
-    export let impl= ()=> Promise.resolve();
+    export let impl = () => Promise.resolve();
 }
 
 /** Must be called and awaited before use */
@@ -22,11 +22,11 @@ export async function launch(): Promise<void> {
 
     //sqliteCustom.enableLog();
 
-    _ = await sqliteCustom.connectAndGetApi( 
+    _ = await sqliteCustom.connectAndGetApi(
         i.semasim_db_path, "HANDLE STRING ENCODING"
     );
 
-    beforeExit.impl= ()=> _.close(); 
+    beforeExit.impl = () => _.close();
 
 }
 
@@ -42,6 +42,43 @@ export async function flush() {
 
 }
 
+export async function getTowardSimKeys(imsi: string): Promise<{
+    encryptKeyStr: string;
+    decryptKeyStr: string;
+} | undefined> {
+
+    const sql = [
+        `SELECT encrypt_key, decrypt_key`,
+        `FROM toward_sim_keys`,
+        `WHERE imsi=${_.esc(imsi)}`
+    ].join("\n");
+
+    const [row] = await _.query(sql);
+
+    return row !== undefined ? ({
+        "encryptKeyStr": row["encrypt_key"],
+        "decryptKeyStr": row["decrypt_key"]
+    }) : undefined;
+
+}
+
+export async function setTowardSimKeys(
+    imsi: string,
+    encryptKeyStr: string,
+    decryptKeyStr: string
+): Promise<void> {
+
+    const sql = _.buildInsertOrUpdateQueries("toward_sim_keys", {
+        imsi,
+        "encrypt_key": encryptKeyStr,
+        "decrypt_key": decryptKeyStr
+    }, ["imsi"]);
+
+    await _.query(sql);
+
+}
+
+
 export async function addUaSim(
     uaSim: types.UaSim
 ): Promise<{
@@ -56,12 +93,13 @@ export async function addUaSim(
     sql += _.buildInsertOrUpdateQueries("ua", {
         "instance": ua.instance,
         "user_email": ua.userEmail,
+        "toward_user_encrypt_key": ua.towardUserEncryptKeyStr,
         "platform": ua.platform,
         "push_token": ua.pushToken,
         "messages_enabled": sqliteCustom.bool.enc(ua.messagesEnabled)
-    }, [ "instance", "user_email"]);
+    }, ["instance", "user_email"]);
 
-    sql+= [
+    sql += [
         "INSERT OR IGNORE INTO ua_sim ( ua, imsi )",
         `SELECT id_, ${_.esc(imsi)}`,
         "FROM ua",
@@ -202,48 +240,47 @@ export async function onDongleMessage(
     }
     */
 
-    let bundledData: types.BundledData.ServerToClient;
+    const bundledData = !!text.match(/^\0.+TYPE=.+http/) ?
+        (() => {
 
-    if (!!text.match(/^\0.+TYPE=.+http/)) {
+            const out: types.BundledData.ServerToClient.MmsNotification = {
+                "type": "MMS NOTIFICATION",
+                "pduDate": date,
+                "wapPushMessage": text,
+                "text": [
+                    "MMS notification received.\n",
+                    "Semasim does not support MMS yet.\n",
+                    "Note that some phones automatically convert long SMS into MMS.",
+                    "If you suspect it is what might have happen here you could ask your",
+                    "contact to send the message again splitting it into smaller parts.",
+                    "All apologies for the inconvenience."
+                ].join(" ")
+            };
 
-        const _bundledData: types.BundledData.ServerToClient.MmsNotification = {
-            "type": "MMS NOTIFICATION",
-            "pduDate": date,
-            "wapPushMessage": text
-        };
+            return out;
 
-        bundledData = _bundledData;
+        })() : (() => {
 
-        text = [
-            "MMS notification received.\n",
-            "Semasim does not support MMS yet.\n",
-            "Note that some phones automatically convert long SMS into MMS.",
-            "If you suspect it is what might have happen here you could ask your",
-            "contact to send the message again splitting it into smaller parts.",
-            "All apologies for the inconvenience.",
-        ].join(" ");
+            const out: types.BundledData.ServerToClient.Message = {
+                "type": "MESSAGE",
+                "pduDate": date,
+                text
+            };
 
-    } else {
+            return out;
 
-        const _bundledData: types.BundledData.ServerToClient.Message = {
-            "type": "MESSAGE",
-            "pduDate": date
-        };
-
-        bundledData = _bundledData;
-
-    }
+        })()
+        ;
 
     const sql = buildMessageTowardSipInsertQuery(
         true,
         fromNumber,
-        text,
         date,
         bundledData,
-        { 
-            "target": "ALL UA REGISTERED TO SIM", 
-            imsi, 
-            "alsoSendToUasWithMessageDisabled": false 
+        {
+            "target": "ALL UA REGISTERED TO SIM",
+            imsi,
+            "alsoSendToUasWithMessageDisabled": false
         }
     );
 
@@ -263,15 +300,15 @@ export async function onMissedCall(imsi: string, number: string) {
 
     let date = new Date();
 
-    let bundledData: types.BundledData.ServerToClient.MissedCall = {
+    const bundledData: types.BundledData.ServerToClient.MissedCall = {
         "type": "MISSED CALL",
-        date
+        date,
+        "text": "Missed call"
     };
 
-    let sql = buildMessageTowardSipInsertQuery(
+    const sql = buildMessageTowardSipInsertQuery(
         false,
         number,
-        `Missed call`,
         date,
         bundledData,
         {
@@ -306,7 +343,8 @@ export async function onCallAnswered(
     const bundledData: types.BundledData.ServerToClient.CallAnsweredBy = {
         "type": "CALL ANSWERED BY",
         date,
-        "ua": answeredByUa
+        "ua": answeredByUa,
+        "text": `Call answered by ${answeredByUa.userEmail}`
     };
 
     for (const ua of otherUasReachedForTheCall) {
@@ -318,7 +356,6 @@ export async function onCallAnswered(
         sql += buildMessageTowardSipInsertQuery(
             false,
             number,
-            `Call answered by ${answeredByUa.userEmail}`,
             date,
             bundledData,
             {
@@ -373,7 +410,6 @@ export async function getUnsentMessagesTowardSip(
         "message_toward_sip.bundled_data,",
         "message_toward_sip.date,",
         "message_toward_sip.from_number,",
-        "message_toward_sip.text,",
         "ua_sim_message_toward_sip.id_",
         "FROM message_toward_sip",
         "INNER JOIN ua_sim_message_toward_sip ON ua_sim_message_toward_sip.message_toward_sip= message_toward_sip.id_",
@@ -399,8 +435,7 @@ export async function getUnsentMessagesTowardSip(
             "date": new Date(row["date"]),
             "fromNumber": row["from_number"],
             "isFromDongle": sqliteCustom.bool.dec(row["is_from_dongle"]),
-            "bundledData": JSON_CUSTOM.parse(row["bundled_data"]),
-            "text": row["text"]
+            "bundledData": JSON_CUSTOM.parse(row["bundled_data"])
         };
 
         let onReceived = async () => {
@@ -446,6 +481,7 @@ export async function getUnsentMessagesTowardGsm(
             "ua.user_email,",
             "ua.platform,",
             "ua.push_token,",
+            "ua.toward_user_encrypt_key,",
             "ua.messages_enabled",
             "FROM message_toward_gsm",
             "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
@@ -469,6 +505,7 @@ export async function getUnsentMessagesTowardGsm(
                 "ua": {
                     "instance": row["instance"],
                     "userEmail": row["user_email"],
+                    "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
                     "platform": row["platform"],
                     "pushToken": row["push_token"],
                     "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
@@ -492,7 +529,9 @@ export async function getUnsentMessagesTowardGsm(
                 "onSent": async sendDate => {
 
                     setSentPr = getUnsentMessagesTowardGsm.onSent(
-                        message_toward_gsm_id_, message, sendDate
+                        message_toward_gsm_id_,
+                        message,
+                        sendDate
                     );
 
                     await setSentPr;
@@ -503,7 +542,6 @@ export async function getUnsentMessagesTowardGsm(
                     await setSentPr;
 
                     await getUnsentMessagesTowardGsm.onStatusReport(
-                        message_toward_gsm_id_,
                         message,
                         statusReport
                     )
@@ -549,16 +587,16 @@ export namespace getUnsentMessagesTowardGsm {
             "send_date": isSuccess ? sendDate!.getTime() : -1
         }, ["id_"]);
 
-        let bundledData: types.BundledData.ServerToClient.SendReport = {
+        const bundledData: types.BundledData.ServerToClient.SendReport = {
             "type": "SEND REPORT",
             messageTowardGsm,
             sendDate,
+            "text": isSuccess ? checkMark : crossMark
         };
 
         sql += buildMessageTowardSipInsertQuery(
             false,
             messageTowardGsm.toNumber,
-            isSuccess ? checkMark : crossMark,
             new Date(),
             bundledData,
             {
@@ -572,38 +610,43 @@ export namespace getUnsentMessagesTowardGsm {
 
     }
 
-    //TODO: Investigate why we have an unused param.
     export async function onStatusReport(
-        messageTowardGsm_id: number,
         messageTowardGsm: types.MessageTowardGsm,
         statusReport: dcTypes.StatusReport
     ) {
-
-        //TODO: set send date and delivery date and not now!!!!!!
 
         //TODO: may be useless...depend of operator I assume
         if (isNaN(statusReport.dischargeDate.getTime())) {
             statusReport.dischargeDate = new Date();
         };
 
-        let bundledData: types.BundledData.ServerToClient.StatusReport = {
-            "type": "STATUS REPORT",
-            messageTowardGsm,
-            statusReport,
-        };
+        const now = new Date();
 
-        let now = new Date();
-
-        let build = (
+        const build = (
             text: string,
             target: buildMessageTowardSipInsertQuery.Target
-        ) => buildMessageTowardSipInsertQuery(
-            false, messageTowardGsm.toNumber, text, now, bundledData, target
-        );
+        ) => {
+
+            const bundledData: types.BundledData.ServerToClient.StatusReport = {
+                "type": "STATUS REPORT",
+                messageTowardGsm,
+                statusReport,
+                text
+            };
+
+            return buildMessageTowardSipInsertQuery(
+                false,
+                messageTowardGsm.toNumber,
+                now,
+                bundledData,
+                target
+            );
+
+        };
 
         let sql = "";
 
-        const alsoSendToUasWithMessageDisabled= false;
+        const alsoSendToUasWithMessageDisabled = false;
 
         if (statusReport.isDelivered) {
 
@@ -715,7 +758,6 @@ export async function lastMessageReceivedDateBySim(): Promise<{ [imsi: string]: 
 function buildMessageTowardSipInsertQuery(
     isFromDongle: boolean,
     fromNumber: string,
-    text: string,
     date: Date,
     bundledData: types.BundledData.ServerToClient,
     target: buildMessageTowardSipInsertQuery.Target
@@ -724,7 +766,7 @@ function buildMessageTowardSipInsertQuery(
     let sqlSelectionUaSim = [
         "FROM ua_sim",
         "INNER JOIN ua ON ua.id_= ua_sim.ua",
-        `WHERE ${target.alsoSendToUasWithMessageDisabled?"":`ua.messages_enabled= 1 AND `}ua_sim.imsi= `
+        `WHERE ${target.alsoSendToUasWithMessageDisabled ? "" : `ua.messages_enabled= 1 AND `}ua_sim.imsi= `
     ].join("\n");
 
     switch (target.target) {
@@ -753,15 +795,14 @@ function buildMessageTowardSipInsertQuery(
             break;
     }
 
-    let sql = [
-        "INSERT INTO message_toward_sip ( is_from_dongle, bundled_data, date, from_number, text )",
+    const sql = [
+        "INSERT INTO message_toward_sip ( is_from_dongle, bundled_data, date, from_number)",
         "SELECT",
         [
             sqliteCustom.bool.enc(isFromDongle),
             _.esc(JSON_CUSTOM.stringify(bundledData)),
             _.esc(date.getTime()),
-            _.esc(fromNumber),
-            _.esc(text)
+            _.esc(fromNumber)
         ].join(", "),
         sqlSelectionUaSim,
         "GROUP BY NULL",
@@ -823,15 +864,15 @@ export async function onTargetGsmRinging(
         return;
     }
 
-    let bundledData: types.BundledData.ServerToClient.Ringback = {
+    const bundledData: types.BundledData.ServerToClient.Ringback = {
         "type": "RINGBACK",
-        callId
+        callId,
+        "text": "( notify ringback )"
     };
 
-    let sql = buildMessageTowardSipInsertQuery(
+    const sql = buildMessageTowardSipInsertQuery(
         false,
         number,
-        "( notify ringback )",
         new Date(),
         bundledData,
         {

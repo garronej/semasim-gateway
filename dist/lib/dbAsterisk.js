@@ -73,8 +73,12 @@ var __values = (this && this.__values) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sqliteCustom = require("sqlite-custom");
-var md5 = require("md5");
 var i = require("../bin/installer");
+/*
+import * as logger from "logger";
+const debug = logger.debugFactory();
+*/
+var crypto = require("crypto");
 var voiceCallBridge_1 = require("./voiceCallBridge");
 var sipMessagesMonitor_1 = require("./sipMessagesMonitor");
 function beforeExit() {
@@ -96,6 +100,40 @@ function launch() {
                 case 2:
                     _a.sent();
                     exports.query = api.query;
+                    /*
+                    //TODO: Fix db related crash witnessed on pi zero
+                
+                    query = async (...args)=>{
+                
+                        while(true){
+                
+                            let out: any;
+                
+                            try{
+                
+                                out = await api.query.apply(api, args);
+                
+                            }catch(error){
+                
+                                debug([
+                                    "",
+                                    "",
+                                    error.stack,
+                                    "",
+                                    ""
+                                ].join("\n"));
+                
+                                continue;
+                            }
+                
+                
+                            return out;
+                
+                
+                        }
+                
+                    };
+                    */
                     exports.esc = api.esc;
                     exports.buildInsertQuery = api.buildInsertQuery;
                     exports.buildInsertOrUpdateQueries = api.buildInsertOrUpdateQueries;
@@ -146,7 +184,7 @@ function deleteContact(contact) {
 exports.deleteContact = deleteContact;
 /** Helper function to generate a sip password */
 function generateSipEndpointPassword() {
-    return md5("" + Math.random());
+    return crypto.randomBytes(16).toString("hex");
 }
 exports.generateSipEndpointPassword = generateSipEndpointPassword;
 /**
@@ -165,7 +203,8 @@ exports.generateSipEndpointPassword = generateSipEndpointPassword;
  */
 function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, newPassword) {
     return __awaiter(this, void 0, void 0, function () {
-        var e_1, _a, sql, table, values, _b, ps_endpoints_web, ps_endpoints_mobile, _c, _d, ps_endpoints, password;
+        var sql, table, values, _a, ps_endpoints_web, ps_endpoints_mobile, _b, _c, ps_endpoints, password;
+        var e_1, _d;
         return __generator(this, function (_e) {
             switch (_e.label) {
                 case 0:
@@ -187,7 +226,7 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                             sql += exports.buildInsertQuery(table, values, "IGNORE");
                         }
                     }
-                    _b = __read((function () {
+                    _a = __read((function () {
                         var ps_endpoints_base = {
                             "disallow": "all",
                             "context": voiceCallBridge_1.sipCallContext,
@@ -211,10 +250,10 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                         audio codecs ( list displayed on Asterisk startup )
                         so we can perform tests easily.
                         */
-                    })(), 2), ps_endpoints_web = _b[0], ps_endpoints_mobile = _b[1];
+                    })(), 2), ps_endpoints_web = _a[0], ps_endpoints_mobile = _a[1];
                     try {
-                        for (_c = __values([ps_endpoints_mobile, ps_endpoints_web]), _d = _c.next(); !_d.done; _d = _c.next()) {
-                            ps_endpoints = _d.value;
+                        for (_b = __values([ps_endpoints_mobile, ps_endpoints_web]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                            ps_endpoints = _c.value;
                             sql += exports.buildInsertQuery("ps_aors", {
                                 "id": ps_endpoints.aors,
                                 "max_contacts": 30,
@@ -227,7 +266,7 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                     catch (e_1_1) { e_1 = { error: e_1_1 }; }
                     finally {
                         try {
-                            if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                            if (_c && !_c.done && (_d = _b.return)) _d.call(_b);
                         }
                         finally { if (e_1) throw e_1.error; }
                     }

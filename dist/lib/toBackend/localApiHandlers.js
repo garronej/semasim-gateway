@@ -34,12 +34,29 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var apiDeclaration = require("../../sip_api_declarations/gatewayToBackend");
 var remoteApi = require("./remoteApiCaller");
 var dbAsterisk = require("../dbAsterisk");
+var dbSemasim = require("../dbSemasim");
 exports.handlers = {};
 {
     var methodName = apiDeclaration.getDongle.methodName;
@@ -52,14 +69,14 @@ exports.handlers = {};
     exports.handlers[methodName] = handler;
 }
 {
-    var methodName = apiDeclaration.getDongleAndSipPassword.methodName;
+    var methodName = apiDeclaration.getDongleSipPasswordAndTowardSimEncryptKeyStr.methodName;
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi;
             return __awaiter(_this, void 0, void 0, function () {
-                var dongle, _b, _c;
-                return __generator(this, function (_d) {
-                    switch (_d.label) {
+                var dongle, _b, sipPassword, towardSimEncryptKeyStr;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
                             dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().dongles.values())
                                 .filter(chan_dongle_extended_client_1.types.Dongle.Usable.match)
@@ -70,14 +87,13 @@ exports.handlers = {};
                             if (!dongle) {
                                 return [2 /*return*/, undefined];
                             }
-                            console.log({ dongle: dongle });
-                            _b = {
-                                dongle: dongle
-                            };
-                            _c = "sipPassword";
-                            return [4 /*yield*/, dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi)];
-                        case 1: return [2 /*return*/, (_b[_c] = _d.sent(),
-                                _b)];
+                            return [4 /*yield*/, Promise.all([
+                                    dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi),
+                                    dbSemasim.getTowardSimKeys(imsi).then(function (out) { return out; })
+                                ])];
+                        case 1:
+                            _b = __read.apply(void 0, [_c.sent(), 2]), sipPassword = _b[0], towardSimEncryptKeyStr = _b[1].encryptKeyStr;
+                            return [2 /*return*/, { dongle: dongle, sipPassword: sipPassword, towardSimEncryptKeyStr: towardSimEncryptKeyStr }];
                     }
                 });
             });

@@ -1,8 +1,5 @@
+import * as cryptoLib from "crypto-lib";
 import * as types from "../types";
-export declare const urlSafeB64: {
-    "enc": (str: string) => string;
-    "dec": (encStr: string) => string;
-};
-export declare function smuggleBundledDataInHeaders(data: types.BundledData, headers?: Record<string, string>): Record<string, string>;
+export declare function smuggleBundledDataInHeaders<T extends types.BundledData>(data: T, encryptor: cryptoLib.Encryptor, headers?: Record<string, string>): Promise<Record<string, string>>;
 /** assert there is data */
-export declare function extractBundledDataFromHeaders(headers: Record<string, string>): types.BundledData;
+export declare function extractBundledDataFromHeaders<T extends types.BundledData>(headers: Record<string, string>, decryptor: cryptoLib.Decryptor): Promise<T>;

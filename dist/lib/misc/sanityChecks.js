@@ -19,6 +19,11 @@ var sanityChecks;
     }
     sanityChecks.uaSim = uaSim;
     function ua(o) {
+        return (uaWithoutUserKeys(o) &&
+            typeof o.towardUserEncryptKeyStr === "string");
+    }
+    sanityChecks.ua = ua;
+    function uaWithoutUserKeys(o) {
         return (o instanceof Object &&
             typeof o.instance === "string" &&
             isValidEmail(o.userEmail, "MUST BE LOWER CASE") &&
@@ -26,7 +31,7 @@ var sanityChecks;
             typeof o.pushToken === "string" &&
             typeof o.messagesEnabled === "boolean");
     }
-    sanityChecks.ua = ua;
+    sanityChecks.uaWithoutUserKeys = uaWithoutUserKeys;
     function platform(o) {
         return (typeof o === "string" && (o === "android" ||
             o === "iOS" ||

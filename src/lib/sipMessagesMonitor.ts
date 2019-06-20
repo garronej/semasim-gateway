@@ -4,11 +4,9 @@ import { Ami } from "ts-ami";
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
 import * as misc from "./misc";
-
-import * as logger from "logger";
-
-
-const debug= logger.debugFactory();
+import * as cryptoLib from "crypto-lib";
+import * as dbSemasim from "./dbSemasim";
+import { workerThreadPoolId } from "./misc/workerThreadPoolId";
 
 export const dialplanContext = "from-sip-message";
 
@@ -23,9 +21,7 @@ export const evtMessage = new SyncEvent<{
 export function sendMessage(
     contact: types.Contact,
     fromNumber: string,
-    headers: Record<string, string>,
-    text: string,
-    fromNumberSimName?: string
+    headers: Record<string, string>
 ) {
     return new Promise<void>((resolve, reject) => {
 
@@ -53,10 +49,6 @@ export function sendMessage(
             2000,
             ({ sipRequest, prSipResponse }) => {
 
-                if (fromNumberSimName) {
-                    sipRequest.headers.from.name = `"${fromNumberSimName} (sim)"`;
-                }
-
                 sipRequest.headers.route = sipLibrary.parsePath(contact.path);
 
                 sipRequest.uri = contact.uri;
@@ -67,7 +59,7 @@ export function sendMessage(
 
                 sipRequest.headers = { ...sipRequest.headers, ...headers };
 
-                sipLibrary.setPacketContent(sipRequest, text);
+                sipLibrary.setPacketContent(sipRequest, "| Message payload encrypted in headers |");
 
                 prSipResponse
                     .then(() => resolve())
@@ -188,33 +180,57 @@ function onOutgoingSipMessage(
  * the message will not be modified.
  * 
  */
-function onIncomingSipMessage(
+async function onIncomingSipMessage(
     fromContact: types.Contact,
     sipRequest: sipLibrary.Request
 ) {
 
-    const content = sipLibrary.getPacketContent(sipRequest);
+    const decryptor = await (async () => {
 
-    const text = content.toString("utf8");
+        const { prDecryptorMap }= onIncomingSipMessage;
 
-    if (!content.equals(Buffer.from(text, "utf8"))) {
-        debug("Sip message content was not a valid UTF-8 string");
-    }
+        const { imsi } = fromContact.uaSim;
 
-    const toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user!;
+        let prDecryptor = prDecryptorMap.get(imsi);
 
-    const { exactSendDate, appendPromotionalMessage } = (misc.extractBundledDataFromHeaders(
-        sipRequest.headers
-    ) as types.BundledData.ClientToServer.Message);
+        if (prDecryptor === undefined) {
 
+            prDecryptor = dbSemasim.getTowardSimKeys(imsi)
+                .then(towardSimKeysStr => cryptoLib.rsa.decryptorFactory(
+                    cryptoLib.RsaKey.parse(
+                        towardSimKeysStr!.decryptKeyStr
+                    ),
+                    workerThreadPoolId
+                ))
+                ;
+
+            prDecryptorMap.set(imsi, prDecryptor);
+
+        }
+
+        return prDecryptor;
+
+    })();
+
+    const { exactSendDate, appendPromotionalMessage, text } =
+        await misc.extractBundledDataFromHeaders<types.BundledData.ClientToServer.Message>(
+            sipRequest.headers,
+            decryptor
+        );
 
     evtMessage.post({
         fromContact,
-        toNumber,
+        "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user!,
         text,
         exactSendDate,
-        "appendPromotionalMessage": !!appendPromotionalMessage
+        appendPromotionalMessage
     });
+
+}
+
+namespace onIncomingSipMessage {
+
+    export const prDecryptorMap = new Map<string, Promise<cryptoLib.Decryptor>>();
 
 }
 

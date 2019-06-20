@@ -5,10 +5,10 @@ var getDongle;
 (function (getDongle) {
     getDongle.methodName = "getDongle";
 })(getDongle = exports.getDongle || (exports.getDongle = {}));
-var getDongleAndSipPassword;
-(function (getDongleAndSipPassword) {
-    getDongleAndSipPassword.methodName = "getUsableDongleAndSipPassword";
-})(getDongleAndSipPassword = exports.getDongleAndSipPassword || (exports.getDongleAndSipPassword = {}));
+var getDongleSipPasswordAndTowardSimEncryptKeyStr;
+(function (getDongleSipPasswordAndTowardSimEncryptKeyStr) {
+    getDongleSipPasswordAndTowardSimEncryptKeyStr.methodName = "getDongleSipPasswordAndTowardSimEncryptKeyStr";
+})(getDongleSipPasswordAndTowardSimEncryptKeyStr = exports.getDongleSipPasswordAndTowardSimEncryptKeyStr || (exports.getDongleSipPasswordAndTowardSimEncryptKeyStr = {}));
 var unlockSim;
 (function (unlockSim) {
     unlockSim.methodName = "unlockSim";

@@ -50,11 +50,12 @@ var ts_events_extended_1 = require("ts-events-extended");
 var ts_ami_1 = require("ts-ami");
 var sipLibrary = require("ts-sip");
 var misc = require("./misc");
-var logger = require("logger");
-var debug = logger.debugFactory();
+var cryptoLib = require("crypto-lib");
+var dbSemasim = require("./dbSemasim");
+var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
 exports.dialplanContext = "from-sip-message";
 exports.evtMessage = new ts_events_extended_1.SyncEvent();
-function sendMessage(contact, fromNumber, headers, text, fromNumberSimName) {
+function sendMessage(contact, fromNumber, headers) {
     return new Promise(function (resolve, reject) {
         var actionId = ts_ami_1.Ami.generateUniqueActionId();
         var uri = (function () {
@@ -68,15 +69,12 @@ function sendMessage(contact, fromNumber, headers, text, fromNumberSimName) {
             return sipLibrary.getPacketContent(sipRequest).toString("utf8") === actionId;
         }, 2000, function (_a) {
             var sipRequest = _a.sipRequest, prSipResponse = _a.prSipResponse;
-            if (fromNumberSimName) {
-                sipRequest.headers.from.name = "\"" + fromNumberSimName + " (sim)\"";
-            }
             sipRequest.headers.route = sipLibrary.parsePath(contact.path);
             sipRequest.uri = contact.uri;
             sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
             delete sipRequest.headers.contact;
             sipRequest.headers = __assign({}, sipRequest.headers, headers);
-            sipLibrary.setPacketContent(sipRequest, text);
+            sipLibrary.setPacketContent(sipRequest, "| Message payload encrypted in headers |");
             prSipResponse
                 .then(function () { return resolve(); })
                 .catch(function () { return reject(new Error("Not received")); });
@@ -176,18 +174,42 @@ function onOutgoingSipMessage(sipRequestAsReceived, prSipResponse) {
  *
  */
 function onIncomingSipMessage(fromContact, sipRequest) {
-    var content = sipLibrary.getPacketContent(sipRequest);
-    var text = content.toString("utf8");
-    if (!content.equals(Buffer.from(text, "utf8"))) {
-        debug("Sip message content was not a valid UTF-8 string");
-    }
-    var toNumber = sipLibrary.parseUri(sipRequest.headers.to.uri).user;
-    var _a = misc.extractBundledDataFromHeaders(sipRequest.headers), exactSendDate = _a.exactSendDate, appendPromotionalMessage = _a.appendPromotionalMessage;
-    exports.evtMessage.post({
-        fromContact: fromContact,
-        toNumber: toNumber,
-        text: text,
-        exactSendDate: exactSendDate,
-        "appendPromotionalMessage": !!appendPromotionalMessage
+    return __awaiter(this, void 0, void 0, function () {
+        var decryptor, _a, exactSendDate, appendPromotionalMessage, text;
+        var _this = this;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
+                        var prDecryptorMap, imsi, prDecryptor;
+                        return __generator(this, function (_a) {
+                            prDecryptorMap = onIncomingSipMessage.prDecryptorMap;
+                            imsi = fromContact.uaSim.imsi;
+                            prDecryptor = prDecryptorMap.get(imsi);
+                            if (prDecryptor === undefined) {
+                                prDecryptor = dbSemasim.getTowardSimKeys(imsi)
+                                    .then(function (towardSimKeysStr) { return cryptoLib.rsa.decryptorFactory(cryptoLib.RsaKey.parse(towardSimKeysStr.decryptKeyStr), workerThreadPoolId_1.workerThreadPoolId); });
+                                prDecryptorMap.set(imsi, prDecryptor);
+                            }
+                            return [2 /*return*/, prDecryptor];
+                        });
+                    }); })()];
+                case 1:
+                    decryptor = _b.sent();
+                    return [4 /*yield*/, misc.extractBundledDataFromHeaders(sipRequest.headers, decryptor)];
+                case 2:
+                    _a = _b.sent(), exactSendDate = _a.exactSendDate, appendPromotionalMessage = _a.appendPromotionalMessage, text = _a.text;
+                    exports.evtMessage.post({
+                        fromContact: fromContact,
+                        "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user,
+                        text: text,
+                        exactSendDate: exactSendDate,
+                        appendPromotionalMessage: appendPromotionalMessage
+                    });
+                    return [2 /*return*/];
+            }
+        });
     });
 }
+(function (onIncomingSipMessage) {
+    onIncomingSipMessage.prDecryptorMap = new Map();
+})(onIncomingSipMessage || (onIncomingSipMessage = {}));

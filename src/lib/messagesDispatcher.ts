@@ -10,6 +10,9 @@ import * as logger from "logger";
 import * as sipContactsMonitor from "./sipContactsMonitor";
 import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 import * as sipMessagesMonitor from "./sipMessagesMonitor";
+import * as cryptoLib from "crypto-lib";
+import { workerThreadPoolId } from "./misc/workerThreadPoolId";
+
 
 const debug = logger.debugFactory();
 
@@ -97,8 +100,33 @@ export async function notifyNewSipMessagesToSend(
 
 }
 
+
 /** Assert contact reachable  */
 export function sendMessagesOfContact(contact: types.Contact) {
+
+    const encryptor = (() => {
+
+        const { encryptorMap } = sendMessagesOfContact;
+
+        const { towardUserEncryptKeyStr } = contact.uaSim.ua;
+
+        let out = encryptorMap.get(towardUserEncryptKeyStr);
+
+        if (out === undefined) {
+
+            out= cryptoLib.rsa.encryptorFactory(
+                cryptoLib.RsaKey.parse(towardUserEncryptKeyStr),
+                workerThreadPoolId
+            );
+
+            encryptorMap.set(towardUserEncryptKeyStr, out);
+
+        }
+
+        return out;
+
+    })();
+
 
     sendMessagesOfContact.lock.acquire(
         misc.generateUaSimId(contact.uaSim),
@@ -114,8 +142,10 @@ export function sendMessagesOfContact(contact: types.Contact) {
                     await sipMessagesMonitor.sendMessage(
                         contact,
                         message.fromNumber,
-                        misc.smuggleBundledDataInHeaders(message.bundledData),
-                        message.text
+                        await misc.smuggleBundledDataInHeaders(
+                            message.bundledData,
+                            encryptor
+                        )
                     );
 
                 } catch (error) {
@@ -137,5 +167,6 @@ export function sendMessagesOfContact(contact: types.Contact) {
 
 export namespace sendMessagesOfContact {
     export const lock = new AsyncLock();
+    export const encryptorMap = new Map<string, cryptoLib.Encryptor>();
 }
 

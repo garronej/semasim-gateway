@@ -1,7 +1,7 @@
 {
   "name": "semasim-gateway",
   "description": "Semasim gateway",
-  "version": "1.3.5",
+  "version": "1.4.0",
   "scripts": {
     "partial_install": "npm install --no-package-lock commander@2.11.0 garronej/scripting-tools",
     "postinstall": "cp $(readlink -e $(which node)) ./node",
@@ -19,11 +19,12 @@
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "chan-dongle-extended-client": "github:garronej/chan-dongle-extended-client",
+    "crypto-lib": "github:garronej/crypto-lib",
+    "node-rsa": "github:garronej/node-rsa",
     "phone-number": "github:garronej/phone-number",
-    "transfer-tools": "garronej/transfer-tools"
+    "transfer-tools": "github:garronej/transfer-tools"
   },
   "devDependencies": {
-    "typescript": "^3.2.0",
     "@types/async-lock": "0.0.20",
     "@types/node": "^8.9.1",
     "@types/ws": "^4.0.0",
@@ -38,6 +39,7 @@
     "ts-ami": "github:garronej/ts-ami",
     "ts-events-extended": "garronej/ts-events-extended",
     "ts-sip": "github:garronej/ts-sip",
+    "typescript": "^3.5.1",
     "ws": "^4.0.0"
   }
 }

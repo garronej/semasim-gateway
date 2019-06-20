@@ -17,7 +17,8 @@
         "strictPropertyInitialization": true,
         "strictFunctionTypes": true,
         "resolveJsonModule": true,
-        "strictBindCallApply": true
+        "strictBindCallApply": true,
+        "incremental": true
     },
     "filesGlob": [
         "./src/**/*.ts"

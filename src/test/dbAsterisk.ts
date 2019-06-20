@@ -2,6 +2,7 @@ import * as db from "../lib/dbAsterisk";
 import * as types from "../lib/types";
 import * as misc from "../lib/misc";
 import * as assert from "assert";
+import * as crypto from "crypto";
 
 const contact: types.Contact = (() => {
 
@@ -10,6 +11,7 @@ const contact: types.Contact = (() => {
     let ua: types.Ua = {
         "instance": "\"<urn:uuid:a98eef4a-5a6d-41ca-8918-e1ef1819fec0>\"",
         "userEmail": "joseph.garrone.gh@gmail.com",
+        "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary"),
         "platform": "android",
         "pushToken": [
             "f_l7SPs6o7A:APA91bF_c0VGlz3pQPwrgpFe9U0FRzc",

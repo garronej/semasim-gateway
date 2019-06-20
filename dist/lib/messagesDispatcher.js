@@ -69,11 +69,14 @@ var logger = require("logger");
 var sipContactsMonitor = require("./sipContactsMonitor");
 var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
 var sipMessagesMonitor = require("./sipMessagesMonitor");
+var cryptoLib = require("crypto-lib");
+var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
 var debug = logger.debugFactory();
 function sendMessagesOfDongle(dongle) {
     var _this = this;
     sendMessagesOfDongle.lock.acquire(dongle.imei, function () { return __awaiter(_this, void 0, void 0, function () {
-        var e_1, _a, dc, _loop_1, _b, _c, _d, message, _e, onSent, onStatusReport, state_1, e_1_1;
+        var dc, _loop_1, _a, _b, _c, message, _d, onSent, onStatusReport, state_1, e_1_1;
+        var e_1, _e;
         return __generator(this, function (_f) {
             switch (_f.label) {
                 case 0:
@@ -124,11 +127,11 @@ function sendMessagesOfDongle(dongle) {
                     _f.trys.push([1, 7, 8, 9]);
                     return [4 /*yield*/, dbSemasim.getUnsentMessagesTowardGsm(dongle.sim.imsi)];
                 case 2:
-                    _b = __values.apply(void 0, [_f.sent()]), _c = _b.next();
+                    _a = __values.apply(void 0, [_f.sent()]), _b = _a.next();
                     _f.label = 3;
                 case 3:
-                    if (!!_c.done) return [3 /*break*/, 6];
-                    _d = __read(_c.value, 2), message = _d[0], _e = _d[1], onSent = _e.onSent, onStatusReport = _e.onStatusReport;
+                    if (!!_b.done) return [3 /*break*/, 6];
+                    _c = __read(_b.value, 2), message = _c[0], _d = _c[1], onSent = _d.onSent, onStatusReport = _d.onStatusReport;
                     return [5 /*yield**/, _loop_1(message, onSent, onStatusReport)];
                 case 4:
                     state_1 = _f.sent();
@@ -136,7 +139,7 @@ function sendMessagesOfDongle(dongle) {
                         return [2 /*return*/, state_1.value];
                     _f.label = 5;
                 case 5:
-                    _c = _b.next();
+                    _b = _a.next();
                     return [3 /*break*/, 3];
                 case 6: return [3 /*break*/, 9];
                 case 7:
@@ -145,7 +148,7 @@ function sendMessagesOfDongle(dongle) {
                     return [3 /*break*/, 9];
                 case 8:
                     try {
-                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                        if (_b && !_b.done && (_e = _a.return)) _e.call(_a);
                     }
                     finally { if (e_1) throw e_1.error; }
                     return [7 /*endfinally*/];
@@ -160,16 +163,17 @@ exports.sendMessagesOfDongle = sendMessagesOfDongle;
 })(sendMessagesOfDongle = exports.sendMessagesOfDongle || (exports.sendMessagesOfDongle = {}));
 function notifyNewSipMessagesToSend(imsi) {
     return __awaiter(this, void 0, void 0, function () {
-        var e_2, _a, _b, _c, contact, e_2_1;
+        var _a, _b, contact, e_2_1;
+        var e_2, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
                     _d.trys.push([0, 6, 7, 8]);
-                    _b = __values(sipContactsMonitor.getContacts(imsi)), _c = _b.next();
+                    _a = __values(sipContactsMonitor.getContacts(imsi)), _b = _a.next();
                     _d.label = 1;
                 case 1:
-                    if (!!_c.done) return [3 /*break*/, 5];
-                    contact = _c.value;
+                    if (!!_b.done) return [3 /*break*/, 5];
+                    contact = _b.value;
                     return [4 /*yield*/, dbSemasim.messageTowardSipUnsentCount(contact.uaSim)];
                 case 2:
                     if (!(_d.sent())) {
@@ -184,7 +188,7 @@ function notifyNewSipMessagesToSend(imsi) {
                     }
                     _d.label = 4;
                 case 4:
-                    _c = _b.next();
+                    _b = _a.next();
                     return [3 /*break*/, 1];
                 case 5: return [3 /*break*/, 8];
                 case 6:
@@ -193,7 +197,7 @@ function notifyNewSipMessagesToSend(imsi) {
                     return [3 /*break*/, 8];
                 case 7:
                     try {
-                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
                     }
                     finally { if (e_2) throw e_2.error; }
                     return [7 /*endfinally*/];
@@ -206,48 +210,63 @@ exports.notifyNewSipMessagesToSend = notifyNewSipMessagesToSend;
 /** Assert contact reachable  */
 function sendMessagesOfContact(contact) {
     var _this = this;
+    var encryptor = (function () {
+        var encryptorMap = sendMessagesOfContact.encryptorMap;
+        var towardUserEncryptKeyStr = contact.uaSim.ua.towardUserEncryptKeyStr;
+        var out = encryptorMap.get(towardUserEncryptKeyStr);
+        if (out === undefined) {
+            out = cryptoLib.rsa.encryptorFactory(cryptoLib.RsaKey.parse(towardUserEncryptKeyStr), workerThreadPoolId_1.workerThreadPoolId);
+            encryptorMap.set(towardUserEncryptKeyStr, out);
+        }
+        return out;
+    })();
     sendMessagesOfContact.lock.acquire(misc.generateUaSimId(contact.uaSim), function () { return __awaiter(_this, void 0, void 0, function () {
-        var e_3, _a, _b, _c, _d, message, onReceived, error_1, e_3_1;
-        return __generator(this, function (_e) {
-            switch (_e.label) {
+        var _a, _b, _c, message, onReceived, _d, _e, _f, error_1, e_3_1;
+        var e_3, _g;
+        return __generator(this, function (_h) {
+            switch (_h.label) {
                 case 0:
-                    _e.trys.push([0, 9, 10, 11]);
+                    _h.trys.push([0, 10, 11, 12]);
                     return [4 /*yield*/, dbSemasim.getUnsentMessagesTowardSip(contact.uaSim)];
                 case 1:
-                    _b = __values.apply(void 0, [_e.sent()]), _c = _b.next();
-                    _e.label = 2;
+                    _a = __values.apply(void 0, [_h.sent()]), _b = _a.next();
+                    _h.label = 2;
                 case 2:
-                    if (!!_c.done) return [3 /*break*/, 8];
-                    _d = __read(_c.value, 2), message = _d[0], onReceived = _d[1];
-                    _e.label = 3;
+                    if (!!_b.done) return [3 /*break*/, 9];
+                    _c = __read(_b.value, 2), message = _c[0], onReceived = _c[1];
+                    _h.label = 3;
                 case 3:
-                    _e.trys.push([3, 5, , 6]);
-                    return [4 /*yield*/, sipMessagesMonitor.sendMessage(contact, message.fromNumber, misc.smuggleBundledDataInHeaders(message.bundledData), message.text)];
-                case 4:
-                    _e.sent();
-                    return [3 /*break*/, 6];
+                    _h.trys.push([3, 6, , 7]);
+                    _e = (_d = sipMessagesMonitor).sendMessage;
+                    _f = [contact,
+                        message.fromNumber];
+                    return [4 /*yield*/, misc.smuggleBundledDataInHeaders(message.bundledData, encryptor)];
+                case 4: return [4 /*yield*/, _e.apply(_d, _f.concat([_h.sent()]))];
                 case 5:
-                    error_1 = _e.sent();
+                    _h.sent();
+                    return [3 /*break*/, 7];
+                case 6:
+                    error_1 = _h.sent();
                     debug("sip Send Message error:", error_1.message);
                     return [2 /*return*/];
-                case 6:
-                    onReceived();
-                    _e.label = 7;
                 case 7:
-                    _c = _b.next();
+                    onReceived();
+                    _h.label = 8;
+                case 8:
+                    _b = _a.next();
                     return [3 /*break*/, 2];
-                case 8: return [3 /*break*/, 11];
-                case 9:
-                    e_3_1 = _e.sent();
-                    e_3 = { error: e_3_1 };
-                    return [3 /*break*/, 11];
+                case 9: return [3 /*break*/, 12];
                 case 10:
+                    e_3_1 = _h.sent();
+                    e_3 = { error: e_3_1 };
+                    return [3 /*break*/, 12];
+                case 11:
                     try {
-                        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                        if (_b && !_b.done && (_g = _a.return)) _g.call(_a);
                     }
                     finally { if (e_3) throw e_3.error; }
                     return [7 /*endfinally*/];
-                case 11: return [2 /*return*/];
+                case 12: return [2 /*return*/];
             }
         });
     }); });
@@ -255,4 +274,5 @@ function sendMessagesOfContact(contact) {
 exports.sendMessagesOfContact = sendMessagesOfContact;
 (function (sendMessagesOfContact) {
     sendMessagesOfContact.lock = new AsyncLock();
+    sendMessagesOfContact.encryptorMap = new Map();
 })(sendMessagesOfContact = exports.sendMessagesOfContact || (exports.sendMessagesOfContact = {}));

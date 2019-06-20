@@ -210,10 +210,6 @@ export function handleAsteriskSocket(
                     imsi,
                     "ua": {
                         "instance": aorParams["+sip.instance"]!,
-                        "userEmail": misc.urlSafeB64.dec((
-                            uriParams["enc_email"] ||
-                            aorParams["enc_email"]
-                        )!),
                         "platform": (() => {
 
                             switch (uriParams["pn-type"]) {
@@ -224,8 +220,7 @@ export function handleAsteriskSocket(
 
                         })(),
                         "pushToken": uriParams["pn-tok"] || "",
-                        "messagesEnabled": !("no_messages" in uriParams)
-
+                        ...misc.RegistrationParams.parse(aorParams, uriParams)
                     }
                 }
             };

@@ -15,8 +15,11 @@ import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 import * as sipContactsMonitor from "./sipContactsMonitor";
 import * as sipMessagesMonitor from "./sipMessagesMonitor";
 import { phoneNumber } from "phone-number";
+import * as cryptoLib from "crypto-lib";
+import { workerThreadPoolId } from "./misc/workerThreadPoolId";
 
 const debug = logger.debugFactory();
+
 
 export async function beforeExit(): Promise<void> {
 
@@ -26,6 +29,7 @@ export async function beforeExit(): Promise<void> {
         backendSocket.destroy("Terminating the process");
     }
 
+    cryptoLib.terminateWorkerThreads();
 
     await Promise.all([
         dbAsterisk.beforeExit().catch(() => { }),
@@ -42,6 +46,8 @@ export async function beforeExit(): Promise<void> {
 export async function launch() {
 
     debug("Starting semasim gateway ...");
+
+    cryptoLib.workerThreadPool.preSpawn(workerThreadPoolId, 1);
 
     await procAsterisk.spawnAsterisk();
 
@@ -126,24 +132,66 @@ function registerListeners() {
         }
     );
 
+    {
 
-    dc.dongles.evtSet.attach(
-        ([dongle]) => {
+        const prKeysByImei = new Map<string, ReturnType<typeof cryptoLib.rsa.generateKeys>>();
 
-            if (dcTypes.Dongle.Locked.match(dongle)) {
+        const generateKeys = () => cryptoLib.rsa.generateKeys(null, 128);
 
-                backendRemoteApiCaller.notifyLockedDongle(dongle);
+        dc.dongles.evtSet.attach(
+            async ([dongle]) => {
 
-            } else {
+                const { imei } = dongle;
+
+                if (dcTypes.Dongle.Locked.match(dongle)) {
+
+                    backendRemoteApiCaller.notifyLockedDongle(dongle);
+
+                    prKeysByImei.set(imei, generateKeys());
+
+                    return;
+
+                }
+
+                const { imsi } = dongle.sim;
+
+                if (undefined === await dbSemasim.getTowardSimKeys(imsi)) {
+
+                    const { publicKey, privateKey } = await (async () => {
+
+                        let prKeys = prKeysByImei.get(imei);
+
+                        if (prKeys === undefined) {
+
+                            prKeys = generateKeys();
+
+                        }else{
+
+                            prKeysByImei.delete(imei);
+
+                        }
+
+                        return prKeys;
+
+                    })();
+
+                    await dbSemasim.setTowardSimKeys(
+                        imsi,
+                        cryptoLib.RsaKey.stringify(publicKey),
+                        cryptoLib.RsaKey.stringify(privateKey)
+                    );
+
+                }
 
                 messagesDispatcher.sendMessagesOfDongle(dongle);
 
                 backendRemoteApiCaller.notifySimOnline(dongle);
 
-            }
 
-        }
-    );
+            }
+        );
+
+    }
 
     dc.dongles.evtDelete.attach(
         ([dongle]) => backendRemoteApiCaller.notifyDongleOffline(dongle)
@@ -160,8 +208,8 @@ function registerListeners() {
 
             const wasAdded = await dbSemasim.onDongleMessage(
                 phoneNumber.build(
-                    message.number, 
-                    !!dongle.sim.country?dongle.sim.country.iso:undefined
+                    message.number,
+                    !!dongle.sim.country ? dongle.sim.country.iso : undefined
                 ),
                 message.text,
                 message.date,
@@ -237,10 +285,10 @@ function registerListeners() {
             const { uaSim } = fromContact;
 
             await dbSemasim.onSipMessage(
-                toNumber, 
-                text, 
-                uaSim, 
-                exactSendDate, 
+                toNumber,
+                text,
+                uaSim,
+                exactSendDate,
                 appendPromotionalMessage
             );
 

@@ -14,15 +14,16 @@ export namespace getDongle {
 
 }
 
-export namespace getDongleAndSipPassword {
+export namespace getDongleSipPasswordAndTowardSimEncryptKeyStr {
 
-    export const methodName= "getUsableDongleAndSipPassword";
+    export const methodName= "getDongleSipPasswordAndTowardSimEncryptKeyStr";
 
     export type Params= { imsi: string; };
 
     export type Response= {
         dongle: dcTypes.Dongle.Usable;
         sipPassword: string;
+        towardSimEncryptKeyStr: string;
     } | undefined;
 
 }

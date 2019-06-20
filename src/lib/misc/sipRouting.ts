@@ -1,7 +1,6 @@
 /* NOTE: Used in the browser. */
 
-//NOTE: Transpiled to ES3.
-import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
+import { urlSafeB64 } from "./urlSafeBase64encoderDecoder";
 
 //NOTE: Transpiled to ES5
 import * as sipLibrary from "ts-sip";
@@ -42,21 +41,20 @@ export function readImsi(sipPacket: sipLibrary.Packet): string {
  * */
 export namespace cid {
 
-    const { enc, dec } = stringTransform.transcode("base64", { "=": "_" });
 
     /** on backend when ua connect */
     export function generate(
         uaSocket: { remoteAddress: string; remotePort: number; },
         timestamp = Date.now()
     ): string {
-        return enc(
+        return urlSafeB64.enc(
             `${timestamp}:${uaSocket.remoteAddress}:${uaSocket.remotePort}`
         );
     }
 
     export function parse(connectionId: string) {
 
-        const [a, b, c] = dec(connectionId).split(":");
+        const [a, b, c] = urlSafeB64.dec(connectionId).split(":");
 
         return {
             "timestamp": parseInt(a),

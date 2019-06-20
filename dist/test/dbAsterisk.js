@@ -38,11 +38,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var db = require("../lib/dbAsterisk");
 var misc = require("../lib/misc");
 var assert = require("assert");
+var crypto = require("crypto");
 var contact = (function () {
     var imsi = "208150113995832";
     var ua = {
         "instance": "\"<urn:uuid:a98eef4a-5a6d-41ca-8918-e1ef1819fec0>\"",
         "userEmail": "joseph.garrone.gh@gmail.com",
+        "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary"),
         "platform": "android",
         "pushToken": [
             "f_l7SPs6o7A:APA91bF_c0VGlz3pQPwrgpFe9U0FRzc",

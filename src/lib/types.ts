@@ -15,6 +15,7 @@ export type UaSim = {
 export type Ua = {
     instance: string;
     userEmail: string;
+    towardUserEncryptKeyStr: string;
     platform: Ua.Platform;
     pushToken: string;
     messagesEnabled: boolean;
@@ -39,7 +40,6 @@ export type MessageTowardSip = {
     bundledData: BundledData.ServerToClient;
     date: Date;
     fromNumber: string;
-    text: string;
 };
 
 
@@ -58,9 +58,10 @@ export namespace BundledData {
 
         export type Message = {
             type: "MESSAGE";
+            text: string;
             exactSendDate: Date;
-            appendPromotionalMessage?: true;
-        }
+            appendPromotionalMessage: boolean;
+        };
 
     }
 
@@ -76,24 +77,28 @@ export namespace BundledData {
 
     export namespace ServerToClient {
 
-        export type Message = {
+        export type _Base = {
+            text: string;
+        };
+
+        export type Message = _Base & {
             type: "MESSAGE";
             pduDate: Date;
         };
 
-        export type MmsNotification = {
+        export type MmsNotification = _Base & {
             type: "MMS NOTIFICATION";
             pduDate: Date;
             wapPushMessage: string;
         };
 
-        export type SendReport = {
+        export type SendReport = _Base & {
             type: "SEND REPORT";
             messageTowardGsm: MessageTowardGsm;
             sendDate: Date | null;
         };
 
-        export type StatusReport = {
+        export type StatusReport = _Base & {
             type: "STATUS REPORT";
             messageTowardGsm: MessageTowardGsm;
             statusReport: {
@@ -105,18 +110,18 @@ export namespace BundledData {
             };
         };
 
-        export type MissedCall = {
+        export type MissedCall = _Base & {
             type: "MISSED CALL";
             date: Date;
         };
 
-        export type CallAnsweredBy = {
+        export type CallAnsweredBy = _Base & {
             type: "CALL ANSWERED BY";
             date: Date;
             ua: Ua
         };
 
-        export type Ringback = {
+        export type Ringback = _Base & {
             type: "RINGBACK";
             callId: string;
         };

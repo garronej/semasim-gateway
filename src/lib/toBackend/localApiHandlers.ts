@@ -4,6 +4,7 @@ import * as apiDeclaration from "../../sip_api_declarations/gatewayToBackend";
 import * as sip from "ts-sip";
 import * as remoteApi from "./remoteApiCaller";
 import * as dbAsterisk from "../dbAsterisk";
+import * as dbSemasim from "../dbSemasim";
 
 export const handlers: sip.api.Server.Handlers = {};
 
@@ -25,9 +26,9 @@ export const handlers: sip.api.Server.Handlers = {};
 
 {
 
-    const methodName = apiDeclaration.getDongleAndSipPassword.methodName;
-    type Params = apiDeclaration.getDongleAndSipPassword.Params;
-    type Response = apiDeclaration.getDongleAndSipPassword.Response;
+    const methodName = apiDeclaration.getDongleSipPasswordAndTowardSimEncryptKeyStr.methodName;
+    type Params = apiDeclaration.getDongleSipPasswordAndTowardSimEncryptKeyStr.Params;
+    type Response = apiDeclaration.getDongleSipPasswordAndTowardSimEncryptKeyStr.Response;
 
     const handler: sip.api.Server.Handler<Params, Response> = {
         "handler": async ({ imsi }) => {
@@ -41,13 +42,12 @@ export const handlers: sip.api.Server.Handlers = {};
                 return undefined;
             }
 
-            console.log({ dongle });
+            const [ sipPassword, { encryptKeyStr: towardSimEncryptKeyStr }] = await Promise.all([
+                     dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi),
+                    dbSemasim.getTowardSimKeys(imsi).then(out=> out!)
+            ]);
 
-            return {
-                dongle,
-                "sipPassword":
-                    await dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi)
-            };
+            return { dongle, sipPassword, towardSimEncryptKeyStr };
         }
     };
 
