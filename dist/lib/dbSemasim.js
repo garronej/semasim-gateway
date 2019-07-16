@@ -62,9 +62,7 @@ var __values = (this && this.__values) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sqliteCustom = require("sqlite-custom");
-var transfer_tools_1 = require("transfer-tools");
 var i = require("../bin/installer");
-var JSON_CUSTOM = transfer_tools_1.JSON_CUSTOM.get();
 function beforeExit() {
     return beforeExit.impl();
 }
@@ -242,13 +240,13 @@ function onSipMessage(toNumber, text, uaSim, date, appendPromotionalMessage) {
             switch (_a.label) {
                 case 0:
                     sql = [
-                        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date, append_promotional_message)",
+                        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text_b64, send_date, append_promotional_message)",
                         "SELECT",
                         [
                             exports._.esc(date.getTime()),
                             "ua_sim.id_",
                             exports._.esc(toNumber),
-                            exports._.esc(text),
+                            exports._.esc(Buffer.from(text, "utf8").toString("base64")),
                             "NULL",
                             sqliteCustom.bool.enc(appendPromotionalMessage)
                         ].join(", "),
@@ -298,23 +296,23 @@ function onDongleMessage(fromNumber, text, date, imsi) {
                         (function () {
                             var out = {
                                 "type": "MMS NOTIFICATION",
-                                "pduDate": date,
-                                "wapPushMessage": text,
-                                "text": [
+                                "pduDateTime": date.getTime(),
+                                "wapPushMessageB64": Buffer.from(text, "utf8").toString("base64"),
+                                "textB64": Buffer.from([
                                     "MMS notification received.\n",
                                     "Semasim does not support MMS yet.\n",
                                     "Note that some phones automatically convert long SMS into MMS.",
                                     "If you suspect it is what might have happen here you could ask your",
                                     "contact to send the message again splitting it into smaller parts.",
                                     "All apologies for the inconvenience."
-                                ].join(" ")
+                                ].join(" "), "utf8").toString("base64")
                             };
                             return out;
                         })() : (function () {
                         var out = {
                             "type": "MESSAGE",
-                            "pduDate": date,
-                            text: text
+                            "pduDateTime": date.getTime(),
+                            "textB64": Buffer.from(text, "utf8").toString("base64")
                         };
                         return out;
                     })();
@@ -347,8 +345,8 @@ function onMissedCall(imsi, number) {
                     date = new Date();
                     bundledData = {
                         "type": "MISSED CALL",
-                        date: date,
-                        "text": "Missed call"
+                        "dateTime": date.getTime(),
+                        "textB64": Buffer.from("Missed call", "utf8").toString("base64")
                     };
                     sql = buildMessageTowardSipInsertQuery(false, number, date, bundledData, {
                         "target": "ALL UA REGISTERED TO SIM",
@@ -382,9 +380,9 @@ function onCallAnswered(number, imsi, answeredByUa, otherUasReachedForTheCall) {
                     date = new Date();
                     bundledData = {
                         "type": "CALL ANSWERED BY",
-                        date: date,
+                        "dateTime": date.getTime(),
                         "ua": answeredByUa,
-                        "text": "Call answered by " + answeredByUa.userEmail
+                        "textB64": Buffer.from("Call answered by " + answeredByUa.userEmail, "utf8").toString("base64")
                     };
                     try {
                         for (otherUasReachedForTheCall_1 = __values(otherUasReachedForTheCall), otherUasReachedForTheCall_1_1 = otherUasReachedForTheCall_1.next(); !otherUasReachedForTheCall_1_1.done; otherUasReachedForTheCall_1_1 = otherUasReachedForTheCall_1.next()) {
@@ -481,10 +479,10 @@ function getUnsentMessagesTowardSip(uaSim) {
                     out = new Array();
                     _loop_1 = function (row) {
                         var message = {
-                            "date": new Date(row["date"]),
+                            "dateTime": row["date"],
                             "fromNumber": row["from_number"],
                             "isFromDongle": sqliteCustom.bool.dec(row["is_from_dongle"]),
-                            "bundledData": JSON_CUSTOM.parse(row["bundled_data"])
+                            "bundledData": JSON.parse(row["bundled_data"])
                         };
                         var onReceived = function () { return __awaiter(_this, void 0, void 0, function () {
                             return __generator(this, function (_a) {
@@ -539,7 +537,7 @@ function getUnsentMessagesTowardGsm(imsi) {
                         "message_toward_gsm.id_,",
                         "message_toward_gsm.date,",
                         "message_toward_gsm.to_number,",
-                        "message_toward_gsm.text,",
+                        "message_toward_gsm.text_b64,",
                         "message_toward_gsm.append_promotional_message,",
                         "ua_sim.imsi,",
                         "ua.instance,",
@@ -560,7 +558,7 @@ function getUnsentMessagesTowardGsm(imsi) {
                     out = [];
                     _loop_2 = function (row) {
                         var message = {
-                            "date": new Date(row["date"]),
+                            "dateTime": row["date"],
                             "uaSim": {
                                 "ua": {
                                     "instance": row["instance"],
@@ -573,7 +571,7 @@ function getUnsentMessagesTowardGsm(imsi) {
                                 "imsi": row["imsi"]
                             },
                             "toNumber": row["to_number"],
-                            "text": row["text"],
+                            "textB64": row["text_b64"],
                             "appendPromotionalMessage": sqliteCustom.bool.dec(row["append_promotional_message"])
                         };
                         var message_toward_gsm_id_ = row["id_"];
@@ -653,8 +651,8 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                         bundledData = {
                             "type": "SEND REPORT",
                             messageTowardGsm: messageTowardGsm,
-                            sendDate: sendDate,
-                            "text": isSuccess ? checkMark : crossMark
+                            "sendDateTime": sendDate === null ? null : sendDate.getTime(),
+                            "textB64": Buffer.from(isSuccess ? checkMark : crossMark, "utf8").toString("base64")
                         };
                         sql += buildMessageTowardSipInsertQuery(false, messageTowardGsm.toNumber, new Date(), bundledData, {
                             "target": "SPECIFIC UA REGISTERED TO SIM",
@@ -686,8 +684,14 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                             var bundledData = {
                                 "type": "STATUS REPORT",
                                 messageTowardGsm: messageTowardGsm,
-                                statusReport: statusReport,
-                                text: text
+                                "statusReport": {
+                                    "dischargeDateTime": statusReport.dischargeDate.getTime(),
+                                    "isDelivered": statusReport.isDelivered,
+                                    "recipient": statusReport.recipient,
+                                    "sendDateTime": statusReport.sendDate.getTime(),
+                                    "status": statusReport.status
+                                },
+                                "textB64": Buffer.from(text, "utf8").toString("base64")
                             };
                             return buildMessageTowardSipInsertQuery(false, messageTowardGsm.toNumber, now, bundledData, target);
                         };
@@ -699,12 +703,12 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                                 "uaSim": messageTowardGsm.uaSim,
                                 alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
-                            sql += build("Me: " + messageTowardGsm.text, {
+                            sql += build("Me: " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), {
                                 "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
                                 "uaSim": messageTowardGsm.uaSim,
                                 alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
-                            sql += build(messageTowardGsm.uaSim.ua.userEmail + ": " + messageTowardGsm.text, {
+                            sql += build(messageTowardGsm.uaSim.ua.userEmail + ": " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), {
                                 "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
                                 "uaSim": messageTowardGsm.uaSim,
                                 alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
@@ -833,7 +837,7 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, date, bundle
         "SELECT",
         [
             sqliteCustom.bool.enc(isFromDongle),
-            exports._.esc(JSON_CUSTOM.stringify(bundledData)),
+            exports._.esc(JSON.stringify(bundledData)),
             exports._.esc(date.getTime()),
             exports._.esc(fromNumber)
         ].join(", "),
@@ -875,7 +879,7 @@ function onTargetGsmRinging(contact, number, callId) {
                     bundledData = {
                         "type": "RINGBACK",
                         callId: callId,
-                        "text": "( notify ringback )"
+                        "textB64": Buffer.from("( notify ringback )", "utf8").toString("base64")
                     };
                     sql = buildMessageTowardSipInsertQuery(false, number, new Date(), bundledData, {
                         "target": "SPECIFIC UA REGISTERED TO SIM",

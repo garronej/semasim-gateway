@@ -20,54 +20,53 @@ export declare namespace Ua {
     type Platform = "android" | "iOS" | "web";
 }
 export declare type MessageTowardGsm = {
-    date: Date;
+    dateTime: number;
     uaSim: UaSim;
     toNumber: string;
-    text: string;
+    textB64: string;
     appendPromotionalMessage: boolean;
 };
 export declare type MessageTowardSip = {
     isFromDongle: boolean;
     bundledData: BundledData.ServerToClient;
-    date: Date;
+    dateTime: number;
     fromNumber: string;
 };
 export declare type BundledData = BundledData.ClientToServer | BundledData.ServerToClient;
 export declare namespace BundledData {
+    type _Base = {
+        textB64: string;
+    };
     type ClientToServer = ClientToServer.Message;
     namespace ClientToServer {
-        type Message = {
+        type Message = _Base & {
             type: "MESSAGE";
-            text: string;
-            exactSendDate: Date;
+            exactSendDateTime: number;
             appendPromotionalMessage: boolean;
         };
     }
     type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
     namespace ServerToClient {
-        type _Base = {
-            text: string;
-        };
         type Message = _Base & {
             type: "MESSAGE";
-            pduDate: Date;
+            pduDateTime: number;
         };
         type MmsNotification = _Base & {
             type: "MMS NOTIFICATION";
-            pduDate: Date;
-            wapPushMessage: string;
+            pduDateTime: number;
+            wapPushMessageB64: string;
         };
         type SendReport = _Base & {
             type: "SEND REPORT";
             messageTowardGsm: MessageTowardGsm;
-            sendDate: Date | null;
+            sendDateTime: number | null;
         };
         type StatusReport = _Base & {
             type: "STATUS REPORT";
             messageTowardGsm: MessageTowardGsm;
             statusReport: {
-                sendDate: Date;
-                dischargeDate: Date;
+                sendDateTime: number;
+                dischargeDateTime: number;
                 isDelivered: boolean;
                 status: string;
                 recipient: string;
@@ -75,11 +74,11 @@ export declare namespace BundledData {
         };
         type MissedCall = _Base & {
             type: "MISSED CALL";
-            date: Date;
+            dateTime: number;
         };
         type CallAnsweredBy = _Base & {
             type: "CALL ANSWERED BY";
-            date: Date;
+            dateTime: number;
             ua: Ua;
         };
         type Ringback = _Base & {

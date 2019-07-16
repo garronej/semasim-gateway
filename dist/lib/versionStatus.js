@@ -38,6 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var installer_1 = require("../bin/installer");
 var path = require("path");
 var scriptLib = require("scripting-tools");
+var webApiDeclaration = require("../web_api_declaration");
 var localVersion = require(path.join(installer_1.module_dir_path, "package.json"))["version"];
 function genIntegerInRange(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
@@ -104,7 +105,7 @@ function getVersion() {
                     _b.label = 2;
                 case 2:
                     _b.trys.push([2, 4, , 6]);
-                    return [4 /*yield*/, scriptLib.web_get("web." + installer_1.getBaseDomain() + "/api/version")];
+                    return [4 /*yield*/, scriptLib.web_get("https://web." + installer_1.getBaseDomain() + webApiDeclaration.apiPath + "/" + webApiDeclaration.version.methodName)];
                 case 3:
                     //TODO: make sure that throw if backend is down
                     //TODO: apparently we may have a response that match to null
@@ -112,7 +113,7 @@ function getVersion() {
                     return [3 /*break*/, 6];
                 case 4:
                     _a = _b.sent();
-                    console.log("web." + installer_1.getBaseDomain() + " is down");
+                    console.log(installer_1.getBaseDomain() + " is down");
                     return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, genRetryDelay()); })];
                 case 5:
                     _b.sent();

@@ -39,10 +39,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 process.once("unhandledRejection", function (error) { throw error; });
 var dbAsterisk_1 = require("./dbAsterisk");
 var dbSemasim_1 = require("./dbSemasim");
+var bundledData = require("./bundledData");
 (function () { return __awaiter(_this, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, dbAsterisk_1.testDbAsterisk()];
+            case 0:
+                bundledData.testSerialization();
+                return [4 /*yield*/, dbAsterisk_1.testDbAsterisk()];
             case 1:
                 _a.sent();
                 return [4 /*yield*/, dbSemasim_1.testDbSemasim()];

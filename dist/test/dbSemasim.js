@@ -228,8 +228,8 @@ function t2() {
                 case 6:
                     if (!(i < 5)) return [3 /*break*/, 9];
                     message = {
-                        "date": new Date(),
-                        "text": ttTesting.genUtf8Str(300),
+                        "dateTime": Date.now(),
+                        "textB64": Buffer.from(ttTesting.genUtf8Str(300), "utf8").toString("base64"),
                         "toNumber": ttTesting.genDigits(10),
                         "uaSim": {
                             imsi: imsi,
@@ -237,7 +237,7 @@ function t2() {
                         },
                         "appendPromotionalMessage": Date.now() % 2 === 0
                     };
-                    return [4 /*yield*/, db.onSipMessage(message.toNumber, message.text, message.uaSim, message.date, message.appendPromotionalMessage)];
+                    return [4 /*yield*/, db.onSipMessage(message.toNumber, Buffer.from(message.textB64, "base64").toString("utf8"), message.uaSim, new Date(message.dateTime), message.appendPromotionalMessage)];
                 case 7:
                     _d.sent();
                     messagesTowardGsm.push(message);
@@ -285,13 +285,13 @@ function t2() {
                                                         _a = __read(o, 1), _b = __read(_a[0], 2), mts = _b[0], setSent = _b[1];
                                                         assertSame(mts, {
                                                             "fromNumber": messageTowardGsm.toNumber,
-                                                            "date": mts.date,
+                                                            "dateTime": mts.dateTime,
                                                             "isFromDongle": false,
                                                             "bundledData": {
                                                                 "type": "SEND REPORT",
                                                                 "messageTowardGsm": messageTowardGsm,
-                                                                "sendDate": sendDate,
-                                                                "text": sendDate ? checkMark : crossMark
+                                                                "sendDateTime": sendDate === null ? null : sendDate.getTime(),
+                                                                "textB64": Buffer.from(sendDate ? checkMark : crossMark, "utf8").toString("base64")
                                                             }
                                                         });
                                                         return [4 /*yield*/, setSent()];
@@ -331,8 +331,15 @@ function t2() {
                                     bundledData = {
                                         "type": "STATUS REPORT",
                                         messageTowardGsm: messageTowardGsm,
-                                        statusReport: statusReport,
-                                        "text": statusReport.isDelivered ? "" + checkMark + checkMark : crossMark,
+                                        "statusReport": {
+                                            "dischargeDateTime": statusReport.dischargeDate.getTime(),
+                                            "isDelivered": statusReport.isDelivered,
+                                            "recipient": statusReport.recipient,
+                                            "sendDateTime": statusReport.sendDate.getTime(),
+                                            "status": statusReport.status
+                                        },
+                                        "textB64": Buffer.from(statusReport.isDelivered ?
+                                            "" + checkMark + checkMark : crossMark, "utf8").toString("base64")
                                     };
                                     __i = 0;
                                     return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
@@ -346,7 +353,7 @@ function t2() {
                                                         _a = __read(o, 1), _b = __read(_a[0], 2), mts = _b[0], setSent = _b[1];
                                                         assertSame(mts, {
                                                             "fromNumber": messageTowardGsm.toNumber,
-                                                            "date": mts.date,
+                                                            "dateTime": mts.dateTime,
                                                             "isFromDongle": false,
                                                             bundledData: bundledData
                                                         });
@@ -380,9 +387,9 @@ function t2() {
                                     _f = __read(o, 1), _g = __read(_f[0], 2), mts = _g[0], setSent = _g[1];
                                     assertSame(mts, {
                                         "fromNumber": messageTowardGsm.toNumber,
-                                        "date": mts.date,
+                                        "dateTime": mts.dateTime,
                                         "isFromDongle": false,
-                                        "bundledData": __assign({}, bundledData, { "text": "Me: " + messageTowardGsm.text })
+                                        "bundledData": __assign({}, bundledData, { "textB64": Buffer.from("Me: " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), "utf8").toString("base64") })
                                     });
                                     return [4 /*yield*/, setSent()];
                                 case 10:
@@ -421,9 +428,9 @@ function t2() {
                                     _k = __read(o, 1), _l = __read(_k[0], 2), mts = _l[0], setSent = _l[1];
                                     assertSame(mts, {
                                         "fromNumber": messageTowardGsm.toNumber,
-                                        "date": mts.date,
+                                        "dateTime": mts.dateTime,
                                         "isFromDongle": false,
-                                        "bundledData": __assign({}, bundledData, { "text": messageTowardGsm.uaSim.ua.userEmail + ": " + messageTowardGsm.text })
+                                        "bundledData": __assign({}, bundledData, { "textB64": Buffer.from(messageTowardGsm.uaSim.ua.userEmail + ": " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), "utf8").toString("base64") })
                                     });
                                     return [4 /*yield*/, setSent()];
                                 case 19:
@@ -509,15 +516,15 @@ function t3() {
                     messageTowardSip = {
                         "bundledData": {
                             "type": "MESSAGE",
-                            "pduDate": pduDate,
-                            "text": ttTesting.genUtf8Str(400)
+                            "pduDateTime": pduDate.getTime(),
+                            "textB64": Buffer.from(ttTesting.genUtf8Str(400), "utf8").toString("base64")
                         },
-                        "date": pduDate,
+                        "dateTime": pduDate.getTime(),
                         "fromNumber": ttTesting.genDigits(10),
                         "isFromDongle": true,
                     };
                     _c = assertSame;
-                    return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.bundledData.text, messageTowardSip.date, imsi)];
+                    return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, Buffer.from(messageTowardSip.bundledData.textB64, "base64").toString("utf8"), new Date(messageTowardSip.dateTime), imsi)];
                 case 8:
                     _c.apply(void 0, [_k.sent(),
                         true]);
@@ -531,7 +538,7 @@ function t3() {
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 11:
                     _d.apply(void 0, [_k.sent(), (_h = {},
-                            _h[imsi] = messagesTowardSipSrc[messagesTowardSipSrc.length - 1].date,
+                            _h[imsi] = new Date(messagesTowardSipSrc[messagesTowardSipSrc.length - 1].dateTime),
                             _h)]);
                     _k.label = 12;
                 case 12:
@@ -727,10 +734,10 @@ function t5() {
                     assertSame(messagesTowardSip, {
                         "bundledData": {
                             "type": "MISSED CALL",
-                            "date": messagesTowardSip.date,
-                            "text": "Missed call"
+                            "dateTime": messagesTowardSip.dateTime,
+                            "textB64": Buffer.from("Missed call", "utf8").toString("base64")
                         },
-                        "date": messagesTowardSip.date,
+                        "dateTime": messagesTowardSip.dateTime,
                         "fromNumber": missedCallNumber,
                         "isFromDongle": false
                     });
@@ -814,11 +821,11 @@ function t6() {
                     assertSame(messagesTowardSip, {
                         "bundledData": {
                             "type": "CALL ANSWERED BY",
-                            "date": messagesTowardSip.date,
+                            "dateTime": messagesTowardSip.dateTime,
                             "ua": answeringUa,
-                            "text": "Call answered by " + answeringUa.userEmail
+                            "textB64": Buffer.from("Call answered by " + answeringUa.userEmail, "utf8").toString("base64")
                         },
-                        "date": messagesTowardSip.date,
+                        "dateTime": messagesTowardSip.dateTime,
                         "fromNumber": number,
                         "isFromDongle": false
                     });

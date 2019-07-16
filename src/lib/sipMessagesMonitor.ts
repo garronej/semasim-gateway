@@ -7,6 +7,8 @@ import * as misc from "./misc";
 import * as cryptoLib from "crypto-lib";
 import * as dbSemasim from "./dbSemasim";
 import { workerThreadPoolId } from "./misc/workerThreadPoolId";
+import * as crypto from "crypto";
+
 
 export const dialplanContext = "from-sip-message";
 
@@ -59,7 +61,16 @@ export function sendMessage(
 
                 sipRequest.headers = { ...sipRequest.headers, ...headers };
 
-                sipLibrary.setPacketContent(sipRequest, "| Message payload encrypted in headers |");
+                //NOTE: We make so that the text of the SIP message is unique.
+                //( required by Semasim android. )
+                sipLibrary.setPacketContent(
+                    sipRequest,
+                    "| Message payload encrypted in headers | headers-digest: " +
+                    crypto.createHash("sha1")
+                        .update(Buffer.from(JSON.stringify(sipRequest.headers), "utf8"))
+                        .digest()
+                        .toString("base64")
+                );
 
                 prSipResponse
                     .then(() => resolve())
@@ -187,7 +198,7 @@ async function onIncomingSipMessage(
 
     const decryptor = await (async () => {
 
-        const { prDecryptorMap }= onIncomingSipMessage;
+        const { prDecryptorMap } = onIncomingSipMessage;
 
         const { imsi } = fromContact.uaSim;
 
@@ -212,7 +223,7 @@ async function onIncomingSipMessage(
 
     })();
 
-    const { exactSendDate, appendPromotionalMessage, text } =
+    const { exactSendDateTime, appendPromotionalMessage, textB64 } =
         await misc.extractBundledDataFromHeaders<types.BundledData.ClientToServer.Message>(
             sipRequest.headers,
             decryptor
@@ -221,8 +232,8 @@ async function onIncomingSipMessage(
     evtMessage.post({
         fromContact,
         "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user!,
-        text,
-        exactSendDate,
+        "text": Buffer.from(textB64, "base64").toString("utf8"),
+        "exactSendDate": new Date(exactSendDateTime),
         appendPromotionalMessage
     });
 

@@ -1,73 +1,130 @@
 /* NOTE: Used in the browser. */
 
-import * as cryptoLib from "crypto-lib";
+import * as cryptoLib from "crypto-lib/dist/sync/types";
+import { stringifyThenEncryptFactory, decryptThenParseFactory } from "crypto-lib/dist/async/serializer";
 import { urlSafeB64 } from "./urlSafeBase64encoderDecoder";
 //NOTE: Transpiled to ES3.
 import * as stringTransform from "transfer-tools/dist/lib/stringTransform";
 
 //Should be only types def. striped.
-import * as types from "../types";
+import { BundledData } from "../types";
 
+//NOTE: Exported for semasim-mobile
+const getIndexedHeaderName = (i: number) => `Bundled-Data-${i}`;
 
-const header = (i: number) => `Bundled-Data-${i}`;
-
-export async function smuggleBundledDataInHeaders<T extends types.BundledData>(
+export function smuggleBundledDataInHeaders<T extends BundledData>(
     data: T,
     encryptor: cryptoLib.Encryptor,
+    headers?: Record<string, string>,
+): Promise<Record<string, string>>;
+export function smuggleBundledDataInHeaders<T extends BundledData>(
+    data: T,
+    encryptor: cryptoLib.Sync<cryptoLib.Encryptor>,
+    headers?: Record<string, string>,
+): Record<string, string>;
+export function smuggleBundledDataInHeaders<
+    T extends BundledData,
+    U extends cryptoLib.Encryptor | cryptoLib.Sync<cryptoLib.Encryptor>
+>(
+    data: T,
+    encryptor: U,
     headers: Record<string, string> = {},
-): Promise<Record<string, string>> {
+): U extends cryptoLib.Encryptor ? Promise<Record<string, string>> : Record<string, string> {
 
-    const split = stringTransform.textSplit(
-        125,
-        urlSafeB64.enc(
-            await cryptoLib.stringifyThenEncryptFactory(encryptor)<types.BundledData>(
-                data
-            )
-        )
-    );
+    const followUp = (value: string) => {
 
-    for (let i = 0; i < split.length; i++) {
+        const split = stringTransform.textSplit(
+            125,
+            urlSafeB64.enc(value)
+        );
 
-        headers[header(i)] = split[i];
+        for (let i = 0; i < split.length; i++) {
 
-    }
+            headers[getIndexedHeaderName(i)] = split[i];
 
-    return headers;
+        }
+
+        return headers;
+
+    };
+
+    const prValueOrValue: Promise<string> | string =
+        stringifyThenEncryptFactory(encryptor)<BundledData>(data);
+
+    return (
+        typeof prValueOrValue === "string" ?
+            followUp(prValueOrValue) :
+            prValueOrValue.then(value => followUp(value))
+    ) as any;
 
 }
 
-/** assert there is data */
-export async function extractBundledDataFromHeaders<T extends types.BundledData>(
-    headers: Record<string, string>,
-    decryptor: cryptoLib.Decryptor
-): Promise<T> {
 
-    const split: string[] = [];
+export type BundledDataSipHeaders = string[] & {
+    _bundledDataSipHeaderBrand: any;
+};
 
-    let i = 0;
+export namespace BundledDataSipHeaders {
 
-    while (true) {
+    export function build(
+        getHeaderValue: (headerName: string) => string | null
+    ): BundledDataSipHeaders {
 
-        const key = header(i++);
+        const headersValues: string[] = [];
 
-        const part = headers[key] || headers[key.toLowerCase()];
+        let i = 0;
 
-        if (!!part) {
-            split.push(part);
-        } else {
-            break;
+        while (true) {
+
+            const headerName = getIndexedHeaderName(i++);
+
+            const headerValue = getHeaderValue(headerName) ||
+                getHeaderValue(headerName.toLocaleLowerCase());
+
+            if (!headerValue) {
+                break;
+            }
+
+            headersValues.push(headerValue);
+
         }
 
+        return headersValues as BundledDataSipHeaders;
+
     }
+
+}
+
+/** Throws if there is not bundled data in the headers */
+export function extractBundledDataFromHeaders<T extends BundledData>(
+    headers: Record<string, string>,
+    decryptor: cryptoLib.Decryptor
+): Promise<T>;
+export function extractBundledDataFromHeaders<T extends BundledData>(
+    headers: BundledDataSipHeaders,
+    decryptor: cryptoLib.Sync<cryptoLib.Decryptor>
+): T;
+export function extractBundledDataFromHeaders<
+    T extends BundledData,
+    U extends cryptoLib.Decryptor | cryptoLib.Sync<cryptoLib.Decryptor>
+>(
+    headers: Record<string, string> | BundledDataSipHeaders,
+    decryptor: U
+): U extends cryptoLib.Encryptor ? Promise<T> : T {
+
+    const split = headers instanceof Array ?
+        headers :
+        BundledDataSipHeaders.build(headerName => headers[headerName] || null)
+        ;
 
     if (!split.length) {
         throw new Error("No bundled data in header");
     }
 
-    return await cryptoLib.decryptThenParseFactory(decryptor)<T>(
+    return decryptThenParseFactory(decryptor)<T>(
         urlSafeB64.dec(
             split.join("")
         )
-    );
+    ) as any;
 
 }

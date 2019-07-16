@@ -34,9 +34,10 @@ export function sendMessagesOfDongle(
             try {
 
                 sendMessageResult = await dc.sendMessage(
-                    dongle.imei, 
-                    message.toNumber, 
-                    message.text + (message.appendPromotionalMessage ? "\n\nSent via Semasim.com" : "")
+                    dongle.imei,
+                    message.toNumber,
+                    Buffer.from(message.textB64, "base64").toString("utf8")
+                    + (message.appendPromotionalMessage ? "\n\nSent via Semasim.com" : "")
                 );
 
             } catch {
@@ -114,7 +115,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
 
         if (out === undefined) {
 
-            out= cryptoLib.rsa.encryptorFactory(
+            out = cryptoLib.rsa.encryptorFactory(
                 cryptoLib.RsaKey.parse(towardUserEncryptKeyStr),
                 workerThreadPoolId
             );

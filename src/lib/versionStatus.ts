@@ -1,6 +1,7 @@
 import { module_dir_path, getEnv, getBaseDomain } from "../bin/installer";
 import * as path from "path";
 import * as scriptLib from "scripting-tools";
+import * as webApiDeclaration from "../web_api_declaration";
 const localVersion: string = require(path.join(module_dir_path, "package.json"))["version"];
 
 function genIntegerInRange(min, max): number {
@@ -84,11 +85,13 @@ export async function getVersion(): Promise<{
 
             //TODO: make sure that throw if backend is down
             //TODO: apparently we may have a response that match to null
-            value = await scriptLib.web_get(`web.${getBaseDomain()}/api/version`);
+            value = await scriptLib.web_get(
+                `https://web.${getBaseDomain()}${webApiDeclaration.apiPath}/${webApiDeclaration.version.methodName}`
+            );
 
         } catch{
 
-            console.log(`web.${getBaseDomain()} is down`);
+            console.log(`${getBaseDomain()} is down`);
 
             await new Promise(
                 resolve => setTimeout(resolve, genRetryDelay())

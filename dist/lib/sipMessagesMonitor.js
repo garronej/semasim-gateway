@@ -53,6 +53,7 @@ var misc = require("./misc");
 var cryptoLib = require("crypto-lib");
 var dbSemasim = require("./dbSemasim");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
+var crypto = require("crypto");
 exports.dialplanContext = "from-sip-message";
 exports.evtMessage = new ts_events_extended_1.SyncEvent();
 function sendMessage(contact, fromNumber, headers) {
@@ -74,7 +75,13 @@ function sendMessage(contact, fromNumber, headers) {
             sipRequest.headers.to = { "name": undefined, "uri": contact.uri, "params": {} };
             delete sipRequest.headers.contact;
             sipRequest.headers = __assign({}, sipRequest.headers, headers);
-            sipLibrary.setPacketContent(sipRequest, "| Message payload encrypted in headers |");
+            //NOTE: We make so that the text of the SIP message is unique.
+            //( required by Semasim android. )
+            sipLibrary.setPacketContent(sipRequest, "| Message payload encrypted in headers | headers-digest: " +
+                crypto.createHash("sha1")
+                    .update(Buffer.from(JSON.stringify(sipRequest.headers), "utf8"))
+                    .digest()
+                    .toString("base64"));
             prSipResponse
                 .then(function () { return resolve(); })
                 .catch(function () { return reject(new Error("Not received")); });
@@ -175,7 +182,7 @@ function onOutgoingSipMessage(sipRequestAsReceived, prSipResponse) {
  */
 function onIncomingSipMessage(fromContact, sipRequest) {
     return __awaiter(this, void 0, void 0, function () {
-        var decryptor, _a, exactSendDate, appendPromotionalMessage, text;
+        var decryptor, _a, exactSendDateTime, appendPromotionalMessage, textB64;
         var _this = this;
         return __generator(this, function (_b) {
             switch (_b.label) {
@@ -197,12 +204,12 @@ function onIncomingSipMessage(fromContact, sipRequest) {
                     decryptor = _b.sent();
                     return [4 /*yield*/, misc.extractBundledDataFromHeaders(sipRequest.headers, decryptor)];
                 case 2:
-                    _a = _b.sent(), exactSendDate = _a.exactSendDate, appendPromotionalMessage = _a.appendPromotionalMessage, text = _a.text;
+                    _a = _b.sent(), exactSendDateTime = _a.exactSendDateTime, appendPromotionalMessage = _a.appendPromotionalMessage, textB64 = _a.textB64;
                     exports.evtMessage.post({
                         fromContact: fromContact,
                         "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user,
-                        text: text,
-                        exactSendDate: exactSendDate,
+                        "text": Buffer.from(textB64, "base64").toString("utf8"),
+                        "exactSendDate": new Date(exactSendDateTime),
                         appendPromotionalMessage: appendPromotionalMessage
                     });
                     return [2 /*return*/];
