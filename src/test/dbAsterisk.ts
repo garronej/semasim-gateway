@@ -50,13 +50,13 @@ export async function testDbAsterisk() {
         contact.uaSim.imsi
     );
 
-    let rows = await db.query(
-        `SELECT * FROM ps_aors WHERE id= ${db.esc(contact.uaSim.imsi)}`
+    let rows = await db.queryRetryUntilSuccess(
+        ()=> `SELECT * FROM ps_aors WHERE id= ${db.esc(contact.uaSim.imsi)}`
     );
 
     assert(rows.length === 1);
 
-    rows= await db.query(`SELECT * FROM ps_auths WHERE id= ${db.esc(contact.uaSim.imsi)}`);
+    rows= await db.queryRetryUntilSuccess(()=>`SELECT * FROM ps_auths WHERE id= ${db.esc(contact.uaSim.imsi)}`);
 
     assert(rows.length === 1);
 

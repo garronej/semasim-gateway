@@ -1,6 +1,6 @@
 import * as sqliteCustom from "sqlite-custom";
 import * as types from "./types";
-export declare let query: sqliteCustom.Api["query"];
+export declare let queryRetryUntilSuccess: (buildSql: () => string) => Promise<any>;
 export declare let esc: sqliteCustom.Api["esc"];
 export declare let buildInsertQuery: sqliteCustom.Api["buildInsertQuery"];
 export declare let buildInsertOrUpdateQueries: sqliteCustom.Api["buildInsertOrUpdateQueries"];

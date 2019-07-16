@@ -309,6 +309,10 @@
         "version": "b3b46e5c280322a2bcbb59d0c5ded8558a01f0c592f897c2f9573fd212f07118",
         "signature": "b08da67aaee84e57bd55ad48953b4e73dc8db12057ac1f97d3ee1061f74830cd"
       },
+      "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts": {
+        "version": "34f0a70e06970e32d059628f7ff83f615da817a20cb03c79360a5c158ac2a650",
+        "signature": "34f0a70e06970e32d059628f7ff83f615da817a20cb03c79360a5c158ac2a650"
+      },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts": {
         "version": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e",
         "signature": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e"
@@ -338,8 +342,8 @@
         "signature": "4ca4f83575447544927d868449f284e62edb3ea9734fe627bcd8a0a5f4ed02ea"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbasterisk.ts": {
-        "version": "c1c1b79079645137c18e261477d209836b99f46006d05ca38c57753cb2f6978b",
-        "signature": "6892dab29e3ba10c51e14a598317c40c162403ac380c6e727f00f5746738a8a9"
+        "version": "33ce498addaf68f15b893e03760783404bb7aa5dd4d0adf657940ba1ee2d2c6b",
+        "signature": "2616483d9c5b601839d1ff5711b30def51cf9b346983b4eea44aa15cfdf35ce8"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/tobackend/localapihandlers.ts": {
         "version": "f5afe5b105d1e6cc61a1b67c4a1bc3b00ae87e72f0d2d6b040adae8f50ee6859",
@@ -402,7 +406,7 @@
         "signature": "5b1c468aa25740e5d4d643db4892518b44ad241dc9f35de9048c66c065612495"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbasterisk.ts": {
-        "version": "c1ad8cab1822bfa9f21d3a025e35d5d7658bb318f6f580f2834c1f5ceec227f7",
+        "version": "7f8d7924a56fd49e523203822601f9f846ab42faf06bd30e71d6281f92163346",
         "signature": "36c87b2f17ce1bee5e20596f2598cf0164bd3a2abc60179b428b1b00213ed126"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbsemasim.ts": {
@@ -830,6 +834,10 @@
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
+      "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts": [
+        "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts": [
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
@@ -885,7 +893,9 @@
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/bin/installer.ts",
+        "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/sipmessagesmonitor.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
@@ -1225,6 +1235,10 @@
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
+      "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts": [
+        "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/gatewaytobackend.ts": [
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
       ],
@@ -1553,6 +1567,7 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/misc/index.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/backendtogateway.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/gatewaytobackend.ts",
+      "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.from.d.ts",

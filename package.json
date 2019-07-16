@@ -29,6 +29,7 @@
     "commander": "^2.11.0",
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
+    "run-exclusive": "github:garronej/run-exclusive",
     "scripting-tools": "github:garronej/scripting-tools",
     "sqlite-custom": "github:garronej/sqlite-custom",
     "ts-ami": "github:garronej/ts-ami",

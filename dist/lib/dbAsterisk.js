@@ -74,11 +74,10 @@ var __values = (this && this.__values) || function (o) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var sqliteCustom = require("sqlite-custom");
 var i = require("../bin/installer");
-/*
-import * as logger from "logger";
-const debug = logger.debugFactory();
-*/
+var logger = require("logger");
+var debug = logger.debugFactory();
 var crypto = require("crypto");
+var runExclusive = require("run-exclusive");
 var voiceCallBridge_1 = require("./voiceCallBridge");
 var sipMessagesMonitor_1 = require("./sipMessagesMonitor");
 function beforeExit() {
@@ -91,6 +90,7 @@ exports.beforeExit = beforeExit;
 function launch() {
     return __awaiter(this, void 0, void 0, function () {
         var api;
+        var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, sqliteCustom.connectAndGetApi(i.ast_db_path)];
@@ -99,41 +99,30 @@ function launch() {
                     return [4 /*yield*/, api.query("DELETE FROM ps_contacts")];
                 case 2:
                     _a.sent();
-                    exports.query = api.query;
-                    /*
-                    //TODO: Fix db related crash witnessed on pi zero
-                
-                    query = async (...args)=>{
-                
-                        while(true){
-                
-                            let out: any;
-                
-                            try{
-                
-                                out = await api.query.apply(api, args);
-                
-                            }catch(error){
-                
-                                debug([
-                                    "",
-                                    "",
-                                    error.stack,
-                                    "",
-                                    ""
-                                ].join("\n"));
-                
-                                continue;
+                    exports.queryRetryUntilSuccess = runExclusive.build(function (buildSql) { return __awaiter(_this, void 0, void 0, function () {
+                        var sql, out, error_1;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    sql = buildSql();
+                                    _a.label = 1;
+                                case 1:
+                                    _a.trys.push([1, 3, , 5]);
+                                    return [4 /*yield*/, api.query(sql)];
+                                case 2:
+                                    out = _a.sent();
+                                    return [3 /*break*/, 5];
+                                case 3:
+                                    error_1 = _a.sent();
+                                    debug(error_1.stack);
+                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 100); })];
+                                case 4:
+                                    _a.sent();
+                                    return [2 /*return*/, exports.queryRetryUntilSuccess(buildSql)];
+                                case 5: return [2 /*return*/, out];
                             }
-                
-                
-                            return out;
-                
-                
-                        }
-                
-                    };
-                    */
+                        });
+                    }); });
                     exports.esc = api.esc;
                     exports.buildInsertQuery = api.buildInsertQuery;
                     exports.buildInsertOrUpdateQueries = api.buildInsertOrUpdateQueries;
@@ -147,17 +136,17 @@ exports.launch = launch;
 /** for test purpose only */
 function flush() {
     return __awaiter(this, void 0, void 0, function () {
-        var sql;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    sql = [
-                        "DELETE FROM ps_aors;",
-                        "DELETE FROM ps_auths;",
-                        "DELETE FROM ps_contacts;",
-                        "DELETE FROM ps_endpoints;",
-                    ].join("\n");
-                    return [4 /*yield*/, exports.query(sql)];
+                case 0: return [4 /*yield*/, exports.queryRetryUntilSuccess(function () {
+                        var sql = [
+                            "DELETE FROM ps_aors;",
+                            "DELETE FROM ps_auths;",
+                            "DELETE FROM ps_contacts;",
+                            "DELETE FROM ps_endpoints;",
+                        ].join("\n");
+                        return sql;
+                    })];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];
@@ -170,10 +159,13 @@ function deleteContact(contact) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, exports.query([
-                        "DELETE FROM ps_contacts",
-                        "WHERE uri=" + exports.esc(contact.uri.replace(/;/g, "^3B"))
-                    ].join("\n"))];
+                case 0: return [4 /*yield*/, exports.queryRetryUntilSuccess(function () {
+                        var sql = [
+                            "DELETE FROM ps_contacts",
+                            "WHERE uri=" + exports.esc(contact.uri.replace(/;/g, "^3B"))
+                        ].join("\n");
+                        return sql;
+                    })];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];
@@ -203,77 +195,80 @@ exports.generateSipEndpointPassword = generateSipEndpointPassword;
  */
 function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, newPassword) {
     return __awaiter(this, void 0, void 0, function () {
-        var sql, table, values, _a, ps_endpoints_web, ps_endpoints_mobile, _b, _c, ps_endpoints, password;
-        var e_1, _d;
-        return __generator(this, function (_e) {
-            switch (_e.label) {
+        var buildSql, password;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
-                    sql = "";
-                    {
-                        table = "ps_auths";
-                        values = {
-                            "id": imsi,
-                            "auth_type": "userpass",
-                            "username": imsi,
-                            "realm": "semasim"
-                        };
-                        if (newPassword !== undefined) {
-                            values["password"] = newPassword;
-                            sql += exports.buildInsertOrUpdateQueries(table, values, ["id"]);
+                    buildSql = function () {
+                        var e_1, _a;
+                        var sql = "";
+                        {
+                            var table = "ps_auths";
+                            var values = {
+                                "id": imsi,
+                                "auth_type": "userpass",
+                                "username": imsi,
+                                "realm": "semasim"
+                            };
+                            if (newPassword !== undefined) {
+                                values["password"] = newPassword;
+                                sql += exports.buildInsertOrUpdateQueries(table, values, ["id"]);
+                            }
+                            else {
+                                values["password"] = generateSipEndpointPassword();
+                                sql += exports.buildInsertQuery(table, values, "IGNORE");
+                            }
                         }
-                        else {
-                            values["password"] = generateSipEndpointPassword();
-                            sql += exports.buildInsertQuery(table, values, "IGNORE");
-                        }
-                    }
-                    _a = __read((function () {
-                        var ps_endpoints_base = {
-                            "disallow": "all",
-                            "context": voiceCallBridge_1.sipCallContext,
-                            "message_context": sipMessagesMonitor_1.dialplanContext,
-                            "auth": imsi,
-                            "from_domain": i.getBaseDomain(),
-                            "ice_support": "yes",
-                            "transport": "transport-tcp",
-                            "dtmf_mode": "info"
-                        };
-                        var webId = imsi + "-webRTC";
-                        return [__assign({ "allow": "alaw,ulaw", "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "allow": "alaw,ulaw", "id": imsi, "aors": imsi }, ps_endpoints_base)];
-                        /*
-                        TODO: We have witnessed an often poor quality
-                        of the audio from GSM to Linphone on galaxy
-                        S4 on Android lollipop but maybe it's just
-                        a problem caused by the test units themselves
-                        and not a general case. Do further investigations.
-                        Changing the codec could solve the problem.
-                        Asterisk is currently compiled with all free
-                        audio codecs ( list displayed on Asterisk startup )
-                        so we can perform tests easily.
-                        */
-                    })(), 2), ps_endpoints_web = _a[0], ps_endpoints_mobile = _a[1];
-                    try {
-                        for (_b = __values([ps_endpoints_mobile, ps_endpoints_web]), _c = _b.next(); !_c.done; _c = _b.next()) {
-                            ps_endpoints = _c.value;
-                            sql += exports.buildInsertQuery("ps_aors", {
-                                "id": ps_endpoints.aors,
-                                "max_contacts": 30,
-                                "qualify_frequency": 0,
-                                "support_path": "yes"
-                            }, "IGNORE");
-                            sql += exports.buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
-                        }
-                    }
-                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                    finally {
+                        var _b = __read((function () {
+                            var ps_endpoints_base = {
+                                "disallow": "all",
+                                "context": voiceCallBridge_1.sipCallContext,
+                                "message_context": sipMessagesMonitor_1.dialplanContext,
+                                "auth": imsi,
+                                "from_domain": i.getBaseDomain(),
+                                "ice_support": "yes",
+                                "transport": "transport-tcp",
+                                "dtmf_mode": "info"
+                            };
+                            var webId = imsi + "-webRTC";
+                            return [__assign({ "allow": "alaw,ulaw", "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "allow": "alaw,ulaw", "id": imsi, "aors": imsi }, ps_endpoints_base)];
+                            /*
+                            TODO: We have witnessed an often poor quality
+                            of the audio from GSM to Linphone on galaxy
+                            S4 on Android lollipop but maybe it's just
+                            a problem caused by the test units themselves
+                            and not a general case. Do further investigations.
+                            Changing the codec could solve the problem.
+                            Asterisk is currently compiled with all free
+                            audio codecs ( list displayed on Asterisk startup )
+                            so we can perform tests easily.
+                            */
+                        })(), 2), ps_endpoints_web = _b[0], ps_endpoints_mobile = _b[1];
                         try {
-                            if (_c && !_c.done && (_d = _b.return)) _d.call(_b);
+                            for (var _c = __values([ps_endpoints_mobile, ps_endpoints_web]), _d = _c.next(); !_d.done; _d = _c.next()) {
+                                var ps_endpoints = _d.value;
+                                sql += exports.buildInsertQuery("ps_aors", {
+                                    "id": ps_endpoints.aors,
+                                    "max_contacts": 30,
+                                    "qualify_frequency": 0,
+                                    "support_path": "yes"
+                                }, "IGNORE");
+                                sql += exports.buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
+                            }
                         }
-                        finally { if (e_1) throw e_1.error; }
-                    }
-                    sql += "SELECT password FROM ps_auths WHERE id= " + exports.esc(imsi);
-                    return [4 /*yield*/, exports.query(sql)];
+                        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                        finally {
+                            try {
+                                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                            }
+                            finally { if (e_1) throw e_1.error; }
+                        }
+                        sql += "SELECT password FROM ps_auths WHERE id= " + exports.esc(imsi);
+                        return sql;
+                    };
+                    return [4 /*yield*/, exports.queryRetryUntilSuccess(buildSql)];
                 case 1:
-                    password = (_e.sent()).pop()[0].password;
+                    password = (_a.sent()).pop()[0].password;
                     return [2 /*return*/, password];
             }
         });

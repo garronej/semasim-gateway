@@ -84,11 +84,11 @@ function testDbAsterisk() {
                     return [4 /*yield*/, db.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(contact.uaSim.imsi)];
                 case 3:
                     password = _d.sent();
-                    return [4 /*yield*/, db.query("SELECT * FROM ps_aors WHERE id= " + db.esc(contact.uaSim.imsi))];
+                    return [4 /*yield*/, db.queryRetryUntilSuccess(function () { return "SELECT * FROM ps_aors WHERE id= " + db.esc(contact.uaSim.imsi); })];
                 case 4:
                     rows = _d.sent();
                     assert(rows.length === 1);
-                    return [4 /*yield*/, db.query("SELECT * FROM ps_auths WHERE id= " + db.esc(contact.uaSim.imsi))];
+                    return [4 /*yield*/, db.queryRetryUntilSuccess(function () { return "SELECT * FROM ps_auths WHERE id= " + db.esc(contact.uaSim.imsi); })];
                 case 5:
                     rows = _d.sent();
                     assert(rows.length === 1);

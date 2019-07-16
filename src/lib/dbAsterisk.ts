@@ -1,18 +1,26 @@
 import * as sqliteCustom from "sqlite-custom";
 import * as types from "./types";
 import * as i from "../bin/installer";
-/*
 import * as logger from "logger";
 const debug = logger.debugFactory();
-*/
 import * as crypto from "crypto";
+import * as runExclusive from "run-exclusive";
 
 
 import { sipCallContext } from "./voiceCallBridge";
 import { dialplanContext as messagesDialplanContext} from "./sipMessagesMonitor";
 
-//Note: Exported only for tests.
-export let query: sqliteCustom.Api["query"];
+/*
+NOTES: 
+-Exported only for tests.
+-asterisk.db is shared with asterisk as a result is asterisk
+have the db locked wile we are trying to write a record queries
+may fail. To cope with it we retry issuing the request until it passes.
+-To implement retry we have to pass a higher order function that build
+the sql query instead of the sql itself. This is because esc function
+assume the sql query to be called only once.
+*/
+export let queryRetryUntilSuccess: (buildSql: () => string) => Promise<any>;
 export let esc: sqliteCustom.Api["esc"];
 export let buildInsertQuery: sqliteCustom.Api["buildInsertQuery"];
 export let buildInsertOrUpdateQueries: sqliteCustom.Api["buildInsertOrUpdateQueries"];
@@ -31,78 +39,76 @@ export async function launch(): Promise<void> {
 
     await api.query("DELETE FROM ps_contacts");
 
-    query= api.query;
+    queryRetryUntilSuccess= runExclusive.build(
+        async (buildSql: () => string): Promise<any> => {
 
-    /*
-    //TODO: Fix db related crash witnessed on pi zero
-
-    query = async (...args)=>{
-
-        while(true){
+            const sql = buildSql();
 
             let out: any;
 
-            try{
+            try {
 
-                out = await api.query.apply(api, args);
+                out = await api.query(sql);
 
-            }catch(error){
+            } catch (error) {
 
-                debug([
-                    "",
-                    "",
-                    error.stack,
-                    "",
-                    ""
-                ].join("\n"));
+                debug(error.stack);
 
-                continue;
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                return queryRetryUntilSuccess(buildSql);
+
             }
-
 
             return out;
 
-
         }
+    );
 
-    };
-    */
 
     esc = api.esc;
     buildInsertQuery = api.buildInsertQuery;
-    buildInsertOrUpdateQueries= api.buildInsertOrUpdateQueries;
+    buildInsertOrUpdateQueries = api.buildInsertOrUpdateQueries;
 
-    beforeExit.impl= ()=> api.close(); 
+    beforeExit.impl = () => api.close();
 
 }
 
 /** for test purpose only */
 export async function flush() {
 
-    let sql = [
-        "DELETE FROM ps_aors;",
-        "DELETE FROM ps_auths;",
-        "DELETE FROM ps_contacts;",
-        "DELETE FROM ps_endpoints;",
-    ].join("\n");
+    await queryRetryUntilSuccess(() => {
 
-    await query(sql);
+        const sql = [
+            "DELETE FROM ps_aors;",
+            "DELETE FROM ps_auths;",
+            "DELETE FROM ps_contacts;",
+            "DELETE FROM ps_endpoints;",
+        ].join("\n");
+
+        return sql;
+
+    });
 
 }
 
 export async function deleteContact(contact: types.Contact) {
 
-    await query(
-        [
+    await queryRetryUntilSuccess(() => {
+
+        const sql = [
             "DELETE FROM ps_contacts",
             `WHERE uri=${esc(contact.uri.replace(/;/g, "^3B"))}`
-        ].join("\n")
-    );
+        ].join("\n");
+
+        return sql;
+
+    });
 
 }
 
 /** Helper function to generate a sip password */
-export function generateSipEndpointPassword(): string{
+export function generateSipEndpointPassword(): string {
     return crypto.randomBytes(16).toString("hex");
 }
 
@@ -125,100 +131,106 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
     newPassword?: string
 ): Promise<string> {
 
-    let sql = "";
+    const buildSql = () => {
 
-    {
+        let sql = "";
 
-        const table = "ps_auths";
+        {
 
-        const values = {
-            "id": imsi,
-            "auth_type": "userpass",
-            "username": imsi,
-            "realm": "semasim"
-        };
+            const table = "ps_auths";
 
-        if (newPassword !== undefined) {
+            const values = {
+                "id": imsi,
+                "auth_type": "userpass",
+                "username": imsi,
+                "realm": "semasim"
+            };
 
-            values["password"]= newPassword;
+            if (newPassword !== undefined) {
 
-            sql += buildInsertOrUpdateQueries(table, values, ["id"]);
+                values["password"] = newPassword;
 
-        } else {
+                sql += buildInsertOrUpdateQueries(table, values, ["id"]);
 
-            values["password"]= generateSipEndpointPassword();
+            } else {
 
-            sql += buildInsertQuery(table, values, "IGNORE");
+                values["password"] = generateSipEndpointPassword();
+
+                sql += buildInsertQuery(table, values, "IGNORE");
+
+            }
 
         }
 
-    }
+        const [ps_endpoints_web, ps_endpoints_mobile] = (() => {
 
-    const [ps_endpoints_web, ps_endpoints_mobile] = (() => {
+            const ps_endpoints_base = {
+                "disallow": "all",
+                "context": sipCallContext,
+                "message_context": messagesDialplanContext,
+                "auth": imsi,
+                "from_domain": i.getBaseDomain(),
+                "ice_support": "yes",
+                "transport": "transport-tcp",
+                "dtmf_mode": "info"
+            };
 
-        const ps_endpoints_base = {
-            "disallow": "all",
-            "context": sipCallContext,
-            "message_context": messagesDialplanContext,
-            "auth": imsi,
-            "from_domain": i.getBaseDomain(),
-            "ice_support": "yes",
-            "transport": "transport-tcp",
-            "dtmf_mode": "info"
-        };
+            const webId = `${imsi}-webRTC`;
 
-        const webId = `${imsi}-webRTC`;
+            return [{
+                "allow": "alaw,ulaw",
+                "id": webId,
+                "aors": webId,
+                ...ps_endpoints_base,
+                "use_avpf": "yes",
+                "media_encryption": "dtls",
+                "dtls_ca_file": i.ca_crt_path,
+                "dtls_cert_file": i.host_pem_path,
+                "dtls_verify": "fingerprint",
+                "dtls_setup": "actpass",
+                "media_use_received_transport": "yes",
+                "rtcp_mux": "yes"
+            }, {
+                "allow": "alaw,ulaw", //See TODO below
+                "id": imsi,
+                "aors": imsi,
+                ...ps_endpoints_base
+            }];
 
-        return [{
-            "allow": "alaw,ulaw",
-            "id": webId,
-            "aors": webId,
-            ...ps_endpoints_base,
-            "use_avpf": "yes",
-            "media_encryption": "dtls",
-            "dtls_ca_file": i.ca_crt_path,
-            "dtls_cert_file": i.host_pem_path,
-            "dtls_verify": "fingerprint",
-            "dtls_setup": "actpass",
-            "media_use_received_transport": "yes",
-            "rtcp_mux": "yes"
-        }, {
-            "allow": "alaw,ulaw", //See TODO below
-            "id": imsi,
-            "aors": imsi,
-            ...ps_endpoints_base
-        }];
+            /*
+            TODO: We have witnessed an often poor quality
+            of the audio from GSM to Linphone on galaxy 
+            S4 on Android lollipop but maybe it's just
+            a problem caused by the test units themselves
+            and not a general case. Do further investigations.
+            Changing the codec could solve the problem.
+            Asterisk is currently compiled with all free
+            audio codecs ( list displayed on Asterisk startup )
+            so we can perform tests easily.
+            */
 
-        /*
-        TODO: We have witnessed an often poor quality
-        of the audio from GSM to Linphone on galaxy 
-        S4 on Android lollipop but maybe it's just
-        a problem caused by the test units themselves
-        and not a general case. Do further investigations.
-        Changing the codec could solve the problem.
-        Asterisk is currently compiled with all free
-        audio codecs ( list displayed on Asterisk startup )
-        so we can perform tests easily.
-        */
+        })();
 
-    })();
+        for (const ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
 
-    for (const ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
+            sql += buildInsertQuery("ps_aors", {
+                "id": ps_endpoints.aors,
+                "max_contacts": 30,
+                "qualify_frequency": 0,
+                "support_path": "yes"
+            }, "IGNORE");
 
-        sql += buildInsertQuery("ps_aors", {
-            "id": ps_endpoints.aors,
-            "max_contacts": 30,
-            "qualify_frequency": 0,
-            "support_path": "yes"
-        }, "IGNORE");
+            sql += buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
 
-        sql += buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
+        }
 
-    }
+        sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
 
-    sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
+        return sql;
 
-    const { password } = (await query(sql)).pop()[0];
+    };
+
+    const { password } = (await queryRetryUntilSuccess(buildSql)).pop()[0];
 
     return password;
 
