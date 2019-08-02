@@ -74,6 +74,7 @@ var sipContactsMonitor = require("./sipContactsMonitor");
 var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
 var debug = logger.debugFactory();
 var gain = "4000";
+var volume = "11";
 /*
 //Work always but introduce delay
 const jitterBuffer = {
@@ -251,7 +252,7 @@ function fromDongle(channel) {
                             ami.setVar("AGC(rx)", gain, channelName);
                             ami.setVar("JITTERBUFFER(" + jitterBuffer.type + ")", jitterBuffer.params, channelName);
                             //To automatically increase the volume toward the softphone.
-                            ami.setVar("AGC(tx)", "32768", channelName);
+                            ami.setVar("VOLUME(TX)", volume, channelName);
                         });
                     });
                     return [4 /*yield*/, ami.evt.waitFor(function (_a) {
@@ -312,7 +313,7 @@ function fromSip(channel) {
                 case 4:
                     _a.sent();
                     //To automatically increase the volume toward the softphone.
-                    return [4 /*yield*/, _.setVariable("AGC(tx)", "32768")];
+                    return [4 /*yield*/, _.setVariable("VOLUME(TX)", volume)];
                 case 5:
                     //To automatically increase the volume toward the softphone.
                     _a.sent();

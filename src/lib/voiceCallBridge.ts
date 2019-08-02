@@ -15,6 +15,8 @@ const debug = logger.debugFactory();
 
 const gain = "4000";
 
+const volume= "11";
+
 /*
 //Work always but introduce delay
 const jitterBuffer = {
@@ -230,7 +232,7 @@ async function fromDongle(channel: agi.AGIChannel) {
                 );
 
                 //To automatically increase the volume toward the softphone.
-                ami.setVar("AGC(tx)", "32768", channelName);
+                ami.setVar("VOLUME(TX)", volume, channelName);
 
             }
         );
@@ -298,7 +300,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     await _.setVariable("AGC(rx)", gain);
 
     //To automatically increase the volume toward the softphone.
-    await _.setVariable("AGC(tx)", "32768");
+    await _.setVariable("VOLUME(TX)",volume);
 
     //TODO: Dial with guessed from ( and only dial, even if not very important)
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
