@@ -39,11 +39,11 @@ const to_distribute_rel_paths = [
 
 export const ast_sip_port = 48398;
 
-export const ld_library_path_for_asterisk = [
-    path.join(ast_dir_path, "lib"),
-    path.join(working_directory_path, "speexdsp", "lib"),
-    path.join(working_directory_path, "speex", "lib")
-].join(":");
+export const get_ld_library_path_for_asterisk= (prefix = ast_dir_path)=> 
+    scriptLib.sh_eval(`du ${path.join(prefix, "lib")}`)
+        .split("\n")
+        .map( line => line.match(/\s([^\s]*)$/)![1] )
+        .join(":");
 
 
 export function getEnv(): "DEV" | "PROD" {
@@ -363,11 +363,6 @@ async function program_action_release() {
     const _dongle_bin_dir_path = _ify(dongle_bin_dir_path);
     const _ast_main_conf_path = _ify(ast_main_conf_path);
     const _ast_dir_path = _ify(ast_dir_path);
-    const _ld_library_path_for_asterisk = ld_library_path_for_asterisk
-        .split(":")
-        .map(v => _ify(v))
-        .join(":")
-        ;
 
     for (const name of to_distribute_rel_paths) {
         scriptLib.fs_move("COPY", module_dir_path, _module_dir_path, name);
@@ -535,7 +530,7 @@ async function program_action_release() {
             `--dest_dir ${path.dirname(module_file_path)}`,
             `--asterisk_main_conf ${_ast_main_conf_path}`,
             `--ast_include_dir_path ${path.join(_ast_dir_path, "include")}`,
-            `--ld_library_path_for_asterisk ${_ld_library_path_for_asterisk}`
+            `--ld_library_path_for_asterisk ${get_ld_library_path_for_asterisk(_ast_dir_path)}`
         ].join(" "));
 
         scriptLib.execSyncTrace(`rm ${_ast_main_conf_path}`);
@@ -927,8 +922,8 @@ async function fetch_asterisk_and_dongle(dest_dir_path: string) {
     await Promise.all([
         scriptLib.download_and_extract_tarball(
             releases_index_asterisk[arch],
-            dest_dir_path,
-            "MERGE"
+            path.join(dest_dir_path, path.basename(ast_dir_path)),
+            "OVERWRITE IF EXIST"
         ),
         scriptLib.download_and_extract_tarball(
             releases_index_dongle[releases_index_dongle[arch]],
@@ -947,32 +942,12 @@ async function installAsteriskPrereq() {
         "libxml2",
         "libsqlite3-0",
         "unixodbc",
-        "libsrtp0"
+        "libtinfo5"
     ]) {
 
         await scriptLib.apt_get_install(package_name);
 
     }
-
-    const debArch = (() => {
-
-        const arch = scriptLib.sh_eval("uname -m");
-
-        if (arch === "i686") {
-            return "i386";
-        }
-
-        if (arch === "x86_64") {
-            return "amd64";
-        }
-
-        if (!!arch.match(/^arm/)) {
-            return "armhf";
-        }
-
-        throw new Error(`${arch} proc not supported`);
-
-    })();
 
     {
 
@@ -983,6 +958,26 @@ async function installAsteriskPrereq() {
             await scriptLib.apt_get_install(package_name);
 
         } else {
+
+            const debArch = (() => {
+
+                const arch = scriptLib.sh_eval("uname -m");
+
+                if (arch === "i686") {
+                    return "i386";
+                }
+
+                if (arch === "x86_64") {
+                    return "amd64";
+                }
+
+                if (!!arch.match(/^arm/)) {
+                    return "armhf";
+                }
+
+                throw new Error(`${arch} proc not supported`);
+
+            })();
 
             const dl_path = `/s/sqliteodbc/libsqliteodbc_0.9995-1_${debArch}.deb`;
 
@@ -1092,7 +1087,7 @@ export namespace dongle {
             `--do_not_create_systemd_conf`,
             `--allow_host_reboot_on_dongle_unrecoverable_crash`,
             isFromTarball() ? "--assume_chan_dongle_installed" : "",
-            `--ld_library_path_for_asterisk ${ld_library_path_for_asterisk}`
+            `--ld_library_path_for_asterisk ${get_ld_library_path_for_asterisk()}`
         ].join(" "));
 
 
@@ -1139,7 +1134,7 @@ namespace shellScripts {
                 `# This script connect to the CLI of Semasim's Asterisk instance.`,
                 ``,
                 `cd ${path.join(ast_dir_path, "var", "lib", "asterisk")}`,
-                `su -s $(which bash) -c "LD_LIBRARY_PATH=${ld_library_path_for_asterisk} ${ast_path} -rvvvvvv -C ${ast_main_conf_path}" ${unix_user}`,
+                `su -s $(which bash) -c "LD_LIBRARY_PATH=${get_ld_library_path_for_asterisk()} ${ast_path} -rvvvvvv -C ${ast_main_conf_path}" ${unix_user}`,
                 ``
             ].join("\n")
         );

@@ -101,11 +101,13 @@ var to_distribute_rel_paths = [
     "package.json"
 ];
 exports.ast_sip_port = 48398;
-exports.ld_library_path_for_asterisk = [
-    path.join(exports.ast_dir_path, "lib"),
-    path.join(exports.working_directory_path, "speexdsp", "lib"),
-    path.join(exports.working_directory_path, "speex", "lib")
-].join(":");
+exports.get_ld_library_path_for_asterisk = function (prefix) {
+    if (prefix === void 0) { prefix = exports.ast_dir_path; }
+    return scriptLib.sh_eval("du " + path.join(prefix, "lib"))
+        .split("\n")
+        .map(function (line) { return line.match(/\s([^\s]*)$/)[1]; })
+        .join(":");
+};
 function getEnv() {
     if (getEnv.value !== undefined) {
         return getEnv.value;
@@ -374,7 +376,7 @@ function update() {
 exports.update = update;
 function program_action_release() {
     return __awaiter(this, void 0, void 0, function () {
-        var tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, _ld_library_path_for_asterisk, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, Version, last_version, previous_release_dir_path, _a, _b, name, _c, _d, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
+        var tmp_dir_path, _module_dir_path, _ify, _node_modules_path, _working_directory_path, _dongle_node_path, _dongle_bin_dir_path, _ast_main_conf_path, _ast_dir_path, to_distribute_rel_paths_1, to_distribute_rel_paths_1_1, name, arch, deps_digest_filename, deps_digest, node_modules_need_update, releases_index_file_path, releases_index, Version, last_version, previous_release_dir_path, _a, _b, name, _c, _d, name, module_file_path, version, tarball_file_path, putasset_dir_path, uploadAsset, tarball_file_url;
         var e_4, _e, e_5, _f, e_6, _g;
         return __generator(this, function (_h) {
             switch (_h.label) {
@@ -391,10 +393,6 @@ function program_action_release() {
                     _dongle_bin_dir_path = _ify(exports.dongle_bin_dir_path);
                     _ast_main_conf_path = _ify(exports.ast_main_conf_path);
                     _ast_dir_path = _ify(exports.ast_dir_path);
-                    _ld_library_path_for_asterisk = exports.ld_library_path_for_asterisk
-                        .split(":")
-                        .map(function (v) { return _ify(v); })
-                        .join(":");
                     try {
                         for (to_distribute_rel_paths_1 = __values(to_distribute_rel_paths), to_distribute_rel_paths_1_1 = to_distribute_rel_paths_1.next(); !to_distribute_rel_paths_1_1.done; to_distribute_rel_paths_1_1 = to_distribute_rel_paths_1.next()) {
                             name = to_distribute_rel_paths_1_1.value;
@@ -528,7 +526,7 @@ function program_action_release() {
                         "--dest_dir " + path.dirname(module_file_path),
                         "--asterisk_main_conf " + _ast_main_conf_path,
                         "--ast_include_dir_path " + path.join(_ast_dir_path, "include"),
-                        "--ld_library_path_for_asterisk " + _ld_library_path_for_asterisk
+                        "--ld_library_path_for_asterisk " + exports.get_ld_library_path_for_asterisk(_ast_dir_path)
                     ].join(" "));
                     scriptLib.execSyncTrace("rm " + _ast_main_conf_path);
                     _h.label = 10;
@@ -823,7 +821,7 @@ function fetch_asterisk_and_dongle(dest_dir_path) {
                     _a = __read.apply(void 0, [_b.sent(), 2]), releases_index_asterisk = _a[0], releases_index_dongle = _a[1];
                     arch = scriptLib.sh_eval("uname -m");
                     return [4 /*yield*/, Promise.all([
-                            scriptLib.download_and_extract_tarball(releases_index_asterisk[arch], dest_dir_path, "MERGE"),
+                            scriptLib.download_and_extract_tarball(releases_index_asterisk[arch], path.join(dest_dir_path, path.basename(exports.ast_dir_path)), "OVERWRITE IF EXIST"),
                             scriptLib.download_and_extract_tarball(releases_index_dongle[releases_index_dongle[arch]], path.join(dest_dir_path, path.basename(exports.dongle_dir_path)), "OVERWRITE IF EXIST")
                         ])];
                 case 2:
@@ -835,7 +833,7 @@ function fetch_asterisk_and_dongle(dest_dir_path) {
 }
 function installAsteriskPrereq() {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, package_name, e_8_1, debArch, package_name, dl_path, file_path;
+        var _a, _b, package_name, e_8_1, package_name, debArch, dl_path, file_path;
         var e_8, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
@@ -847,7 +845,7 @@ function installAsteriskPrereq() {
                         "libxml2",
                         "libsqlite3-0",
                         "unixodbc",
-                        "libsrtp0"
+                        "libtinfo5"
                     ]), _b = _a.next();
                     _d.label = 1;
                 case 1:
@@ -872,6 +870,13 @@ function installAsteriskPrereq() {
                     finally { if (e_8) throw e_8.error; }
                     return [7 /*endfinally*/];
                 case 7:
+                    package_name = "libsqliteodbc";
+                    if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 9];
+                    return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
+                case 8:
+                    _d.sent();
+                    return [3 /*break*/, 11];
+                case 9:
                     debArch = (function () {
                         var arch = scriptLib.sh_eval("uname -m");
                         if (arch === "i686") {
@@ -885,13 +890,6 @@ function installAsteriskPrereq() {
                         }
                         throw new Error(arch + " proc not supported");
                     })();
-                    package_name = "libsqliteodbc";
-                    if (!scriptLib.sh_if("apt-get install --dry-run " + package_name)) return [3 /*break*/, 9];
-                    return [4 /*yield*/, scriptLib.apt_get_install(package_name)];
-                case 8:
-                    _d.sent();
-                    return [3 /*break*/, 11];
-                case 9:
                     dl_path = "/s/sqliteodbc/libsqliteodbc_0.9995-1_" + debArch + ".deb";
                     file_path = path.basename(dl_path);
                     return [4 /*yield*/, scriptLib.web_get("http://http.us.debian.org/debian/pool/main" + dl_path, file_path)];
@@ -968,7 +966,7 @@ var dongle;
             "--do_not_create_systemd_conf",
             "--allow_host_reboot_on_dongle_unrecoverable_crash",
             isFromTarball() ? "--assume_chan_dongle_installed" : "",
-            "--ld_library_path_for_asterisk " + exports.ld_library_path_for_asterisk
+            "--ld_library_path_for_asterisk " + exports.get_ld_library_path_for_asterisk()
         ].join(" "));
         (function merge_installed_pkg() {
             var e_9, _a;
@@ -1007,7 +1005,7 @@ var shellScripts;
             "# This script connect to the CLI of Semasim's Asterisk instance.",
             "",
             "cd " + path.join(exports.ast_dir_path, "var", "lib", "asterisk"),
-            "su -s $(which bash) -c \"LD_LIBRARY_PATH=" + exports.ld_library_path_for_asterisk + " " + exports.ast_path + " -rvvvvvv -C " + exports.ast_main_conf_path + "\" " + exports.unix_user,
+            "su -s $(which bash) -c \"LD_LIBRARY_PATH=" + exports.get_ld_library_path_for_asterisk() + " " + exports.ast_path + " -rvvvvvv -C " + exports.ast_main_conf_path + "\" " + exports.unix_user,
             ""
         ].join("\n"));
         var uninstaller_sh_path = path.join(exports.working_directory_path, "uninstaller.sh");

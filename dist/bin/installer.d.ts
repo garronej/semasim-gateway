@@ -16,7 +16,7 @@ export declare const ca_crt_path: string;
 export declare const host_pem_path: string;
 export declare const pidfile_path: string;
 export declare const ast_sip_port = 48398;
-export declare const ld_library_path_for_asterisk: string;
+export declare const get_ld_library_path_for_asterisk: (prefix?: string) => string;
 export declare function getEnv(): "DEV" | "PROD";
 export declare namespace getEnv {
     let value: "DEV" | "PROD" | undefined;

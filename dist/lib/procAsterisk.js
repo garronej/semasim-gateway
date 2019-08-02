@@ -43,7 +43,7 @@ function doSpawn(args) {
         "cwd": home_path,
         "env": {
             "HOME": home_path,
-            "LD_LIBRARY_PATH": i.ld_library_path_for_asterisk
+            "LD_LIBRARY_PATH": i.get_ld_library_path_for_asterisk()
         }
     });
 }
