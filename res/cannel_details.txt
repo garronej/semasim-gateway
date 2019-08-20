@@ -1,0 +1,125 @@
+
+d2-jessie*CLI> core show channel Dongle/Dongle1-0100000001
+ -- General --
+           Name: Dongle/Dongle1-0100000001
+           Type: Dongle
+       UniqueID: 1566118421.4
+       LinkedID: 1566118421.3
+      Caller ID: +33782918656
+ Caller ID Name: (N/A)
+Connected Line ID: 208201715194653-webRTC
+Connected Line ID Name: (N/A)
+Eff. Connected Line ID: 208201715194653-webRTC
+Eff. Connected Line ID Name: (N/A)
+    DNID Digits: (N/A)
+       Language: en
+          State: Up (6)
+  NativeFormats: (slin)
+    WriteFormat: slin
+     ReadFormat: slin
+ WriteTranscode: No
+  ReadTranscode: No
+ Time to Hangup: 0
+   Elapsed Time: 0h1m58s
+      Bridge ID: 152b11d5-2529-40d9-95ef-a475602636e3
+ --   PBX   --
+        Context: from-dongle
+      Extension:
+       Priority: 1
+     Call Group: 0
+   Pickup Group: 0
+    Application: AppDial
+           Data: (Outgoing Line)
+ Call Identifer: [C-00000002]
+      Variables:
+BRIDGEPVTCALLID=utv84uuav3h4fukv0qlj
+BRIDGEPEER=PJSIP/208201715194653-webRTC-00000001
+DIALEDPEERNUMBER=i:353284020952548/+33782918656
+DONGLENUMBER=+33636786385
+DONGLEIMSI=208201715194653
+DONGLEIMEI=353284020952548
+DONGLEPROVIDER=Bouygues Teleco
+DONGLENAME=Dongle1
+  CDR Variables:
+level 1: calledsubaddr=
+level 1: callingsubaddr=
+level 1: dnid=
+level 1: clid="" <+33782918656>
+level 1: src=+33782918656
+level 1: dcontext=from-dongle
+level 1: channel=Dongle/Dongle1-0100000001
+level 1: lastapp=AppDial
+level 1: lastdata=(Outgoing Line)
+level 1: start=1566118421.846235
+level 1: answer=1566118432.166083
+level 1: end=1566118432.202494
+level 1: duration=10
+level 1: billsec=0
+level 1: disposition=8
+level 1: amaflags=3
+level 1: uniqueid=1566118421.4
+level 1: linkedid=1566118421.3
+level 1: sequence=4
+
+d2-jessie*CLI> core show channel PJSIP/208201715194653-webRTC-00000001
+ -- General --
+           Name: PJSIP/208201715194653-webRTC-00000001
+           Type: PJSIP
+       UniqueID: 1566118421.3
+       LinkedID: 1566118421.3
+      Caller ID: 208201715194653-webRTC
+ Caller ID Name: (N/A)
+Connected Line ID: (N/A)
+Connected Line ID Name: (N/A)
+Eff. Connected Line ID: (N/A)
+Eff. Connected Line ID Name: (N/A)
+    DNID Digits: (N/A)
+       Language: en
+          State: Up (6)
+  NativeFormats: (alaw|ulaw)
+    WriteFormat: slin
+     ReadFormat: slin
+ WriteTranscode: Yes (slin@8000)->(alaw@8000)
+  ReadTranscode: Yes (alaw@8000)->(slin@8000)
+ Time to Hangup: 0
+   Elapsed Time: 0h2m19s
+      Bridge ID: 152b11d5-2529-40d9-95ef-a475602636e3
+ --   PBX   --
+        Context: from-sip-call
+      Extension: +33782918656
+       Priority: 2
+     Call Group: 0
+   Pickup Group: 0
+    Application: Dial
+           Data: Dongle/i:353284020952548/+33782918656
+ Call Identifer: [C-00000002]
+      Variables:
+BRIDGEPEER=Dongle/Dongle1-0100000001
+DIALEDPEERNUMBER=i:353284020952548/+33782918656
+DIALEDPEERNAME=Dongle/Dongle1-0100000001
+DIALSTATUS=ANSWER
+DIALEDTIME=
+ANSWEREDTIME=
+EXTENSION_PATTERN=_[+0-9].
+  CDR Variables:
+level 1: calledsubaddr=
+level 1: callingsubaddr=
+level 1: dnid=
+level 1: clid="" <208201715194653-webRTC>
+level 1: src=208201715194653-webRTC
+level 1: dst=+33782918656
+level 1: dcontext=from-sip-call
+level 1: channel=PJSIP/208201715194653-webRTC-00000001
+level 1: dstchannel=Dongle/Dongle1-0100000001
+level 1: lastapp=Dial
+level 1: lastdata=Dongle/i:353284020952548/+33782918656
+level 1: start=1566118421.427768
+level 1: answer=1566118432.176623
+level 1: end=0.000000
+level 1: duration=138
+level 1: billsec=127
+level 1: disposition=8
+level 1: amaflags=3
+level 1: uniqueid=1566118421.3
+level 1: linkedid=1566118421.3
+level 1: sequence=3

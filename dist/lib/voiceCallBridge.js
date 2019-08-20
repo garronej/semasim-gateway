@@ -73,8 +73,8 @@ var logger = require("logger");
 var sipContactsMonitor = require("./sipContactsMonitor");
 var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
 var debug = logger.debugFactory();
-var gain = "4000";
-var volume = "11";
+var gain = "3000";
+//const volume= "11";
 /*
 //Work always but introduce delay
 const jitterBuffer = {
@@ -97,9 +97,15 @@ const jitterBuffer = {
 };
 */
 //Work just fine
-var jitterBuffer = {
+/*
+const jitterBuffer = {
     "type": "adaptive",
     "params": "2000,1600,120"
+};
+*/
+var jitterBuffer = {
+    "type": "adaptive",
+    "params": "200,1600,10"
 };
 exports.sipCallContext = "from-sip-call";
 var dc;
@@ -252,7 +258,8 @@ function fromDongle(channel) {
                             ami.setVar("AGC(rx)", gain, channelName);
                             ami.setVar("JITTERBUFFER(" + jitterBuffer.type + ")", jitterBuffer.params, channelName);
                             //To automatically increase the volume toward the softphone.
-                            ami.setVar("VOLUME(TX)", volume, channelName);
+                            //ami.setVar("VOLUME(TX)", volume, channelName);
+                            ami.setVar("AGC(tx)", "32768", channelName);
                         });
                     });
                     return [4 /*yield*/, ami.evt.waitFor(function (_a) {
@@ -313,9 +320,11 @@ function fromSip(channel) {
                 case 4:
                     _a.sent();
                     //To automatically increase the volume toward the softphone.
-                    return [4 /*yield*/, _.setVariable("VOLUME(TX)", volume)];
+                    //await _.setVariable("VOLUME(TX)",volume);
+                    return [4 /*yield*/, _.setVariable("AGC(tx)", "32768")];
                 case 5:
                     //To automatically increase the volume toward the softphone.
+                    //await _.setVariable("VOLUME(TX)",volume);
                     _a.sent();
                     //TODO: Dial with guessed from ( and only dial, even if not very important)
                     //TODO: there is a delay for call terminated when web client abruptly disconnect.

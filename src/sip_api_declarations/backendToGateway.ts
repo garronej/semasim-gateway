@@ -24,6 +24,8 @@ export namespace notifySimOnline {
             model: string;
             firmwareVersion: string;
         };
+        isGsmConnectivityOk: boolean;
+        cellSignalStrength: dcTypes.Dongle.Usable.CellSignalStrength;
     };
 
     export type Response={
@@ -35,6 +37,32 @@ export namespace notifySimOnline {
         allowedUas: types.Ua[];
     };
     
+}
+
+export namespace notifyGsmConnectivityChange {
+
+    export const methodName = "notifyGsmConnectivityChange";
+
+    export type Params = {
+        imsi: string;
+        isGsmConnectivityOk: boolean;
+    };
+
+    export type Response= undefined;
+
+}
+
+export namespace notifyCellSignalStrengthChange {
+
+    export const methodName= "notifyCellSignalStrengthChange";
+
+    export type Params = {
+        imsi: string;
+        cellSignalStrength: dcTypes.Dongle.Usable.CellSignalStrength;
+    };
+
+    export type Response= undefined;
+
 }
 
 export namespace notifyLockedDongle {

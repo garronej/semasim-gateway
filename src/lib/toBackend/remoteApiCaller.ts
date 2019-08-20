@@ -34,7 +34,9 @@ export const notifySimOnline = (() => {
                     "manufacturer": dongle.manufacturer,
                     "model": dongle.model,
                     "firmwareVersion": dongle.firmwareVersion
-                }
+                },
+                "isGsmConnectivityOk": dongle.isGsmConnectivityOk,
+                "cellSignalStrength": dongle.cellSignalStrength
             }
         ).catch(() => undefined);
 
@@ -65,6 +67,42 @@ export const notifySimOnline = (() => {
     };
 
 })();
+
+
+export const notifyGsmConnectivityChange = (() => {
+
+    const { methodName } = apiDeclaration.notifyGsmConnectivityChange;
+    type Params = apiDeclaration.notifyGsmConnectivityChange.Params;
+    type Response = apiDeclaration.notifyGsmConnectivityChange.Response;
+
+    return async function (imsi: string, isGsmConnectivityOk: boolean): Promise<void> {
+
+        await sendRequest<Params, Response>(
+            methodName,
+            { imsi, isGsmConnectivityOk }
+        ).catch(() => { });
+
+    };
+
+})();
+
+export const notifyCellSignalStrengthChange = (() => {
+
+    const { methodName } = apiDeclaration.notifyCellSignalStrengthChange;
+    type Params = apiDeclaration.notifyCellSignalStrengthChange.Params;
+    type Response = apiDeclaration.notifyCellSignalStrengthChange.Response;
+
+    return async function (imsi: string, cellSignalStrength: dcTypes.Dongle.Usable.CellSignalStrength): Promise<void> {
+
+        await sendRequest<Params, Response>(
+            methodName,
+            { imsi, cellSignalStrength }
+        ).catch(() => { });
+
+    };
+
+})();
+
 
 export const notifyLockedDongle = (() => {
 

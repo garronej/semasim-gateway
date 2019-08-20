@@ -76,15 +76,20 @@ export async function launch() {
 
 }
 
+
 async function init() {
 
     const dc = Dc.getInstance();
+
+    //TODO: Remove, it should really be removable
+    /*
 
     for (const dongle of dc.usableDongles.values()) {
 
         messagesDispatcher.sendMessagesOfDongle(dongle)
 
     }
+    */
 
     const lastMessageReceivedDateBySim = await dbSemasim.lastMessageReceivedDateBySim();
 
@@ -153,6 +158,53 @@ function registerListeners() {
 
                 }
 
+
+                /*
+                (async () => {
+
+                    debug("Test Test Test Test");
+
+                    if ("__mark__" in global) {
+                        return;
+                    }
+
+                    global["__mark__"] = true;
+
+
+                    while (true) {
+
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+
+                        debug("=================> changing isGsmConnectionOk value manually");
+
+                        dongle.isGsmConnectivityOk = !dongle.isGsmConnectivityOk;
+
+                        dc.evtGsmConnectivityChange.post({ dongle });
+
+                        if (!dongle.isGsmConnectivityOk) {
+                            continue;
+                        }
+
+                        for (const cellSignalStrength of ["NULL", "VERY WEAK", "WEAK", "GOOD", "EXCELLENT"] as const) {
+
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+
+                            const previousCellSignalStrength = dongle.cellSignalStrength;
+
+                            dongle.cellSignalStrength = cellSignalStrength;
+
+                            dc.evtCellSignalStrengthChange.post({ dongle, previousCellSignalStrength });
+
+                        }
+
+
+                    }
+
+                })();
+                */
+
+
+
                 const { imsi } = dongle.sim;
 
                 if (undefined === await dbSemasim.getTowardSimKeys(imsi)) {
@@ -165,7 +217,7 @@ function registerListeners() {
 
                             prKeys = generateKeys();
 
-                        }else{
+                        } else {
 
                             prKeysByImei.delete(imei);
 
@@ -195,6 +247,20 @@ function registerListeners() {
 
     dc.dongles.evtDelete.attach(
         ([dongle]) => backendRemoteApiCaller.notifyDongleOffline(dongle)
+    );
+
+    dc.evtGsmConnectivityChange.attach(({ dongle }) =>
+        backendRemoteApiCaller.notifyGsmConnectivityChange(
+            dongle.sim.imsi,
+            dongle.isGsmConnectivityOk
+        )
+    );
+
+    dc.evtCellSignalStrengthChange.attach(({ dongle }) =>
+        backendRemoteApiCaller.notifyCellSignalStrengthChange(
+            dongle.sim.imsi,
+            dongle.cellSignalStrength
+        )
     );
 
     dc.evtMessage.attach(

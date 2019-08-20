@@ -20,6 +20,8 @@ export declare namespace notifySimOnline {
             model: string;
             firmwareVersion: string;
         };
+        isGsmConnectivityOk: boolean;
+        cellSignalStrength: dcTypes.Dongle.Usable.CellSignalStrength;
     };
     type Response = {
         status: "OK";
@@ -29,6 +31,22 @@ export declare namespace notifySimOnline {
         status: "REPLACE PASSWORD";
         allowedUas: types.Ua[];
     };
+}
+export declare namespace notifyGsmConnectivityChange {
+    const methodName = "notifyGsmConnectivityChange";
+    type Params = {
+        imsi: string;
+        isGsmConnectivityOk: boolean;
+    };
+    type Response = undefined;
+}
+export declare namespace notifyCellSignalStrengthChange {
+    const methodName = "notifyCellSignalStrengthChange";
+    type Params = {
+        imsi: string;
+        cellSignalStrength: dcTypes.Dongle.Usable.CellSignalStrength;
+    };
+    type Response = undefined;
 }
 export declare namespace notifyLockedDongle {
     const methodName = "notifyLockedDongle";

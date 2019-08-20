@@ -13,9 +13,9 @@ import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 
 const debug = logger.debugFactory();
 
-const gain = "4000";
+const gain = "3000";
 
-const volume= "11";
+//const volume= "11";
 
 /*
 //Work always but introduce delay
@@ -42,9 +42,16 @@ const jitterBuffer = {
 */
 
 //Work just fine
+/*
 const jitterBuffer = {
     "type": "adaptive",
     "params": "2000,1600,120"
+};
+*/
+
+const jitterBuffer = {
+    "type": "adaptive",
+    "params": "200,1600,10"
 };
 
 export const sipCallContext = "from-sip-call";
@@ -84,6 +91,31 @@ export function initAgi() {
 async function fromDongle(channel: agi.AGIChannel) {
 
     debug("Call originated from dongle");
+
+
+    /*
+    console.log("================> dingo!");
+
+    let _= channel.relax;
+
+    await _.answer();
+
+    console.log("waiting two second");
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+
+    console.log("=========================================>stream!");
+    await _.streamFile("demo-congrats");
+
+
+    console.log("Hangup!!!!!!!!!!!!!!!!!!!");
+    await _.hangup();
+
+
+    if( 1 === 1 ){
+        return;
+    }
+    */
+
 
     const imsi = (await channel.relax.getVariable("DONGLEIMSI"))!;
 
@@ -232,7 +264,8 @@ async function fromDongle(channel: agi.AGIChannel) {
                 );
 
                 //To automatically increase the volume toward the softphone.
-                ami.setVar("VOLUME(TX)", volume, channelName);
+                //ami.setVar("VOLUME(TX)", volume, channelName);
+                ami.setVar("AGC(tx)", "32768", channelName);
 
             }
         );
@@ -300,7 +333,8 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     await _.setVariable("AGC(rx)", gain);
 
     //To automatically increase the volume toward the softphone.
-    await _.setVariable("VOLUME(TX)",volume);
+    //await _.setVariable("VOLUME(TX)",volume);
+    await _.setVariable("AGC(tx)", "32768");
 
     //TODO: Dial with guessed from ( and only dial, even if not very important)
     //TODO: there is a delay for call terminated when web client abruptly disconnect.

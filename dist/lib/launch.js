@@ -147,66 +147,53 @@ function launch() {
 exports.launch = launch;
 function init() {
     return __awaiter(this, void 0, void 0, function () {
-        var dc, _a, _b, dongle, lastMessageReceivedDateBySim, _c, _d, _i, imsi, messages, messages_1, messages_1_1, _e, number, text, date, e_1_1;
-        var e_2, _f, e_1, _g;
-        return __generator(this, function (_h) {
-            switch (_h.label) {
+        var dc, lastMessageReceivedDateBySim, _a, _b, _i, imsi, messages, messages_1, messages_1_1, _c, number, text, date, e_1_1;
+        var e_1, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0:
                     dc = chan_dongle_extended_client_1.DongleController.getInstance();
-                    try {
-                        for (_a = __values(dc.usableDongles.values()), _b = _a.next(); !_b.done; _b = _a.next()) {
-                            dongle = _b.value;
-                            messagesDispatcher.sendMessagesOfDongle(dongle);
-                        }
-                    }
-                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                    finally {
-                        try {
-                            if (_b && !_b.done && (_f = _a.return)) _f.call(_a);
-                        }
-                        finally { if (e_2) throw e_2.error; }
-                    }
                     return [4 /*yield*/, dbSemasim.lastMessageReceivedDateBySim()];
                 case 1:
-                    lastMessageReceivedDateBySim = _h.sent();
-                    _c = [];
-                    for (_d in lastMessageReceivedDateBySim)
-                        _c.push(_d);
+                    lastMessageReceivedDateBySim = _e.sent();
+                    _a = [];
+                    for (_b in lastMessageReceivedDateBySim)
+                        _a.push(_b);
                     _i = 0;
-                    _h.label = 2;
+                    _e.label = 2;
                 case 2:
-                    if (!(_i < _c.length)) return [3 /*break*/, 12];
-                    imsi = _c[_i];
+                    if (!(_i < _a.length)) return [3 /*break*/, 12];
+                    imsi = _a[_i];
                     return [4 /*yield*/, dc.getMessages({
                             imsi: imsi,
                             "fromDate": new Date(lastMessageReceivedDateBySim[imsi].getTime() + 1),
                             "flush": true
                         })];
                 case 3:
-                    messages = _h.sent();
-                    _h.label = 4;
+                    messages = _e.sent();
+                    _e.label = 4;
                 case 4:
-                    _h.trys.push([4, 9, 10, 11]);
+                    _e.trys.push([4, 9, 10, 11]);
                     messages_1 = (e_1 = void 0, __values(messages)), messages_1_1 = messages_1.next();
-                    _h.label = 5;
+                    _e.label = 5;
                 case 5:
                     if (!!messages_1_1.done) return [3 /*break*/, 8];
-                    _e = messages_1_1.value, number = _e.number, text = _e.text, date = _e.date;
+                    _c = messages_1_1.value, number = _c.number, text = _c.text, date = _c.date;
                     return [4 /*yield*/, dbSemasim.onDongleMessage(number, text, date, imsi)];
                 case 6:
-                    _h.sent();
-                    _h.label = 7;
+                    _e.sent();
+                    _e.label = 7;
                 case 7:
                     messages_1_1 = messages_1.next();
                     return [3 /*break*/, 5];
                 case 8: return [3 /*break*/, 11];
                 case 9:
-                    e_1_1 = _h.sent();
+                    e_1_1 = _e.sent();
                     e_1 = { error: e_1_1 };
                     return [3 /*break*/, 11];
                 case 10:
                     try {
-                        if (messages_1_1 && !messages_1_1.done && (_g = messages_1.return)) _g.call(messages_1);
+                        if (messages_1_1 && !messages_1_1.done && (_d = messages_1.return)) _d.call(messages_1);
                     }
                     finally { if (e_1) throw e_1.error; }
                     return [7 /*endfinally*/];
@@ -222,7 +209,7 @@ function registerListeners() {
     var _this = this;
     var dc = chan_dongle_extended_client_1.DongleController.getInstance();
     backendConnection.evtConnect.attach(function () {
-        var e_3, _a;
+        var e_2, _a;
         debug("Connection established with backend");
         try {
             for (var _b = __values(dc.dongles.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -235,12 +222,12 @@ function registerListeners() {
                 }
             }
         }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_3) throw e_3.error; }
+            finally { if (e_2) throw e_2.error; }
         }
     });
     {
@@ -297,6 +284,14 @@ function registerListeners() {
         var _b = __read(_a, 1), dongle = _b[0];
         return backendRemoteApiCaller.notifyDongleOffline(dongle);
     });
+    dc.evtGsmConnectivityChange.attach(function (_a) {
+        var dongle = _a.dongle;
+        return backendRemoteApiCaller.notifyGsmConnectivityChange(dongle.sim.imsi, dongle.isGsmConnectivityOk);
+    });
+    dc.evtCellSignalStrengthChange.attach(function (_a) {
+        var dongle = _a.dongle;
+        return backendRemoteApiCaller.notifyCellSignalStrengthChange(dongle.sim.imsi, dongle.cellSignalStrength);
+    });
     dc.evtMessage.attach(function (_a) {
         var dongle = _a.dongle, message = _a.message, submitShouldSave = _a.submitShouldSave;
         return __awaiter(_this, void 0, void 0, function () {
@@ -324,7 +319,7 @@ function registerListeners() {
     });
     sipContactsMonitor.evtContactRegistration.attach(function (contact) { return __awaiter(_this, void 0, void 0, function () {
         var _a, isUaCreatedOrUpdated, isFirstUaForSim, messages, tasks, messages_2, messages_2_1, _b, number, text, date;
-        var e_4, _c;
+        var e_3, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
@@ -353,12 +348,12 @@ function registerListeners() {
                             tasks[tasks.length] = dbSemasim.onDongleMessage(number, text, date, contact.uaSim.imsi);
                         }
                     }
-                    catch (e_4_1) { e_4 = { error: e_4_1 }; }
+                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
                     finally {
                         try {
                             if (messages_2_1 && !messages_2_1.done && (_c = messages_2.return)) _c.call(messages_2);
                         }
-                        finally { if (e_4) throw e_4.error; }
+                        finally { if (e_3) throw e_3.error; }
                     }
                     return [4 /*yield*/, Promise.all(tasks)];
                 case 5:

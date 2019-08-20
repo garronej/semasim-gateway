@@ -2,6 +2,8 @@ import * as apiDeclaration from "../../sip_api_declarations/backendToGateway";
 import { types as dcTypes } from "chan-dongle-extended-client";
 import * as types from "../types";
 export declare const notifySimOnline: (dongle: dcTypes.Dongle.Usable) => Promise<void>;
+export declare const notifyGsmConnectivityChange: (imsi: string, isGsmConnectivityOk: boolean) => Promise<void>;
+export declare const notifyCellSignalStrengthChange: (imsi: string, cellSignalStrength: dcTypes.Dongle.Usable.CellSignalStrength) => Promise<void>;
 export declare const notifyLockedDongle: (dongle: dcTypes.Dongle.Locked) => Promise<void>;
 export declare const notifyDongleOffline: (dongle: dcTypes.Dongle) => Promise<void>;
 export declare const notifyNewOrUpdatedUa: (ua: types.Ua) => Promise<void>;

@@ -178,7 +178,7 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
             const webId = `${imsi}-webRTC`;
 
             return [{
-                "allow": "alaw,ulaw",
+                "allow": "alaw:10,ulaw:10",
                 "id": webId,
                 "aors": webId,
                 ...ps_endpoints_base,
@@ -191,7 +191,7 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
                 "media_use_received_transport": "yes",
                 "rtcp_mux": "yes"
             }, {
-                "allow": "alaw,ulaw", //See TODO below
+                "allow": "alaw:10,ulaw:10", //See TODO below
                 "id": imsi,
                 "aors": imsi,
                 ...ps_endpoints_base

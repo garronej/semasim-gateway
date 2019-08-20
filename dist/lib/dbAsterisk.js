@@ -231,7 +231,7 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                                 "dtmf_mode": "info"
                             };
                             var webId = imsi + "-webRTC";
-                            return [__assign({ "allow": "alaw,ulaw", "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "allow": "alaw,ulaw", "id": imsi, "aors": imsi }, ps_endpoints_base)];
+                            return [__assign({ "allow": "alaw:10,ulaw:10", "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "allow": "alaw:10,ulaw:10", "id": imsi, "aors": imsi }, ps_endpoints_base)];
                             /*
                             TODO: We have witnessed an often poor quality
                             of the audio from GSM to Linphone on galaxy

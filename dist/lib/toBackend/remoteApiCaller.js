@@ -73,6 +73,8 @@ exports.notifySimOnline = (function () {
                                     "model": dongle.model,
                                     "firmwareVersion": dongle.firmwareVersion
                                 },
+                                _c["isGsmConnectivityOk"] = dongle.isGsmConnectivityOk,
+                                _c["cellSignalStrength"] = dongle.cellSignalStrength,
                                 _c)])).catch(function () { return undefined; })];
                     case 3:
                         response = _f.sent();
@@ -91,6 +93,36 @@ exports.notifySimOnline = (function () {
                                 dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, replacementPassword);
                                 break;
                         }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+})();
+exports.notifyGsmConnectivityChange = (function () {
+    var methodName = apiDeclaration.notifyGsmConnectivityChange.methodName;
+    return function (imsi, isGsmConnectivityOk) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, sendRequest(methodName, { imsi: imsi, isGsmConnectivityOk: isGsmConnectivityOk }).catch(function () { })];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+})();
+exports.notifyCellSignalStrengthChange = (function () {
+    var methodName = apiDeclaration.notifyCellSignalStrengthChange.methodName;
+    return function (imsi, cellSignalStrength) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, sendRequest(methodName, { imsi: imsi, cellSignalStrength: cellSignalStrength }).catch(function () { })];
+                    case 1:
+                        _a.sent();
                         return [2 /*return*/];
                 }
             });
