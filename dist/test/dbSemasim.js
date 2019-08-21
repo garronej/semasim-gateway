@@ -121,8 +121,11 @@ function testDbSemasim() {
                     return [4 /*yield*/, t6()];
                 case 8:
                     _a.sent();
-                    return [4 /*yield*/, db.flush()];
+                    return [4 /*yield*/, t7()];
                 case 9:
+                    _a.sent();
+                    return [4 /*yield*/, db.flush()];
+                case 10:
                     _a.sent();
                     console.log("ALL TESTS DB SEMASIM PASSED");
                     return [2 /*return*/];
@@ -682,7 +685,7 @@ function t4() {
 }
 function t5() {
     return __awaiter(this, void 0, void 0, function () {
-        var imsi, email, uas, i, ua, _a, missedCallNumber, uas_2, uas_2_1, ua, _b, _c, _d, messagesTowardSip, e_5_1;
+        var imsi, email, uas, i, ua, _a, missedCallNumber, uas_2, uas_2_1, ua, _b, _c, _d, messageTowardSip, e_5_1;
         var e_5, _e;
         return __generator(this, function (_f) {
             switch (_f.label) {
@@ -730,14 +733,14 @@ function t5() {
                         1]);
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 10:
-                    _c = __read.apply(void 0, [_f.sent(), 1]), _d = __read(_c[0], 1), messagesTowardSip = _d[0];
-                    assertSame(messagesTowardSip, {
+                    _c = __read.apply(void 0, [_f.sent(), 1]), _d = __read(_c[0], 1), messageTowardSip = _d[0];
+                    assertSame(messageTowardSip, {
                         "bundledData": {
                             "type": "MISSED CALL",
-                            "dateTime": messagesTowardSip.dateTime,
+                            "dateTime": messageTowardSip.dateTime,
                             "textB64": Buffer.from("Missed call", "utf8").toString("base64")
                         },
-                        "dateTime": messagesTowardSip.dateTime,
+                        "dateTime": messageTowardSip.dateTime,
                         "fromNumber": missedCallNumber,
                         "isFromDongle": false
                     });
@@ -765,7 +768,7 @@ function t5() {
 }
 function t6() {
     return __awaiter(this, void 0, void 0, function () {
-        var imsi, email, ringingUas, i, ua, _a, answeringUa, number, _b, _c, ua, _d, _e, _f, messagesTowardSip, e_6_1;
+        var imsi, email, ringingUas, i, ua, _a, answeringUa, number, _b, _c, ua, _d, _e, _f, messageTowardSip, e_6_1;
         var e_6, _g;
         return __generator(this, function (_h) {
             switch (_h.label) {
@@ -817,15 +820,15 @@ function t6() {
                         1]);
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 10:
-                    _e = __read.apply(void 0, [_h.sent(), 1]), _f = __read(_e[0], 1), messagesTowardSip = _f[0];
-                    assertSame(messagesTowardSip, {
+                    _e = __read.apply(void 0, [_h.sent(), 1]), _f = __read(_e[0], 1), messageTowardSip = _f[0];
+                    assertSame(messageTowardSip, {
                         "bundledData": {
                             "type": "CALL ANSWERED BY",
-                            "dateTime": messagesTowardSip.dateTime,
+                            "dateTime": messageTowardSip.dateTime,
                             "ua": answeringUa,
                             "textB64": Buffer.from("Call answered by " + answeringUa.userEmail, "utf8").toString("base64")
                         },
-                        "dateTime": messagesTowardSip.dateTime,
+                        "dateTime": messageTowardSip.dateTime,
                         "fromNumber": number,
                         "isFromDongle": false
                     });
@@ -846,6 +849,105 @@ function t6() {
                     return [7 /*endfinally*/];
                 case 15:
                     console.log("ON CALL ANSWERED PASS");
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function t7() {
+    return __awaiter(this, void 0, void 0, function () {
+        var imsi, email, uas, i, ua, _a, number, callPlacedAtDateTime, callRingingAfterMs, callAnsweredAfterMs, callTerminatedAfterMs, tasks, _loop_2, uas_3, uas_3_1, ua;
+        var e_7, _b;
+        var _this = this;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0: return [4 /*yield*/, db.flush()];
+                case 1:
+                    _c.sent();
+                    imsi = ttTesting.genDigits(15);
+                    email = ttTesting.genHexStr(10) + "@foo.com";
+                    uas = [];
+                    i = 0;
+                    _c.label = 2;
+                case 2:
+                    if (!(i < 12)) return [3 /*break*/, 5];
+                    ua = generateUa((i % 4 === 0) ? email : undefined);
+                    _a = assertSame;
+                    return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
+                case 3:
+                    _a.apply(void 0, [_c.sent(),
+                        {
+                            "isFirstUaForSim": i === 0,
+                            "isUaCreatedOrUpdated": true
+                        }]);
+                    uas.push(ua);
+                    _c.label = 4;
+                case 4:
+                    i++;
+                    return [3 /*break*/, 2];
+                case 5:
+                    number = ttTesting.genDigits(10);
+                    callPlacedAtDateTime = Date.now();
+                    callRingingAfterMs = 1000;
+                    callAnsweredAfterMs = 5000;
+                    callTerminatedAfterMs = 60000;
+                    return [4 /*yield*/, db.onCallFromSipTerminated(number, imsi, callPlacedAtDateTime, callRingingAfterMs, callAnsweredAfterMs, callTerminatedAfterMs, uas[0])];
+                case 6:
+                    _c.sent();
+                    tasks = [];
+                    _loop_2 = function (ua) {
+                        tasks[tasks.length] = (function () { return __awaiter(_this, void 0, void 0, function () {
+                            var _a, o, _b, _c, messageTowardSip, textB64;
+                            return __generator(this, function (_d) {
+                                switch (_d.label) {
+                                    case 0:
+                                        _a = assertSame;
+                                        return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
+                                    case 1:
+                                        _a.apply(void 0, [(_d.sent()).length,
+                                            1]);
+                                        return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
+                                    case 2:
+                                        o = _d.sent();
+                                        assertSame(o.length, 1);
+                                        _b = __read(o, 1), _c = __read(_b[0], 1), messageTowardSip = _c[0];
+                                        textB64 = messageTowardSip.bundledData.textB64;
+                                        assertSame(messageTowardSip, {
+                                            "bundledData": {
+                                                "type": "FROM SIP CALL SUMMARY",
+                                                callPlacedAtDateTime: callPlacedAtDateTime,
+                                                callRingingAfterMs: callRingingAfterMs,
+                                                callAnsweredAfterMs: callAnsweredAfterMs,
+                                                callTerminatedAfterMs: callTerminatedAfterMs,
+                                                textB64: textB64,
+                                                "ua": uas[0]
+                                            },
+                                            "dateTime": messageTowardSip.dateTime,
+                                            "fromNumber": number,
+                                            "isFromDongle": false
+                                        });
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); })();
+                    };
+                    try {
+                        for (uas_3 = __values(uas), uas_3_1 = uas_3.next(); !uas_3_1.done; uas_3_1 = uas_3.next()) {
+                            ua = uas_3_1.value;
+                            _loop_2(ua);
+                        }
+                    }
+                    catch (e_7_1) { e_7 = { error: e_7_1 }; }
+                    finally {
+                        try {
+                            if (uas_3_1 && !uas_3_1.done && (_b = uas_3.return)) _b.call(uas_3);
+                        }
+                        finally { if (e_7) throw e_7.error; }
+                    }
+                    return [4 /*yield*/, Promise.all(tasks)];
+                case 7:
+                    _c.sent();
+                    console.log("NOTIFICATIONS SIP CALL SUMMARY PASS");
                     return [2 /*return*/];
             }
         });

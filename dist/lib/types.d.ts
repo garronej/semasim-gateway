@@ -45,7 +45,7 @@ export declare namespace BundledData {
             appendPromotionalMessage: boolean;
         };
     }
-    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
+    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.FromSipCallSummary | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
     namespace ServerToClient {
         type Message = _Base & {
             type: "MESSAGE";
@@ -75,6 +75,14 @@ export declare namespace BundledData {
         type MissedCall = _Base & {
             type: "MISSED CALL";
             dateTime: number;
+        };
+        type FromSipCallSummary = _Base & {
+            type: "FROM SIP CALL SUMMARY";
+            callPlacedAtDateTime: number;
+            callRingingAfterMs: number | undefined;
+            callAnsweredAfterMs: number | undefined;
+            callTerminatedAfterMs: number;
+            ua: Ua;
         };
         type CallAnsweredBy = _Base & {
             type: "CALL ANSWERED BY";

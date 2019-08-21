@@ -210,12 +210,12 @@
         "signature": "89305cb8a9c0d323a759b816eea0579729727c7ad7cf0c6cac752a91b05abb06"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts": {
-        "version": "9236867b191a755a3aebaca4ce1e41e90dd281c2673fa877bf94acef5a60e94d",
-        "signature": "6553ce5e3c366c16206be85d362981b40389855c5e63072527536039dd362f3a"
+        "version": "fb155704a38a1b71704c2d5c735baf6991f92c1e427e12306ee9205cf2a560ed",
+        "signature": "34fd3c8626f62ca329d7560eb63f942e47c65ade397f8c7fec5b77713db5e84c"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbsemasim.ts": {
-        "version": "382d3cca836ec5f53c992a722401fbceb0c87c55ad5ce84675541df128231280",
-        "signature": "aa0c9662e6f03e802bf40bc2c6921b08d6360dc6e713f7c89829b71855a7a830"
+        "version": "975088f46a2f36618f742c0c3a4c3e4ac70d54a078c61db12d4f4ec48af1637e",
+        "signature": "a1c15a9a1bd1933fd3601077ade0ad90dd98a95803031a5c3cd323e509baa677"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts": {
         "version": "ece2ed9e7494bdd3ed91165738857e5c391089ad5584823582efb5b563ee94de",
@@ -318,7 +318,7 @@
         "signature": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts": {
-        "version": "ebd7ce3b0711e420a83c179d44cfe269620bcf8c3c8d7b725179476942cad1e3",
+        "version": "55bbe2454767d385c73c8f030c33043711ad6a6a9971f3b260ea198defe3db8c",
         "signature": "d01f1f4d09b8ceadaa0740e1e9c2a8c1cd888abe98b8b05936b0a2300c8f67bf"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.from.d.ts": {
@@ -402,7 +402,7 @@
         "signature": "88b0b9965b5d9351d601361f5198afcb88d1e74bd329c038582a44c7464ab978"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/bundleddata.ts": {
-        "version": "38ca95fb0bf1eef5f409e2e95378c384ec0fcc9c217a138eaf078a32c030f2cf",
+        "version": "0913cd6c4bee852b39a1f1b8fc6c57012c20a451ac81ab736c3655a26aac9ecd",
         "signature": "5b1c468aa25740e5d4d643db4892518b44ad241dc9f35de9048c66c065612495"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbasterisk.ts": {
@@ -410,7 +410,7 @@
         "signature": "36c87b2f17ce1bee5e20596f2598cf0164bd3a2abc60179b428b1b00213ed126"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbsemasim.ts": {
-        "version": "658ae2e1dde1ba0b3297f7c7ea6aeb6fdcfc4b0e4b9410d8c255ace6ea56a207",
+        "version": "05e980e62698e512d6d487eb3e17188a58e68a9136768cb0bd1e65c47d0814f2",
         "signature": "967e1260b468da2adeb13ed5e0676303028623c838baca2afb9dddd284fc0ae5"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/main.ts": {
@@ -439,7 +439,6 @@
       "strictBindCallApply": true,
       "incremental": true,
       "project": "./tsconfig.json",
-      "watch": true,
       "configFilePath": "C:/Users/joseph/Dropbox/shell/semasim/gateway/tsconfig.json"
     },
     "referencedMap": {
@@ -1543,7 +1542,6 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
-      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbsemasim.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/async/serializer.d.ts",
@@ -1587,14 +1585,15 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/procasterisk.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/procchandongleextended.ts",
+      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/launch.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/bin/main.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/bundleddata.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbasterisk.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbsemasim.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/main.ts",
-      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts",
-      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/launch.ts"
+      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",
+      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts"
     ]
   },
   "version": "3.5.2"

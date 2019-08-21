@@ -300,6 +300,8 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
         .find(({ uri }) => uri === contact_uri)!
         ;
 
+    const number = channel.request.extension;
+
     const dongle = Array.from(Dc.getInstance().usableDongles.values())
         .find(({ sim }) => sim.imsi === contact.uaSim.imsi)
         ;
@@ -312,21 +314,69 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     }
 
-    const number = channel.request.extension;
+    const callPlacedAtDateTime = Date.now();
+    let callRingingAfterMs: number | undefined = undefined;
+    let callAnsweredAfterMs: number | undefined = undefined;
 
-    ami.evt.waitFor(
-        e => (
-            e["event"] === "RTCPSent" &&
-            e["channelstatedesc"] === "Ring" &&
-            e["channel"] === channel.request.channel
-        ), 30000
-    )
-        .then(
-            () => dbSemasim.onTargetGsmRinging(contact, number, call_id)
-                .then(() => messageDispatcher.sendMessagesOfContact(contact))
+    {
+
+        const boundToRingback = [];
+
+        ami.evt.attachOnce(
+            e => (
+                e["event"] === "RTCPSent" &&
+                e["channelstatedesc"] === "Ring" &&
+                e["channel"] === channel.request.channel
+            ),
+            boundToRingback,
+            () => {
+
+                callRingingAfterMs = Date.now() - callPlacedAtDateTime;
+
+                dbSemasim.onTargetGsmRinging(contact, number, call_id)
+                    .then(() => messageDispatcher.sendMessagesOfContact(contact));
+
+            }
         )
-        .catch(() => { })
-        ;
+
+
+        const boundToAnswer = [];
+
+        ami.evt.attachOnce(
+            e => (
+                e["channel"] === channel.request.channel &&
+                e["event"] === "DialEnd" &&
+                e["dialstatus"] === "ANSWER"
+            ),
+            boundToAnswer,
+            () => {
+
+                if (callRingingAfterMs === undefined) {
+
+                    ami.evt.detach(boundToRingback);
+
+                    callRingingAfterMs = Date.now();
+                }
+
+                callAnsweredAfterMs = Date.now() - callPlacedAtDateTime;
+            }
+        );
+
+        ami.evt.attachOnce(
+            e => (
+                e["channel"] === channel.request.channel &&
+                e["event"] === "Hangup"
+
+            ),
+            () => {
+
+                ami.evt.detach(boundToRingback);
+                ami.evt.detach(boundToAnswer);
+
+            }
+        );
+
+    }
 
     await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
 
@@ -340,7 +390,19 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
     await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
 
+    dbSemasim.onCallFromSipTerminated(
+        number,
+        contact.uaSim.imsi,
+        callPlacedAtDateTime,
+        callRingingAfterMs,
+        callAnsweredAfterMs,
+        Date.now() - callPlacedAtDateTime,
+        contact.uaSim.ua
+    ).then(() => messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi));
+
     //TODO: Increase volume on TX
     debug("call terminated");
 
 }
+
+

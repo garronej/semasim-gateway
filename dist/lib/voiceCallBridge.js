@@ -279,7 +279,7 @@ function fromDongle(channel) {
 }
 function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function () {
-        var _, contact_uri, call_id, contact, dongle, number;
+        var _, contact_uri, call_id, contact, number, dongle, callPlacedAtDateTime, callRingingAfterMs, callAnsweredAfterMs, boundToRingback_1, boundToAnswer_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -296,6 +296,7 @@ function fromSip(channel) {
                         var uri = _a.uri;
                         return uri === contact_uri;
                     });
+                    number = channel.request.extension;
                     dongle = Array.from(chan_dongle_extended_client_1.DongleController.getInstance().usableDongles.values())
                         .find(function (_a) {
                         var sim = _a.sim;
@@ -306,13 +307,34 @@ function fromSip(channel) {
                         debug("DONGLE is not usable");
                         return [2 /*return*/];
                     }
-                    number = channel.request.extension;
-                    ami.evt.waitFor(function (e) { return (e["event"] === "RTCPSent" &&
-                        e["channelstatedesc"] === "Ring" &&
-                        e["channel"] === channel.request.channel); }, 30000)
-                        .then(function () { return dbSemasim.onTargetGsmRinging(contact, number, call_id)
-                        .then(function () { return messageDispatcher.sendMessagesOfContact(contact); }); })
-                        .catch(function () { });
+                    callPlacedAtDateTime = Date.now();
+                    callRingingAfterMs = undefined;
+                    callAnsweredAfterMs = undefined;
+                    {
+                        boundToRingback_1 = [];
+                        ami.evt.attachOnce(function (e) { return (e["event"] === "RTCPSent" &&
+                            e["channelstatedesc"] === "Ring" &&
+                            e["channel"] === channel.request.channel); }, boundToRingback_1, function () {
+                            callRingingAfterMs = Date.now() - callPlacedAtDateTime;
+                            dbSemasim.onTargetGsmRinging(contact, number, call_id)
+                                .then(function () { return messageDispatcher.sendMessagesOfContact(contact); });
+                        });
+                        boundToAnswer_1 = [];
+                        ami.evt.attachOnce(function (e) { return (e["channel"] === channel.request.channel &&
+                            e["event"] === "DialEnd" &&
+                            e["dialstatus"] === "ANSWER"); }, boundToAnswer_1, function () {
+                            if (callRingingAfterMs === undefined) {
+                                ami.evt.detach(boundToRingback_1);
+                                callRingingAfterMs = Date.now();
+                            }
+                            callAnsweredAfterMs = Date.now() - callPlacedAtDateTime;
+                        });
+                        ami.evt.attachOnce(function (e) { return (e["channel"] === channel.request.channel &&
+                            e["event"] === "Hangup"); }, function () {
+                            ami.evt.detach(boundToRingback_1);
+                            ami.evt.detach(boundToAnswer_1);
+                        });
+                    }
                     return [4 /*yield*/, _.setVariable("JITTERBUFFER(" + jitterBuffer.type + ")", jitterBuffer.params)];
                 case 3:
                     _a.sent();
@@ -333,6 +355,7 @@ function fromSip(channel) {
                     //TODO: Dial with guessed from ( and only dial, even if not very important)
                     //TODO: there is a delay for call terminated when web client abruptly disconnect.
                     _a.sent();
+                    dbSemasim.onCallFromSipTerminated(number, contact.uaSim.imsi, callPlacedAtDateTime, callRingingAfterMs, callAnsweredAfterMs, Date.now() - callPlacedAtDateTime, contact.uaSim.ua).then(function () { return messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi); });
                     //TODO: Increase volume on TX
                     debug("call terminated");
                     return [2 /*return*/];

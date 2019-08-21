@@ -120,3 +120,4 @@ export declare function lastMessageReceivedDateBySim(): Promise<{
  *
  */
 export declare function onTargetGsmRinging(contact: types.Contact, number: string, callId: string): Promise<void>;
+export declare function onCallFromSipTerminated(number: string, imsi: string, callPlacedAtDateTime: number, callRingingAfterMs: number | undefined, callAnsweredAfterMs: number | undefined, callTerminatedAfterMs: number, ua: types.Ua): Promise<void>;

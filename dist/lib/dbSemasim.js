@@ -704,7 +704,7 @@ exports.getUnsentMessagesTowardGsm = getUnsentMessagesTowardGsm;
                                 alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
                             sql += build("Me: " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), {
-                                "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
+                                "target": "ALL OTHER UA OF USER",
                                 "uaSim": messageTowardGsm.uaSim,
                                 alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
                             });
@@ -818,7 +818,13 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, date, bundle
         case "ALL UA REGISTERED TO SIM":
             sqlSelectionUaSim += "" + exports._.esc(target.imsi);
             break;
-        case "ALL OTHER UA OF USER REGISTERED TO SIM":
+        case "ALL UA OF USER":
+            sqlSelectionUaSim += [
+                exports._.esc(target.uaSim.imsi),
+                "ua.user_email= " + exports._.esc(target.uaSim.ua.userEmail)
+            ].join(" AND ");
+            break;
+        case "ALL OTHER UA OF USER":
             sqlSelectionUaSim += [
                 exports._.esc(target.uaSim.imsi),
                 "ua.instance <> " + exports._.esc(target.uaSim.ua.instance),
@@ -895,3 +901,61 @@ function onTargetGsmRinging(contact, number, callId) {
     });
 }
 exports.onTargetGsmRinging = onTargetGsmRinging;
+function onCallFromSipTerminated(number, imsi, callPlacedAtDateTime, callRingingAfterMs, callAnsweredAfterMs, callTerminatedAfterMs, ua) {
+    return __awaiter(this, void 0, void 0, function () {
+        var buildQuery, alsoSendToUasWithMessageDisabled, uaSim, buildText, sql;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    buildQuery = function (text, target) { return buildMessageTowardSipInsertQuery(false, number, new Date(callPlacedAtDateTime), (function () {
+                        var bundledData = {
+                            "type": "FROM SIP CALL SUMMARY",
+                            callPlacedAtDateTime: callPlacedAtDateTime,
+                            callRingingAfterMs: callRingingAfterMs,
+                            callAnsweredAfterMs: callAnsweredAfterMs,
+                            callTerminatedAfterMs: callTerminatedAfterMs,
+                            ua: ua,
+                            "textB64": Buffer.from(text, "utf8").toString("base64")
+                        };
+                        return bundledData;
+                    })(), target); };
+                    alsoSendToUasWithMessageDisabled = false;
+                    uaSim = { imsi: imsi, ua: ua };
+                    buildText = function (email) {
+                        var byText = email === undefined ? "" : "by " + email;
+                        if (callAnsweredAfterMs !== undefined) {
+                            var formatedCallDuration = (function () {
+                                var date = new Date(0);
+                                date.setMilliseconds(callTerminatedAfterMs - callAnsweredAfterMs);
+                                return date.toISOString().substr(11, 8);
+                            })();
+                            return "Call placed " + byText + ", duration: " + formatedCallDuration;
+                        }
+                        else if (callRingingAfterMs !== undefined) {
+                            return "Call placed " + byText + ", hanged up before being established.";
+                        }
+                        else {
+                            return "Aborted attempt to place call " + byText;
+                        }
+                    };
+                    sql = [
+                        buildQuery(buildText(undefined), {
+                            "target": "ALL UA OF USER",
+                            uaSim: uaSim,
+                            alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
+                        }),
+                        buildQuery(buildText(ua.userEmail), {
+                            "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
+                            uaSim: uaSim,
+                            alsoSendToUasWithMessageDisabled: alsoSendToUasWithMessageDisabled
+                        })
+                    ].join("");
+                    return [4 /*yield*/, exports._.query(sql)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.onCallFromSipTerminated = onCallFromSipTerminated;

@@ -45,6 +45,7 @@ export function testSerialization() {
             "SEND REPORT",
             "STATUS REPORT",
             "MISSED CALL",
+            "FROM SIP CALL SUMMARY",
             "CALL ANSWERED BY",
             "RINGBACK"
         ] as const;
@@ -107,10 +108,19 @@ export function testSerialization() {
                 case types[5]: return {
                     type,
                     textB64,
-                    "dateTime": Date.now(),
+                    "callPlacedAtDateTime": Date.now(),
+                    "callRingingAfterMs": 5000,
+                    "callAnsweredAfterMs": 10000, 
+                    "callTerminatedAfterMs": 20000,
                     "ua": messageTowardGsm.uaSim.ua
                 };
                 case types[6]: return {
+                    type,
+                    textB64,
+                    "dateTime": Date.now(),
+                    "ua": messageTowardGsm.uaSim.ua
+                };
+                case types[7]: return {
                     type,
                     textB64,
                     "callId": str
@@ -134,5 +144,14 @@ export function testSerialization() {
     }
 
     console.log("PASS BundledData serialization test");
+
+}
+
+if (require.main === module) {
+
+    console.log("Run standalone");
+
+    testSerialization();
+
 
 }

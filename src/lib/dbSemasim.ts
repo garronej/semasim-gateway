@@ -665,7 +665,7 @@ export namespace getUnsentMessagesTowardGsm {
             sql += build(
                 `Me: ${Buffer.from(messageTowardGsm.textB64,"base64").toString("utf8")}`,
                 {
-                    "target": "ALL OTHER UA OF USER REGISTERED TO SIM",
+                    "target": "ALL OTHER UA OF USER",
                     "uaSim": messageTowardGsm.uaSim,
                     alsoSendToUasWithMessageDisabled
                 }
@@ -783,7 +783,13 @@ function buildMessageTowardSipInsertQuery(
         case "ALL UA REGISTERED TO SIM":
             sqlSelectionUaSim += `${_.esc(target.imsi)}`;
             break;
-        case "ALL OTHER UA OF USER REGISTERED TO SIM":
+        case "ALL UA OF USER":
+            sqlSelectionUaSim += [
+                _.esc(target.uaSim.imsi),
+                `ua.user_email= ${_.esc(target.uaSim.ua.userEmail)}`
+            ].join(" AND ");
+            break;
+        case "ALL OTHER UA OF USER":
             sqlSelectionUaSim += [
                 _.esc(target.uaSim.imsi),
                 `ua.instance <> ${_.esc(target.uaSim.ua.instance)}`,
@@ -834,7 +840,10 @@ namespace buildMessageTowardSipInsertQuery {
             target: "ALL UA REGISTERED TO SIM";
             imsi: string;
         } | {
-            target: "ALL OTHER UA OF USER REGISTERED TO SIM";
+            target: "ALL UA OF USER";
+            uaSim: types.UaSim;
+        } | {
+            target: "ALL OTHER UA OF USER";
             uaSim: types.UaSim;
         } | {
             target: "ALL UA OF OTHER USERS REGISTERED TO SIM";
@@ -884,6 +893,100 @@ export async function onTargetGsmRinging(
             "alsoSendToUasWithMessageDisabled": true
         }
     );
+
+    await _.query(sql);
+
+}
+
+export async function onCallFromSipTerminated(
+    number: string,
+    imsi: string,
+    callPlacedAtDateTime: number,
+    callRingingAfterMs: number | undefined,
+    callAnsweredAfterMs: number | undefined,
+    callTerminatedAfterMs: number,
+    ua: types.Ua
+): Promise<void> {
+
+    const buildQuery = (
+        text: string,
+        target: buildMessageTowardSipInsertQuery.Target
+    ) => buildMessageTowardSipInsertQuery(
+        false,
+        number,
+        new Date(callPlacedAtDateTime),
+        (() => {
+
+            const bundledData: types.BundledData.ServerToClient.FromSipCallSummary = {
+                "type": "FROM SIP CALL SUMMARY",
+                callPlacedAtDateTime,
+                callRingingAfterMs,
+                callAnsweredAfterMs,
+                callTerminatedAfterMs,
+                ua,
+                "textB64": Buffer.from(
+                    text,
+                    "utf8"
+                ).toString("base64")
+            };
+
+            return bundledData;
+
+        })(),
+        target
+    );
+
+    const alsoSendToUasWithMessageDisabled = false;
+
+    const uaSim = { imsi, ua };
+
+    const buildText = (email: string | undefined) => {
+
+        const byText = email === undefined ? "" : `by ${email}`;
+
+        if (callAnsweredAfterMs !== undefined) {
+
+            const formatedCallDuration = (() => {
+
+                const date = new Date(0);
+                date.setMilliseconds(callTerminatedAfterMs - callAnsweredAfterMs)
+                return date.toISOString().substr(11, 8);
+
+            })();
+
+            return `Call placed ${byText}, duration: ${formatedCallDuration}`;
+
+        } else if (callRingingAfterMs !== undefined) {
+
+            return `Call placed ${byText}, hanged up before being established.`;
+
+        } else {
+
+            return `Aborted attempt to place call ${byText}`;
+
+        }
+
+    };
+
+
+    const sql = [
+        buildQuery(
+            buildText(undefined),
+            {
+                "target": "ALL UA OF USER",
+                uaSim,
+                alsoSendToUasWithMessageDisabled
+            }
+        ),
+        buildQuery(
+            buildText(ua.userEmail),
+            {
+                "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
+                uaSim,
+                alsoSendToUasWithMessageDisabled
+            }
+        )
+    ].join("");
 
     await _.query(sql);
 

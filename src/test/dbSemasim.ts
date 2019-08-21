@@ -29,6 +29,7 @@ export async  function testDbSemasim(){
     await t4();
     await t5();
     await t6();
+    await t7();
 
     await db.flush();
 
@@ -596,18 +597,18 @@ async function t5() {
             1
         )
 
-        let [[messagesTowardSip]] =
+        let [[messageTowardSip]] =
             await db.getUnsentMessagesTowardSip({ imsi, ua });
 
         assertSame<types.MessageTowardSip>(
-            messagesTowardSip,
+            messageTowardSip,
             {
                 "bundledData": {
                     "type": "MISSED CALL",
-                    "dateTime": messagesTowardSip.dateTime,
+                    "dateTime": messageTowardSip.dateTime,
                     "textB64": Buffer.from("Missed call", "utf8").toString("base64")
                 },
-                "dateTime": messagesTowardSip.dateTime,
+                "dateTime": messageTowardSip.dateTime,
                 "fromNumber": missedCallNumber,
                 "isFromDongle": false
             }
@@ -663,19 +664,19 @@ async function t6() {
             1
         );
 
-        let [[messagesTowardSip]] =
+        let [[messageTowardSip]] =
             await db.getUnsentMessagesTowardSip({ imsi, ua });
 
         assertSame<types.MessageTowardSip>(
-            messagesTowardSip,
+            messageTowardSip,
             {
                 "bundledData": {
                     "type": "CALL ANSWERED BY",
-                    "dateTime": messagesTowardSip.dateTime,
+                    "dateTime": messageTowardSip.dateTime,
                     "ua": answeringUa,
                     "textB64": Buffer.from(`Call answered by ${answeringUa.userEmail}`, "utf8").toString("base64")
                 },
-                "dateTime": messagesTowardSip.dateTime,
+                "dateTime": messageTowardSip.dateTime,
                 "fromNumber": number,
                 "isFromDongle": false
             }
@@ -684,6 +685,96 @@ async function t6() {
     }
 
     console.log("ON CALL ANSWERED PASS");
+
+}
+
+async function t7() {
+
+    await db.flush();
+
+    let imsi = ttTesting.genDigits(15);
+    let email = `${ttTesting.genHexStr(10)}@foo.com`;
+
+    let uas: types.Ua[] = [];
+
+    for (let i = 0; i < 12; i++) {
+
+        let ua: types.Ua = generateUa((i % 4 === 0) ? email : undefined);
+
+        assertSame(
+            await db.addUaSim({ imsi, ua }),
+            {
+                "isFirstUaForSim": i === 0,
+                "isUaCreatedOrUpdated": true
+            }
+        );
+
+        uas.push(ua);
+
+    }
+
+    const number= ttTesting.genDigits(10);
+
+    const callPlacedAtDateTime= Date.now();
+    const callRingingAfterMs= 1000;
+    const callAnsweredAfterMs= 5000;
+    const callTerminatedAfterMs= 60000;
+
+    await db.onCallFromSipTerminated(
+        number,
+        imsi,
+        callPlacedAtDateTime,
+        callRingingAfterMs,
+        callAnsweredAfterMs,
+        callTerminatedAfterMs,
+        uas[0]
+    );
+
+    const tasks: Promise<void>[]= [];
+
+    for (const ua of uas) {
+
+        tasks[tasks.length] = (async () => {
+
+            assertSame(
+                (await db.getUnsentMessagesTowardSip({ imsi, ua })).length,
+                1
+            );
+
+            const o =
+                await db.getUnsentMessagesTowardSip({ imsi, ua });
+
+            assertSame(o.length, 1);
+
+            const [[messageTowardSip]] = o;
+
+            const { textB64 } = messageTowardSip.bundledData;
+
+            assertSame<types.MessageTowardSip>(
+                messageTowardSip,
+                {
+                    "bundledData": {
+                        "type": "FROM SIP CALL SUMMARY",
+                        callPlacedAtDateTime,
+                        callRingingAfterMs,
+                        callAnsweredAfterMs,
+                        callTerminatedAfterMs,
+                        textB64,
+                        "ua": uas[0]
+                    },
+                    "dateTime": messageTowardSip.dateTime,
+                    "fromNumber": number,
+                    "isFromDongle": false
+                }
+            );
+
+        })();
+
+    }
+
+    await Promise.all(tasks);
+
+    console.log("NOTIFICATIONS SIP CALL SUMMARY PASS");
 
 }
 

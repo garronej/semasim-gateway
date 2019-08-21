@@ -74,8 +74,9 @@ export namespace BundledData {
         ServerToClient.SendReport |
         ServerToClient.StatusReport |
         ServerToClient.MissedCall |
+        ServerToClient.FromSipCallSummary |
         ServerToClient.CallAnsweredBy |
-        ServerToClient.Ringback
+        ServerToClient.Ringback 
         ;
 
     export namespace ServerToClient {
@@ -113,6 +114,27 @@ export namespace BundledData {
             type: "MISSED CALL";
             dateTime: number;
         };
+
+        export type FromSipCallSummary = _Base & {
+            type: "FROM SIP CALL SUMMARY";
+            callPlacedAtDateTime: number;
+            callRingingAfterMs: number | undefined; //NOTE: ms since placed date
+            callAnsweredAfterMs: number | undefined; //NOTE: ms since placed date
+            callTerminatedAfterMs: number; //NOTE: ms since placed date.
+            ua: Ua
+        };
+
+        /*
+        export type FromDongleCallSummary = _Base & {
+            type: "FROM DONGLE CALL SUMMARY";
+            callReceivedAtDateTime: number;
+            callTerminatedAfterMs: number; //NOTE: ms since call received.
+            pickedUp: {
+                callPickedUpAfterMs: number;
+                ua: Ua;
+            } | undefined;
+        };
+        */
 
         export type CallAnsweredBy = _Base & {
             type: "CALL ANSWERED BY";
