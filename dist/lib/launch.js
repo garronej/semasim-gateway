@@ -236,10 +236,11 @@ function registerListeners() {
         dc.dongles.evtSet.attach(function (_a) {
             var _b = __read(_a, 1), dongle = _b[0];
             return __awaiter(_this, void 0, void 0, function () {
-                var imei, imsi, _c, _d, publicKey, privateKey;
+                var imei, imsi, tasks, numberSet, _loop_1, numberSet_1, numberSet_1_1, number, _c, _d, publicKey, privateKey;
+                var e_3, _e;
                 var _this = this;
-                return __generator(this, function (_e) {
-                    switch (_e.label) {
+                return __generator(this, function (_f) {
+                    switch (_f.label) {
                         case 0:
                             imei = dongle.imei;
                             if (chan_dongle_extended_client_1.types.Dongle.Locked.match(dongle)) {
@@ -248,10 +249,53 @@ function registerListeners() {
                                 return [2 /*return*/];
                             }
                             imsi = dongle.sim.imsi;
+                            tasks = [];
+                            numberSet = new Set(dongle.sim.storage.contacts
+                                .map(function (_a) {
+                                var number = _a.number;
+                                return phone_number_1.phoneNumber.build(number, !!dongle.sim.country ?
+                                    dongle.sim.country.iso : undefined);
+                            }));
+                            _loop_1 = function (number) {
+                                var e_4, _a;
+                                var contacts = dongle.sim.storage.contacts
+                                    .filter(function (contact) { return phone_number_1.phoneNumber.areSame(number, contact.number); });
+                                contacts.shift();
+                                try {
+                                    for (var contacts_1 = (e_4 = void 0, __values(contacts)), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
+                                        var index = contacts_1_1.value.index;
+                                        tasks[tasks.length] = dc.deleteContact(imsi, index)
+                                            .catch(function () { });
+                                    }
+                                }
+                                catch (e_4_1) { e_4 = { error: e_4_1 }; }
+                                finally {
+                                    try {
+                                        if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
+                                    }
+                                    finally { if (e_4) throw e_4.error; }
+                                }
+                            };
+                            try {
+                                for (numberSet_1 = __values(numberSet), numberSet_1_1 = numberSet_1.next(); !numberSet_1_1.done; numberSet_1_1 = numberSet_1.next()) {
+                                    number = numberSet_1_1.value;
+                                    _loop_1(number);
+                                }
+                            }
+                            catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                            finally {
+                                try {
+                                    if (numberSet_1_1 && !numberSet_1_1.done && (_e = numberSet_1.return)) _e.call(numberSet_1);
+                                }
+                                finally { if (e_3) throw e_3.error; }
+                            }
+                            return [4 /*yield*/, Promise.all(tasks)];
+                        case 1:
+                            _f.sent();
                             _c = undefined;
                             return [4 /*yield*/, dbSemasim.getTowardSimKeys(imsi)];
-                        case 1:
-                            if (!(_c === (_e.sent()))) return [3 /*break*/, 4];
+                        case 2:
+                            if (!(_c === (_f.sent()))) return [3 /*break*/, 5];
                             return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
                                     var prKeys;
                                     return __generator(this, function (_a) {
@@ -265,13 +309,13 @@ function registerListeners() {
                                         return [2 /*return*/, prKeys];
                                     });
                                 }); })()];
-                        case 2:
-                            _d = _e.sent(), publicKey = _d.publicKey, privateKey = _d.privateKey;
-                            return [4 /*yield*/, dbSemasim.setTowardSimKeys(imsi, cryptoLib.RsaKey.stringify(publicKey), cryptoLib.RsaKey.stringify(privateKey))];
                         case 3:
-                            _e.sent();
-                            _e.label = 4;
+                            _d = _f.sent(), publicKey = _d.publicKey, privateKey = _d.privateKey;
+                            return [4 /*yield*/, dbSemasim.setTowardSimKeys(imsi, cryptoLib.RsaKey.stringify(publicKey), cryptoLib.RsaKey.stringify(privateKey))];
                         case 4:
+                            _f.sent();
+                            _f.label = 5;
+                        case 5:
                             messagesDispatcher.sendMessagesOfDongle(dongle);
                             backendRemoteApiCaller.notifySimOnline(dongle);
                             return [2 /*return*/];
@@ -319,7 +363,7 @@ function registerListeners() {
     });
     sipContactsMonitor.evtContactRegistration.attach(function (contact) { return __awaiter(_this, void 0, void 0, function () {
         var _a, isUaCreatedOrUpdated, isFirstUaForSim, messages, tasks, messages_2, messages_2_1, _b, number, text, date;
-        var e_3, _c;
+        var e_5, _c;
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
@@ -348,12 +392,12 @@ function registerListeners() {
                             tasks[tasks.length] = dbSemasim.onDongleMessage(number, text, date, contact.uaSim.imsi);
                         }
                     }
-                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                    catch (e_5_1) { e_5 = { error: e_5_1 }; }
                     finally {
                         try {
                             if (messages_2_1 && !messages_2_1.done && (_c = messages_2.return)) _c.call(messages_2);
                         }
-                        finally { if (e_3) throw e_3.error; }
+                        finally { if (e_5) throw e_5.error; }
                     }
                     return [4 /*yield*/, Promise.all(tasks)];
                 case 5:

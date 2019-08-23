@@ -203,9 +203,48 @@ function registerListeners() {
                 })();
                 */
 
-
-
                 const { imsi } = dongle.sim;
+
+                //NOTE: Remove duplicated contacts ( if multiple contacts have same number )
+                {
+
+                    const tasks: Promise<void>[] = [];
+
+                    const numberSet = new Set<string>(
+                        dongle.sim.storage.contacts
+                            .map(({ number }) =>
+                                phoneNumber.build(
+                                    number,
+                                    !!dongle.sim.country ?
+                                        dongle.sim.country.iso : undefined
+                                )
+                            )
+                    );
+
+                    for (const number of numberSet) {
+
+                        const contacts = dongle.sim.storage.contacts
+                            .filter(contact => phoneNumber.areSame(
+                                number, contact.number
+                            ))
+                            ;
+
+                        contacts.shift();
+
+                        for (const { index } of contacts) {
+
+                            tasks[tasks.length] = dc.deleteContact(imsi, index)
+                                .catch(() => { })
+                                ;
+
+                        }
+
+
+                    }
+
+                    await Promise.all(tasks);
+
+                }
 
                 if (undefined === await dbSemasim.getTowardSimKeys(imsi)) {
 

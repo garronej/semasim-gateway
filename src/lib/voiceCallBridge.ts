@@ -88,6 +88,16 @@ export function initAgi() {
 
 }
 
+type OngoingCall = {
+    imsi: string;
+    number: string;
+    userEmails: Set<string>;
+    channelName: string; //NOTE: One of the channel name of the bridge
+    prBridgeCall: Promise<void>;
+};
+
+const ongoingCalls = new Set<OngoingCall>();
+
 async function fromDongle(channel: agi.AGIChannel) {
 
     debug("Call originated from dongle");
@@ -115,7 +125,6 @@ async function fromDongle(channel: agi.AGIChannel) {
         return;
     }
     */
-
 
     const imsi = (await channel.relax.getVariable("DONGLEIMSI"))!;
 
@@ -212,6 +221,18 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     const dongleChannelName = channel.request.channel;
 
+    let resolvePrBridgeCall!: ()=> void;
+
+    const ongoingCall: OngoingCall= {
+        imsi, 
+        number,
+        "channelName": dongleChannelName,
+        "userEmails": new Set<string>(),
+        "prBridgeCall": new Promise<void>(resolve=> resolvePrBridgeCall = resolve )
+    };
+
+    ongoingCalls.add(ongoingCall);
+
     evtReachableContact.attach(contact => {
 
         debug("Reachable contact!");
@@ -234,13 +255,21 @@ async function fromDongle(channel: agi.AGIChannel) {
 
             channels.get(contact)!.state = "ANSWERED";
 
+            ongoingCall.userEmails.add(contact.uaSim.ua.userEmail);
+
+            ami.evt.attachOnce(
+                ({ event, uniqueid }) => (
+                    event === "Hangup" &&
+                    uniqueid === sipChannelId
+                ),
+                () => ongoingCall.userEmails.delete(contact.uaSim.ua.userEmail)
+            );
+
             evtAnsweredOrEnded.post();
 
-        }).catch(() => {
-
-            channels.get(contact)!.state = "REJECTED";
-
-        });
+        }).catch(() => 
+            channels.get(contact)!.state = "REJECTED"
+        );
 
         ami.evt.attachOnce(
             ({ event, uniqueid }) => (
@@ -272,12 +301,26 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     });
 
+
+    ami.evt.attachOnce(
+        e => (
+            e.event === "BridgeEnter" &&
+            e["channel"] === dongleChannelName
+        ),
+        channel,
+        () => resolvePrBridgeCall()
+    );
+
     await ami.evt.waitFor(
         ({ event, channel }) => (
             event === "Hangup" &&
             channel === dongleChannelName
         )
     );
+
+    ami.evt.detach(channel);
+
+    ongoingCalls.delete(ongoingCall);
 
     /** no problem we can emit as long as we attach once */
     evtAnsweredOrEnded.post();
@@ -290,15 +333,31 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     const _ = channel.relax;
 
+    const setGainControlAndJitterBuffer = async () => {
+
+        await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
+
+        await _.setVariable("AGC(rx)", gain);
+
+        //To automatically increase the volume toward the softphone.
+        //await _.setVariable("VOLUME(TX)",volume);
+        await _.setVariable("AGC(tx)", "32768");
+
+    };
+
     debug("Call originated from sip");
 
-    const contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
+    const contact = await (async () => {
+
+        const contact_uri = await _.getVariable("CHANNEL(pjsip,target_uri)");
+
+        return sipContactsMonitor.getContacts()
+            .find(({ uri }) => uri === contact_uri)!
+            ;
+
+    })();
 
     const call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
-
-    const contact = sipContactsMonitor.getContacts()
-        .find(({ uri }) => uri === contact_uri)!
-        ;
 
     const number = channel.request.extension;
 
@@ -314,13 +373,127 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     }
 
-    const callPlacedAtDateTime = Date.now();
-    let callRingingAfterMs: number | undefined = undefined;
-    let callAnsweredAfterMs: number | undefined = undefined;
+    let ongoingCall = Array.from(ongoingCalls)
+        .find(({ imsi }) => imsi === contact.uaSim.imsi)
+        ;
+
+    debug({ ongoingCall });
+
+    if (ongoingCall !== undefined) {
+
+        if (ongoingCall.number !== number) {
+
+            debug(`Dongle already in a call with an other number (${ongoingCall.number})`);
+
+            await _.hangup();
+
+            return;
+
+        }
+
+        if (ongoingCall.userEmails.size === 0) {
+
+            debug("The user phone is about to ring");
+
+            await _.hangup();
+
+            return;
+
+        }
+
+        if (ongoingCall.userEmails.has(contact.uaSim.ua.userEmail)) {
+
+            debug("User is already calling with an other device!");
+
+            await _.hangup();
+
+            return;
+
+        }
+
+
+        await setGainControlAndJitterBuffer();
+
+        await ongoingCall.prBridgeCall;
+
+        ongoingCall.userEmails.add(contact.uaSim.ua.userEmail);
+
+        await _.exec("BridgeAdd", [ongoingCall.channelName]);
+
+        ongoingCall.userEmails.delete(contact.uaSim.ua.userEmail);
+
+        return;
+
+    }
+
+    let resolvePrBridgeCall!: () => void;
+
+    ongoingCall = {
+        "imsi": contact.uaSim.imsi,
+        number,
+        "channelName": channel.request.channel,
+        "userEmails": new Set([contact.uaSim.ua.userEmail]),
+        "prBridgeCall": new Promise<void>(resolve => resolvePrBridgeCall = resolve)
+    };
+
+    ami.evt.attachOnce(
+        e => (
+            e.event === "BridgeEnter" &&
+            e["channel"] === channel.request.channel
+        ),
+        channel,
+        () => resolvePrBridgeCall()
+    );
+
+    ami.evt.attachOnce(
+        e => (
+            e.event === "Hangup" &&
+            e["channel"] === channel.request.channel
+        ),
+        () => {
+
+            ami.evt.detach(channel);
+
+            ongoingCall!.userEmails.delete(contact.uaSim.ua.userEmail);
+
+        }
+    );
+
+    ami.evt.attachOnce(
+        ({ event, linkedid }) => (
+            event === "Newchannel" &&
+            linkedid === channel.request.uniqueid
+        ),
+        channel,
+        ({ channel: dongleChannelName }) => {
+
+            ongoingCalls.add(ongoingCall!);
+
+            ami.evt.attachOnce(
+                e => (
+                    e.event === "Hangup" &&
+                    e["channel"] === dongleChannelName
+                ),
+                () => ongoingCalls.delete(ongoingCall!)
+            );
+        }
+    );
 
     {
 
-        const boundToRingback = [];
+        const callPlacedAtDateTime = Date.now();
+        let callRingingAfterMs: number | undefined = undefined;
+        let callAnsweredAfterMs: number | undefined = undefined;
+
+        const sendNotification = () => dbSemasim.onCallFromSipTerminated(
+            number,
+            contact.uaSim.imsi,
+            callPlacedAtDateTime,
+            callRingingAfterMs,
+            callAnsweredAfterMs,
+            Date.now() - callPlacedAtDateTime,
+            contact.uaSim.ua
+        ).then(() => messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi));
 
         ami.evt.attachOnce(
             e => (
@@ -328,7 +501,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
                 e["channelstatedesc"] === "Ring" &&
                 e["channel"] === channel.request.channel
             ),
-            boundToRingback,
+            channel,
             () => {
 
                 callRingingAfterMs = Date.now() - callPlacedAtDateTime;
@@ -337,28 +510,32 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
                     .then(() => messageDispatcher.sendMessagesOfContact(contact));
 
             }
-        )
-
-
-        const boundToAnswer = [];
+        );
 
         ami.evt.attachOnce(
             e => (
-                e["channel"] === channel.request.channel &&
-                e["event"] === "DialEnd" &&
-                e["dialstatus"] === "ANSWER"
+                e["event"] === "BridgeEnter" &&
+                e["channel"] !== channel.request.channel &&
+                e["linkedid"] === channel.request.uniqueid
             ),
-            boundToAnswer,
-            () => {
+            channel,
+            ({ channel: dongleChannelName }) => {
 
                 if (callRingingAfterMs === undefined) {
-
-                    ami.evt.detach(boundToRingback);
 
                     callRingingAfterMs = Date.now();
                 }
 
                 callAnsweredAfterMs = Date.now() - callPlacedAtDateTime;
+
+                ami.evt.attachOnce(
+                    e => (
+                        e["event"] === "Hangup" &&
+                        e["channel"] === dongleChannelName
+                    ),
+                    () => sendNotification()
+                );
+
             }
         );
 
@@ -370,35 +547,21 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
             ),
             () => {
 
-                ami.evt.detach(boundToRingback);
-                ami.evt.detach(boundToAnswer);
+                if (callAnsweredAfterMs !== undefined) {
+                    return;
+                }
 
+                sendNotification();
             }
         );
 
     }
 
-    await _.setVariable(`JITTERBUFFER(${jitterBuffer.type})`, jitterBuffer.params);
-
-    await _.setVariable("AGC(rx)", gain);
-
-    //To automatically increase the volume toward the softphone.
-    //await _.setVariable("VOLUME(TX)",volume);
-    await _.setVariable("AGC(tx)", "32768");
+    await setGainControlAndJitterBuffer();
 
     //TODO: Dial with guessed from ( and only dial, even if not very important)
     //TODO: there is a delay for call terminated when web client abruptly disconnect.
     await _.exec("Dial", [`Dongle/i:${dongle.imei}/${number}`]);
-
-    dbSemasim.onCallFromSipTerminated(
-        number,
-        contact.uaSim.imsi,
-        callPlacedAtDateTime,
-        callRingingAfterMs,
-        callAnsweredAfterMs,
-        Date.now() - callPlacedAtDateTime,
-        contact.uaSim.ua
-    ).then(() => messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi));
 
     //TODO: Increase volume on TX
     debug("call terminated");

@@ -318,7 +318,7 @@
         "signature": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts": {
-        "version": "55bbe2454767d385c73c8f030c33043711ad6a6a9971f3b260ea198defe3db8c",
+        "version": "97403ab7727299ae122397f1f7e660f3bd92bde92b23303a640c5fdfc32feacc",
         "signature": "d01f1f4d09b8ceadaa0740e1e9c2a8c1cd888abe98b8b05936b0a2300c8f67bf"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.from.d.ts": {
@@ -390,7 +390,7 @@
         "signature": "63721742bb9c27a03ae540f50e2ba11aeeb401bc0d9dabdd5ec44466c6a9460a"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/launch.ts": {
-        "version": "b8d52fd685dd958ea3fb1ab17335c969bdcd11297cd10492f924e55749aaf10b",
+        "version": "6125a0909390e6589c24e779cde62957dbc8960fe5d61444ef23004b93318dfd",
         "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/bin/main.ts": {
@@ -439,6 +439,7 @@
       "strictBindCallApply": true,
       "incremental": true,
       "project": "./tsconfig.json",
+      "watch": true,
       "configFilePath": "C:/Users/joseph/Dropbox/shell/semasim/gateway/tsconfig.json"
     },
     "referencedMap": {
@@ -1542,6 +1543,7 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbsemasim.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/async/serializer.d.ts",
@@ -1592,7 +1594,6 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbasterisk.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbsemasim.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/main.ts",
-      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts"
     ]
   },
