@@ -140,6 +140,25 @@ export const notifyDongleOffline = (() => {
 
 })();
 
+export const notifyOngoingCall = (() => {
+
+    const { methodName } = apiDeclaration.notifyOngoingCall;
+    type Params = apiDeclaration.notifyOngoingCall.Params;
+    type Response = apiDeclaration.notifyOngoingCall.Response;
+
+    return async function (params: Params): Promise<void> {
+
+        await sendRequest<Params, Response>(
+            methodName,
+            params
+        ).catch(() => { });
+
+    };
+
+})();
+
+
+
 export const notifyNewOrUpdatedUa = (() => {
 
     let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
@@ -148,8 +167,12 @@ export const notifyNewOrUpdatedUa = (() => {
 
     return async function (ua: types.Ua): Promise<void> {
 
+        const uaNoKey = { ...ua };
+
+        delete uaNoKey.towardUserEncryptKeyStr;
+
         //TODO: See if we really need to return that promise that never resolve
-        await sendRequest<Params, Response>(methodName, ua)
+        await sendRequest<Params, Response>(methodName, uaNoKey)
             .catch(() => new Promise(() => { }));
 
     };

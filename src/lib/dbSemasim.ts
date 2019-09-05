@@ -129,7 +129,7 @@ export async function addUaSim(
 //TODO: refactor, it's unclear what this function does
 export async function removeUaSim(
     imsi: string,
-    uasToKeep: types.Ua[] = []
+    uasToKeep: types.UaRef[] = []
 ) {
 
     let condition = uasToKeep.length ? [

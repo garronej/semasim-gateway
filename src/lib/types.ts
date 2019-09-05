@@ -12,9 +12,12 @@ export type UaSim = {
 };
 
 
-export type Ua = {
+export type UaRef= {
     instance: string;
     userEmail: string;
+};
+
+export type Ua = UaRef & {
     towardUserEncryptKeyStr: string;
     platform: Ua.Platform;
     pushToken: string;

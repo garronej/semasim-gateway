@@ -24,14 +24,18 @@ var sanityChecks;
     }
     sanityChecks.ua = ua;
     function uaWithoutUserKeys(o) {
-        return (o instanceof Object &&
-            typeof o.instance === "string" &&
-            isValidEmail(o.userEmail, "MUST BE LOWER CASE") &&
+        return (uaRef(o) &&
             platform(o.platform) &&
             typeof o.pushToken === "string" &&
             typeof o.messagesEnabled === "boolean");
     }
     sanityChecks.uaWithoutUserKeys = uaWithoutUserKeys;
+    function uaRef(o) {
+        return (o instanceof Object &&
+            typeof o.instance === "string" &&
+            isValidEmail(o.userEmail, "MUST BE LOWER CASE"));
+    }
+    sanityChecks.uaRef = uaRef;
     function platform(o) {
         return (typeof o === "string" && (o === "android" ||
             o === "iOS" ||

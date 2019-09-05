@@ -20,6 +20,10 @@ var notifyDongleOffline;
 (function (notifyDongleOffline) {
     notifyDongleOffline.methodName = "notifyDongleOffline";
 })(notifyDongleOffline = exports.notifyDongleOffline || (exports.notifyDongleOffline = {}));
+var notifyOngoingCall;
+(function (notifyOngoingCall) {
+    notifyOngoingCall.methodName = "notifyOngoingCall";
+})(notifyOngoingCall = exports.notifyOngoingCall || (exports.notifyOngoingCall = {}));
 var notifyNewOrUpdatedUa;
 (function (notifyNewOrUpdatedUa) {
     notifyNewOrUpdatedUa.methodName = "notifyNewOrUpdatedUa";

@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -161,16 +172,34 @@ exports.notifyDongleOffline = (function () {
         });
     };
 })();
+exports.notifyOngoingCall = (function () {
+    var methodName = apiDeclaration.notifyOngoingCall.methodName;
+    return function (params) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, sendRequest(methodName, params).catch(function () { })];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+})();
 exports.notifyNewOrUpdatedUa = (function () {
     var methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
     return function (ua) {
         return __awaiter(this, void 0, void 0, function () {
+            var uaNoKey;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: 
-                    //TODO: See if we really need to return that promise that never resolve
-                    return [4 /*yield*/, sendRequest(methodName, ua)
-                            .catch(function () { return new Promise(function () { }); })];
+                    case 0:
+                        uaNoKey = __assign({}, ua);
+                        delete uaNoKey.towardUserEncryptKeyStr;
+                        //TODO: See if we really need to return that promise that never resolve
+                        return [4 /*yield*/, sendRequest(methodName, uaNoKey)
+                                .catch(function () { return new Promise(function () { }); })];
                     case 1:
                         //TODO: See if we really need to return that promise that never resolve
                         _a.sent();

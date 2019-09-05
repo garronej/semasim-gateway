@@ -19,7 +19,7 @@ export declare function addUaSim(uaSim: types.UaSim): Promise<{
     isUaCreatedOrUpdated: boolean;
     isFirstUaForSim: boolean;
 }>;
-export declare function removeUaSim(imsi: string, uasToKeep?: types.Ua[]): Promise<void>;
+export declare function removeUaSim(imsi: string, uasToKeep?: types.UaRef[]): Promise<void>;
 /**
  *
  * to call when sip message received.

@@ -29,7 +29,7 @@ export declare namespace notifySimOnline {
         status: "NOT REGISTERED";
     } | {
         status: "REPLACE PASSWORD";
-        allowedUas: types.Ua[];
+        allowedUas: types.UaRef[];
     };
 }
 export declare namespace notifyGsmConnectivityChange {
@@ -59,6 +59,22 @@ export declare namespace notifyDongleOffline {
         imsi: string;
     } | {
         imei: string;
+    };
+    type Response = undefined;
+}
+export declare namespace notifyOngoingCall {
+    const methodName = "notifyOngoingCall";
+    /** Assert we never send this notif when the sim
+     * is not registered. ( ok as the notif is sent only
+     * when at least one user joined the call )
+    */
+    type Params = {
+        ongoingCallId: string;
+        from: "DONGLE" | "SIP";
+        imsi: string;
+        number: string;
+        uasInCall: types.UaRef[];
+        isTerminated: boolean;
     };
     type Response = undefined;
 }

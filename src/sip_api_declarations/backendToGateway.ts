@@ -34,7 +34,7 @@ export namespace notifySimOnline {
         status: "NOT REGISTERED"
     } | {
         status: "REPLACE PASSWORD";
-        allowedUas: types.Ua[];
+        allowedUas: types.UaRef[];
     };
     
 }
@@ -85,10 +85,34 @@ export namespace notifyDongleOffline {
 
 }
 
+export namespace notifyOngoingCall {
+
+    export const methodName = "notifyOngoingCall";
+
+    /** Assert we never send this notif when the sim 
+     * is not registered. ( ok as the notif is sent only
+     * when at least one user joined the call )
+    */
+    export type Params = { 
+        ongoingCallId: string;
+        from: "DONGLE" | "SIP";
+        imsi: string;
+        number: string;
+        uasInCall: types.UaRef[]; //NOTE: Only the key of the UA.
+        isTerminated: boolean;
+    };
+
+    export type Response = undefined;
+
+}
+
+
 export namespace notifyNewOrUpdatedUa {
 
     export const methodName = "notifyNewOrUpdatedUa";
 
+    //NOTE: There is no security breach in sending towardUserEncryptKey to the
+    //backend. If we omit it it's just to tell that we wont use it...
     export type Params= Omit<types.Ua, "towardUserEncryptKeyStr">;
 
     export type Response= undefined;

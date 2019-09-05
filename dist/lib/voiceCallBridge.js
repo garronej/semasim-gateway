@@ -72,6 +72,7 @@ var sip = require("ts-sip");
 var logger = require("logger");
 var sipContactsMonitor = require("./sipContactsMonitor");
 var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
+var misc = require("./misc");
 var debug = logger.debugFactory();
 var gain = "3000";
 //const volume= "11";
@@ -129,10 +130,72 @@ function initAgi() {
     });
 }
 exports.initAgi = initAgi;
-var ongoingCalls = new Set();
+var OngoingCall = /** @class */ (function () {
+    function OngoingCall(from, imsi, number, dongleChannelName) {
+        var _this = this;
+        this.from = from;
+        this.imsi = imsi;
+        this.number = number;
+        this.dongleChannelName = dongleChannelName;
+        this.uasInCall = new Map();
+        this.id = [imsi, number, Date.now()].join("-");
+        this.prBridgeCall = new Promise(function (resolve) { return _this.resolvePrBridgeCall = resolve; });
+    }
+    OngoingCall.addCall = function (ongoingCall) {
+        this.set.add(ongoingCall);
+        //NOTE: We wait for a user to join the call before notifying.
+        return ongoingCall;
+    };
+    OngoingCall.deleteCall = function (ongoingCall) {
+        this.terminatedCalls.add(ongoingCall);
+        this.set.delete(ongoingCall);
+        this.notifyCall(ongoingCall, true);
+    };
+    OngoingCall.addUaToCall = function (ongoingCall, ua) {
+        ongoingCall.uasInCall.set(misc.generateUaId(ua), ua);
+        //NOTE: We prevent notifying a call that have been terminated already.
+        //Maybe never happen but we add this check for safety.
+        if (this.terminatedCalls.has(ongoingCall)) {
+            return;
+        }
+        this.notifyCall(ongoingCall, false);
+    };
+    OngoingCall.removeUaFromCall = function (ongoingCall, ua) {
+        ongoingCall.uasInCall.delete(misc.generateUaId(ua));
+        //NOTE: If the call is terminated we do not notify.
+        if (this.terminatedCalls.has(ongoingCall)) {
+            return;
+        }
+        this.notifyCall(ongoingCall, false);
+    };
+    OngoingCall.notifyCall = function (ongoingCall, isTerminated) {
+        backendRemoteApiCaller.notifyOngoingCall({
+            "ongoingCallId": ongoingCall.id,
+            "from": ongoingCall.from,
+            "imsi": ongoingCall.imsi,
+            "number": ongoingCall.number,
+            "uasInCall": Array.from(ongoingCall.uasInCall.values())
+                .map(function (_a) {
+                var instance = _a.instance, userEmail = _a.userEmail;
+                return ({ instance: instance, userEmail: userEmail });
+            }),
+            isTerminated: isTerminated
+        });
+    };
+    OngoingCall.prototype.getNumberOfUasInTheCall = function () {
+        return this.uasInCall.size;
+    };
+    OngoingCall.prototype.isUserAlreadyInTheCall = function (userEmail) {
+        return !!Array.from(this.uasInCall.values())
+            .find(function (ua) { return ua.userEmail === userEmail; });
+    };
+    OngoingCall.set = new Set();
+    OngoingCall.terminatedCalls = new WeakSet();
+    return OngoingCall;
+}());
 function fromDongle(channel) {
     return __awaiter(this, void 0, void 0, function () {
-        var imsi, dongle, number, evtReachableContact, _loop_1, _a, _b, contact, channels, evtAnsweredOrEnded, dongleChannelName, resolvePrBridgeCall, ongoingCall;
+        var imsi, dongle, number, evtReachableContact, _loop_1, _a, _b, contact, channels, evtAnsweredOrEnded, dongleChannelName, ongoingCall;
         var e_1, _c;
         var _this = this;
         return __generator(this, function (_d) {
@@ -228,14 +291,8 @@ function fromDongle(channel) {
                         });
                     }); });
                     dongleChannelName = channel.request.channel;
-                    ongoingCall = {
-                        imsi: imsi,
-                        number: number,
-                        "channelName": dongleChannelName,
-                        "userEmails": new Set(),
-                        "prBridgeCall": new Promise(function (resolve) { return resolvePrBridgeCall = resolve; })
-                    };
-                    ongoingCalls.add(ongoingCall);
+                    ongoingCall = new OngoingCall("DONGLE", imsi, number, dongleChannelName);
+                    OngoingCall.addCall(ongoingCall);
                     evtReachableContact.attach(function (contact) {
                         debug("Reachable contact!");
                         var sipChannelId = ts_ami_1.Ami.generateUniqueActionId();
@@ -252,12 +309,13 @@ function fromDongle(channel) {
                         }).then(function () {
                             debug("Answered");
                             channels.get(contact).state = "ANSWERED";
-                            ongoingCall.userEmails.add(contact.uaSim.ua.userEmail);
+                            var ua = contact.uaSim.ua;
+                            OngoingCall.addUaToCall(ongoingCall, ua);
                             ami.evt.attachOnce(function (_a) {
                                 var event = _a.event, uniqueid = _a.uniqueid;
                                 return (event === "Hangup" &&
                                     uniqueid === sipChannelId);
-                            }, function () { return ongoingCall.userEmails.delete(contact.uaSim.ua.userEmail); });
+                            }, function () { return OngoingCall.removeUaFromCall(ongoingCall, ua); });
                             evtAnsweredOrEnded.post();
                         }).catch(function () {
                             return channels.get(contact).state = "REJECTED";
@@ -278,7 +336,7 @@ function fromDongle(channel) {
                         });
                     });
                     ami.evt.attachOnce(function (e) { return (e.event === "BridgeEnter" &&
-                        e["channel"] === dongleChannelName); }, channel, function () { return resolvePrBridgeCall(); });
+                        e["channel"] === dongleChannelName); }, channel, function () { return ongoingCall.resolvePrBridgeCall(); });
                     return [4 /*yield*/, ami.evt.waitFor(function (_a) {
                             var event = _a.event, channel = _a.channel;
                             return (event === "Hangup" &&
@@ -287,7 +345,7 @@ function fromDongle(channel) {
                 case 2:
                     _d.sent();
                     ami.evt.detach(channel);
-                    ongoingCalls.delete(ongoingCall);
+                    OngoingCall.deleteCall(ongoingCall);
                     /** no problem we can emit as long as we attach once */
                     evtAnsweredOrEnded.post();
                     debug("Call ended");
@@ -298,7 +356,7 @@ function fromDongle(channel) {
 }
 function fromSip(channel) {
     return __awaiter(this, void 0, void 0, function () {
-        var _, setGainControlAndJitterBuffer, contact, call_id, number, dongle, ongoingCall, resolvePrBridgeCall, callPlacedAtDateTime_1, callRingingAfterMs_1, callAnsweredAfterMs_1, sendNotification_1;
+        var _, setGainControlAndJitterBuffer, contact, call_id, number, dongle, ongoingCall, callPlacedAtDateTime_1, callRingingAfterMs_1, callAnsweredAfterMs_1, sendCallLogNotification_1;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -356,7 +414,7 @@ function fromSip(channel) {
                         debug("DONGLE is not usable");
                         return [2 /*return*/];
                     }
-                    ongoingCall = Array.from(ongoingCalls)
+                    ongoingCall = Array.from(OngoingCall.set)
                         .find(function (_a) {
                         var imsi = _a.imsi;
                         return imsi === contact.uaSim.imsi;
@@ -370,61 +428,54 @@ function fromSip(channel) {
                     _a.sent();
                     return [2 /*return*/];
                 case 4:
-                    if (!(ongoingCall.userEmails.size === 0)) return [3 /*break*/, 6];
+                    if (!(ongoingCall.getNumberOfUasInTheCall() === 0)) return [3 /*break*/, 6];
                     debug("The user phone is about to ring");
                     return [4 /*yield*/, _.hangup()];
                 case 5:
                     _a.sent();
                     return [2 /*return*/];
                 case 6:
-                    if (!ongoingCall.userEmails.has(contact.uaSim.ua.userEmail)) return [3 /*break*/, 8];
+                    if (!ongoingCall.isUserAlreadyInTheCall(contact.uaSim.ua.userEmail)) return [3 /*break*/, 8];
                     debug("User is already calling with an other device!");
                     return [4 /*yield*/, _.hangup()];
                 case 7:
                     _a.sent();
                     return [2 /*return*/];
-                case 8: return [4 /*yield*/, setGainControlAndJitterBuffer()];
+                case 8:
+                    OngoingCall.addUaToCall(ongoingCall, contact.uaSim.ua);
+                    return [4 /*yield*/, setGainControlAndJitterBuffer()];
                 case 9:
                     _a.sent();
                     return [4 /*yield*/, ongoingCall.prBridgeCall];
                 case 10:
                     _a.sent();
-                    ongoingCall.userEmails.add(contact.uaSim.ua.userEmail);
-                    return [4 /*yield*/, _.exec("BridgeAdd", [ongoingCall.channelName])];
+                    return [4 /*yield*/, _.exec("BridgeAdd", [ongoingCall.dongleChannelName])];
                 case 11:
                     _a.sent();
-                    ongoingCall.userEmails.delete(contact.uaSim.ua.userEmail);
+                    OngoingCall.removeUaFromCall(ongoingCall, contact.uaSim.ua);
                     return [2 /*return*/];
                 case 12:
-                    ongoingCall = {
-                        "imsi": contact.uaSim.imsi,
-                        number: number,
-                        "channelName": channel.request.channel,
-                        "userEmails": new Set([contact.uaSim.ua.userEmail]),
-                        "prBridgeCall": new Promise(function (resolve) { return resolvePrBridgeCall = resolve; })
-                    };
-                    ami.evt.attachOnce(function (e) { return (e.event === "BridgeEnter" &&
-                        e["channel"] === channel.request.channel); }, channel, function () { return resolvePrBridgeCall(); });
-                    ami.evt.attachOnce(function (e) { return (e.event === "Hangup" &&
-                        e["channel"] === channel.request.channel); }, function () {
-                        ami.evt.detach(channel);
-                        ongoingCall.userEmails.delete(contact.uaSim.ua.userEmail);
-                    });
                     ami.evt.attachOnce(function (_a) {
                         var event = _a.event, linkedid = _a.linkedid;
                         return (event === "Newchannel" &&
                             linkedid === channel.request.uniqueid);
                     }, channel, function (_a) {
                         var dongleChannelName = _a.channel;
-                        ongoingCalls.add(ongoingCall);
+                        var ongoingCall = new OngoingCall("SIP", contact.uaSim.imsi, number, dongleChannelName);
+                        ami.evt.attachOnce(function (e) { return (e.event === "BridgeEnter" &&
+                            e["channel"] === channel.request.channel); }, channel, function () { return ongoingCall.resolvePrBridgeCall(); });
                         ami.evt.attachOnce(function (e) { return (e.event === "Hangup" &&
-                            e["channel"] === dongleChannelName); }, function () { return ongoingCalls.delete(ongoingCall); });
+                            e["channel"] === channel.request.channel); }, function () { return OngoingCall.removeUaFromCall(ongoingCall, contact.uaSim.ua); });
+                        OngoingCall.addCall(ongoingCall);
+                        OngoingCall.addUaToCall(ongoingCall, contact.uaSim.ua);
+                        ami.evt.attachOnce(function (e) { return (e.event === "Hangup" &&
+                            e["channel"] === dongleChannelName); }, function () { return OngoingCall.deleteCall(ongoingCall); });
                     });
                     {
                         callPlacedAtDateTime_1 = Date.now();
                         callRingingAfterMs_1 = undefined;
                         callAnsweredAfterMs_1 = undefined;
-                        sendNotification_1 = function () { return dbSemasim.onCallFromSipTerminated(number, contact.uaSim.imsi, callPlacedAtDateTime_1, callRingingAfterMs_1, callAnsweredAfterMs_1, Date.now() - callPlacedAtDateTime_1, contact.uaSim.ua).then(function () { return messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi); }); };
+                        sendCallLogNotification_1 = function () { return dbSemasim.onCallFromSipTerminated(number, contact.uaSim.imsi, callPlacedAtDateTime_1, callRingingAfterMs_1, callAnsweredAfterMs_1, Date.now() - callPlacedAtDateTime_1, contact.uaSim.ua).then(function () { return messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi); }); };
                         ami.evt.attachOnce(function (e) { return (e["event"] === "RTCPSent" &&
                             e["channelstatedesc"] === "Ring" &&
                             e["channel"] === channel.request.channel); }, channel, function () {
@@ -441,16 +492,18 @@ function fromSip(channel) {
                             }
                             callAnsweredAfterMs_1 = Date.now() - callPlacedAtDateTime_1;
                             ami.evt.attachOnce(function (e) { return (e["event"] === "Hangup" &&
-                                e["channel"] === dongleChannelName); }, function () { return sendNotification_1(); });
+                                e["channel"] === dongleChannelName); }, function () { return sendCallLogNotification_1(); });
                         });
                         ami.evt.attachOnce(function (e) { return (e["channel"] === channel.request.channel &&
                             e["event"] === "Hangup"); }, function () {
                             if (callAnsweredAfterMs_1 !== undefined) {
                                 return;
                             }
-                            sendNotification_1();
+                            sendCallLogNotification_1();
                         });
                     }
+                    ami.evt.attachOnce(function (e) { return (e["channel"] === channel.request.channel &&
+                        e["event"] === "Hangup"); }, function () { return ami.evt.detach(channel); });
                     return [4 /*yield*/, setGainControlAndJitterBuffer()];
                 case 13:
                     _a.sent();

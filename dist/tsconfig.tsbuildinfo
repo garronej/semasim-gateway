@@ -210,12 +210,12 @@
         "signature": "89305cb8a9c0d323a759b816eea0579729727c7ad7cf0c6cac752a91b05abb06"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts": {
-        "version": "fb155704a38a1b71704c2d5c735baf6991f92c1e427e12306ee9205cf2a560ed",
-        "signature": "34fd3c8626f62ca329d7560eb63f942e47c65ade397f8c7fec5b77713db5e84c"
+        "version": "9a5daf1ee8619879572c9215503d4d824b68a31be46c66a6118a2c095650d09c",
+        "signature": "08b328156b6a07571e6eb8d429e9923d863ea86e1eabf6a81df42fd09acf4461"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbsemasim.ts": {
-        "version": "975088f46a2f36618f742c0c3a4c3e4ac70d54a078c61db12d4f4ec48af1637e",
-        "signature": "a1c15a9a1bd1933fd3601077ade0ad90dd98a95803031a5c3cd323e509baa677"
+        "version": "ec676d2693d2c5bfd171237237d059cbbfbe79f69a2ac472746638beff56f7ad",
+        "signature": "73c31abdb338a9b04bcbd4985e8f826ec1c9d066b5e7d6a0065d77857a50be16"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts": {
         "version": "ece2ed9e7494bdd3ed91165738857e5c391089ad5584823582efb5b563ee94de",
@@ -246,8 +246,8 @@
         "signature": "8d62e7593f6165641411d6ce2c7a8654aeb994baeb8ecf61f4ce90fd53da9739"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/misc/sanitychecks.ts": {
-        "version": "e4e07a5fcde2d4fa9bcbf3785257b0f58744c6f3867f630049d082f2415585ca",
-        "signature": "b83702ce3422a47d4c250e7dc4c5463d3f07291dbbad08d86f7e355a98d93f66"
+        "version": "cb9bd42262e91a7dea5b09d9a2903119f15fbd8ca487297ed804cdf118b52158",
+        "signature": "e8718f241c2e0b4e96d89d7ddf88dd709d62df021ee2a7e67286a8f77cb3c31f"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts": {
         "version": "7a150bc951faafabece4b248c55473bb8c397cddcc86d7245c527df91f29ba88",
@@ -302,8 +302,8 @@
         "signature": "0dad8d09155a58aaf1b75c0a8da73b0248704b7bd781852c18a404013fa0cc07"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/backendtogateway.ts": {
-        "version": "6076de27dfdd6949b971f39a69ee5050dbd0be2cb324dbeb71284919ac94e6eb",
-        "signature": "61b8096583d36b55dc1e18796236e6fdd056b36e7caaf14c4aff1757cfc0803d"
+        "version": "7cf46d4f34a91b3b2d97db71f6f2f47d2e8e0bedd0cc91e18e6feafb36b9c751",
+        "signature": "6ed9e38976f6c40350d142020f120626576f3af97b326784a6a8f1eab2311e33"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/gatewaytobackend.ts": {
         "version": "b3b46e5c280322a2bcbb59d0c5ded8558a01f0c592f897c2f9573fd212f07118",
@@ -318,7 +318,7 @@
         "signature": "25aecda30c3d5ceb4375b0f43482d90939ad23c71c1f8cf78d64412f08fc673e"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts": {
-        "version": "97403ab7727299ae122397f1f7e660f3bd92bde92b23303a640c5fdfc32feacc",
+        "version": "9c0e67a2483aab0b477edcb364bf9caa8fa5d20386d884190a0c204299fa4c98",
         "signature": "d01f1f4d09b8ceadaa0740e1e9c2a8c1cd888abe98b8b05936b0a2300c8f67bf"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.from.d.ts": {
@@ -366,8 +366,8 @@
         "signature": "1377bf2c336dde90763c48abb74442cd541e23493569a10c86ce6a4d6d3327a9"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/tobackend/remoteapicaller.ts": {
-        "version": "91e511b39993da02a7a9563df230a107475cddef15b302f9e341a931c2084e67",
-        "signature": "e247e07703d9f6721d6acab521830eb0cceba8bd13aa4306af3ec75ee20b8485"
+        "version": "49087a7fcc264097b149449bfa844a75f993b08eea1d563ea9f5472ecdbda034",
+        "signature": "c191ac99dc983eb7bbab4bca96f2c00a301efd3acc2737f4e6e7657718959207"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/sipcontactsmonitor.ts": {
         "version": "8c03c4b9a24cf7cec6f14b02b5b7525c4338dae18c378729121c52820cd5cf37",
@@ -439,7 +439,6 @@
       "strictBindCallApply": true,
       "incremental": true,
       "project": "./tsconfig.json",
-      "watch": true,
       "configFilePath": "C:/Users/joseph/Dropbox/shell/semasim/gateway/tsconfig.json"
     },
     "referencedMap": {
@@ -855,6 +854,7 @@
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/logger/dist/lib/index.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/sipcontactsmonitor.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/tobackend/remoteapicaller.ts",
+        "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/misc/index.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/base.d.ts",
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -1466,8 +1466,8 @@
       ],
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/tobackend/remoteapicaller.ts": [
         "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",
-        "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/backendtogateway.ts"
+        "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/backendtogateway.ts",
+        "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts"
       ],
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/sipcontactsmonitor.ts": [
         "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts",

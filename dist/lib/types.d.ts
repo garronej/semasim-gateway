@@ -8,9 +8,11 @@ export declare type UaSim = {
     ua: Ua;
     imsi: string;
 };
-export declare type Ua = {
+export declare type UaRef = {
     instance: string;
     userEmail: string;
+};
+export declare type Ua = UaRef & {
     towardUserEncryptKeyStr: string;
     platform: Ua.Platform;
     pushToken: string;
