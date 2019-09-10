@@ -15,9 +15,7 @@ export const dialplanContext = "from-sip-message";
 export const evtMessage = new SyncEvent<{
     fromContact: types.Contact;
     toNumber: string;
-    text: string;
-    exactSendDate: Date;
-    appendPromotionalMessage: boolean;
+    bundledData: types.BundledData.ClientToServer;
 }>();
 
 export function sendMessage(
@@ -196,6 +194,8 @@ async function onIncomingSipMessage(
     sipRequest: sipLibrary.Request
 ) {
 
+    console.log("===============> onIncomingSipMessage", {fromContact, sipRequest });
+
     const decryptor = await (async () => {
 
         const { prDecryptorMap } = onIncomingSipMessage;
@@ -223,18 +223,13 @@ async function onIncomingSipMessage(
 
     })();
 
-    const { exactSendDateTime, appendPromotionalMessage, textB64 } =
-        await misc.extractBundledDataFromHeaders<types.BundledData.ClientToServer.Message>(
-            sipRequest.headers,
-            decryptor
-        );
-
     evtMessage.post({
         fromContact,
         "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user!,
-        "text": Buffer.from(textB64, "base64").toString("utf8"),
-        "exactSendDate": new Date(exactSendDateTime),
-        appendPromotionalMessage
+        "bundledData": await misc.extractBundledDataFromHeaders<types.BundledData.ClientToServer>(
+            sipRequest.headers,
+            decryptor
+        )
     });
 
 }

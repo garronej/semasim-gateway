@@ -39,15 +39,19 @@ export declare namespace BundledData {
     type _Base = {
         textB64: string;
     };
-    type ClientToServer = ClientToServer.Message;
+    type ClientToServer = ClientToServer.Message | ClientToServer.ConversationCheckedOut;
     namespace ClientToServer {
         type Message = _Base & {
             type: "MESSAGE";
             exactSendDateTime: number;
             appendPromotionalMessage: boolean;
         };
+        type ConversationCheckedOut = _Base & {
+            type: "CONVERSATION CHECKED OUT";
+            checkedOutAtTime: number;
+        };
     }
-    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.FromSipCallSummary | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
+    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.FromSipCallSummary | ServerToClient.CallAnsweredBy | ServerToClient.Ringback | ServerToClient.ConversationCheckedOutFromOtherUa;
     namespace ServerToClient {
         type Message = _Base & {
             type: "MESSAGE";
@@ -94,6 +98,10 @@ export declare namespace BundledData {
         type Ringback = _Base & {
             type: "RINGBACK";
             callId: string;
+        };
+        type ConversationCheckedOutFromOtherUa = _Base & {
+            type: "CONVERSATION CHECKED OUT FROM OTHER UA";
+            checkedOutAtTime: number;
         };
     }
 }

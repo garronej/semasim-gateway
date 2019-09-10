@@ -343,7 +343,7 @@ function registerListeners() {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        debug("FROM DONGLE MESSAGE", { message: message });
+                        debug("FROM DONGLE MESSAGE", { message: message, "time": message.date.getTime() });
                         evtShouldSave = new ts_events_extended_1.SyncEvent();
                         submitShouldSave(evtShouldSave.waitFor());
                         return [4 /*yield*/, dbSemasim.onDongleMessage(phone_number_1.phoneNumber.build(message.number, !!dongle.sim.country ? dongle.sim.country.iso : undefined), message.text, message.date, dongle.sim.imsi)];
@@ -410,17 +410,27 @@ function registerListeners() {
         });
     }); });
     sipMessagesMonitor.evtMessage.attach(function (_a) {
-        var fromContact = _a.fromContact, toNumber = _a.toNumber, text = _a.text, exactSendDate = _a.exactSendDate, appendPromotionalMessage = _a.appendPromotionalMessage;
+        var fromContact = _a.fromContact, toNumber = _a.toNumber, bundledData = _a.bundledData;
         return __awaiter(_this, void 0, void 0, function () {
-            var uaSim, dongle;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var text, uaSim, _b, exactSendDate, appendPromotionalMessage, dongle;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
-                        debug("FROM SIP MESSAGE", { toNumber: toNumber, text: text });
+                        text = Buffer.from(bundledData.textB64, "base64").toString("utf8");
+                        debug("FROM SIP MESSAGE", { "imsi": fromContact.uaSim.imsi, toNumber: toNumber, text: text });
                         uaSim = fromContact.uaSim;
-                        return [4 /*yield*/, dbSemasim.onSipMessage(toNumber, text, uaSim, exactSendDate, appendPromotionalMessage)];
+                        _b = bundledData.type;
+                        switch (_b) {
+                            case "MESSAGE": return [3 /*break*/, 1];
+                            case "CONVERSATION CHECKED OUT": return [3 /*break*/, 3];
+                        }
+                        return [3 /*break*/, 5];
                     case 1:
-                        _b.sent();
+                        exactSendDate = new Date(bundledData.exactSendDateTime);
+                        appendPromotionalMessage = bundledData.appendPromotionalMessage;
+                        return [4 /*yield*/, dbSemasim.onSipMessage(toNumber, text, uaSim, exactSendDate, appendPromotionalMessage)];
+                    case 2:
+                        _c.sent();
                         dongle = Array.from(dc.usableDongles.values()).find(function (_a) {
                             var sim = _a.sim;
                             return sim.imsi === uaSim.imsi;
@@ -430,7 +440,15 @@ function registerListeners() {
                             return [2 /*return*/];
                         }
                         messagesDispatcher.sendMessagesOfDongle(dongle);
-                        return [2 /*return*/];
+                        return [3 /*break*/, 5];
+                    case 3:
+                        debug("Checked out at time: " + bundledData.checkedOutAtTime);
+                        return [4 /*yield*/, dbSemasim.onConversationCheckedOut(uaSim, toNumber, bundledData)];
+                    case 4:
+                        _c.sent();
+                        messagesDispatcher.notifyNewSipMessagesToSend(uaSim.imsi);
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
                 }
             });
         });

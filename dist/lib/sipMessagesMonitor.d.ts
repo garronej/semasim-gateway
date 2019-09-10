@@ -5,9 +5,7 @@ export declare const dialplanContext = "from-sip-message";
 export declare const evtMessage: SyncEvent<{
     fromContact: types.Contact;
     toNumber: string;
-    text: string;
-    exactSendDate: Date;
-    appendPromotionalMessage: boolean;
+    bundledData: types.BundledData.ClientToServer;
 }>;
 export declare function sendMessage(contact: types.Contact, fromNumber: string, headers: Record<string, string>): Promise<void>;
 export declare namespace sendMessage {

@@ -860,6 +860,34 @@ function buildMessageTowardSipInsertQuery(isFromDongle, fromNumber, date, bundle
     ].join("\n");
     return sql;
 }
+function onConversationCheckedOut(uaSim, number, bundledData) {
+    return __awaiter(this, void 0, void 0, function () {
+        var sql;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    sql = buildMessageTowardSipInsertQuery(false, number, new Date(bundledData.checkedOutAtTime), (function () {
+                        var out = {
+                            "type": "CONVERSATION CHECKED OUT FROM OTHER UA",
+                            "checkedOutAtTime": bundledData.checkedOutAtTime,
+                            "textB64": Buffer.from("Conversation checked out on an other device", "utf8")
+                                .toString("base64")
+                        };
+                        return out;
+                    })(), {
+                        "target": "ALL OTHER UA OF USER",
+                        uaSim: uaSim,
+                        "alsoSendToUasWithMessageDisabled": false
+                    });
+                    return [4 /*yield*/, exports._.query(sql)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.onConversationCheckedOut = onConversationCheckedOut;
 /**
  *
  * TODO: include in tests

@@ -182,36 +182,38 @@ function onOutgoingSipMessage(sipRequestAsReceived, prSipResponse) {
  */
 function onIncomingSipMessage(fromContact, sipRequest) {
     return __awaiter(this, void 0, void 0, function () {
-        var decryptor, _a, exactSendDateTime, appendPromotionalMessage, textB64;
+        var decryptor, _a, _b, _c, _d;
         var _this = this;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0: return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
-                        var prDecryptorMap, imsi, prDecryptor;
-                        return __generator(this, function (_a) {
-                            prDecryptorMap = onIncomingSipMessage.prDecryptorMap;
-                            imsi = fromContact.uaSim.imsi;
-                            prDecryptor = prDecryptorMap.get(imsi);
-                            if (prDecryptor === undefined) {
-                                prDecryptor = dbSemasim.getTowardSimKeys(imsi)
-                                    .then(function (towardSimKeysStr) { return cryptoLib.rsa.decryptorFactory(cryptoLib.RsaKey.parse(towardSimKeysStr.decryptKeyStr), workerThreadPoolId_1.workerThreadPoolId); });
-                                prDecryptorMap.set(imsi, prDecryptor);
-                            }
-                            return [2 /*return*/, prDecryptor];
-                        });
-                    }); })()];
+        return __generator(this, function (_e) {
+            switch (_e.label) {
+                case 0:
+                    console.log("===============> onIncomingSipMessage", { fromContact: fromContact, sipRequest: sipRequest });
+                    return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
+                            var prDecryptorMap, imsi, prDecryptor;
+                            return __generator(this, function (_a) {
+                                prDecryptorMap = onIncomingSipMessage.prDecryptorMap;
+                                imsi = fromContact.uaSim.imsi;
+                                prDecryptor = prDecryptorMap.get(imsi);
+                                if (prDecryptor === undefined) {
+                                    prDecryptor = dbSemasim.getTowardSimKeys(imsi)
+                                        .then(function (towardSimKeysStr) { return cryptoLib.rsa.decryptorFactory(cryptoLib.RsaKey.parse(towardSimKeysStr.decryptKeyStr), workerThreadPoolId_1.workerThreadPoolId); });
+                                    prDecryptorMap.set(imsi, prDecryptor);
+                                }
+                                return [2 /*return*/, prDecryptor];
+                            });
+                        }); })()];
                 case 1:
-                    decryptor = _b.sent();
+                    decryptor = _e.sent();
+                    _b = (_a = exports.evtMessage).post;
+                    _c = {
+                        fromContact: fromContact,
+                        "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user
+                    };
+                    _d = "bundledData";
                     return [4 /*yield*/, misc.extractBundledDataFromHeaders(sipRequest.headers, decryptor)];
                 case 2:
-                    _a = _b.sent(), exactSendDateTime = _a.exactSendDateTime, appendPromotionalMessage = _a.appendPromotionalMessage, textB64 = _a.textB64;
-                    exports.evtMessage.post({
-                        fromContact: fromContact,
-                        "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user,
-                        "text": Buffer.from(textB64, "base64").toString("utf8"),
-                        "exactSendDate": new Date(exactSendDateTime),
-                        appendPromotionalMessage: appendPromotionalMessage
-                    });
+                    _b.apply(_a, [(_c[_d] = _e.sent(),
+                            _c)]);
                     return [2 /*return*/];
             }
         });

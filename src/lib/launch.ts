@@ -305,7 +305,7 @@ function registerListeners() {
     dc.evtMessage.attach(
         async ({ dongle, message, submitShouldSave }) => {
 
-            debug("FROM DONGLE MESSAGE", { message });
+            debug("FROM DONGLE MESSAGE", { message, "time": message.date.getTime() });
 
             let evtShouldSave = new SyncEvent<"SAVE MESSAGE" | "DO NOT SAVE MESSAGE">();
 
@@ -383,32 +383,56 @@ function registerListeners() {
     );
 
     sipMessagesMonitor.evtMessage.attach(
-        async ({ fromContact, toNumber, text, exactSendDate, appendPromotionalMessage }) => {
+        async ({ fromContact, toNumber, bundledData }) => {
 
-            debug("FROM SIP MESSAGE", { toNumber, text });
+            const text = Buffer.from(bundledData.textB64, "base64").toString("utf8");
+
+            debug("FROM SIP MESSAGE", {"imsi": fromContact.uaSim.imsi, toNumber, text });
 
             const { uaSim } = fromContact;
 
-            await dbSemasim.onSipMessage(
-                toNumber,
-                text,
-                uaSim,
-                exactSendDate,
-                appendPromotionalMessage
-            );
+            switch (bundledData.type) {
+                case "MESSAGE": {
 
-            const dongle = Array.from(dc.usableDongles.values()).find(
-                ({ sim }) => sim.imsi === uaSim.imsi
-            );
+                    const exactSendDate = new Date(bundledData.exactSendDateTime);
 
-            if (!dongle) {
+                    const { appendPromotionalMessage } = bundledData;
 
-                debug("Target dongle not usable".red);
+                    await dbSemasim.onSipMessage(
+                        toNumber,
+                        text,
+                        uaSim,
+                        exactSendDate,
+                        appendPromotionalMessage
+                    );
 
-                return;
+                    const dongle = Array.from(dc.usableDongles.values()).find(
+                        ({ sim }) => sim.imsi === uaSim.imsi
+                    );
+
+                    if (!dongle) {
+
+                        debug("Target dongle not usable".red);
+                        return;
+
+                    }
+
+
+                    messagesDispatcher.sendMessagesOfDongle(dongle);
+
+                } break;
+                case "CONVERSATION CHECKED OUT": {
+
+                    debug(`Checked out at time: ${bundledData.checkedOutAtTime}`);
+
+                    await dbSemasim.onConversationCheckedOut(
+                        uaSim, toNumber, bundledData
+                    );
+
+                    messagesDispatcher.notifyNewSipMessagesToSend(uaSim.imsi);
+
+                } break;
             }
-
-            messagesDispatcher.sendMessagesOfDongle(dongle);
 
         }
     );

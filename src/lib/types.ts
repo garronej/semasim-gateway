@@ -58,7 +58,8 @@ export namespace BundledData {
     };
 
     export type ClientToServer =
-        ClientToServer.Message
+        ClientToServer.Message | 
+        ClientToServer.ConversationCheckedOut
         ;
 
     export namespace ClientToServer {
@@ -67,6 +68,11 @@ export namespace BundledData {
             type: "MESSAGE";
             exactSendDateTime: number;
             appendPromotionalMessage: boolean;
+        };
+
+        export type ConversationCheckedOut = _Base & {
+            type: "CONVERSATION CHECKED OUT";
+            checkedOutAtTime: number;
         };
 
     }
@@ -79,7 +85,8 @@ export namespace BundledData {
         ServerToClient.MissedCall |
         ServerToClient.FromSipCallSummary |
         ServerToClient.CallAnsweredBy |
-        ServerToClient.Ringback 
+        ServerToClient.Ringback |
+        ServerToClient.ConversationCheckedOutFromOtherUa
         ;
 
     export namespace ServerToClient {
@@ -148,6 +155,11 @@ export namespace BundledData {
         export type Ringback = _Base & {
             type: "RINGBACK";
             callId: string;
+        };
+
+        export type ConversationCheckedOutFromOtherUa = _Base & {
+            type: "CONVERSATION CHECKED OUT FROM OTHER UA";
+            checkedOutAtTime: number;
         };
 
     }

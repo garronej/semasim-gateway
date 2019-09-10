@@ -16,7 +16,7 @@ function testSerialization() {
     var str = "foobar";
     var textB64 = "Hello World";
     {
-        var types_3 = ["MESSAGE"];
+        var types_3 = ["MESSAGE", "CONVERSATION CHECKED OUT"];
         var getSample = function (type) {
             switch (type) {
                 case types_3[0]: return {
@@ -24,6 +24,11 @@ function testSerialization() {
                     textB64: textB64,
                     "exactSendDateTime": Date.now(),
                     "appendPromotionalMessage": false
+                };
+                case types_3[1]: return {
+                    type: type,
+                    textB64: textB64,
+                    "checkedOutAtTime": Date.now()
                 };
             }
         };
@@ -51,7 +56,8 @@ function testSerialization() {
             "MISSED CALL",
             "FROM SIP CALL SUMMARY",
             "CALL ANSWERED BY",
-            "RINGBACK"
+            "RINGBACK",
+            "CONVERSATION CHECKED OUT FROM OTHER UA"
         ];
         var getSample = function (type) {
             var messageTowardGsm = {
@@ -125,6 +131,11 @@ function testSerialization() {
                     type: type,
                     textB64: textB64,
                     "callId": str
+                };
+                case types_4[8]: return {
+                    type: type,
+                    textB64: textB64,
+                    "checkedOutAtTime": Date.now()
                 };
             }
         };

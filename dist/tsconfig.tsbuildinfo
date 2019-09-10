@@ -210,12 +210,12 @@
         "signature": "89305cb8a9c0d323a759b816eea0579729727c7ad7cf0c6cac752a91b05abb06"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/types.ts": {
-        "version": "9a5daf1ee8619879572c9215503d4d824b68a31be46c66a6118a2c095650d09c",
-        "signature": "08b328156b6a07571e6eb8d429e9923d863ea86e1eabf6a81df42fd09acf4461"
+        "version": "4df73c4c28c1f8ad0d5b92d2f87ab540be214d401d8ba231850d8eea284c8ff2",
+        "signature": "14d8b0c2024e3ba573e0513ac8b441f4e497faf591288f85ff1a0e16d00498e6"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbsemasim.ts": {
-        "version": "ec676d2693d2c5bfd171237237d059cbbfbe79f69a2ac472746638beff56f7ad",
-        "signature": "73c31abdb338a9b04bcbd4985e8f826ec1c9d066b5e7d6a0065d77857a50be16"
+        "version": "593e366f2b3c60a0e3ef74b9fc80ff8ef41ddb0d20c4c5ca5057f09fff8d8a2a",
+        "signature": "d127ca8ee2d0a3c3151878780bdf1d4711c6327d5d56783e2ce8e089ccd2b1d3"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts": {
         "version": "ece2ed9e7494bdd3ed91165738857e5c391089ad5584823582efb5b563ee94de",
@@ -338,8 +338,8 @@
         "signature": "299385732f934784c153b2d72121affeb966ce5f2356cacea54ca9f4fd9ab302"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/sipmessagesmonitor.ts": {
-        "version": "d7473567c976b0deb6f782463deb644a818958eaa7538b5545ba55bc2f2a9e73",
-        "signature": "4ca4f83575447544927d868449f284e62edb3ea9734fe627bcd8a0a5f4ed02ea"
+        "version": "a2eb7bd0e6a35663887319101a395aa59c8f865e243376de4186519e7db15667",
+        "signature": "b79f681f811ed427d2a57ae99ad3e7bf45c199a02c960efe6e5b17356fa56262"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/dbasterisk.ts": {
         "version": "dbaf4980abc1750727fce0fd7329507d198db55e5b44215ae94480121aa1362e",
@@ -390,7 +390,7 @@
         "signature": "63721742bb9c27a03ae540f50e2ba11aeeb401bc0d9dabdd5ec44466c6a9460a"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/launch.ts": {
-        "version": "6125a0909390e6589c24e779cde62957dbc8960fe5d61444ef23004b93318dfd",
+        "version": "091451cac424e70a2e96ed8748d131213933efc6a66d2cc344579a4668a0e3ca",
         "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/bin/main.ts": {
@@ -402,7 +402,7 @@
         "signature": "88b0b9965b5d9351d601361f5198afcb88d1e74bd329c038582a44c7464ab978"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/bundleddata.ts": {
-        "version": "0913cd6c4bee852b39a1f1b8fc6c57012c20a451ac81ab736c3655a26aac9ecd",
+        "version": "3e7a687fc3d18b7e03dcef7a12521f4ef80583daa993ca41b2a5f5d5b472a002",
         "signature": "5b1c468aa25740e5d4d643db4892518b44ad241dc9f35de9048c66c065612495"
       },
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbasterisk.ts": {
@@ -1570,6 +1570,7 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/sip_api_declarations/gatewaytobackend.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts",
+      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.from.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts",
@@ -1593,8 +1594,7 @@
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/bundleddata.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbasterisk.ts",
       "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/dbsemasim.ts",
-      "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/main.ts",
-      "c:/users/joseph/dropbox/shell/semasim/gateway/src/lib/voicecallbridge.ts"
+      "c:/users/joseph/dropbox/shell/semasim/gateway/src/test/main.ts"
     ]
   },
   "version": "3.5.2"

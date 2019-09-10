@@ -852,6 +852,39 @@ namespace buildMessageTowardSipInsertQuery {
 
 }
 
+export async function onConversationCheckedOut(
+    uaSim: types.UaSim,
+    number: string,
+    bundledData: types.BundledData.ClientToServer.ConversationCheckedOut
+): Promise<void> {
+
+    const sql = buildMessageTowardSipInsertQuery(
+        false,
+        number,
+        new Date(bundledData.checkedOutAtTime),
+        (() => {
+
+            const out: types.BundledData.ServerToClient.ConversationCheckedOutFromOtherUa = {
+                "type": "CONVERSATION CHECKED OUT FROM OTHER UA",
+                "checkedOutAtTime": bundledData.checkedOutAtTime,
+                "textB64": Buffer.from("Conversation checked out on an other device", "utf8")
+                    .toString("base64")
+            };
+
+            return out;
+
+        })(),
+        {
+            "target": "ALL OTHER UA OF USER",
+            uaSim,
+            "alsoSendToUasWithMessageDisabled": false
+        }
+    );
+
+    await _.query(sql);
+
+}
+
 
 /**
  * 
@@ -879,7 +912,7 @@ export async function onTargetGsmRinging(
     const bundledData: types.BundledData.ServerToClient.Ringback = {
         "type": "RINGBACK",
         callId,
-        "textB64": Buffer.from("( notify ringback )","utf8").toString("base64")
+        "textB64": Buffer.from("( notify ringback )", "utf8").toString("base64")
     };
 
     const sql = buildMessageTowardSipInsertQuery(

@@ -9,7 +9,7 @@ export function testSerialization() {
 
     {
 
-        const types = ["MESSAGE"] as const;
+        const types = ["MESSAGE", "CONVERSATION CHECKED OUT"] as const;
 
         const getSample = (type: BundledData.ClientToServer["type"]): BundledData.ClientToServer => {
 
@@ -19,6 +19,11 @@ export function testSerialization() {
                     textB64,
                     "exactSendDateTime": Date.now(),
                     "appendPromotionalMessage": false
+                };
+                case types[1]: return {
+                    type,
+                    textB64,
+                    "checkedOutAtTime": Date.now()
                 };
             }
 
@@ -47,7 +52,8 @@ export function testSerialization() {
             "MISSED CALL",
             "FROM SIP CALL SUMMARY",
             "CALL ANSWERED BY",
-            "RINGBACK"
+            "RINGBACK",
+            "CONVERSATION CHECKED OUT FROM OTHER UA"
         ] as const;
 
         const getSample = (type: BundledData.ServerToClient["type"]): BundledData.ServerToClient => {
@@ -124,6 +130,11 @@ export function testSerialization() {
                     type,
                     textB64,
                     "callId": str
+                };
+                case types[8]: return {
+                    type,
+                    textB64,
+                    "checkedOutAtTime": Date.now()
                 };
 
             }
