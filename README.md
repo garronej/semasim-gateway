@@ -29,7 +29,7 @@ $ sudo npm install -g npm@NPM_VERSION
 
 ## Publish release
 To build, bundle and publish a new release for 
-a specifics arch there is no need to ``npm install`` just clone
+a specifics arch there is no need to ``npm install && npm run copy_node`` just clone
 this repo then: 
 
 * run ``npm run partial_install`` ( without sudo, only first time )

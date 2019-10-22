@@ -18,8 +18,14 @@ import { phoneNumber } from "phone-number";
 import * as cryptoLib from "crypto-lib";
 import { workerThreadPoolId } from "./misc/workerThreadPoolId";
 
+import * as memwatch from "memwatch-next";
+
 const debug = logger.debugFactory();
 
+debug("Memory leak detection enabled");
+
+memwatch.on("leak", infos => debug("memory leak detected", infos));
+memwatch.on("stats", stats=> debug("mem stats", stats));
 
 export async function beforeExit(): Promise<void> {
 

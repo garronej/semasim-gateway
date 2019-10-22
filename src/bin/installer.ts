@@ -456,6 +456,16 @@ async function program_action_release() {
             { "cwd": _module_dir_path }
         );
 
+        //TODO: TEST!!!!!!!!!!
+        scriptLib.execSyncTrace(
+            [
+                `sudo`,
+                `env "PATH=${path.dirname(process.argv[0])}:${process.env["PATH"]}"`,
+                `npm run copy_node`,
+            ].join(" "),
+            { "cwd": _module_dir_path }
+        );
+
         scriptLib.execSyncTrace(`rm package-lock.json`, { "cwd": _module_dir_path });
 
         for (const name of ["@types", "typescript"]) {

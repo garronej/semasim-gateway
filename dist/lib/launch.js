@@ -80,7 +80,11 @@ var sipMessagesMonitor = require("./sipMessagesMonitor");
 var phone_number_1 = require("phone-number");
 var cryptoLib = require("crypto-lib");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
+var memwatch = require("memwatch-next");
 var debug = logger.debugFactory();
+debug("Memory leak detection enabled");
+memwatch.on("leak", function (infos) { return debug("memory leak detected", infos); });
+memwatch.on("stats", function (stats) { return debug("mem stats", stats); });
 function beforeExit() {
     return __awaiter(this, void 0, void 0, function () {
         var backendSocket;

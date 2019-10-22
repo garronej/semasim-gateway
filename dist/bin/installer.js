@@ -468,6 +468,12 @@ function program_action_release() {
                             "env \"PATH=" + path.dirname(process.argv[0]) + ":" + process.env["PATH"] + "\"",
                             "npm install --unsafe-perm",
                         ].join(" "), { "cwd": _module_dir_path });
+                        //TODO: TEST!!!!!!!!!!
+                        scriptLib.execSyncTrace([
+                            "sudo",
+                            "env \"PATH=" + path.dirname(process.argv[0]) + ":" + process.env["PATH"] + "\"",
+                            "npm run copy_node",
+                        ].join(" "), { "cwd": _module_dir_path });
                         scriptLib.execSyncTrace("rm package-lock.json", { "cwd": _module_dir_path });
                         try {
                             for (_c = __values(["@types", "typescript"]), _d = _c.next(); !_d.done; _d = _c.next()) {
