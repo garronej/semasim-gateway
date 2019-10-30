@@ -48,14 +48,17 @@ export const notifySimOnline = (() => {
             case "OK": break;
             case "NOT REGISTERED":
 
-                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
+                sipContactsMonitor.discardContactsRegisteredToSim(imsi, "sim is no longer registered by any user");
 
                 dbSemasim.removeUaSim(imsi);
 
                 break;
             case "REPLACE PASSWORD":
 
-                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
+                sipContactsMonitor.discardContactsRegisteredToSim(
+                    imsi,
+                    "need password renewal"
+                );
 
                 dbSemasim.removeUaSim(imsi, response.allowedUas);
 
@@ -157,87 +160,38 @@ export const notifyOngoingCall = (() => {
 
 })();
 
+export const seeIfSipContactIsReachableElseSendWakeUpPushNotification = (() => {
 
+    const { methodName } = apiDeclaration.seeIfSipContactIsReachableElseSendWakeUpPushNotification;
+    type Params = apiDeclaration.seeIfSipContactIsReachableElseSendWakeUpPushNotification.Params;
+    type Response = apiDeclaration.seeIfSipContactIsReachableElseSendWakeUpPushNotification.Response;
 
-export const notifyNewOrUpdatedUa = (() => {
-
-    let methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
-    type Params = apiDeclaration.notifyNewOrUpdatedUa.Params;
-    type Response = apiDeclaration.notifyNewOrUpdatedUa.Response;
-
-    return async function (ua: types.Ua): Promise<void> {
-
-        const uaNoKey = { ...ua };
-
-        delete uaNoKey.towardUserEncryptKeyStr;
-
-        //TODO: See if we really need to return that promise that never resolve
-        await sendRequest<Params, Response>(methodName, uaNoKey)
-            .catch(() => new Promise(() => { }));
-
-    };
-
+    return (contact: types.Contact) => sendRequest<Params, Response>(
+        methodName,
+        contact
+    );
 
 })();
 
-export const wakeUpContact = (() => {
+export const sendWakeUpPushNotifications = (() => {
 
-    let methodName = apiDeclaration.wakeUpContact.methodName;
-    type Params = apiDeclaration.wakeUpContact.Params;
-    type Response = apiDeclaration.wakeUpContact.Response;
+    const { methodName } = apiDeclaration.sendWakeUpPushNotifications;
+    type Params = apiDeclaration.sendWakeUpPushNotifications.Params;
+    type Response = apiDeclaration.sendWakeUpPushNotifications.Response;
 
-    /**
-     * 
-     * To use when we want to send a message or make a call
-     * backend will try to reach the contact with a qualify
-     * if the contact does not respond a push notification
-     * will be sent.
-     * 
-     * TODO: add contextual infos about the call or the message
-     * in the notification so web notification can be displayed.
-     * 
-     */
-    return function (contact: types.Contact): Promise<Response> {
+    return async ({ uas, imsi }: Params) => {
 
-        //TODO: See if we really need to return that promise that never resolve
-        return sendRequest<Params, Response>(methodName, { contact })
-            .catch(() => new Promise<Response>(() => { }));
+        if (uas.length === 0) {
+            return;
+        }
 
-    };
-
-})();
-
-export const forceContactToRegister = (() => {
-
-    let methodName = apiDeclaration.forceContactToReRegister.methodName;
-    type Params = apiDeclaration.forceContactToReRegister.Params;
-    type Response = apiDeclaration.forceContactToReRegister.Response;
-
-    /**
-     * 
-     * To use when the contact has expired to make it re register
-     * with a new connection.
-     * No push notification will be sent to this ua until it re-register.
-     * 
-     * The contact has to expire or we will keep sending push notifications
-     * for ever to UA that can be no longer active ( e.g uninstalled app )
-     * 
-     * NOTE: Web UA should never expire as it may only have one ua
-     * by sim so we do not keep sending push notification 
-     * 
-     * NOTE: this push notification should not have any content
-     * 
-     */
-    return function (contact: types.Contact): Promise<boolean> {
-
-        return sendRequest<Params, Response>(
+        await sendRequest<Params, Response>(
             methodName,
-            { contact },
+            { uas, imsi },
             "RETRY"
         );
 
-    };
-
+    }
 
 })();
 
@@ -247,7 +201,7 @@ async function sendRequest<Params, Response>(
     retry: false | "RETRY" = false
 ): Promise<Response> {
 
-    let response;
+    let response: Response;
 
     try {
 
@@ -260,12 +214,18 @@ async function sendRequest<Params, Response>(
 
     } catch (error) {
 
+
         if (!!retry) {
 
+            //NOTE: Only retry once. If it's a connection problem
+            //this will likely be solved by resending the request,
+            //if there is really a problem with the request altho
+            //it should not happen as the client is supposed to be 
+            //always up to date let's not flood the backend.
             return sendRequest<Params, Response>(
                 methodName,
                 params,
-                "RETRY"
+                false
             );
 
         } else {

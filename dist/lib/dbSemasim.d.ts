@@ -16,7 +16,6 @@ export declare function getTowardSimKeys(imsi: string): Promise<{
 } | undefined>;
 export declare function setTowardSimKeys(imsi: string, encryptKeyStr: string, decryptKeyStr: string): Promise<void>;
 export declare function addUaSim(uaSim: types.UaSim): Promise<{
-    isUaCreatedOrUpdated: boolean;
     isFirstUaForSim: boolean;
 }>;
 export declare function removeUaSim(imsi: string, uasToKeep?: types.UaRef[]): Promise<void>;
@@ -122,3 +121,4 @@ export declare function onConversationCheckedOut(uaSim: types.UaSim, number: str
  */
 export declare function onTargetGsmRinging(contact: types.Contact, number: string, callId: string): Promise<void>;
 export declare function onCallFromSipTerminated(number: string, imsi: string, callPlacedAtDateTime: number, callRingingAfterMs: number | undefined, callAnsweredAfterMs: number | undefined, callTerminatedAfterMs: number, ua: types.Ua): Promise<void>;
+export declare function getUas(imsi: string): Promise<types.Ua[]>;

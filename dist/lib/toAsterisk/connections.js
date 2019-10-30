@@ -30,7 +30,7 @@ function connect(connectionId, imsi) {
         "socketId": "gatewayToAsterisk",
         "remoteEndId": "ASTERISK",
         "localEndId": "GATEWAY",
-        "connection": false,
+        "connection": true,
         "error": true,
         "close": true,
         "incomingTraffic": false,
@@ -41,18 +41,10 @@ function connect(connectionId, imsi) {
     var prContact = sipContactsMonitor.handleAsteriskSocket(socket);
     sipMessagesMonitor.handleAsteriskSocket(socket, prContact);
     {
-        var connectionIdImsi_1 = "" + connectionId + imsi;
-        byConnectionIdImsi.set(connectionIdImsi_1, socket);
+        var key_1 = { imsi: imsi, connectionId: connectionId };
+        connections.set(key_1, socket);
         //TODO: See if really need prepend
-        socket.evtClose.attachOncePrepend(function () {
-            expiredRegistrations.add(connectionIdImsi_1);
-            /*
-            We do not keep the null ref for more than one
-            minute to avoid a memory leak.
-            */
-            setTimeout(function () { return expiredRegistrations.delete(connectionIdImsi_1); }, 60000).unref();
-            byConnectionIdImsi.delete(connectionIdImsi_1);
-        });
+        socket.evtClose.attachOncePrepend(function () { return connections.remove(key_1); });
     }
     router.handle(socket, connectionId, prContact.then(function (_a) {
         var uaSim = _a.uaSim;
@@ -61,20 +53,24 @@ function connect(connectionId, imsi) {
     return socket;
 }
 exports.connect = connect;
-var byConnectionIdImsi = new Map();
-/**
- * We keep track of the connections that have
- * been recently closed so if we have some
- * more packet that comme for UA (connectionId)
- * to IMSI we can discard them and wait
- * for the UA to re-register with a new connection.
- */
-var expiredRegistrations = new Set();
-function get(connectionId, imsi) {
-    return byConnectionIdImsi.get("" + connectionId + imsi);
-}
-exports.get = get;
-function isExpiredRegistration(connectionId, imsi) {
-    return expiredRegistrations.has("" + connectionId + imsi);
-}
-exports.isExpiredRegistration = isExpiredRegistration;
+var connections;
+(function (connections) {
+    var map = new Map();
+    var Key;
+    (function (Key) {
+        Key.stringify = function (key) { return key.connectionId + "-" + key.imsi; };
+    })(Key = connections.Key || (connections.Key = {}));
+    function set(key, socket) {
+        map.set(Key.stringify(key), socket);
+    }
+    connections.set = set;
+    function get(key) {
+        return map.get(Key.stringify(key));
+    }
+    connections.get = get;
+    function remove(key) {
+        map.delete(Key.stringify(key));
+    }
+    connections.remove = remove;
+})(connections || (connections = {}));
+exports.get = connections.get;

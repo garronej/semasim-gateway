@@ -1,6 +1,7 @@
 import * as db from "../lib/dbAsterisk";
 import * as types from "../lib/types";
-import * as misc from "../lib/misc";
+import { sanityChecks } from "../lib/misc/sanityChecks";
+import * as sipRouting from "../lib/misc/sipRouting"
 import * as assert from "assert";
 import * as crypto from "crypto";
 
@@ -18,8 +19,7 @@ const contact: types.Contact = (() => {
             "VXlDmG97jt3DTzOlsjbUzsent-yeEz_QpQNhdO3Mbr-",
             "4-XxcSmyKj_Hr-XY_-LefF3RhHsSekVsSeYN95PAtwR",
             "Cpz-i1ytnc5DyMY8je4n69G"
-        ].join(""),
-        "messagesEnabled": true
+        ].join("")
     };
 
     return {
@@ -32,7 +32,7 @@ const contact: types.Contact = (() => {
             "pn-silent=1;transport=tls"
         ].join(""),
         "path": "<sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>",
-        "connectionId": misc.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
+        "connectionId": sipRouting.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
         "uaSim": { imsi, ua }
     };
 
@@ -40,7 +40,7 @@ const contact: types.Contact = (() => {
 
 export async function testDbAsterisk() {
 
-    assert(misc.sanityChecks.contact(contact));
+    assert(sanityChecks.contact(contact));
 
     await db.launch();
 

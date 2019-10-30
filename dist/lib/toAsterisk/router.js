@@ -12,7 +12,7 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sip = require("ts-sip");
-var misc = require("../misc");
+var sipRouting = require("../misc/sipRouting");
 var backendConnection = require("../toBackend/connection");
 /** Assert we have an active backend connection */
 function handle(socket, connectionId, prPlatform) {
@@ -20,7 +20,7 @@ function handle(socket, connectionId, prPlatform) {
         var iceHacks = (function () {
             var platform;
             prPlatform.then(function (v) { return platform = v; });
-            var uaAddress = misc.cid.parse(connectionId).uaSocket.remoteAddress;
+            var uaAddress = sipRouting.cid.parse(connectionId).uaSocket.remoteAddress;
             return function (sipPacketNextHop) {
                 if (sipPacketNextHop.headers["content-type"] !== "application/sdp") {
                     return;
@@ -63,7 +63,7 @@ function handle(socket, connectionId, prPlatform) {
             asteriskPatches(sipPacket);
             var sipPacketNextHop = backendSocket.buildNextHopPacket(sipPacket);
             if (sip.matchRequest(sipPacketNextHop)) {
-                misc.cid.set(sipPacketNextHop, connectionId);
+                sipRouting.cid.set(sipPacketNextHop, connectionId);
             }
             iceHacks(sipPacketNextHop);
             backendSocket.write(sipPacketNextHop);

@@ -6,15 +6,13 @@ import * as crypto from "crypto";
 
 import * as ttTesting from "transfer-tools/dist/lib/testing";
 import assertSame = ttTesting.assertSame;
-import * as sqliteCustom from "sqlite-custom";
 
 const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`): types.Ua => ({
     "instance": `"<urn:uuid:${ttTesting.genHexStr(30)}>"`,
     "platform": Date.now() % 2 ? "android" : "iOS",
     "pushToken": ttTesting.genHexStr(60),
     "userEmail": email,
-    "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary"),
-    "messagesEnabled": true
+    "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary")
 });
 
 export async  function testDbSemasim(){
@@ -30,6 +28,7 @@ export async  function testDbSemasim(){
     await t5();
     await t6();
     await t7();
+    await t8();
 
     await db.flush();
 
@@ -53,19 +52,19 @@ async function t1() {
 
     assertSame(
         await db.addUaSim(uaSim),
-        { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true }
+        { "isFirstUaForSim": true }
     );
 
     assertSame(
         await db.addUaSim(uaSim),
-        { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false }
+        { "isFirstUaForSim": false }
     );
 
     uaSim.ua.pushToken= ttTesting.genHexStr(60);
 
     assertSame(
         await db.addUaSim(uaSim),
-        { "isFirstUaForSim": false, "isUaCreatedOrUpdated": true }
+        { "isFirstUaForSim": false }
     );
 
     let imsi2 = "123456789123456"
@@ -75,7 +74,7 @@ async function t1() {
             "imsi": imsi2,
             "ua": uaSim.ua
         }),
-        { "isFirstUaForSim": true, "isUaCreatedOrUpdated": false }
+        { "isFirstUaForSim": true }
     );
 
     assertSame(
@@ -112,7 +111,7 @@ async function t2() {
 
         assertSame(
             await db.addUaSim({ imsi, ua }),
-            { "isFirstUaForSim": i === 0, "isUaCreatedOrUpdated": true }
+            { "isFirstUaForSim": i === 0 }
         );
 
         uas.push(ua);
@@ -153,8 +152,11 @@ async function t2() {
         }
     );
 
-    const checkMark = Buffer.from("e29c94", "hex").toString("utf8");
-    const crossMark = Buffer.from("e29d8c", "hex").toString("utf8");
+    const [checkMark, crossMark] = [
+        "e29c94",
+        "e29d8c"
+    ].map(code => Buffer.from(code, "hex").toString("utf8"));
+
 
     while ((await db.getUnsentMessagesTowardGsm(imsi)).length) {
 
@@ -171,7 +173,7 @@ async function t2() {
             messagesTowardGsm[0]
         );
 
-        let sendDate = ( messagesTowardGsm.length%3 === 0 )?null:new Date();
+        let sendDate = (messagesTowardGsm.length % 3 === 0) ? null : new Date();
 
         await onSent(sendDate);
 
@@ -179,9 +181,9 @@ async function t2() {
 
         await (async () => {
 
-            let o= await db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
+            let o = await db.getUnsentMessagesTowardSip(messageTowardGsm.uaSim);
 
-            assertSame( o.length, 1);
+            assertSame(o.length, 1);
 
             let [[mts, setSent]] = o;
 
@@ -195,7 +197,7 @@ async function t2() {
                         "type": "SEND REPORT",
                         "messageTowardGsm": messageTowardGsm,
                         "sendDateTime": sendDate === null ? null : sendDate.getTime(),
-                        "textB64": Buffer.from(sendDate?checkMark:crossMark,"utf8").toString("base64")
+                        "textB64": Buffer.from(sendDate ? checkMark : crossMark, "utf8").toString("base64")
                     }
                 }
             );
@@ -247,13 +249,13 @@ async function t2() {
 
             },
             "textB64": Buffer.from(
-                statusReport.isDelivered ? 
-                `${checkMark}${checkMark}` : crossMark, 
+                statusReport.isDelivered ?
+                    `${checkMark}${checkMark}` : crossMark,
                 "utf8"
             ).toString("base64")
         };
 
-        let __i=0;
+        let __i = 0;
 
         await (async () => {
 
@@ -282,24 +284,24 @@ async function t2() {
             continue;
         }
 
-        let __in= false;
+        let __in = false;
 
         for (
             let ua
             of
             uas.filter(ua => (
-                    ua.userEmail === messageTowardGsm.uaSim.ua.userEmail &&
-                    ua.instance !== messageTowardGsm.uaSim.ua.instance
+                ua.userEmail === messageTowardGsm.uaSim.ua.userEmail &&
+                ua.instance !== messageTowardGsm.uaSim.ua.instance
             ))
         ) {
 
-            __in= true;
+            __in = true;
 
-            let o= await db.getUnsentMessagesTowardSip({ ua, imsi });
+            let o = await db.getUnsentMessagesTowardSip({ ua, imsi });
 
-            assertSame(o.length, 1 );
+            assertSame(o.length, 1);
 
-            let [[mts, setSent ]]= o;
+            let [[mts, setSent]] = o;
 
             assertSame<types.MessageTowardSip>(
                 mts,
@@ -392,10 +394,7 @@ async function t3() {
 
         assertSame(
             await db.addUaSim({ imsi, ua }),
-            {
-                "isFirstUaForSim": i === 0,
-                "isUaCreatedOrUpdated": true
-            }
+            { "isFirstUaForSim": i === 0 }
         );
 
         uas.push(ua);
@@ -484,10 +483,7 @@ async function t4() {
 
     assertSame(
         await db.addUaSim(uaSimExt),
-        {
-            "isUaCreatedOrUpdated": true,
-            "isFirstUaForSim": true
-        }
+        { "isFirstUaForSim": true }
     );
 
     let imsi = ttTesting.genDigits(15);
@@ -504,10 +500,7 @@ async function t4() {
 
         assertSame(
             await db.addUaSim({ imsi, ua }),
-            {
-                "isUaCreatedOrUpdated": true,
-                "isFirstUaForSim": allowedUas.length === 1
-            }
+            { "isFirstUaForSim": allowedUas.length === 1 }
         );
 
     }
@@ -531,9 +524,7 @@ async function t4() {
             "userEmail": row["user_email"],
             "platform": row["platform"],
             "pushToken": row["push_token"],
-            "software": row["software"],
-            "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
-            "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
+            "towardUserEncryptKeyStr": row["toward_user_encrypt_key"]
         };
 
         if (row["imsi"] === imsi) {
@@ -576,10 +567,7 @@ async function t5() {
 
         assertSame(
             await db.addUaSim({ imsi, ua }),
-            {
-                "isFirstUaForSim": i === 0,
-                "isUaCreatedOrUpdated": true
-            }
+            { "isFirstUaForSim": i === 0 }
         );
 
         uas.push(ua);
@@ -631,14 +619,11 @@ async function t6() {
 
     for (let i = 0; i < 12; i++) {
 
-        let ua: types.Ua = generateUa((i % 4 === 0) ? email : undefined);
+        let ua = generateUa((i % 4 === 0) ? email : undefined);
 
         assertSame(
             await db.addUaSim({ imsi, ua }),
-            {
-                "isFirstUaForSim": i === 0,
-                "isUaCreatedOrUpdated": true
-            }
+            { "isFirstUaForSim": i === 0 }
         );
 
         ringingUas.push(ua);
@@ -703,22 +688,19 @@ async function t7() {
 
         assertSame(
             await db.addUaSim({ imsi, ua }),
-            {
-                "isFirstUaForSim": i === 0,
-                "isUaCreatedOrUpdated": true
-            }
+            { "isFirstUaForSim": i === 0 }
         );
 
         uas.push(ua);
 
     }
 
-    const number= ttTesting.genDigits(10);
+    const number = ttTesting.genDigits(10);
 
-    const callPlacedAtDateTime= Date.now();
-    const callRingingAfterMs= 1000;
-    const callAnsweredAfterMs= 5000;
-    const callTerminatedAfterMs= 60000;
+    const callPlacedAtDateTime = Date.now();
+    const callRingingAfterMs = 1000;
+    const callAnsweredAfterMs = 5000;
+    const callTerminatedAfterMs = 60000;
 
     await db.onCallFromSipTerminated(
         number,
@@ -730,7 +712,7 @@ async function t7() {
         uas[0]
     );
 
-    const tasks: Promise<void>[]= [];
+    const tasks: Promise<void>[] = [];
 
     for (const ua of uas) {
 
@@ -775,6 +757,45 @@ async function t7() {
     await Promise.all(tasks);
 
     console.log("NOTIFICATIONS SIP CALL SUMMARY PASS");
+
+}
+
+async function t8() {
+
+    await db.flush();
+
+    const uasPreGenerated = new Array(12).fill("").map(() => generateUa());
+
+    for (const imsi of new Array(10).fill("").map(() => ttTesting.genDigits(15))) {
+
+        const uas: types.Ua[] = [];
+
+        for (let i = 0; i < 16; i++) {
+
+            const ua: types.Ua = generateUa();
+
+            await db.addUaSim({ imsi, ua }),
+
+            uas.push(ua);
+
+        }
+
+        for( const ua of uasPreGenerated ){
+
+            await db.addUaSim({ imsi, ua }),
+
+            uas.push(ua);
+
+        }
+
+        assertSame(
+            await db.getUas(imsi),
+            uas
+        );
+
+    }
+
+    console.log("GET UA TEST PASS");
 
 }
 

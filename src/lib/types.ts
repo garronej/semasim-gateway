@@ -21,7 +21,6 @@ export type Ua = UaRef & {
     towardUserEncryptKeyStr: string;
     platform: Ua.Platform;
     pushToken: string;
-    messagesEnabled: boolean;
 };
 
 export namespace Ua {

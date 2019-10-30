@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -44,32 +33,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
-};
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sqliteCustom = require("sqlite-custom");
@@ -200,7 +163,6 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
             switch (_a.label) {
                 case 0:
                     buildSql = function () {
-                        var e_1, _a;
                         var sql = "";
                         {
                             var table = "ps_auths";
@@ -219,50 +181,34 @@ function createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, 
                                 sql += exports.buildInsertQuery(table, values, "IGNORE");
                             }
                         }
-                        var _b = __read((function () {
-                            var ps_endpoints_base = {
-                                "disallow": "all",
-                                "context": voiceCallBridge_1.sipCallContext,
-                                "message_context": sipMessagesMonitor_1.dialplanContext,
-                                "auth": imsi,
-                                "from_domain": i.getBaseDomain(),
-                                "ice_support": "yes",
-                                "transport": "transport-tcp",
-                                "dtmf_mode": "info"
-                            };
-                            var webId = imsi + "-webRTC";
-                            return [__assign({ "allow": "alaw:10,ulaw:10", "id": webId, "aors": webId }, ps_endpoints_base, { "use_avpf": "yes", "media_encryption": "dtls", "dtls_ca_file": i.ca_crt_path, "dtls_cert_file": i.host_pem_path, "dtls_verify": "fingerprint", "dtls_setup": "actpass", "media_use_received_transport": "yes", "rtcp_mux": "yes" }), __assign({ "allow": "alaw:10,ulaw:10", "id": imsi, "aors": imsi }, ps_endpoints_base)];
-                            /*
-                            TODO: We have witnessed an often poor quality
-                            of the audio from GSM to Linphone on galaxy
-                            S4 on Android lollipop but maybe it's just
-                            a problem caused by the test units themselves
-                            and not a general case. Do further investigations.
-                            Changing the codec could solve the problem.
-                            Asterisk is currently compiled with all free
-                            audio codecs ( list displayed on Asterisk startup )
-                            so we can perform tests easily.
-                            */
-                        })(), 2), ps_endpoints_web = _b[0], ps_endpoints_mobile = _b[1];
-                        try {
-                            for (var _c = __values([ps_endpoints_mobile, ps_endpoints_web]), _d = _c.next(); !_d.done; _d = _c.next()) {
-                                var ps_endpoints = _d.value;
-                                sql += exports.buildInsertQuery("ps_aors", {
-                                    "id": ps_endpoints.aors,
-                                    "max_contacts": 30,
-                                    "qualify_frequency": 0,
-                                    "support_path": "yes"
-                                }, "IGNORE");
-                                sql += exports.buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
-                            }
-                        }
-                        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                        finally {
-                            try {
-                                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-                            }
-                            finally { if (e_1) throw e_1.error; }
-                        }
+                        var ps_endpoints = {
+                            "disallow": "all",
+                            "context": voiceCallBridge_1.sipCallContext,
+                            "message_context": sipMessagesMonitor_1.dialplanContext,
+                            "auth": imsi,
+                            "from_domain": i.getBaseDomain(),
+                            "ice_support": "yes",
+                            "transport": "transport-tcp",
+                            "dtmf_mode": "info",
+                            "allow": "alaw:10,ulaw:10",
+                            "id": imsi,
+                            "aors": imsi,
+                            "use_avpf": "yes",
+                            "media_encryption": "dtls",
+                            "dtls_ca_file": i.ca_crt_path,
+                            "dtls_cert_file": i.host_pem_path,
+                            "dtls_verify": "fingerprint",
+                            "dtls_setup": "actpass",
+                            "media_use_received_transport": "yes",
+                            "rtcp_mux": "yes"
+                        };
+                        sql += exports.buildInsertQuery("ps_aors", {
+                            "id": ps_endpoints.aors,
+                            "max_contacts": 30,
+                            "qualify_frequency": 0,
+                            "support_path": "yes"
+                        }, "IGNORE");
+                        sql += exports.buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
                         sql += "SELECT password FROM ps_auths WHERE id= " + exports.esc(imsi);
                         return sql;
                     };

@@ -106,39 +106,29 @@ export namespace notifyOngoingCall {
 
 }
 
+export namespace seeIfSipContactIsReachableElseSendWakeUpPushNotification {
 
-export namespace notifyNewOrUpdatedUa {
+    export const methodName = "seeIfSipContactIsReachableElseSendWakeUpPushNotification";
 
-    export const methodName = "notifyNewOrUpdatedUa";
+    export type Params= types.Contact;
 
-    //NOTE: There is no security breach in sending towardUserEncryptKey to the
-    //backend. If we omit it it's just to tell that we wont use it...
-    export type Params= Omit<types.Ua, "towardUserEncryptKeyStr">;
+    export type Response= { isReachable: boolean; }
+
+}
+
+export namespace sendWakeUpPushNotifications {
+
+    export const methodName= "sendWakeUpPushNotifications";
+
+    export type Params = {
+        uas: types.Ua[];
+        imsi: string;
+    };
 
     export type Response= undefined;
 
 }
 
-export namespace wakeUpContact {
 
-    export const methodName = "wakeUpContact";
 
-    export type Params= {
-        contact: types.Contact;
-    };
 
-    export type Response= 
-        "REACHABLE" | "PUSH_NOTIFICATION_SENT" | "UNREACHABLE";
-
-}
-
-export namespace forceContactToReRegister {
-
-    export const methodName = "forceContactToReRegister";
-
-    export interface Params { contact: types.Contact; }
-
-    //** isPushNotificationSent */
-    export type Response = boolean;
-
-}

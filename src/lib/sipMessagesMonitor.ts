@@ -3,7 +3,7 @@ import { Ami } from "ts-ami";
 
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
-import * as misc from "./misc";
+import { extractBundledDataFromHeaders } from "./misc/bundledData";
 import * as cryptoLib from "crypto-lib";
 import * as dbSemasim from "./dbSemasim";
 import { workerThreadPoolId } from "./misc/workerThreadPoolId";
@@ -226,7 +226,7 @@ async function onIncomingSipMessage(
     evtMessage.post({
         fromContact,
         "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user!,
-        "bundledData": await misc.extractBundledDataFromHeaders<types.BundledData.ClientToServer>(
+        "bundledData": await extractBundledDataFromHeaders<types.BundledData.ClientToServer>(
             sipRequest.headers,
             decryptor
         )

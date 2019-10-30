@@ -9,7 +9,7 @@ import * as sipMessagesMonitor from "../sipMessagesMonitor";
 import * as router from "./router";
 
 /** Assert we have an active backend connection */
-export function connect( connectionId: string, imsi: string): sip.Socket{
+export function connect(connectionId: string, imsi: string): sip.Socket {
 
     const backendSocket = backendConnection.get() as sip.Socket;
 
@@ -25,21 +25,21 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
      */
     const socket = new sip.Socket(
         net.connect({
-            "host": backendSocket.localAddress, 
+            "host": backendSocket.localAddress,
             "port": i.ast_sip_port
         }),
         true
     );
 
     backendSocket.evtClose.attachOnce(
-        () => socket.destroy("Backend socket closed => asterisk socket destroyed") 
+        () => socket.destroy("Backend socket closed => asterisk socket destroyed")
     );
 
     socket.enableLogger({
         "socketId": "gatewayToAsterisk",
         "remoteEndId": "ASTERISK",
         "localEndId": "GATEWAY",
-        "connection": false,
+        "connection": true,
         "error": true,
         "close": true,
         "incomingTraffic": false,
@@ -54,31 +54,12 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
 
     {
 
-        const connectionIdImsi= `${connectionId}${imsi}`;
+        const key = { imsi, connectionId };
 
-        byConnectionIdImsi.set(connectionIdImsi, socket);
-        
+        connections.set(key, socket);
+
         //TODO: See if really need prepend
-        socket.evtClose.attachOncePrepend(()=> {
-
-            expiredRegistrations.add(connectionIdImsi);
-
-            /*
-            We do not keep the null ref for more than one 
-            minute to avoid a memory leak.
-            */
-            setTimeout(
-                () => expiredRegistrations.delete(connectionIdImsi), 
-                60000
-            ).unref();
-            
-            byConnectionIdImsi.delete(connectionIdImsi);
-
-
-
-
-
-        });
+        socket.evtClose.attachOncePrepend(() => connections.remove(key));
 
     }
 
@@ -92,24 +73,35 @@ export function connect( connectionId: string, imsi: string): sip.Socket{
 
 }
 
-const byConnectionIdImsi = new Map<string, sip.Socket>();
 
-/**
- * We keep track of the connections that have 
- * been recently closed so if we have some 
- * more packet that comme for UA (connectionId)
- * to IMSI we can discard them and wait 
- * for the UA to re-register with a new connection.
- */
-const expiredRegistrations = new Set<string>();
+namespace connections {
 
-export function get(
-    connectionId: string,
-    imsi: string
-): sip.Socket | undefined {
-    return byConnectionIdImsi.get(`${connectionId}${imsi}`);
+    const map = new Map<string, sip.Socket>();
+
+    type Key = { imsi: string, connectionId: string };
+
+    export namespace Key {
+        export const stringify = (key: Key) => `${key.connectionId}-${key.imsi}`;
+    }
+
+    export function set(key: Key, socket: sip.Socket): void {
+        map.set(Key.stringify(key), socket);
+    }
+
+    export function get(key: Key): sip.Socket | undefined {
+        return map.get(Key.stringify(key));
+    }
+
+    export function remove(key: Key): void {
+        map.delete(Key.stringify(key));
+    }
+
 }
 
-export function isExpiredRegistration(connectionId: string, imsi: string) {
-    return expiredRegistrations.has(`${connectionId}${imsi}`);
-}
+export const get = connections.get;
+
+
+
+
+
+

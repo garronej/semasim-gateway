@@ -35,42 +35,54 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var sipRouting = require("../misc/sipRouting");
-var asteriskConnections = require("../toAsterisk/connections");
-//import * as logger from "logger";
-//const debug= logger.debugFactory();
-function handle(socket) {
-    var _this = this;
-    socket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {
-        var connectionId, imsi, asteriskSocket;
+var sipContactsMonitor = require("../sipContactsMonitor");
+var toBackendRemoteApiCaller = require("../toBackend/remoteApiCaller");
+var dbSemasim = require("../dbSemasim");
+var misc_1 = require("./misc");
+function asyncFilter(array, asyncMatcher) {
+    return __awaiter(this, void 0, void 0, function () {
+        var __removed__, arr;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    connectionId = sipRouting.cid.read(sipRequest);
-                    imsi = sipRouting.readImsi(sipRequest);
-                    asteriskSocket = asteriskConnections.get({ connectionId: connectionId, imsi: imsi });
-                    if (!asteriskSocket) {
-                        asteriskSocket = asteriskConnections.connect(connectionId, imsi);
-                    }
-                    if (!(asteriskSocket.evtConnect.postCount === 0)) return [3 /*break*/, 2];
-                    return [4 /*yield*/, asteriskSocket.evtConnect.waitFor()];
+                    __removed__ = [];
+                    return [4 /*yield*/, Promise.all(array.map(function (entry) { return asyncMatcher(entry)
+                            .then(function (doKeep) { return doKeep ? entry : __removed__; }); }))];
                 case 1:
-                    _a.sent();
-                    _a.label = 2;
-                case 2:
-                    asteriskSocket.write(asteriskSocket.buildNextHopPacket(sipRequest));
-                    return [2 /*return*/];
+                    arr = _a.sent();
+                    return [2 /*return*/, arr.filter(function (entry) { return entry !== __removed__; })];
+            }
+        });
+    });
+}
+function getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered(params) {
+    var _this = this;
+    var imsi = params.imsi, reachableSipContactCallbackFn = params.reachableSipContactCallbackFn;
+    var asyncUaMatcher = params.asyncUaMatcher || (function () { return Promise.resolve(true); });
+    var contacts = sipContactsMonitor.getContacts(imsi);
+    asyncFilter(contacts, function (contact) { return asyncUaMatcher(contact.uaSim.ua); })
+        .then(function (contacts) { return contacts.forEach(function (contact) { return toBackendRemoteApiCaller.seeIfSipContactIsReachableElseSendWakeUpPushNotification(contact)
+        .then(function (_a) {
+        var isReachable = _a.isReachable;
+        if (!isReachable) {
+            return;
+        }
+        reachableSipContactCallbackFn(contact);
+    }); }); });
+    dbSemasim.getUas(imsi).then(function (uas) { return __awaiter(_this, void 0, void 0, function () {
+        var _a, _b, _c, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
+                case 0:
+                    _b = (_a = toBackendRemoteApiCaller).sendWakeUpPushNotifications;
+                    _c = {};
+                    _d = "uas";
+                    return [4 /*yield*/, asyncFilter(uas.filter(function (ua) { return !contacts.find(function (contact) { return misc_1.areSameUas(ua, contact.uaSim.ua); }); }), asyncUaMatcher)];
+                case 1: return [2 /*return*/, _b.apply(_a, [(_c[_d] = _e.sent(),
+                            _c.imsi = imsi,
+                            _c)])];
             }
         });
     }); });
-    socket.evtResponse.attach(function (sipResponse) {
-        var connectionId = sipRouting.cid.read(sipResponse);
-        var imsi = sipRouting.readImsi(sipResponse);
-        var asteriskSocket = asteriskConnections.get({ connectionId: connectionId, imsi: imsi });
-        if (!asteriskSocket) {
-            return;
-        }
-        asteriskSocket.write(asteriskSocket.buildNextHopPacket(sipResponse));
-    });
 }
-exports.handle = handle;
+exports.getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered = getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered;

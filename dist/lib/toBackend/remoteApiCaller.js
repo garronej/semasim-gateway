@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -45,6 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var sip = require("ts-sip");
 var apiDeclaration = require("../../sip_api_declarations/backendToGateway");
@@ -95,11 +85,11 @@ exports.notifySimOnline = (function () {
                         switch (response.status) {
                             case "OK": break;
                             case "NOT REGISTERED":
-                                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
+                                sipContactsMonitor.discardContactsRegisteredToSim(imsi, "sim is no longer registered by any user");
                                 dbSemasim.removeUaSim(imsi);
                                 break;
                             case "REPLACE PASSWORD":
-                                sipContactsMonitor.discardContactsRegisteredToSim(imsi);
+                                sipContactsMonitor.discardContactsRegisteredToSim(imsi, "need password renewal");
                                 dbSemasim.removeUaSim(imsi, response.allowedUas);
                                 dbAsterisk.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword(imsi, replacementPassword);
                                 break;
@@ -187,66 +177,28 @@ exports.notifyOngoingCall = (function () {
         });
     };
 })();
-exports.notifyNewOrUpdatedUa = (function () {
-    var methodName = apiDeclaration.notifyNewOrUpdatedUa.methodName;
-    return function (ua) {
-        return __awaiter(this, void 0, void 0, function () {
-            var uaNoKey;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+exports.seeIfSipContactIsReachableElseSendWakeUpPushNotification = (function () {
+    var methodName = apiDeclaration.seeIfSipContactIsReachableElseSendWakeUpPushNotification.methodName;
+    return function (contact) { return sendRequest(methodName, contact); };
+})();
+exports.sendWakeUpPushNotifications = (function () {
+    var methodName = apiDeclaration.sendWakeUpPushNotifications.methodName;
+    return function (_a) {
+        var uas = _a.uas, imsi = _a.imsi;
+        return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        uaNoKey = __assign({}, ua);
-                        delete uaNoKey.towardUserEncryptKeyStr;
-                        //TODO: See if we really need to return that promise that never resolve
-                        return [4 /*yield*/, sendRequest(methodName, uaNoKey)
-                                .catch(function () { return new Promise(function () { }); })];
+                        if (uas.length === 0) {
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, sendRequest(methodName, { uas: uas, imsi: imsi }, "RETRY")];
                     case 1:
-                        //TODO: See if we really need to return that promise that never resolve
-                        _a.sent();
+                        _b.sent();
                         return [2 /*return*/];
                 }
             });
         });
-    };
-})();
-exports.wakeUpContact = (function () {
-    var methodName = apiDeclaration.wakeUpContact.methodName;
-    /**
-     *
-     * To use when we want to send a message or make a call
-     * backend will try to reach the contact with a qualify
-     * if the contact does not respond a push notification
-     * will be sent.
-     *
-     * TODO: add contextual infos about the call or the message
-     * in the notification so web notification can be displayed.
-     *
-     */
-    return function (contact) {
-        //TODO: See if we really need to return that promise that never resolve
-        return sendRequest(methodName, { contact: contact })
-            .catch(function () { return new Promise(function () { }); });
-    };
-})();
-exports.forceContactToRegister = (function () {
-    var methodName = apiDeclaration.forceContactToReRegister.methodName;
-    /**
-     *
-     * To use when the contact has expired to make it re register
-     * with a new connection.
-     * No push notification will be sent to this ua until it re-register.
-     *
-     * The contact has to expire or we will keep sending push notifications
-     * for ever to UA that can be no longer active ( e.g uninstalled app )
-     *
-     * NOTE: Web UA should never expire as it may only have one ua
-     * by sim so we do not keep sending push notification
-     *
-     * NOTE: this push notification should not have any content
-     *
-     */
-    return function (contact) {
-        return sendRequest(methodName, { contact: contact }, "RETRY");
     };
 })();
 function sendRequest(methodName, params, retry) {
@@ -269,7 +221,12 @@ function sendRequest(methodName, params, retry) {
                 case 3:
                     error_1 = _c.sent();
                     if (!!retry) {
-                        return [2 /*return*/, sendRequest(methodName, params, "RETRY")];
+                        //NOTE: Only retry once. If it's a connection problem
+                        //this will likely be solved by resending the request,
+                        //if there is really a problem with the request altho
+                        //it should not happen as the client is supposed to be 
+                        //always up to date let's not flood the backend.
+                        return [2 /*return*/, sendRequest(methodName, params, false)];
                     }
                     else {
                         throw error_1;

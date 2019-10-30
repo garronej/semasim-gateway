@@ -5,13 +5,16 @@ import {
 } from "chan-dongle-extended-client";
 import * as dbSemasim from "./dbSemasim";
 import * as types from "./types";
-import * as misc from "./misc";
+import { generateUaSimId } from "./misc/misc";
+import { smuggleBundledDataInHeaders } from "./misc/bundledData";
 import * as logger from "logger";
-import * as sipContactsMonitor from "./sipContactsMonitor";
-import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
 import * as sipMessagesMonitor from "./sipMessagesMonitor";
 import * as cryptoLib from "crypto-lib";
 import { workerThreadPoolId } from "./misc/workerThreadPoolId";
+
+import { 
+    getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered 
+} from "./misc/getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered";
 
 
 const debug = logger.debugFactory();
@@ -83,6 +86,7 @@ export async function notifyNewSipMessagesToSend(
     imsi: string
 ) {
 
+    /*
     for (const contact of sipContactsMonitor.getContacts(imsi)) {
 
         if (!(await dbSemasim.messageTowardSipUnsentCount(contact.uaSim))) {
@@ -98,6 +102,13 @@ export async function notifyNewSipMessagesToSend(
         }
 
     }
+    */
+
+    getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered({
+        imsi,
+        "asyncUaMatcher": async ua => 0 !== await dbSemasim.messageTowardSipUnsentCount({ imsi, ua }),
+        "reachableSipContactCallbackFn": contact=> sendMessagesOfContact(contact)
+    });
 
 }
 
@@ -130,7 +141,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
 
 
     sendMessagesOfContact.lock.acquire(
-        misc.generateUaSimId(contact.uaSim),
+        generateUaSimId(contact.uaSim),
         async () => {
 
             for (
@@ -143,7 +154,7 @@ export function sendMessagesOfContact(contact: types.Contact) {
                     await sipMessagesMonitor.sendMessage(
                         contact,
                         message.fromNumber,
-                        await misc.smuggleBundledDataInHeaders(
+                        await smuggleBundledDataInHeaders(
                             message.bundledData,
                             encryptor
                         )

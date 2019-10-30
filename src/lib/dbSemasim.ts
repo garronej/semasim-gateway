@@ -78,10 +78,7 @@ export async function setTowardSimKeys(
 
 export async function addUaSim(
     uaSim: types.UaSim
-): Promise<{
-    isUaCreatedOrUpdated: boolean;
-    isFirstUaForSim: boolean;
-}> {
+): Promise<{ isFirstUaForSim: boolean; }> {
 
     let sql = "";
 
@@ -92,8 +89,7 @@ export async function addUaSim(
         "user_email": ua.userEmail,
         "toward_user_encrypt_key": ua.towardUserEncryptKeyStr,
         "platform": ua.platform,
-        "push_token": ua.pushToken,
-        "messages_enabled": sqliteCustom.bool.enc(ua.messagesEnabled)
+        "push_token": ua.pushToken
     }, ["instance", "user_email"]);
 
     sql += [
@@ -114,10 +110,6 @@ export async function addUaSim(
     let queryResults = await _.query(sql);
 
     return {
-        "isUaCreatedOrUpdated": (
-            !!queryResults[0].insertId ||
-            !!queryResults[1].affectedRows
-        ),
         "isFirstUaForSim": (
             !!queryResults[2].affectedRows &&
             queryResults[3][0]["sim_ua_count"] === 1
@@ -276,8 +268,7 @@ export async function onDongleMessage(
         bundledData,
         {
             "target": "ALL UA REGISTERED TO SIM",
-            imsi,
-            "alsoSendToUasWithMessageDisabled": false
+            imsi
         }
     );
 
@@ -310,8 +301,7 @@ export async function onMissedCall(imsi: string, number: string) {
         bundledData,
         {
             "target": "ALL UA REGISTERED TO SIM",
-            imsi,
-            "alsoSendToUasWithMessageDisabled": false
+            imsi
         }
     );
 
@@ -357,8 +347,7 @@ export async function onCallAnswered(
             bundledData,
             {
                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                "uaSim": { ua, imsi },
-                "alsoSendToUasWithMessageDisabled": false
+                "uaSim": { ua, imsi }
             }
         );
 
@@ -478,8 +467,7 @@ export async function getUnsentMessagesTowardGsm(
             "ua.user_email,",
             "ua.platform,",
             "ua.push_token,",
-            "ua.toward_user_encrypt_key,",
-            "ua.messages_enabled",
+            "ua.toward_user_encrypt_key",
             "FROM message_toward_gsm",
             "INNER JOIN ua_sim ON ua_sim.id_ = message_toward_gsm.ua_sim",
             "INNER JOIN ua ON ua.id_ = ua_sim.ua",
@@ -504,8 +492,7 @@ export async function getUnsentMessagesTowardGsm(
                     "userEmail": row["user_email"],
                     "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
                     "platform": row["platform"],
-                    "pushToken": row["push_token"],
-                    "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
+                    "pushToken": row["push_token"]
                 },
                 "imsi": row["imsi"]
             },
@@ -560,8 +547,10 @@ export namespace getUnsentMessagesTowardGsm {
         onStatusReport(statusReport: dcTypes.StatusReport): Promise<void>
     };
 
-    const checkMark = Buffer.from("e29c94", "hex").toString("utf8");
-    const crossMark = Buffer.from("e29d8c", "hex").toString("utf8");
+    const [checkMark, crossMark] = [
+        "e29c94",
+        "e29d8c"
+    ].map(code => Buffer.from(code, "hex").toString("utf8"));
 
     /**
      * 
@@ -598,8 +587,7 @@ export namespace getUnsentMessagesTowardGsm {
             bundledData,
             {
                 "target": "SPECIFIC UA REGISTERED TO SIM",
-                "uaSim": messageTowardGsm.uaSim,
-                "alsoSendToUasWithMessageDisabled": false
+                "uaSim": messageTowardGsm.uaSim
             }
         );
 
@@ -649,16 +637,13 @@ export namespace getUnsentMessagesTowardGsm {
 
         let sql = "";
 
-        const alsoSendToUasWithMessageDisabled = false;
-
         if (statusReport.isDelivered) {
 
             sql += build(
                 `${checkMark}${checkMark}`,
                 {
                     "target": "SPECIFIC UA REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim,
-                    alsoSendToUasWithMessageDisabled
+                    "uaSim": messageTowardGsm.uaSim
                 }
             );
 
@@ -666,8 +651,7 @@ export namespace getUnsentMessagesTowardGsm {
                 `Me: ${Buffer.from(messageTowardGsm.textB64,"base64").toString("utf8")}`,
                 {
                     "target": "ALL OTHER UA OF USER",
-                    "uaSim": messageTowardGsm.uaSim,
-                    alsoSendToUasWithMessageDisabled
+                    "uaSim": messageTowardGsm.uaSim
                 }
             );
 
@@ -675,8 +659,7 @@ export namespace getUnsentMessagesTowardGsm {
                 `${messageTowardGsm.uaSim.ua.userEmail}: ${Buffer.from(messageTowardGsm.textB64,"base64").toString("utf8")}`,
                 {
                     "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim,
-                    alsoSendToUasWithMessageDisabled
+                    "uaSim": messageTowardGsm.uaSim
                 }
             );
 
@@ -686,8 +669,7 @@ export namespace getUnsentMessagesTowardGsm {
                 crossMark,
                 {
                     "target": "SPECIFIC UA REGISTERED TO SIM",
-                    "uaSim": messageTowardGsm.uaSim,
-                    alsoSendToUasWithMessageDisabled
+                    "uaSim": messageTowardGsm.uaSim
                 }
             );
 
@@ -769,7 +751,7 @@ function buildMessageTowardSipInsertQuery(
     let sqlSelectionUaSim = [
         "FROM ua_sim",
         "INNER JOIN ua ON ua.id_= ua_sim.ua",
-        `WHERE ${target.alsoSendToUasWithMessageDisabled ? "" : `ua.messages_enabled= 1 AND `}ua_sim.imsi= `
+        "WHERE ua_sim.imsi= "
     ].join("\n");
 
     switch (target.target) {
@@ -833,7 +815,7 @@ function buildMessageTowardSipInsertQuery(
 namespace buildMessageTowardSipInsertQuery {
 
     export type Target =
-        ({
+        {
             target: "SPECIFIC UA REGISTERED TO SIM";
             uaSim: types.UaSim;
         } | {
@@ -848,7 +830,7 @@ namespace buildMessageTowardSipInsertQuery {
         } | {
             target: "ALL UA OF OTHER USERS REGISTERED TO SIM";
             uaSim: types.UaSim;
-        }) & { alsoSendToUasWithMessageDisabled: boolean; };
+        };
 
 }
 
@@ -876,8 +858,7 @@ export async function onConversationCheckedOut(
         })(),
         {
             "target": "ALL OTHER UA OF USER",
-            uaSim,
-            "alsoSendToUasWithMessageDisabled": false
+            uaSim
         }
     );
 
@@ -922,8 +903,7 @@ export async function onTargetGsmRinging(
         bundledData,
         {
             "target": "SPECIFIC UA REGISTERED TO SIM",
-            "uaSim": contact.uaSim,
-            "alsoSendToUasWithMessageDisabled": true
+            "uaSim": contact.uaSim
         }
     );
 
@@ -969,8 +949,6 @@ export async function onCallFromSipTerminated(
         target
     );
 
-    const alsoSendToUasWithMessageDisabled = false;
-
     const uaSim = { imsi, ua };
 
     const buildText = (email: string | undefined) => {
@@ -1007,20 +985,40 @@ export async function onCallFromSipTerminated(
             buildText(undefined),
             {
                 "target": "ALL UA OF USER",
-                uaSim,
-                alsoSendToUasWithMessageDisabled
+                uaSim
             }
         ),
         buildQuery(
             buildText(ua.userEmail),
             {
                 "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
-                uaSim,
-                alsoSendToUasWithMessageDisabled
+                uaSim
             }
         )
     ].join("");
 
     await _.query(sql);
+
+}
+
+
+export async function getUas(imsi: string): Promise<types.Ua[]> {
+
+    const sql = [
+        "SELECT ua.*",
+        "FROM ua",
+        "INNER JOIN ua_sim ON ua_sim.ua=ua.id_",
+        `WHERE ua_sim.imsi=${_.esc(imsi)}`
+    ].join("\n");
+
+    const rows: any[] = await _.query(sql);
+
+    return rows.map<types.Ua>(row => ({
+        "instance": row["instance"],
+        "userEmail": row["user_email"],
+        "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
+        "platform": row["platform"],
+        "pushToken": row["push_token"]
+    }));
 
 }

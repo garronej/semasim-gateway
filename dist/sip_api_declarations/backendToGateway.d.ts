@@ -78,22 +78,18 @@ export declare namespace notifyOngoingCall {
     };
     type Response = undefined;
 }
-export declare namespace notifyNewOrUpdatedUa {
-    const methodName = "notifyNewOrUpdatedUa";
-    type Params = Omit<types.Ua, "towardUserEncryptKeyStr">;
-    type Response = undefined;
-}
-export declare namespace wakeUpContact {
-    const methodName = "wakeUpContact";
-    type Params = {
-        contact: types.Contact;
+export declare namespace seeIfSipContactIsReachableElseSendWakeUpPushNotification {
+    const methodName = "seeIfSipContactIsReachableElseSendWakeUpPushNotification";
+    type Params = types.Contact;
+    type Response = {
+        isReachable: boolean;
     };
-    type Response = "REACHABLE" | "PUSH_NOTIFICATION_SENT" | "UNREACHABLE";
 }
-export declare namespace forceContactToReRegister {
-    const methodName = "forceContactToReRegister";
-    interface Params {
-        contact: types.Contact;
-    }
-    type Response = boolean;
+export declare namespace sendWakeUpPushNotifications {
+    const methodName = "sendWakeUpPushNotifications";
+    type Params = {
+        uas: types.Ua[];
+        imsi: string;
+    };
+    type Response = undefined;
 }

@@ -49,7 +49,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ts_events_extended_1 = require("ts-events-extended");
 var ts_ami_1 = require("ts-ami");
 var sipLibrary = require("ts-sip");
-var misc = require("./misc");
+var bundledData_1 = require("./misc/bundledData");
 var cryptoLib = require("crypto-lib");
 var dbSemasim = require("./dbSemasim");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
@@ -210,7 +210,7 @@ function onIncomingSipMessage(fromContact, sipRequest) {
                         "toNumber": sipLibrary.parseUri(sipRequest.headers.to.uri).user
                     };
                     _d = "bundledData";
-                    return [4 /*yield*/, misc.extractBundledDataFromHeaders(sipRequest.headers, decryptor)];
+                    return [4 /*yield*/, bundledData_1.extractBundledDataFromHeaders(sipRequest.headers, decryptor)];
                 case 2:
                     _b.apply(_a, [(_c[_d] = _e.sent(),
                             _c)]);

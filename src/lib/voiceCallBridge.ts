@@ -9,8 +9,12 @@ import * as messageDispatcher from "./messagesDispatcher";
 import * as sip from "ts-sip";
 import * as logger from "logger";
 import * as sipContactsMonitor from "./sipContactsMonitor";
-import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
-import * as misc from "./misc";
+import * as toBackendRemoteApiCaller from "./toBackend/remoteApiCaller";
+import { generateUaId } from "./misc/misc";
+import { 
+    getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered 
+} from "./misc/getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered";
+
 
 const debug = logger.debugFactory();
 
@@ -116,7 +120,7 @@ class OngoingCall {
 
 
     public static addUaToCall(ongoingCall: OngoingCall, ua: types.Ua){
-        ongoingCall.uasInCall.set(misc.generateUaId(ua), ua);
+        ongoingCall.uasInCall.set(generateUaId(ua), ua);
 
         //NOTE: We prevent notifying a call that have been terminated already.
         //Maybe never happen but we add this check for safety.
@@ -131,7 +135,7 @@ class OngoingCall {
 
     public static removeUaFromCall(ongoingCall: OngoingCall, ua: types.Ua){
 
-        ongoingCall.uasInCall.delete(misc.generateUaId(ua));
+        ongoingCall.uasInCall.delete(generateUaId(ua));
 
         //NOTE: If the call is terminated we do not notify.
         if( this.terminatedCalls.has(ongoingCall) ){
@@ -145,7 +149,7 @@ class OngoingCall {
 
     private static notifyCall(ongoingCall: OngoingCall, isTerminated: boolean){
 
-        backendRemoteApiCaller.notifyOngoingCall({
+        toBackendRemoteApiCaller.notifyOngoingCall({
             "ongoingCallId": ongoingCall.id,
             "from": ongoingCall.from,
             "imsi": ongoingCall.imsi,
@@ -244,28 +248,37 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     const evtReachableContact = new SyncEvent<types.Contact>();
 
+    /*
+    NOTE: evtContactRegistration is also posted when a contact refresh
+    it's registration. 
+    It is possible that a contact "REACHABLE" ( that responded to the notify )
+    then send a register to refresh it's registration. We don't want the same
+    contact to be posted two times by evtReachableContact so with the next
+    block we extract contacts that have already been posted.
+    */
+    {
+        const postedContacts= new WeakSet<types.Contact>();
+
+        evtReachableContact.attach(contact=> postedContacts.add(contact));
+
+        evtReachableContact.attachExtract(
+            contact => postedContacts.has(contact),
+            contact => debug("==========> prevent re posting contact that have already be posted", contact)
+        );
+
+    }
+
+
     sipContactsMonitor.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
         evtReachableContact,
         contact => evtReachableContact.post(contact)
     );
 
-    for (let contact of sipContactsMonitor.getContacts(imsi)) {
-
-        backendRemoteApiCaller
-            .wakeUpContact(contact)
-            .then(status => {
-
-                if (status === "REACHABLE") {
-
-                    evtReachableContact.post(contact);
-
-                }
-
-            })
-            ;
-
-    }
+    getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered({
+        imsi,
+        "reachableSipContactCallbackFn": contact=> evtReachableContact.post(contact)
+    });
 
     const channels = new Map<types.Contact, {
         channelName: string;
@@ -322,7 +335,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     const dongleChannelName = channel.request.channel;
 
-    const ongoingCall= new OngoingCall(
+    const ongoingCall = new OngoingCall(
         "DONGLE", imsi, number, dongleChannelName
     );
 
@@ -493,7 +506,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
         }
 
-        if( ongoingCall.getNumberOfUasInTheCall() === 0 ){
+        if (ongoingCall.getNumberOfUasInTheCall() === 0) {
 
             debug("The user phone is about to ring");
 
@@ -503,7 +516,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
         }
 
-        if( ongoingCall.isUserAlreadyInTheCall(contact.uaSim.ua.userEmail)){
+        if (ongoingCall.isUserAlreadyInTheCall(contact.uaSim.ua.userEmail)) {
 
             debug("User is already calling with an other device!");
 

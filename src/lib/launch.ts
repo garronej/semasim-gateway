@@ -17,6 +17,7 @@ import * as sipMessagesMonitor from "./sipMessagesMonitor";
 import { phoneNumber } from "phone-number";
 import * as cryptoLib from "crypto-lib";
 import { workerThreadPoolId } from "./misc/workerThreadPoolId";
+import { removeDuplicateContactInSimInternalStorage } from "./misc/removeDuplicateContactInSimInternalStorage";
 
 import * as memwatch from "memwatch-next";
 
@@ -209,48 +210,11 @@ function registerListeners() {
                 })();
                 */
 
+
+
+                await removeDuplicateContactInSimInternalStorage(dongle, dc);
+
                 const { imsi } = dongle.sim;
-
-                //NOTE: Remove duplicated contacts ( if multiple contacts have same number )
-                {
-
-                    const tasks: Promise<void>[] = [];
-
-                    const numberSet = new Set<string>(
-                        dongle.sim.storage.contacts
-                            .map(({ number }) =>
-                                phoneNumber.build(
-                                    number,
-                                    !!dongle.sim.country ?
-                                        dongle.sim.country.iso : undefined
-                                )
-                            )
-                    );
-
-                    for (const number of numberSet) {
-
-                        const contacts = dongle.sim.storage.contacts
-                            .filter(contact => phoneNumber.areSame(
-                                number, contact.number
-                            ))
-                            ;
-
-                        contacts.shift();
-
-                        for (const { index } of contacts) {
-
-                            tasks[tasks.length] = dc.deleteContact(imsi, index)
-                                .catch(() => { })
-                                ;
-
-                        }
-
-
-                    }
-
-                    await Promise.all(tasks);
-
-                }
 
                 if (undefined === await dbSemasim.getTowardSimKeys(imsi)) {
 
@@ -290,9 +254,26 @@ function registerListeners() {
 
     }
 
+
     dc.dongles.evtDelete.attach(
-        ([dongle]) => backendRemoteApiCaller.notifyDongleOffline(dongle)
+        ([dongle]) => {
+
+            if( dcTypes.Dongle.Usable.match(dongle) ){
+
+                sipContactsMonitor.discardContactsRegisteredToSim(
+                    dongle.sim.imsi, 
+                    "SIM no longer usable"
+                );
+
+            }
+
+            backendRemoteApiCaller.notifyDongleOffline(dongle);
+
+        }
     );
+
+
+
 
     dc.evtGsmConnectivityChange.attach(({ dongle }) =>
         backendRemoteApiCaller.notifyGsmConnectivityChange(
@@ -345,24 +326,14 @@ function registerListeners() {
     sipContactsMonitor.evtContactRegistration.attach(
         async contact => {
 
-            debug(`Contact registered`, contact);
-
-            let {
-                isUaCreatedOrUpdated,
+            const {
+                //isUaCreatedOrUpdated,
                 isFirstUaForSim
             } = await dbSemasim.addUaSim(contact.uaSim);
 
-            if (isUaCreatedOrUpdated) {
-
-                await backendRemoteApiCaller.notifyNewOrUpdatedUa(
-                    contact.uaSim.ua
-                );
-
-            }
-
             if (isFirstUaForSim) {
 
-                debug("First SIM UA");
+                debug("First UA registration for this the sim");
 
                 const messages = await dc.getMessages({
                     "imsi": contact.uaSim.imsi,

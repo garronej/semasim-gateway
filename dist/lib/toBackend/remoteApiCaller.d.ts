@@ -7,6 +7,5 @@ export declare const notifyCellSignalStrengthChange: (imsi: string, cellSignalSt
 export declare const notifyLockedDongle: (dongle: dcTypes.Dongle.Locked) => Promise<void>;
 export declare const notifyDongleOffline: (dongle: dcTypes.Dongle) => Promise<void>;
 export declare const notifyOngoingCall: (params: apiDeclaration.notifyOngoingCall.Params) => Promise<void>;
-export declare const notifyNewOrUpdatedUa: (ua: types.Ua) => Promise<void>;
-export declare const wakeUpContact: (contact: types.Contact) => Promise<apiDeclaration.wakeUpContact.Response>;
-export declare const forceContactToRegister: (contact: types.Contact) => Promise<boolean>;
+export declare const seeIfSipContactIsReachableElseSendWakeUpPushNotification: (contact: types.Contact) => Promise<apiDeclaration.seeIfSipContactIsReachableElseSendWakeUpPushNotification.Response>;
+export declare const sendWakeUpPushNotifications: ({ uas, imsi }: apiDeclaration.sendWakeUpPushNotifications.Params) => Promise<void>;

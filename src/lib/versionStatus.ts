@@ -4,7 +4,7 @@ import * as scriptLib from "scripting-tools";
 import * as webApiDeclaration from "../web_api_declaration";
 const localVersion: string = require(path.join(module_dir_path, "package.json"))["version"];
 
-function genIntegerInRange(min, max): number {
+function genIntegerInRange(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min) + min);
 }
 

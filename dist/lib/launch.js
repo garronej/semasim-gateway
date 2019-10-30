@@ -80,6 +80,7 @@ var sipMessagesMonitor = require("./sipMessagesMonitor");
 var phone_number_1 = require("phone-number");
 var cryptoLib = require("crypto-lib");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
+var removeDuplicateContactInSimInternalStorage_1 = require("./misc/removeDuplicateContactInSimInternalStorage");
 var memwatch = require("memwatch-next");
 var debug = logger.debugFactory();
 debug("Memory leak detection enabled");
@@ -240,11 +241,10 @@ function registerListeners() {
         dc.dongles.evtSet.attach(function (_a) {
             var _b = __read(_a, 1), dongle = _b[0];
             return __awaiter(_this, void 0, void 0, function () {
-                var imei, imsi, tasks, numberSet, _loop_1, numberSet_1, numberSet_1_1, number, _c, _d, publicKey, privateKey;
-                var e_3, _e;
+                var imei, imsi, _c, _d, publicKey, privateKey;
                 var _this = this;
-                return __generator(this, function (_f) {
-                    switch (_f.label) {
+                return __generator(this, function (_e) {
+                    switch (_e.label) {
                         case 0:
                             imei = dongle.imei;
                             if (chan_dongle_extended_client_1.types.Dongle.Locked.match(dongle)) {
@@ -252,54 +252,100 @@ function registerListeners() {
                                 prKeysByImei_1.set(imei, generateKeys_1());
                                 return [2 /*return*/];
                             }
-                            imsi = dongle.sim.imsi;
-                            tasks = [];
-                            numberSet = new Set(dongle.sim.storage.contacts
-                                .map(function (_a) {
-                                var number = _a.number;
-                                return phone_number_1.phoneNumber.build(number, !!dongle.sim.country ?
-                                    dongle.sim.country.iso : undefined);
-                            }));
-                            _loop_1 = function (number) {
-                                var e_4, _a;
-                                var contacts = dongle.sim.storage.contacts
-                                    .filter(function (contact) { return phone_number_1.phoneNumber.areSame(number, contact.number); });
-                                contacts.shift();
-                                try {
-                                    for (var contacts_1 = (e_4 = void 0, __values(contacts)), contacts_1_1 = contacts_1.next(); !contacts_1_1.done; contacts_1_1 = contacts_1.next()) {
-                                        var index = contacts_1_1.value.index;
-                                        tasks[tasks.length] = dc.deleteContact(imsi, index)
-                                            .catch(function () { });
+                            /*
+                            (async () => {
+            
+                                debug("Test Test Test Test");
+            
+                                if ("__mark__" in global) {
+                                    return;
+                                }
+            
+                                global["__mark__"] = true;
+            
+            
+                                while (true) {
+            
+                                    await new Promise(resolve => setTimeout(resolve, 5000));
+            
+                                    debug("=================> changing isGsmConnectionOk value manually");
+            
+                                    dongle.isGsmConnectivityOk = !dongle.isGsmConnectivityOk;
+            
+                                    dc.evtGsmConnectivityChange.post({ dongle });
+            
+                                    if (!dongle.isGsmConnectivityOk) {
+                                        continue;
                                     }
-                                }
-                                catch (e_4_1) { e_4 = { error: e_4_1 }; }
-                                finally {
-                                    try {
-                                        if (contacts_1_1 && !contacts_1_1.done && (_a = contacts_1.return)) _a.call(contacts_1);
+            
+                                    for (const cellSignalStrength of ["NULL", "VERY WEAK", "WEAK", "GOOD", "EXCELLENT"] as const) {
+            
+                                        await new Promise(resolve => setTimeout(resolve, 2000));
+            
+                                        const previousCellSignalStrength = dongle.cellSignalStrength;
+            
+                                        dongle.cellSignalStrength = cellSignalStrength;
+            
+                                        dc.evtCellSignalStrengthChange.post({ dongle, previousCellSignalStrength });
+            
                                     }
-                                    finally { if (e_4) throw e_4.error; }
+            
+            
                                 }
-                            };
-                            try {
-                                for (numberSet_1 = __values(numberSet), numberSet_1_1 = numberSet_1.next(); !numberSet_1_1.done; numberSet_1_1 = numberSet_1.next()) {
-                                    number = numberSet_1_1.value;
-                                    _loop_1(number);
-                                }
-                            }
-                            catch (e_3_1) { e_3 = { error: e_3_1 }; }
-                            finally {
-                                try {
-                                    if (numberSet_1_1 && !numberSet_1_1.done && (_e = numberSet_1.return)) _e.call(numberSet_1);
-                                }
-                                finally { if (e_3) throw e_3.error; }
-                            }
-                            return [4 /*yield*/, Promise.all(tasks)];
+            
+                            })();
+                            */
+                            return [4 /*yield*/, removeDuplicateContactInSimInternalStorage_1.removeDuplicateContactInSimInternalStorage(dongle, dc)];
                         case 1:
-                            _f.sent();
+                            /*
+                            (async () => {
+            
+                                debug("Test Test Test Test");
+            
+                                if ("__mark__" in global) {
+                                    return;
+                                }
+            
+                                global["__mark__"] = true;
+            
+            
+                                while (true) {
+            
+                                    await new Promise(resolve => setTimeout(resolve, 5000));
+            
+                                    debug("=================> changing isGsmConnectionOk value manually");
+            
+                                    dongle.isGsmConnectivityOk = !dongle.isGsmConnectivityOk;
+            
+                                    dc.evtGsmConnectivityChange.post({ dongle });
+            
+                                    if (!dongle.isGsmConnectivityOk) {
+                                        continue;
+                                    }
+            
+                                    for (const cellSignalStrength of ["NULL", "VERY WEAK", "WEAK", "GOOD", "EXCELLENT"] as const) {
+            
+                                        await new Promise(resolve => setTimeout(resolve, 2000));
+            
+                                        const previousCellSignalStrength = dongle.cellSignalStrength;
+            
+                                        dongle.cellSignalStrength = cellSignalStrength;
+            
+                                        dc.evtCellSignalStrengthChange.post({ dongle, previousCellSignalStrength });
+            
+                                    }
+            
+            
+                                }
+            
+                            })();
+                            */
+                            _e.sent();
+                            imsi = dongle.sim.imsi;
                             _c = undefined;
                             return [4 /*yield*/, dbSemasim.getTowardSimKeys(imsi)];
                         case 2:
-                            if (!(_c === (_f.sent()))) return [3 /*break*/, 5];
+                            if (!(_c === (_e.sent()))) return [3 /*break*/, 5];
                             return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
                                     var prKeys;
                                     return __generator(this, function (_a) {
@@ -314,11 +360,11 @@ function registerListeners() {
                                     });
                                 }); })()];
                         case 3:
-                            _d = _f.sent(), publicKey = _d.publicKey, privateKey = _d.privateKey;
+                            _d = _e.sent(), publicKey = _d.publicKey, privateKey = _d.privateKey;
                             return [4 /*yield*/, dbSemasim.setTowardSimKeys(imsi, cryptoLib.RsaKey.stringify(publicKey), cryptoLib.RsaKey.stringify(privateKey))];
                         case 4:
-                            _f.sent();
-                            _f.label = 5;
+                            _e.sent();
+                            _e.label = 5;
                         case 5:
                             messagesDispatcher.sendMessagesOfDongle(dongle);
                             backendRemoteApiCaller.notifySimOnline(dongle);
@@ -330,7 +376,10 @@ function registerListeners() {
     }
     dc.dongles.evtDelete.attach(function (_a) {
         var _b = __read(_a, 1), dongle = _b[0];
-        return backendRemoteApiCaller.notifyDongleOffline(dongle);
+        if (chan_dongle_extended_client_1.types.Dongle.Usable.match(dongle)) {
+            sipContactsMonitor.discardContactsRegisteredToSim(dongle.sim.imsi, "SIM no longer usable");
+        }
+        backendRemoteApiCaller.notifyDongleOffline(dongle);
     });
     dc.evtGsmConnectivityChange.attach(function (_a) {
         var dongle = _a.dongle;
@@ -366,48 +415,42 @@ function registerListeners() {
         });
     });
     sipContactsMonitor.evtContactRegistration.attach(function (contact) { return __awaiter(_this, void 0, void 0, function () {
-        var _a, isUaCreatedOrUpdated, isFirstUaForSim, messages, tasks, messages_2, messages_2_1, _b, number, text, date;
-        var e_5, _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0:
-                    debug("Contact registered", contact);
-                    return [4 /*yield*/, dbSemasim.addUaSim(contact.uaSim)];
+        var 
+        //isUaCreatedOrUpdated,
+        isFirstUaForSim, messages, tasks, messages_2, messages_2_1, _a, number, text, date;
+        var e_3, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0: return [4 /*yield*/, dbSemasim.addUaSim(contact.uaSim)];
                 case 1:
-                    _a = _d.sent(), isUaCreatedOrUpdated = _a.isUaCreatedOrUpdated, isFirstUaForSim = _a.isFirstUaForSim;
-                    if (!isUaCreatedOrUpdated) return [3 /*break*/, 3];
-                    return [4 /*yield*/, backendRemoteApiCaller.notifyNewOrUpdatedUa(contact.uaSim.ua)];
-                case 2:
-                    _d.sent();
-                    _d.label = 3;
-                case 3:
-                    if (!isFirstUaForSim) return [3 /*break*/, 6];
-                    debug("First SIM UA");
+                    isFirstUaForSim = (_c.sent()).isFirstUaForSim;
+                    if (!isFirstUaForSim) return [3 /*break*/, 4];
+                    debug("First UA registration for this the sim");
                     return [4 /*yield*/, dc.getMessages({
                             "imsi": contact.uaSim.imsi,
                             "flush": true
                         })];
-                case 4:
-                    messages = _d.sent();
+                case 2:
+                    messages = _c.sent();
                     tasks = [];
                     try {
                         for (messages_2 = __values(messages), messages_2_1 = messages_2.next(); !messages_2_1.done; messages_2_1 = messages_2.next()) {
-                            _b = messages_2_1.value, number = _b.number, text = _b.text, date = _b.date;
+                            _a = messages_2_1.value, number = _a.number, text = _a.text, date = _a.date;
                             tasks[tasks.length] = dbSemasim.onDongleMessage(number, text, date, contact.uaSim.imsi);
                         }
                     }
-                    catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                    catch (e_3_1) { e_3 = { error: e_3_1 }; }
                     finally {
                         try {
-                            if (messages_2_1 && !messages_2_1.done && (_c = messages_2.return)) _c.call(messages_2);
+                            if (messages_2_1 && !messages_2_1.done && (_b = messages_2.return)) _b.call(messages_2);
                         }
-                        finally { if (e_5) throw e_5.error; }
+                        finally { if (e_3) throw e_3.error; }
                     }
                     return [4 /*yield*/, Promise.all(tasks)];
-                case 5:
-                    _d.sent();
-                    _d.label = 6;
-                case 6:
+                case 3:
+                    _c.sent();
+                    _c.label = 4;
+                case 4:
                     messagesDispatcher.sendMessagesOfContact(contact);
                     return [2 /*return*/];
             }

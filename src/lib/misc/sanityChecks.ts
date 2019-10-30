@@ -41,8 +41,7 @@ export namespace sanityChecks {
         return (
             uaRef(o) &&
             platform(o.platform) &&
-            typeof o.pushToken === "string" &&
-            typeof o.messagesEnabled === "boolean"
+            typeof o.pushToken === "string"
         );
 
     }

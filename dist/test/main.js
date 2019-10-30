@@ -51,7 +51,7 @@ var bundledData = require("./bundledData");
                 return [4 /*yield*/, dbSemasim_1.testDbSemasim()];
             case 2:
                 _a.sent();
-                console.log("ALL TESTS PASSED !");
+                console.log("ALL TESTS PASSED");
                 process.exit(0);
                 return [2 /*return*/];
         }

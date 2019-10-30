@@ -68,8 +68,7 @@ function testSerialization() {
                         "userEmail": str,
                         "towardUserEncryptKeyStr": str,
                         "platform": "android",
-                        "pushToken": str,
-                        "messagesEnabled": false
+                        "pushToken": str
                     },
                     "imsi": str
                 },

@@ -1,7 +1,7 @@
 {
   "name": "semasim-gateway",
   "description": "Semasim gateway",
-  "version": "1.5.6",
+  "version": "1.6.0",
   "scripts": {
     "partial_install": "npm install --no-package-lock commander@2.11.0 garronej/scripting-tools",
     "copy_node": "cp $(readlink -e $(which node)) ./node",

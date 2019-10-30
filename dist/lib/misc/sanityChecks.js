@@ -26,8 +26,7 @@ var sanityChecks;
     function uaWithoutUserKeys(o) {
         return (uaRef(o) &&
             platform(o.platform) &&
-            typeof o.pushToken === "string" &&
-            typeof o.messagesEnabled === "boolean");
+            typeof o.pushToken === "string");
     }
     sanityChecks.uaWithoutUserKeys = uaWithoutUserKeys;
     function uaRef(o) {

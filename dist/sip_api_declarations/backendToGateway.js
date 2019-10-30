@@ -24,15 +24,11 @@ var notifyOngoingCall;
 (function (notifyOngoingCall) {
     notifyOngoingCall.methodName = "notifyOngoingCall";
 })(notifyOngoingCall = exports.notifyOngoingCall || (exports.notifyOngoingCall = {}));
-var notifyNewOrUpdatedUa;
-(function (notifyNewOrUpdatedUa) {
-    notifyNewOrUpdatedUa.methodName = "notifyNewOrUpdatedUa";
-})(notifyNewOrUpdatedUa = exports.notifyNewOrUpdatedUa || (exports.notifyNewOrUpdatedUa = {}));
-var wakeUpContact;
-(function (wakeUpContact) {
-    wakeUpContact.methodName = "wakeUpContact";
-})(wakeUpContact = exports.wakeUpContact || (exports.wakeUpContact = {}));
-var forceContactToReRegister;
-(function (forceContactToReRegister) {
-    forceContactToReRegister.methodName = "forceContactToReRegister";
-})(forceContactToReRegister = exports.forceContactToReRegister || (exports.forceContactToReRegister = {}));
+var seeIfSipContactIsReachableElseSendWakeUpPushNotification;
+(function (seeIfSipContactIsReachableElseSendWakeUpPushNotification) {
+    seeIfSipContactIsReachableElseSendWakeUpPushNotification.methodName = "seeIfSipContactIsReachableElseSendWakeUpPushNotification";
+})(seeIfSipContactIsReachableElseSendWakeUpPushNotification = exports.seeIfSipContactIsReachableElseSendWakeUpPushNotification || (exports.seeIfSipContactIsReachableElseSendWakeUpPushNotification = {}));
+var sendWakeUpPushNotifications;
+(function (sendWakeUpPushNotifications) {
+    sendWakeUpPushNotifications.methodName = "sendWakeUpPushNotifications";
+})(sendWakeUpPushNotifications = exports.sendWakeUpPushNotifications || (exports.sendWakeUpPushNotifications = {}));

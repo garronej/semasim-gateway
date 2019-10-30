@@ -36,7 +36,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var db = require("../lib/dbAsterisk");
-var misc = require("../lib/misc");
+var sanityChecks_1 = require("../lib/misc/sanityChecks");
+var sipRouting = require("../lib/misc/sipRouting");
 var assert = require("assert");
 var crypto = require("crypto");
 var contact = (function () {
@@ -51,8 +52,7 @@ var contact = (function () {
             "VXlDmG97jt3DTzOlsjbUzsent-yeEz_QpQNhdO3Mbr-",
             "4-XxcSmyKj_Hr-XY_-LefF3RhHsSekVsSeYN95PAtwR",
             "Cpz-i1ytnc5DyMY8je4n69G"
-        ].join(""),
-        "messagesEnabled": true
+        ].join("")
     };
     return {
         "uri": [
@@ -64,7 +64,7 @@ var contact = (function () {
             "pn-silent=1;transport=tls"
         ].join(""),
         "path": "<sip:192.168.0.20:54632;transport=TCP;lr>,  <sip:172.31.18.20:80;transport=TLS;lr>",
-        "connectionId": misc.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
+        "connectionId": sipRouting.cid.generate({ "remoteAddress": "82.12.123.2", "remotePort": 23292 }),
         "uaSim": { imsi: imsi, ua: ua }
     };
 })();
@@ -74,7 +74,7 @@ function testDbAsterisk() {
         return __generator(this, function (_d) {
             switch (_d.label) {
                 case 0:
-                    assert(misc.sanityChecks.contact(contact));
+                    assert(sanityChecks_1.sanityChecks.contact(contact));
                     return [4 /*yield*/, db.launch()];
                 case 1:
                     _d.sent();

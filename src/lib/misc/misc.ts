@@ -4,6 +4,14 @@ export function generateUaId(o: types.Ua): string {
     return JSON.stringify([o.instance, o.userEmail]);
 }
 
+export function areSameUas(
+    o1: types.Ua,
+    o2: types.Ua
+): boolean {
+    return generateUaId(o1) === generateUaId(o2);
+}
+
+
 export function generateUaSimId(o: types.UaSim): string {
     return JSON.stringify([o.imsi, generateUaId(o.ua)]);
 }

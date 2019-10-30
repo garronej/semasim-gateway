@@ -162,67 +162,36 @@ export async function createEndpointIfNeededOptionallyReplacePasswordAndReturnPa
 
         }
 
-        const [ps_endpoints_web, ps_endpoints_mobile] = (() => {
+        const ps_endpoints = {
+            "disallow": "all",
+            "context": sipCallContext,
+            "message_context": messagesDialplanContext,
+            "auth": imsi,
+            "from_domain": i.getBaseDomain(),
+            "ice_support": "yes",
+            "transport": "transport-tcp",
+            "dtmf_mode": "info",
+            "allow": "alaw:10,ulaw:10",
+            "id": imsi,
+            "aors": imsi,
+            "use_avpf": "yes",
+            "media_encryption": "dtls",
+            "dtls_ca_file": i.ca_crt_path,
+            "dtls_cert_file": i.host_pem_path,
+            "dtls_verify": "fingerprint",
+            "dtls_setup": "actpass",
+            "media_use_received_transport": "yes",
+            "rtcp_mux": "yes"
+        };
 
-            const ps_endpoints_base = {
-                "disallow": "all",
-                "context": sipCallContext,
-                "message_context": messagesDialplanContext,
-                "auth": imsi,
-                "from_domain": i.getBaseDomain(),
-                "ice_support": "yes",
-                "transport": "transport-tcp",
-                "dtmf_mode": "info"
-            };
+        sql += buildInsertQuery("ps_aors", {
+            "id": ps_endpoints.aors,
+            "max_contacts": 30,
+            "qualify_frequency": 0,
+            "support_path": "yes"
+        }, "IGNORE");
 
-            const webId = `${imsi}-webRTC`;
-
-            return [{
-                "allow": "alaw:10,ulaw:10",
-                "id": webId,
-                "aors": webId,
-                ...ps_endpoints_base,
-                "use_avpf": "yes",
-                "media_encryption": "dtls",
-                "dtls_ca_file": i.ca_crt_path,
-                "dtls_cert_file": i.host_pem_path,
-                "dtls_verify": "fingerprint",
-                "dtls_setup": "actpass",
-                "media_use_received_transport": "yes",
-                "rtcp_mux": "yes"
-            }, {
-                "allow": "alaw:10,ulaw:10", //See TODO below
-                "id": imsi,
-                "aors": imsi,
-                ...ps_endpoints_base
-            }];
-
-            /*
-            TODO: We have witnessed an often poor quality
-            of the audio from GSM to Linphone on galaxy 
-            S4 on Android lollipop but maybe it's just
-            a problem caused by the test units themselves
-            and not a general case. Do further investigations.
-            Changing the codec could solve the problem.
-            Asterisk is currently compiled with all free
-            audio codecs ( list displayed on Asterisk startup )
-            so we can perform tests easily.
-            */
-
-        })();
-
-        for (const ps_endpoints of [ps_endpoints_mobile, ps_endpoints_web]) {
-
-            sql += buildInsertQuery("ps_aors", {
-                "id": ps_endpoints.aors,
-                "max_contacts": 30,
-                "qualify_frequency": 0,
-                "support_path": "yes"
-            }, "IGNORE");
-
-            sql += buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
-
-        }
+        sql += buildInsertQuery("ps_endpoints", ps_endpoints, "IGNORE");
 
         sql += `SELECT password FROM ps_auths WHERE id= ${esc(imsi)}`;
 

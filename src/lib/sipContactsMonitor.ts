@@ -1,9 +1,14 @@
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
 import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
-import * as misc from "./misc";
-import * as backendRemoteApiCaller from "./toBackend/remoteApiCaller";
+import * as sipRouting from "./misc/sipRouting";
+import { areSameUaSims } from "./misc/misc"
 import * as dbAsterisk from "./dbAsterisk";
+import * as serializedUaObjectCarriedOverSipContactParameter from "./misc/serializedUaObjectCarriedOverSipContactParameter";
+import * as crypto from "crypto";
+import * as logger from "logger";
+
+const debug = logger.debugFactory();
 
 //TODO: create proxy
 export const evtContactRegistration = new SyncEvent<types.Contact>();
@@ -15,16 +20,15 @@ export function getContacts(imsi?: string): types.Contact[] {
 }
 
 /** Close all asteriskSocket that has a contact registered to a IMSI */
-export function discardContactsRegisteredToSim(imsi: string): void {
+export function discardContactsRegisteredToSim(imsi: string, asteriskSocketsDestroyReason: string): void {
+
+
 
     for (let { contact, asteriskSocket } of contacts.get()) {
 
         if (contact.uaSim.imsi === imsi) {
 
-            asteriskSocket.destroy([
-                "need password renewal or sim not registered, closing all ast",
-                `sockets that have a contact registered to imsi: ${imsi}`
-            ].join(" "));
+            asteriskSocket.destroy(asteriskSocketsDestroyReason);
 
         }
 
@@ -94,13 +98,9 @@ namespace contacts {
 }
 
 contacts.evtExpiredContact.attach(
-    ({ contact, asteriskSocket }) => {
-
-        asteriskSocket.destroy(`Contact associated to connection expired`);
-
-        backendRemoteApiCaller.forceContactToRegister(contact);
-
-    }
+    ({ contact, asteriskSocket }) => asteriskSocket.destroy(
+        `Contact ${contact.uri} that was associated associated to this connection has expired`
+    )
 );
 
 function onContactRegistered(
@@ -117,34 +117,56 @@ function onContactRegistered(
 
     });
 
-    contacts.get().find(entry => {
+    let sipContactRegistrationType:
+        "NEW REGISTRATION" |
+        "REGISTRATION REFRESH" |
+        "UNREGISTER" |
+        "NEW REGISTRATION OF AN UA(SIM) THAT HAD A REGISTRATION STILL VALID ON AN OTHER CONNECTION"
+        = "NEW REGISTRATION";
 
-        if (
-            entry.contact !== contact &&
-            misc.areSameUaSims(contact.uaSim, entry.contact.uaSim)
-        ) {
+    for (const { contact: contact_i, asteriskSocket: asteriskSocket_i } of contacts.get()) {
 
-            entry.asteriskSocket.destroy("Same UA re-registered with an other connection");
+        if (contact_i === contact) {
 
-            return true;
+            sipContactRegistrationType = expire === 0 ? "UNREGISTER" : "REGISTRATION REFRESH";
+
+            break;
+        }
+
+        if (areSameUaSims(contact.uaSim, contact_i.uaSim)) {
+
+            asteriskSocket_i.destroy("UA re-registered with an other connection");
+
+            sipContactRegistrationType =
+                "NEW REGISTRATION OF AN UA(SIM) THAT HAD A REGISTRATION STILL VALID ON AN OTHER CONNECTION";
+
+            break;
 
         }
 
-        return false;
+    }
 
-    });
+    debug(
+        JSON.stringify({
+            sipContactRegistrationType,
+            expire,
+            contact
+        }, null, 2)
+    );
+
 
     contacts.setOrRefresh(contact, asteriskSocket, expire * 1000);
+
+    if (expire === 0) {
+        return;
+    }
 
     evtContactRegistration.post(contact);
 
 }
 
-
 /** should be called against every new asterisk socket */
-export function handleAsteriskSocket(
-    asteriskSocket: sipLibrary.Socket
-): Promise<types.Contact> {
+export function handleAsteriskSocket( asteriskSocket: sipLibrary.Socket): Promise<types.Contact> {
 
     let imsi: string;
     let connectionId: string;
@@ -153,12 +175,16 @@ export function handleAsteriskSocket(
         sipLibrary.matchRequest,
         sipRequest => {
 
-            imsi = misc.readImsi(sipRequest);
-            connectionId = misc.cid.read(sipRequest);
+            imsi = sipRouting.readImsi(sipRequest);
+            connectionId = sipRouting.cid.read(sipRequest);
 
         }
     );
 
+    /*NOTE: Asterisk use a fixed length buffer for storing contact uri 
+    as a result we have to first extract the information carried by the 
+    contact then remove the parameters so it does not overflow asterisk 
+    buffer. We still need the contact uri to be uniq so we add a mark. */
     let purgedContactUri: string;
 
     asteriskSocket.evtPacketPreWrite.attachOnce(
@@ -168,12 +194,19 @@ export function handleAsteriskSocket(
         ),
         sipRequest => {
 
-            let parsedUri = sipLibrary.parseUri(
-                sipLibrary.getContact(sipRequest)!.uri
-            );
+            const { uri } = sipLibrary.getContact(sipRequest)!;
 
+            const parsedUri = sipLibrary.parseUri(uri);
+
+            /*NOTE: Each asteriskSocket have an single sip contact registration
+            associated to it. and an asterisk socket is identified by a connectionId and an imsi
+            so the contact uri must be unique across imsi + connectionId
+            */
             parsedUri.params = {
-                "mk": `${misc.cid.parse(connectionId).timestamp}`.match(/([0-9]{6})$/)![1]
+                "mk": crypto.createHash("md5")
+                    .update(uri + connectionId)
+                    .digest("hex")
+                    .substring(0, 8)
             };
 
             purgedContactUri = sipLibrary.stringifyUri(parsedUri);
@@ -182,55 +215,30 @@ export function handleAsteriskSocket(
     );
 
     let contact: types.Contact;
-    let expire: number;
 
+    //TODO: What if an old client connect, or an attacked provide malformed params ?
     asteriskSocket.evtPacketPreWrite.attachOnce(
         (sipPacket): sipPacket is sipLibrary.Request => (
             sipLibrary.matchRequest(sipPacket) &&
             sipPacket.method === "REGISTER"
         ),
-        sipRequestRegister => {
+        sipRequestRegister => contact = {
+            "uri": purgedContactUri,
+            connectionId,
+            "path": sipLibrary.stringifyPath(sipRequestRegister.headers.path!),
+            "uaSim": {
+                imsi,
+                "ua": serializedUaObjectCarriedOverSipContactParameter.parseFromContactUriParams(
+                    sipLibrary.parseUri(
+                        sipLibrary.getContact(sipRequestRegister)!.uri
+                    ).params
+                )
 
-            const [aorParams, uriParams] = (() => {
-
-                let contactAor = sipLibrary.getContact(sipRequestRegister)!;
-
-                return [
-                    contactAor.params,
-                    sipLibrary.parseUri(contactAor.uri).params
-                ];
-
-            })();
-
-            contact = {
-                "uri": purgedContactUri,
-                connectionId,
-                "path": sipLibrary.stringifyPath(sipRequestRegister.headers.path!),
-                "uaSim": {
-                    imsi,
-                    "ua": {
-                        "instance": aorParams["+sip.instance"]!,
-                        "platform": (() => {
-
-                            switch (uriParams["pn-type"]) {
-                                case "firebase": return "android";
-                                case "apple": return "iOS";
-                                default: return "web";
-                            }
-
-                        })(),
-                        "pushToken": uriParams["pn-tok"] || "",
-                        ...misc.RegistrationParams.parse(aorParams, uriParams)
-                    }
-                }
-            };
-
-            expire = parseInt(sipRequestRegister.headers["expires"]);
-
+            }
         }
     );
 
-    let evtRegistered = new VoidSyncEvent();
+    const evtFirstRegistration = new VoidSyncEvent();
 
     asteriskSocket.evtPacketPreWrite.attach(
         (sipPacket): sipPacket is sipLibrary.Request => (
@@ -241,17 +249,23 @@ export function handleAsteriskSocket(
         sipRequestRegister =>
             asteriskSocket.evtResponse.attachOnce(
                 sipResponse => sipLibrary.isResponse(sipRequestRegister, sipResponse),
-                ({ status }) => {
+                sipResponse => {
 
-                    if (status !== 200) {
+                    if (sipResponse.status !== 200) {
                         return;
                     }
 
-                    onContactRegistered(contact, expire, asteriskSocket);
+                    onContactRegistered(
+                        contact,
+                        parseInt(sipResponse.headers["expires"]),
+                        asteriskSocket
+                    );
 
-                    if (!evtRegistered.postCount) {
-                        evtRegistered.post();
+                    if (evtFirstRegistration.postCount) {
+                        return;
                     }
+
+                    evtFirstRegistration.post();
 
                 }
             )
@@ -266,7 +280,7 @@ export function handleAsteriskSocket(
     );
 
     return new Promise(
-        resolve => evtRegistered
+        resolve => evtFirstRegistration
             .waitFor(6001)
             .then(() => resolve(contact))
             .catch(() => asteriskSocket.destroy("This connection did not register a contact in time"))

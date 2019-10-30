@@ -83,8 +83,8 @@ export async function connect() {
         "connection": false,
         "error": true,
         "close": true,
-        "incomingTraffic": false,
-        "outgoingTraffic": false,
+        "incomingTraffic": true,
+        "outgoingTraffic": true,
         "colorizedTraffic": "IN",
         "ignoreApiTraffic": true
     }, logger.log);

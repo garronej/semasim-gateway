@@ -1,7 +1,7 @@
 
 
 import * as sip from "ts-sip";
-import * as misc from "../misc";
+import * as sipRouting from "../misc/sipRouting";
 import * as types from "../types";
 import * as backendConnection from "../toBackend/connection";
 
@@ -20,7 +20,7 @@ export function handle(
 
             prPlatform.then(v => platform = v);
 
-            const { uaSocket: { remoteAddress: uaAddress } } = misc.cid.parse(connectionId);
+            const { uaSocket: { remoteAddress: uaAddress } } = sipRouting.cid.parse(connectionId);
 
             return (sipPacketNextHop: sip.Packet): void => {
 
@@ -103,7 +103,7 @@ export function handle(
 
             if (sip.matchRequest(sipPacketNextHop)) {
 
-                misc.cid.set(sipPacketNextHop, connectionId);
+                sipRouting.cid.set(sipPacketNextHop, connectionId);
 
             }
 

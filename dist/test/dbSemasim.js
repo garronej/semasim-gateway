@@ -81,7 +81,6 @@ var db = require("../lib/dbSemasim");
 var crypto = require("crypto");
 var ttTesting = require("transfer-tools/dist/lib/testing");
 var assertSame = ttTesting.assertSame;
-var sqliteCustom = require("sqlite-custom");
 var generateUa = function (email) {
     if (email === void 0) { email = ttTesting.genHexStr(10) + "@foo.com"; }
     return ({
@@ -89,8 +88,7 @@ var generateUa = function (email) {
         "platform": Date.now() % 2 ? "android" : "iOS",
         "pushToken": ttTesting.genHexStr(60),
         "userEmail": email,
-        "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary"),
-        "messagesEnabled": true
+        "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary")
     });
 };
 function testDbSemasim() {
@@ -124,8 +122,11 @@ function testDbSemasim() {
                     return [4 /*yield*/, t7()];
                 case 9:
                     _a.sent();
-                    return [4 /*yield*/, db.flush()];
+                    return [4 /*yield*/, t8()];
                 case 10:
+                    _a.sent();
+                    return [4 /*yield*/, db.flush()];
+                case 11:
                     _a.sent();
                     console.log("ALL TESTS DB SEMASIM PASSED");
                     return [2 /*return*/];
@@ -156,18 +157,18 @@ function t1() {
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 3:
                     _b.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": true, "isUaCreatedOrUpdated": true }]);
+                        { "isFirstUaForSim": true }]);
                     _c = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 4:
                     _c.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": false, "isUaCreatedOrUpdated": false }]);
+                        { "isFirstUaForSim": false }]);
                     uaSim.ua.pushToken = ttTesting.genHexStr(60);
                     _d = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 5:
                     _d.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": false, "isUaCreatedOrUpdated": true }]);
+                        { "isFirstUaForSim": false }]);
                     imsi2 = "123456789123456";
                     _e = assertSame;
                     return [4 /*yield*/, db.addUaSim({
@@ -176,7 +177,7 @@ function t1() {
                         })];
                 case 6:
                     _e.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": true, "isUaCreatedOrUpdated": false }]);
+                        { "isFirstUaForSim": true }]);
                     _f = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 7:
@@ -197,37 +198,37 @@ function t1() {
 }
 function t2() {
     return __awaiter(this, void 0, void 0, function () {
-        var imsi, email, messagesTowardGsm, uas, i, ua, _a, sendingUa, i, message, _b, checkMark, crossMark, _loop_1;
-        var _c;
+        var imsi, email, messagesTowardGsm, uas, i, ua, _a, sendingUa, i, message, _b, _c, checkMark, crossMark, _loop_1;
+        var _d;
         var _this = this;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0: return [4 /*yield*/, db.flush()];
                 case 1:
-                    _d.sent();
+                    _e.sent();
                     imsi = ttTesting.genDigits(15);
                     email = ttTesting.genHexStr(10) + "@foo.com";
                     messagesTowardGsm = [];
                     uas = [];
                     i = 0;
-                    _d.label = 2;
+                    _e.label = 2;
                 case 2:
                     if (!(i < 10)) return [3 /*break*/, 5];
                     ua = generateUa((i % 4 === 0) ? email : undefined);
                     _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _a.apply(void 0, [_d.sent(),
-                        { "isFirstUaForSim": i === 0, "isUaCreatedOrUpdated": true }]);
+                    _a.apply(void 0, [_e.sent(),
+                        { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
-                    _d.label = 4;
+                    _e.label = 4;
                 case 4:
                     i++;
                     return [3 /*break*/, 2];
                 case 5:
                     sendingUa = uas[0];
                     i = 0;
-                    _d.label = 6;
+                    _e.label = 6;
                 case 6:
                     if (!(i < 5)) return [3 /*break*/, 9];
                     message = {
@@ -242,9 +243,9 @@ function t2() {
                     };
                     return [4 /*yield*/, db.onSipMessage(message.toNumber, Buffer.from(message.textB64, "base64").toString("utf8"), message.uaSim, new Date(message.dateTime), message.appendPromotionalMessage)];
                 case 7:
-                    _d.sent();
+                    _e.sent();
                     messagesTowardGsm.push(message);
-                    _d.label = 8;
+                    _e.label = 8;
                 case 8:
                     i++;
                     return [3 /*break*/, 6];
@@ -252,11 +253,13 @@ function t2() {
                     _b = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 10:
-                    _b.apply(void 0, [_d.sent(), (_c = {},
-                            _c[imsi] = new Date(0),
-                            _c)]);
-                    checkMark = Buffer.from("e29c94", "hex").toString("utf8");
-                    crossMark = Buffer.from("e29d8c", "hex").toString("utf8");
+                    _b.apply(void 0, [_e.sent(), (_d = {},
+                            _d[imsi] = new Date(0),
+                            _d)]);
+                    _c = __read([
+                        "e29c94",
+                        "e29d8c"
+                    ].map(function (code) { return Buffer.from(code, "hex").toString("utf8"); }), 2), checkMark = _c[0], crossMark = _c[1];
                     _loop_1 = function () {
                         var _a, _b, messageTowardGsm, _c, onSent, onStatusReport, sendDate, statusReport, bundledData, __i, __in, _d, _e, ua, o, _f, _g, mts, setSent, e_1_1, _h, _j, ua, o, _k, _l, mts, setSent, e_2_1;
                         var e_1, _m, e_2, _o;
@@ -459,13 +462,13 @@ function t2() {
                             }
                         });
                     };
-                    _d.label = 11;
+                    _e.label = 11;
                 case 11: return [4 /*yield*/, db.getUnsentMessagesTowardGsm(imsi)];
                 case 12:
-                    if (!(_d.sent()).length) return [3 /*break*/, 14];
+                    if (!(_e.sent()).length) return [3 /*break*/, 14];
                     return [5 /*yield**/, _loop_1()];
                 case 13:
-                    _d.sent();
+                    _e.sent();
                     return [3 /*break*/, 11];
                 case 14:
                     console.log("SIP => DONGLE PASS");
@@ -500,10 +503,7 @@ function t3() {
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 4:
                     _b.apply(void 0, [_k.sent(),
-                        {
-                            "isFirstUaForSim": i === 0,
-                            "isUaCreatedOrUpdated": true
-                        }]);
+                        { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _k.label = 5;
                 case 5:
@@ -609,10 +609,7 @@ function t4() {
                     return [4 /*yield*/, db.addUaSim(uaSimExt)];
                 case 2:
                     _a.apply(void 0, [_d.sent(),
-                        {
-                            "isUaCreatedOrUpdated": true,
-                            "isFirstUaForSim": true
-                        }]);
+                        { "isFirstUaForSim": true }]);
                     imsi = ttTesting.genDigits(15);
                     allowedUas = [];
                     i = 0;
@@ -627,10 +624,7 @@ function t4() {
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 4:
                     _b.apply(void 0, [_d.sent(),
-                        {
-                            "isUaCreatedOrUpdated": true,
-                            "isFirstUaForSim": allowedUas.length === 1
-                        }]);
+                        { "isFirstUaForSim": allowedUas.length === 1 }]);
                     _d.label = 5;
                 case 5:
                     i++;
@@ -656,9 +650,7 @@ function t4() {
                                 "userEmail": row["user_email"],
                                 "platform": row["platform"],
                                 "pushToken": row["push_token"],
-                                "software": row["software"],
-                                "towardUserEncryptKeyStr": row["toward_user_encrypt_key"],
-                                "messagesEnabled": sqliteCustom.bool.dec(row["messages_enabled"])
+                                "towardUserEncryptKeyStr": row["toward_user_encrypt_key"]
                             };
                             if (row["imsi"] === imsi) {
                                 remainingUas.push(ua);
@@ -704,10 +696,7 @@ function t5() {
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
                     _a.apply(void 0, [_f.sent(),
-                        {
-                            "isFirstUaForSim": i === 0,
-                            "isUaCreatedOrUpdated": true
-                        }]);
+                        { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _f.label = 4;
                 case 4:
@@ -787,10 +776,7 @@ function t6() {
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
                     _a.apply(void 0, [_h.sent(),
-                        {
-                            "isFirstUaForSim": i === 0,
-                            "isUaCreatedOrUpdated": true
-                        }]);
+                        { "isFirstUaForSim": i === 0 }]);
                     ringingUas.push(ua);
                     _h.label = 4;
                 case 4:
@@ -876,10 +862,7 @@ function t7() {
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
                     _a.apply(void 0, [_c.sent(),
-                        {
-                            "isFirstUaForSim": i === 0,
-                            "isUaCreatedOrUpdated": true
-                        }]);
+                        { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _c.label = 4;
                 case 4:
@@ -948,6 +931,92 @@ function t7() {
                 case 7:
                     _c.sent();
                     console.log("NOTIFICATIONS SIP CALL SUMMARY PASS");
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function t8() {
+    return __awaiter(this, void 0, void 0, function () {
+        var uasPreGenerated, _a, _b, imsi, uas, i, ua, uasPreGenerated_1, uasPreGenerated_1_1, ua, e_8_1, _c, e_9_1;
+        var e_9, _d, e_8, _e;
+        return __generator(this, function (_f) {
+            switch (_f.label) {
+                case 0: return [4 /*yield*/, db.flush()];
+                case 1:
+                    _f.sent();
+                    uasPreGenerated = new Array(12).fill("").map(function () { return generateUa(); });
+                    _f.label = 2;
+                case 2:
+                    _f.trys.push([2, 18, 19, 20]);
+                    _a = __values(new Array(10).fill("").map(function () { return ttTesting.genDigits(15); })), _b = _a.next();
+                    _f.label = 3;
+                case 3:
+                    if (!!_b.done) return [3 /*break*/, 17];
+                    imsi = _b.value;
+                    uas = [];
+                    i = 0;
+                    _f.label = 4;
+                case 4:
+                    if (!(i < 16)) return [3 /*break*/, 7];
+                    ua = generateUa();
+                    return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
+                case 5:
+                    _f.sent(),
+                        uas.push(ua);
+                    _f.label = 6;
+                case 6:
+                    i++;
+                    return [3 /*break*/, 4];
+                case 7:
+                    _f.trys.push([7, 12, 13, 14]);
+                    uasPreGenerated_1 = (e_8 = void 0, __values(uasPreGenerated)), uasPreGenerated_1_1 = uasPreGenerated_1.next();
+                    _f.label = 8;
+                case 8:
+                    if (!!uasPreGenerated_1_1.done) return [3 /*break*/, 11];
+                    ua = uasPreGenerated_1_1.value;
+                    return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
+                case 9:
+                    _f.sent(),
+                        uas.push(ua);
+                    _f.label = 10;
+                case 10:
+                    uasPreGenerated_1_1 = uasPreGenerated_1.next();
+                    return [3 /*break*/, 8];
+                case 11: return [3 /*break*/, 14];
+                case 12:
+                    e_8_1 = _f.sent();
+                    e_8 = { error: e_8_1 };
+                    return [3 /*break*/, 14];
+                case 13:
+                    try {
+                        if (uasPreGenerated_1_1 && !uasPreGenerated_1_1.done && (_e = uasPreGenerated_1.return)) _e.call(uasPreGenerated_1);
+                    }
+                    finally { if (e_8) throw e_8.error; }
+                    return [7 /*endfinally*/];
+                case 14:
+                    _c = assertSame;
+                    return [4 /*yield*/, db.getUas(imsi)];
+                case 15:
+                    _c.apply(void 0, [_f.sent(),
+                        uas]);
+                    _f.label = 16;
+                case 16:
+                    _b = _a.next();
+                    return [3 /*break*/, 3];
+                case 17: return [3 /*break*/, 20];
+                case 18:
+                    e_9_1 = _f.sent();
+                    e_9 = { error: e_9_1 };
+                    return [3 /*break*/, 20];
+                case 19:
+                    try {
+                        if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                    }
+                    finally { if (e_9) throw e_9.error; }
+                    return [7 /*endfinally*/];
+                case 20:
+                    console.log("GET UA TEST PASS");
                     return [2 /*return*/];
             }
         });

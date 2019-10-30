@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __values = (this && this.__values) || function (o) {
     var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
@@ -39,9 +28,13 @@ var __read = (this && this.__read) || function (o, n) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var sipLibrary = require("ts-sip");
 var ts_events_extended_1 = require("ts-events-extended");
-var misc = require("./misc");
-var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
+var sipRouting = require("./misc/sipRouting");
+var misc_1 = require("./misc/misc");
 var dbAsterisk = require("./dbAsterisk");
+var serializedUaObjectCarriedOverSipContactParameter = require("./misc/serializedUaObjectCarriedOverSipContactParameter");
+var crypto = require("crypto");
+var logger = require("logger");
+var debug = logger.debugFactory();
 //TODO: create proxy
 exports.evtContactRegistration = new ts_events_extended_1.SyncEvent();
 function getContacts(imsi) {
@@ -57,16 +50,13 @@ function getContacts(imsi) {
 }
 exports.getContacts = getContacts;
 /** Close all asteriskSocket that has a contact registered to a IMSI */
-function discardContactsRegisteredToSim(imsi) {
+function discardContactsRegisteredToSim(imsi, asteriskSocketsDestroyReason) {
     var e_1, _a;
     try {
         for (var _b = __values(contacts.get()), _c = _b.next(); !_c.done; _c = _b.next()) {
             var _d = _c.value, contact = _d.contact, asteriskSocket = _d.asteriskSocket;
             if (contact.uaSim.imsi === imsi) {
-                asteriskSocket.destroy([
-                    "need password renewal or sim not registered, closing all ast",
-                    "sockets that have a contact registered to imsi: " + imsi
-                ].join(" "));
+                asteriskSocket.destroy(asteriskSocketsDestroyReason);
             }
         }
     }
@@ -123,23 +113,46 @@ var contacts;
 })(contacts || (contacts = {}));
 contacts.evtExpiredContact.attach(function (_a) {
     var contact = _a.contact, asteriskSocket = _a.asteriskSocket;
-    asteriskSocket.destroy("Contact associated to connection expired");
-    backendRemoteApiCaller.forceContactToRegister(contact);
+    return asteriskSocket.destroy("Contact " + contact.uri + " that was associated associated to this connection has expired");
 });
 function onContactRegistered(contact, expire, asteriskSocket) {
+    var e_3, _a;
     asteriskSocket.evtClose.attachOnce(function () {
         contacts._delete(contact);
         dbAsterisk.deleteContact(contact);
     });
-    contacts.get().find(function (entry) {
-        if (entry.contact !== contact &&
-            misc.areSameUaSims(contact.uaSim, entry.contact.uaSim)) {
-            entry.asteriskSocket.destroy("Same UA re-registered with an other connection");
-            return true;
+    var sipContactRegistrationType = "NEW REGISTRATION";
+    try {
+        for (var _b = __values(contacts.get()), _c = _b.next(); !_c.done; _c = _b.next()) {
+            var _d = _c.value, contact_i = _d.contact, asteriskSocket_i = _d.asteriskSocket;
+            if (contact_i === contact) {
+                sipContactRegistrationType = expire === 0 ? "UNREGISTER" : "REGISTRATION REFRESH";
+                break;
+            }
+            if (misc_1.areSameUaSims(contact.uaSim, contact_i.uaSim)) {
+                asteriskSocket_i.destroy("UA re-registered with an other connection");
+                sipContactRegistrationType =
+                    "NEW REGISTRATION OF AN UA(SIM) THAT HAD A REGISTRATION STILL VALID ON AN OTHER CONNECTION";
+                break;
+            }
         }
-        return false;
-    });
+    }
+    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+    finally {
+        try {
+            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+        }
+        finally { if (e_3) throw e_3.error; }
+    }
+    debug(JSON.stringify({
+        sipContactRegistrationType: sipContactRegistrationType,
+        expire: expire,
+        contact: contact
+    }, null, 2));
     contacts.setOrRefresh(contact, asteriskSocket, expire * 1000);
+    if (expire === 0) {
+        return;
+    }
     exports.evtContactRegistration.post(contact);
 }
 /** should be called against every new asterisk socket */
@@ -147,64 +160,60 @@ function handleAsteriskSocket(asteriskSocket) {
     var imsi;
     var connectionId;
     asteriskSocket.evtPacketPreWrite.attachOnce(sipLibrary.matchRequest, function (sipRequest) {
-        imsi = misc.readImsi(sipRequest);
-        connectionId = misc.cid.read(sipRequest);
+        imsi = sipRouting.readImsi(sipRequest);
+        connectionId = sipRouting.cid.read(sipRequest);
     });
+    /*NOTE: Asterisk use a fixed length buffer for storing contact uri
+    as a result we have to first extract the information carried by the
+    contact then remove the parameters so it does not overflow asterisk
+    buffer. We still need the contact uri to be uniq so we add a mark. */
     var purgedContactUri;
     asteriskSocket.evtPacketPreWrite.attachOnce(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
         !!sipLibrary.getContact(sipPacket)); }, function (sipRequest) {
-        var parsedUri = sipLibrary.parseUri(sipLibrary.getContact(sipRequest).uri);
+        var uri = sipLibrary.getContact(sipRequest).uri;
+        var parsedUri = sipLibrary.parseUri(uri);
+        /*NOTE: Each asteriskSocket have an single sip contact registration
+        associated to it. and an asterisk socket is identified by a connectionId and an imsi
+        so the contact uri must be unique across imsi + connectionId
+        */
         parsedUri.params = {
-            "mk": ("" + misc.cid.parse(connectionId).timestamp).match(/([0-9]{6})$/)[1]
+            "mk": crypto.createHash("md5")
+                .update(uri + connectionId)
+                .digest("hex")
+                .substring(0, 8)
         };
         purgedContactUri = sipLibrary.stringifyUri(parsedUri);
     });
     var contact;
-    var expire;
+    //TODO: What if an old client connect, or an attacked provide malformed params ?
     asteriskSocket.evtPacketPreWrite.attachOnce(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
-        sipPacket.method === "REGISTER"); }, function (sipRequestRegister) {
-        var _a = __read((function () {
-            var contactAor = sipLibrary.getContact(sipRequestRegister);
-            return [
-                contactAor.params,
-                sipLibrary.parseUri(contactAor.uri).params
-            ];
-        })(), 2), aorParams = _a[0], uriParams = _a[1];
-        contact = {
-            "uri": purgedContactUri,
-            connectionId: connectionId,
-            "path": sipLibrary.stringifyPath(sipRequestRegister.headers.path),
-            "uaSim": {
-                imsi: imsi,
-                "ua": __assign({ "instance": aorParams["+sip.instance"], "platform": (function () {
-                        switch (uriParams["pn-type"]) {
-                            case "firebase": return "android";
-                            case "apple": return "iOS";
-                            default: return "web";
-                        }
-                    })(), "pushToken": uriParams["pn-tok"] || "" }, misc.RegistrationParams.parse(aorParams, uriParams))
-            }
-        };
-        expire = parseInt(sipRequestRegister.headers["expires"]);
-    });
-    var evtRegistered = new ts_events_extended_1.VoidSyncEvent();
+        sipPacket.method === "REGISTER"); }, function (sipRequestRegister) { return contact = {
+        "uri": purgedContactUri,
+        connectionId: connectionId,
+        "path": sipLibrary.stringifyPath(sipRequestRegister.headers.path),
+        "uaSim": {
+            imsi: imsi,
+            "ua": serializedUaObjectCarriedOverSipContactParameter.parseFromContactUriParams(sipLibrary.parseUri(sipLibrary.getContact(sipRequestRegister).uri).params)
+        }
+    }; });
+    var evtFirstRegistration = new ts_events_extended_1.VoidSyncEvent();
     asteriskSocket.evtPacketPreWrite.attach(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
         sipPacket.method === "REGISTER" &&
         sipPacket.headers["authorization"]); }, function (sipRequestRegister) {
-        return asteriskSocket.evtResponse.attachOnce(function (sipResponse) { return sipLibrary.isResponse(sipRequestRegister, sipResponse); }, function (_a) {
-            var status = _a.status;
-            if (status !== 200) {
+        return asteriskSocket.evtResponse.attachOnce(function (sipResponse) { return sipLibrary.isResponse(sipRequestRegister, sipResponse); }, function (sipResponse) {
+            if (sipResponse.status !== 200) {
                 return;
             }
-            onContactRegistered(contact, expire, asteriskSocket);
-            if (!evtRegistered.postCount) {
-                evtRegistered.post();
+            onContactRegistered(contact, parseInt(sipResponse.headers["expires"]), asteriskSocket);
+            if (evtFirstRegistration.postCount) {
+                return;
             }
+            evtFirstRegistration.post();
         });
     });
     asteriskSocket.evtPacketPreWrite.attach(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
         !!sipLibrary.getContact(sipPacket)); }, function (sipPacket) { return sipLibrary.getContact(sipPacket).uri = purgedContactUri; });
-    return new Promise(function (resolve) { return evtRegistered
+    return new Promise(function (resolve) { return evtFirstRegistration
         .waitFor(6001)
         .then(function () { return resolve(contact); })
         .catch(function () { return asteriskSocket.destroy("This connection did not register a contact in time"); }); });

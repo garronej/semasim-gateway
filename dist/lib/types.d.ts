@@ -16,7 +16,6 @@ export declare type Ua = UaRef & {
     towardUserEncryptKeyStr: string;
     platform: Ua.Platform;
     pushToken: string;
-    messagesEnabled: boolean;
 };
 export declare namespace Ua {
     type Platform = "android" | "iOS" | "web";

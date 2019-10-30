@@ -64,13 +64,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var AsyncLock = require("async-lock");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var dbSemasim = require("./dbSemasim");
-var misc = require("./misc");
+var misc_1 = require("./misc/misc");
+var bundledData_1 = require("./misc/bundledData");
 var logger = require("logger");
-var sipContactsMonitor = require("./sipContactsMonitor");
-var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
 var sipMessagesMonitor = require("./sipMessagesMonitor");
 var cryptoLib = require("crypto-lib");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
+var getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1 = require("./misc/getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered");
 var debug = logger.debugFactory();
 function sendMessagesOfDongle(dongle) {
     var _this = this;
@@ -164,46 +164,38 @@ exports.sendMessagesOfDongle = sendMessagesOfDongle;
 })(sendMessagesOfDongle = exports.sendMessagesOfDongle || (exports.sendMessagesOfDongle = {}));
 function notifyNewSipMessagesToSend(imsi) {
     return __awaiter(this, void 0, void 0, function () {
-        var _a, _b, contact, e_2_1;
-        var e_2, _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0:
-                    _d.trys.push([0, 6, 7, 8]);
-                    _a = __values(sipContactsMonitor.getContacts(imsi)), _b = _a.next();
-                    _d.label = 1;
-                case 1:
-                    if (!!_b.done) return [3 /*break*/, 5];
-                    contact = _b.value;
-                    return [4 /*yield*/, dbSemasim.messageTowardSipUnsentCount(contact.uaSim)];
-                case 2:
-                    if (!(_d.sent())) {
-                        return [3 /*break*/, 4];
-                    }
-                    return [4 /*yield*/, backendRemoteApiCaller.wakeUpContact(contact)];
-                case 3:
-                    if ((_d.sent())
-                        ===
-                            "REACHABLE") {
-                        sendMessagesOfContact(contact);
-                    }
-                    _d.label = 4;
-                case 4:
-                    _b = _a.next();
-                    return [3 /*break*/, 1];
-                case 5: return [3 /*break*/, 8];
-                case 6:
-                    e_2_1 = _d.sent();
-                    e_2 = { error: e_2_1 };
-                    return [3 /*break*/, 8];
-                case 7:
-                    try {
-                        if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-                    }
-                    finally { if (e_2) throw e_2.error; }
-                    return [7 /*endfinally*/];
-                case 8: return [2 /*return*/];
+        var _this = this;
+        return __generator(this, function (_a) {
+            /*
+            for (const contact of sipContactsMonitor.getContacts(imsi)) {
+        
+                if (!(await dbSemasim.messageTowardSipUnsentCount(contact.uaSim))) {
+                    continue;
+                }
+        
+                if (
+                    (await backendRemoteApiCaller.wakeUpContact(contact))
+                    ===
+                    "REACHABLE"
+                ) {
+                    sendMessagesOfContact(contact);
+                }
+        
             }
+            */
+            getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1.getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered({
+                imsi: imsi,
+                "asyncUaMatcher": function (ua) { return __awaiter(_this, void 0, void 0, function () { var _a; return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _a = 0;
+                            return [4 /*yield*/, dbSemasim.messageTowardSipUnsentCount({ imsi: imsi, ua: ua })];
+                        case 1: return [2 /*return*/, _a !== (_b.sent())];
+                    }
+                }); }); },
+                "reachableSipContactCallbackFn": function (contact) { return sendMessagesOfContact(contact); }
+            });
+            return [2 /*return*/];
         });
     });
 }
@@ -221,9 +213,9 @@ function sendMessagesOfContact(contact) {
         }
         return out;
     })();
-    sendMessagesOfContact.lock.acquire(misc.generateUaSimId(contact.uaSim), function () { return __awaiter(_this, void 0, void 0, function () {
-        var _a, _b, _c, message, onReceived, _d, _e, _f, error_1, e_3_1;
-        var e_3, _g;
+    sendMessagesOfContact.lock.acquire(misc_1.generateUaSimId(contact.uaSim), function () { return __awaiter(_this, void 0, void 0, function () {
+        var _a, _b, _c, message, onReceived, _d, _e, _f, error_1, e_2_1;
+        var e_2, _g;
         return __generator(this, function (_h) {
             switch (_h.label) {
                 case 0:
@@ -241,7 +233,7 @@ function sendMessagesOfContact(contact) {
                     _e = (_d = sipMessagesMonitor).sendMessage;
                     _f = [contact,
                         message.fromNumber];
-                    return [4 /*yield*/, misc.smuggleBundledDataInHeaders(message.bundledData, encryptor)];
+                    return [4 /*yield*/, bundledData_1.smuggleBundledDataInHeaders(message.bundledData, encryptor)];
                 case 4: return [4 /*yield*/, _e.apply(_d, _f.concat([_h.sent()]))];
                 case 5:
                     _h.sent();
@@ -258,14 +250,14 @@ function sendMessagesOfContact(contact) {
                     return [3 /*break*/, 2];
                 case 9: return [3 /*break*/, 12];
                 case 10:
-                    e_3_1 = _h.sent();
-                    e_3 = { error: e_3_1 };
+                    e_2_1 = _h.sent();
+                    e_2 = { error: e_2_1 };
                     return [3 /*break*/, 12];
                 case 11:
                     try {
                         if (_b && !_b.done && (_g = _a.return)) _g.call(_a);
                     }
-                    finally { if (e_3) throw e_3.error; }
+                    finally { if (e_2) throw e_2.error; }
                     return [7 /*endfinally*/];
                 case 12: return [2 /*return*/];
             }

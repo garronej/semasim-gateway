@@ -34,16 +34,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -71,8 +61,9 @@ var messageDispatcher = require("./messagesDispatcher");
 var sip = require("ts-sip");
 var logger = require("logger");
 var sipContactsMonitor = require("./sipContactsMonitor");
-var backendRemoteApiCaller = require("./toBackend/remoteApiCaller");
-var misc = require("./misc");
+var toBackendRemoteApiCaller = require("./toBackend/remoteApiCaller");
+var misc_1 = require("./misc/misc");
+var getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1 = require("./misc/getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered");
 var debug = logger.debugFactory();
 var gain = "3000";
 //const volume= "11";
@@ -152,7 +143,7 @@ var OngoingCall = /** @class */ (function () {
         this.notifyCall(ongoingCall, true);
     };
     OngoingCall.addUaToCall = function (ongoingCall, ua) {
-        ongoingCall.uasInCall.set(misc.generateUaId(ua), ua);
+        ongoingCall.uasInCall.set(misc_1.generateUaId(ua), ua);
         //NOTE: We prevent notifying a call that have been terminated already.
         //Maybe never happen but we add this check for safety.
         if (this.terminatedCalls.has(ongoingCall)) {
@@ -161,7 +152,7 @@ var OngoingCall = /** @class */ (function () {
         this.notifyCall(ongoingCall, false);
     };
     OngoingCall.removeUaFromCall = function (ongoingCall, ua) {
-        ongoingCall.uasInCall.delete(misc.generateUaId(ua));
+        ongoingCall.uasInCall.delete(misc_1.generateUaId(ua));
         //NOTE: If the call is terminated we do not notify.
         if (this.terminatedCalls.has(ongoingCall)) {
             return;
@@ -169,7 +160,7 @@ var OngoingCall = /** @class */ (function () {
         this.notifyCall(ongoingCall, false);
     };
     OngoingCall.notifyCall = function (ongoingCall, isTerminated) {
-        backendRemoteApiCaller.notifyOngoingCall({
+        toBackendRemoteApiCaller.notifyOngoingCall({
             "ongoingCallId": ongoingCall.id,
             "from": ongoingCall.from,
             "imsi": ongoingCall.imsi,
@@ -195,16 +186,15 @@ var OngoingCall = /** @class */ (function () {
 }());
 function fromDongle(channel) {
     return __awaiter(this, void 0, void 0, function () {
-        var imsi, dongle, number, evtReachableContact, _loop_1, _a, _b, contact, channels, evtAnsweredOrEnded, dongleChannelName, ongoingCall;
-        var e_1, _c;
+        var imsi, dongle, number, evtReachableContact, postedContacts_1, channels, evtAnsweredOrEnded, dongleChannelName, ongoingCall;
         var _this = this;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
                     debug("Call originated from dongle");
                     return [4 /*yield*/, channel.relax.getVariable("DONGLEIMSI")];
                 case 1:
-                    imsi = (_d.sent());
+                    imsi = (_a.sent());
                     dongle = Array.from(dc.usableDongles.values()).find(function (_a) {
                         var sim = _a.sim;
                         return sim.imsi === imsi;
@@ -214,32 +204,27 @@ function fromDongle(channel) {
                     }
                     number = phone_number_1.phoneNumber.build(channel.request.callerid, !!dongle.sim.country ? dongle.sim.country.iso : undefined);
                     evtReachableContact = new ts_events_extended_1.SyncEvent();
+                    /*
+                    NOTE: evtContactRegistration is also posted when a contact refresh
+                    it's registration.
+                    It is possible that a contact "REACHABLE" ( that responded to the notify )
+                    then send a register to refresh it's registration. We don't want the same
+                    contact to be posted two times by evtReachableContact so with the next
+                    block we extract contacts that have already been posted.
+                    */
+                    {
+                        postedContacts_1 = new WeakSet();
+                        evtReachableContact.attach(function (contact) { return postedContacts_1.add(contact); });
+                        evtReachableContact.attachExtract(function (contact) { return postedContacts_1.has(contact); }, function (contact) { return debug("==========> prevent re posting contact that have already be posted", contact); });
+                    }
                     sipContactsMonitor.evtContactRegistration.attach(function (_a) {
                         var uaSim = _a.uaSim;
                         return uaSim.imsi === imsi;
                     }, evtReachableContact, function (contact) { return evtReachableContact.post(contact); });
-                    _loop_1 = function (contact) {
-                        backendRemoteApiCaller
-                            .wakeUpContact(contact)
-                            .then(function (status) {
-                            if (status === "REACHABLE") {
-                                evtReachableContact.post(contact);
-                            }
-                        });
-                    };
-                    try {
-                        for (_a = __values(sipContactsMonitor.getContacts(imsi)), _b = _a.next(); !_b.done; _b = _a.next()) {
-                            contact = _b.value;
-                            _loop_1(contact);
-                        }
-                    }
-                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                    finally {
-                        try {
-                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
-                        }
-                        finally { if (e_1) throw e_1.error; }
-                    }
+                    getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1.getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered({
+                        imsi: imsi,
+                        "reachableSipContactCallbackFn": function (contact) { return evtReachableContact.post(contact); }
+                    });
                     channels = new Map();
                     evtAnsweredOrEnded = new ts_events_extended_1.VoidSyncEvent();
                     evtAnsweredOrEnded.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
@@ -343,7 +328,7 @@ function fromDongle(channel) {
                                 channel === dongleChannelName);
                         })];
                 case 2:
-                    _d.sent();
+                    _a.sent();
                     ami.evt.detach(channel);
                     OngoingCall.deleteCall(ongoingCall);
                     /** no problem we can emit as long as we attach once */

@@ -12,7 +12,7 @@ import * as bundledData from "./bundledData";
 
     await testDbSemasim();
 
-    console.log("ALL TESTS PASSED !");
+    console.log("ALL TESTS PASSED");
 
     process.exit(0);
 
