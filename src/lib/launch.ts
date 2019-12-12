@@ -362,7 +362,7 @@ function registerListeners() {
     sipMessagesMonitor.evtMessage.attach(
         async ({ fromContact, toNumber, bundledData }) => {
 
-            const text = Buffer.from(bundledData.textB64, "base64").toString("utf8");
+            const { text } = bundledData;
 
             debug("FROM SIP MESSAGE", {"imsi": fromContact.uaSim.imsi, toNumber, text });
 
@@ -396,17 +396,6 @@ function registerListeners() {
 
 
                     messagesDispatcher.sendMessagesOfDongle(dongle);
-
-                } break;
-                case "CONVERSATION CHECKED OUT": {
-
-                    debug(`Checked out at time: ${bundledData.checkedOutAtTime}`);
-
-                    await dbSemasim.onConversationCheckedOut(
-                        uaSim, toNumber, bundledData
-                    );
-
-                    messagesDispatcher.notifyNewSipMessagesToSend(uaSim.imsi);
 
                 } break;
             }

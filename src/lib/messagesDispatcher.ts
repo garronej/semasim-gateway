@@ -39,7 +39,7 @@ export function sendMessagesOfDongle(
                 sendMessageResult = await dc.sendMessage(
                     dongle.imei,
                     message.toNumber,
-                    Buffer.from(message.textB64, "base64").toString("utf8")
+                    message.text
                     + (message.appendPromotionalMessage ? "\n\nSent via Semasim.com" : "")
                 );
 

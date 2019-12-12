@@ -61,7 +61,7 @@ export namespace sanityChecks {
         return (
             typeof o === "string" && (
                 o === "android" ||
-                o === "iOS" ||
+                o === "ios" ||
                 o === "web"
             )
         );

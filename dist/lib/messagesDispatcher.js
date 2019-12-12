@@ -90,7 +90,7 @@ function sendMessagesOfDongle(dongle) {
                                     _b.label = 1;
                                 case 1:
                                     _b.trys.push([1, 3, , 4]);
-                                    return [4 /*yield*/, dc.sendMessage(dongle.imei, message.toNumber, Buffer.from(message.textB64, "base64").toString("utf8")
+                                    return [4 /*yield*/, dc.sendMessage(dongle.imei, message.toNumber, message.text
                                             + (message.appendPromotionalMessage ? "\n\nSent via Semasim.com" : ""))];
                                 case 2:
                                     sendMessageResult = _b.sent();

@@ -25,7 +25,7 @@ export type Ua = UaRef & {
 
 export namespace Ua {
 
-    export type Platform = "android" | "iOS" | "web";
+    export type Platform = "android" | "ios" | "web";
 
 }
 
@@ -33,7 +33,7 @@ export type MessageTowardGsm = {
     dateTime: number;
     uaSim: UaSim;
     toNumber: string;
-    textB64: string;
+    text: string;
     appendPromotionalMessage: boolean;
 };
 
@@ -53,12 +53,11 @@ export type BundledData =
 export namespace BundledData {
 
     export type _Base = {
-        textB64: string;
+        text: string;
     };
 
     export type ClientToServer =
-        ClientToServer.Message | 
-        ClientToServer.ConversationCheckedOut
+        ClientToServer.Message
         ;
 
     export namespace ClientToServer {
@@ -69,10 +68,6 @@ export namespace BundledData {
             appendPromotionalMessage: boolean;
         };
 
-        export type ConversationCheckedOut = _Base & {
-            type: "CONVERSATION CHECKED OUT";
-            checkedOutAtTime: number;
-        };
 
     }
 
@@ -84,8 +79,7 @@ export namespace BundledData {
         ServerToClient.MissedCall |
         ServerToClient.FromSipCallSummary |
         ServerToClient.CallAnsweredBy |
-        ServerToClient.Ringback |
-        ServerToClient.ConversationCheckedOutFromOtherUa
+        ServerToClient.Ringback
         ;
 
     export namespace ServerToClient {
@@ -98,7 +92,7 @@ export namespace BundledData {
         export type MmsNotification = _Base & {
             type: "MMS NOTIFICATION";
             pduDateTime: number;
-            wapPushMessageB64: string;
+            wapPushMessage: string;
         };
 
         export type SendReport = _Base & {
@@ -156,10 +150,6 @@ export namespace BundledData {
             callId: string;
         };
 
-        export type ConversationCheckedOutFromOtherUa = _Base & {
-            type: "CONVERSATION CHECKED OUT FROM OTHER UA";
-            checkedOutAtTime: number;
-        };
 
     }
 

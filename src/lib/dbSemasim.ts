@@ -164,13 +164,13 @@ export async function onSipMessage(
 ): Promise<void> {
 
     let sql = [
-        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text_b64, send_date, append_promotional_message)",
+        "INSERT INTO message_toward_gsm ( date, ua_sim, to_number, text, send_date, append_promotional_message)",
         `SELECT`,
         [
             _.esc(date.getTime()),
             "ua_sim.id_",
             _.esc(toNumber),
-            _.esc(Buffer.from(text, "utf8").toString("base64")),
+            _.esc(text),
             "NULL",
             sqliteCustom.bool.enc(appendPromotionalMessage)
         ].join(", "),
@@ -235,15 +235,15 @@ export async function onDongleMessage(
             const out: types.BundledData.ServerToClient.MmsNotification = {
                 "type": "MMS NOTIFICATION",
                 "pduDateTime": date.getTime(),
-                "wapPushMessageB64": Buffer.from(text,"utf8").toString("base64"),
-                "textB64": Buffer.from([
+                "wapPushMessage": text,
+                "text": [
                     "MMS notification received.\n",
                     "Semasim does not support MMS yet.\n",
                     "Note that some phones automatically convert long SMS into MMS.",
                     "If you suspect it is what might have happen here you could ask your",
                     "contact to send the message again splitting it into smaller parts.",
                     "All apologies for the inconvenience."
-                ].join(" "), "utf8").toString("base64")
+                ].join(" ")
             };
 
             return out;
@@ -253,7 +253,7 @@ export async function onDongleMessage(
             const out: types.BundledData.ServerToClient.Message = {
                 "type": "MESSAGE",
                 "pduDateTime": date.getTime(),
-                "textB64": Buffer.from(text, "utf8").toString("base64")
+                text
             };
 
             return out;
@@ -291,7 +291,7 @@ export async function onMissedCall(imsi: string, number: string) {
     const bundledData: types.BundledData.ServerToClient.MissedCall = {
         "type": "MISSED CALL",
         "dateTime": date.getTime(),
-        "textB64": Buffer.from("Missed call","utf8").toString("base64")
+        "text": "Missed call"
     };
 
     const sql = buildMessageTowardSipInsertQuery(
@@ -331,7 +331,7 @@ export async function onCallAnswered(
         "type": "CALL ANSWERED BY",
         "dateTime": date.getTime(),
         "ua": answeredByUa,
-        "textB64": Buffer.from(`Call answered by ${answeredByUa.userEmail}`, "utf8").toString("base64")
+        "text": `Call answered by ${answeredByUa.userEmail}`
     };
 
     for (const ua of otherUasReachedForTheCall) {
@@ -460,7 +460,7 @@ export async function getUnsentMessagesTowardGsm(
             "message_toward_gsm.id_,",
             "message_toward_gsm.date,",
             "message_toward_gsm.to_number,",
-            "message_toward_gsm.text_b64,",
+            "message_toward_gsm.text,",
             "message_toward_gsm.append_promotional_message,",
             "ua_sim.imsi,",
             "ua.instance,",
@@ -497,7 +497,7 @@ export async function getUnsentMessagesTowardGsm(
                 "imsi": row["imsi"]
             },
             "toNumber": row["to_number"],
-            "textB64": row["text_b64"],
+            "text": row["text"],
             "appendPromotionalMessage": sqliteCustom.bool.dec(
                 row["append_promotional_message"]
             )
@@ -577,7 +577,7 @@ export namespace getUnsentMessagesTowardGsm {
             "type": "SEND REPORT",
             messageTowardGsm,
             "sendDateTime": sendDate === null ? null : sendDate.getTime(),
-            "textB64": Buffer.from(isSuccess ? checkMark : crossMark,"utf8").toString("base64")
+            "text": isSuccess ? checkMark : crossMark
         };
 
         sql += buildMessageTowardSipInsertQuery(
@@ -622,7 +622,7 @@ export namespace getUnsentMessagesTowardGsm {
                     "sendDateTime": statusReport.sendDate.getTime(),
                     "status": statusReport.status
                 },
-                "textB64": Buffer.from(text, "utf8").toString("base64")
+                text
             };
 
             return buildMessageTowardSipInsertQuery(
@@ -648,7 +648,7 @@ export namespace getUnsentMessagesTowardGsm {
             );
 
             sql += build(
-                `Me: ${Buffer.from(messageTowardGsm.textB64,"base64").toString("utf8")}`,
+                `Me: ${messageTowardGsm.text}`,
                 {
                     "target": "ALL OTHER UA OF USER",
                     "uaSim": messageTowardGsm.uaSim
@@ -656,7 +656,7 @@ export namespace getUnsentMessagesTowardGsm {
             );
 
             sql += build(
-                `${messageTowardGsm.uaSim.ua.userEmail}: ${Buffer.from(messageTowardGsm.textB64,"base64").toString("utf8")}`,
+                `${messageTowardGsm.uaSim.ua.userEmail}: ${messageTowardGsm.text}`,
                 {
                     "target": "ALL UA OF OTHER USERS REGISTERED TO SIM",
                     "uaSim": messageTowardGsm.uaSim
@@ -834,37 +834,6 @@ namespace buildMessageTowardSipInsertQuery {
 
 }
 
-export async function onConversationCheckedOut(
-    uaSim: types.UaSim,
-    number: string,
-    bundledData: types.BundledData.ClientToServer.ConversationCheckedOut
-): Promise<void> {
-
-    const sql = buildMessageTowardSipInsertQuery(
-        false,
-        number,
-        new Date(bundledData.checkedOutAtTime),
-        (() => {
-
-            const out: types.BundledData.ServerToClient.ConversationCheckedOutFromOtherUa = {
-                "type": "CONVERSATION CHECKED OUT FROM OTHER UA",
-                "checkedOutAtTime": bundledData.checkedOutAtTime,
-                "textB64": Buffer.from("Conversation checked out on an other device", "utf8")
-                    .toString("base64")
-            };
-
-            return out;
-
-        })(),
-        {
-            "target": "ALL OTHER UA OF USER",
-            uaSim
-        }
-    );
-
-    await _.query(sql);
-
-}
 
 
 /**
@@ -893,7 +862,7 @@ export async function onTargetGsmRinging(
     const bundledData: types.BundledData.ServerToClient.Ringback = {
         "type": "RINGBACK",
         callId,
-        "textB64": Buffer.from("( notify ringback )", "utf8").toString("base64")
+        "text": "( notify ringback )"
     };
 
     const sql = buildMessageTowardSipInsertQuery(
@@ -937,10 +906,7 @@ export async function onCallFromSipTerminated(
                 callAnsweredAfterMs,
                 callTerminatedAfterMs,
                 ua,
-                "textB64": Buffer.from(
-                    text,
-                    "utf8"
-                ).toString("base64")
+                text
             };
 
             return bundledData;

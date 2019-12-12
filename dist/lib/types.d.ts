@@ -18,13 +18,13 @@ export declare type Ua = UaRef & {
     pushToken: string;
 };
 export declare namespace Ua {
-    type Platform = "android" | "iOS" | "web";
+    type Platform = "android" | "ios" | "web";
 }
 export declare type MessageTowardGsm = {
     dateTime: number;
     uaSim: UaSim;
     toNumber: string;
-    textB64: string;
+    text: string;
     appendPromotionalMessage: boolean;
 };
 export declare type MessageTowardSip = {
@@ -36,21 +36,17 @@ export declare type MessageTowardSip = {
 export declare type BundledData = BundledData.ClientToServer | BundledData.ServerToClient;
 export declare namespace BundledData {
     type _Base = {
-        textB64: string;
+        text: string;
     };
-    type ClientToServer = ClientToServer.Message | ClientToServer.ConversationCheckedOut;
+    type ClientToServer = ClientToServer.Message;
     namespace ClientToServer {
         type Message = _Base & {
             type: "MESSAGE";
             exactSendDateTime: number;
             appendPromotionalMessage: boolean;
         };
-        type ConversationCheckedOut = _Base & {
-            type: "CONVERSATION CHECKED OUT";
-            checkedOutAtTime: number;
-        };
     }
-    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.FromSipCallSummary | ServerToClient.CallAnsweredBy | ServerToClient.Ringback | ServerToClient.ConversationCheckedOutFromOtherUa;
+    type ServerToClient = ServerToClient.Message | ServerToClient.MmsNotification | ServerToClient.SendReport | ServerToClient.StatusReport | ServerToClient.MissedCall | ServerToClient.FromSipCallSummary | ServerToClient.CallAnsweredBy | ServerToClient.Ringback;
     namespace ServerToClient {
         type Message = _Base & {
             type: "MESSAGE";
@@ -59,7 +55,7 @@ export declare namespace BundledData {
         type MmsNotification = _Base & {
             type: "MMS NOTIFICATION";
             pduDateTime: number;
-            wapPushMessageB64: string;
+            wapPushMessage: string;
         };
         type SendReport = _Base & {
             type: "SEND REPORT";
@@ -97,10 +93,6 @@ export declare namespace BundledData {
         type Ringback = _Base & {
             type: "RINGBACK";
             callId: string;
-        };
-        type ConversationCheckedOutFromOtherUa = _Base & {
-            type: "CONVERSATION CHECKED OUT FROM OTHER UA";
-            checkedOutAtTime: number;
         };
     }
 }

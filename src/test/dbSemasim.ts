@@ -9,7 +9,7 @@ import assertSame = ttTesting.assertSame;
 
 const generateUa = (email: string = `${ttTesting.genHexStr(10)}@foo.com`): types.Ua => ({
     "instance": `"<urn:uuid:${ttTesting.genHexStr(30)}>"`,
-    "platform": Date.now() % 2 ? "android" : "iOS",
+    "platform": Date.now() % 2 ? "android" : "ios",
     "pushToken": ttTesting.genHexStr(60),
     "userEmail": email,
     "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary")
@@ -124,7 +124,7 @@ async function t2() {
 
         let message: types.MessageTowardGsm = {
             "dateTime": Date.now(),
-            "textB64": Buffer.from(ttTesting.genUtf8Str(300), "utf8").toString("base64"),
+            "text": ttTesting.genUtf8Str(300),
             "toNumber": ttTesting.genDigits(10),
             "uaSim": {
                 imsi,
@@ -135,7 +135,7 @@ async function t2() {
 
         await db.onSipMessage(
             message.toNumber,
-            Buffer.from(message.textB64,"base64").toString("utf8"),
+            message.text,
             message.uaSim,
             new Date(message.dateTime),
             message.appendPromotionalMessage
@@ -197,7 +197,7 @@ async function t2() {
                         "type": "SEND REPORT",
                         "messageTowardGsm": messageTowardGsm,
                         "sendDateTime": sendDate === null ? null : sendDate.getTime(),
-                        "textB64": Buffer.from(sendDate ? checkMark : crossMark, "utf8").toString("base64")
+                        "text": sendDate ? checkMark : crossMark
                     }
                 }
             );
@@ -248,11 +248,7 @@ async function t2() {
                 "status": statusReport.status
 
             },
-            "textB64": Buffer.from(
-                statusReport.isDelivered ?
-                    `${checkMark}${checkMark}` : crossMark,
-                "utf8"
-            ).toString("base64")
+            "text": statusReport.isDelivered ? `${checkMark}${checkMark}` : crossMark
         };
 
         let __i = 0;
@@ -311,10 +307,7 @@ async function t2() {
                     "isFromDongle": false,
                     "bundledData": {
                         ...bundledData,
-                        "textB64": Buffer.from(
-                            `Me: ${Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8")}`,
-                            "utf8"
-                        ).toString("base64")
+                        "text": `Me: ${messageTowardGsm.text}`
                     }
                 }
             );
@@ -349,10 +342,7 @@ async function t2() {
                     "isFromDongle": false,
                     "bundledData": {
                         ...bundledData,
-                        "textB64": Buffer.from(
-                            `${messageTowardGsm.uaSim.ua.userEmail}: ${Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8")}`,
-                            "utf8"
-                        ).toString("base64")
+                        "text": `${messageTowardGsm.uaSim.ua.userEmail}: ${messageTowardGsm.text}`,
                     }
                 }
             );
@@ -411,7 +401,7 @@ async function t3() {
             "bundledData": {
                 "type": "MESSAGE",
                 "pduDateTime": pduDate.getTime(),
-                "textB64": Buffer.from(ttTesting.genUtf8Str(400), "utf8").toString("base64")
+                "text": ttTesting.genUtf8Str(400)
             },
             "dateTime": pduDate.getTime(),
             "fromNumber": ttTesting.genDigits(10),
@@ -421,7 +411,7 @@ async function t3() {
         assertSame(
             await db.onDongleMessage(
                 messageTowardSip.fromNumber,
-                Buffer.from(messageTowardSip.bundledData.textB64, "base64").toString("utf8"),
+                messageTowardSip.bundledData.text,
                 new Date(messageTowardSip.dateTime),
                 imsi
             ),
@@ -594,7 +584,7 @@ async function t5() {
                 "bundledData": {
                     "type": "MISSED CALL",
                     "dateTime": messageTowardSip.dateTime,
-                    "textB64": Buffer.from("Missed call", "utf8").toString("base64")
+                    "text": "Missed call"
                 },
                 "dateTime": messageTowardSip.dateTime,
                 "fromNumber": missedCallNumber,
@@ -659,7 +649,7 @@ async function t6() {
                     "type": "CALL ANSWERED BY",
                     "dateTime": messageTowardSip.dateTime,
                     "ua": answeringUa,
-                    "textB64": Buffer.from(`Call answered by ${answeringUa.userEmail}`, "utf8").toString("base64")
+                    "text": `Call answered by ${answeringUa.userEmail}`
                 },
                 "dateTime": messageTowardSip.dateTime,
                 "fromNumber": number,
@@ -730,7 +720,7 @@ async function t7() {
 
             const [[messageTowardSip]] = o;
 
-            const { textB64 } = messageTowardSip.bundledData;
+            const { text } = messageTowardSip.bundledData;
 
             assertSame<types.MessageTowardSip>(
                 messageTowardSip,
@@ -741,7 +731,7 @@ async function t7() {
                         callRingingAfterMs,
                         callAnsweredAfterMs,
                         callTerminatedAfterMs,
-                        textB64,
+                        text,
                         "ua": uas[0]
                     },
                     "dateTime": messageTowardSip.dateTime,

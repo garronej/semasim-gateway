@@ -37,7 +37,7 @@ var sanityChecks;
     sanityChecks.uaRef = uaRef;
     function platform(o) {
         return (typeof o === "string" && (o === "android" ||
-            o === "iOS" ||
+            o === "ios" ||
             o === "web"));
     }
     sanityChecks.platform = platform;

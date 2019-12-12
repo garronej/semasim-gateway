@@ -105,7 +105,6 @@ export declare namespace getUnsentMessagesTowardGsm {
 export declare function lastMessageReceivedDateBySim(): Promise<{
     [imsi: string]: Date;
 }>;
-export declare function onConversationCheckedOut(uaSim: types.UaSim, number: string, bundledData: types.BundledData.ClientToServer.ConversationCheckedOut): Promise<void>;
 /**
  *
  * TODO: include in tests

@@ -218,12 +218,12 @@
         "signature": "89305cb8a9c0d323a759b816eea0579729727c7ad7cf0c6cac752a91b05abb06"
       },
       "/users/joseph/semasim/gateway/src/lib/types.ts": {
-        "version": "1d476f993fb0661efef92072ea7533e6656f2e86cbf5c2dae3a7dcb3b5438578",
-        "signature": "761e6dce30001bbc03f5572407456efb9f4b8ce52a84512ff93568d856035472"
+        "version": "322bc771e58433e44d90fb7a01c79ed7c04f6922ae6761af247d08c76e2d1285",
+        "signature": "d5137b4ee7e3f7e0d08d5794ef97a6b6e27a35ff4f6ef88f7ee46040e5ce702e"
       },
       "/users/joseph/semasim/gateway/src/lib/dbsemasim.ts": {
-        "version": "51af435489b04d519d6e13b6946fcde305018ebff6bd15ac0f836ce196c1e1c5",
-        "signature": "63ee34e763d7ee34a2ad42e58507557278a82f8cab591a34bc536ba8e819de07"
+        "version": "f208bc70bc45d841faaa350246c64da427355a9ea1911daddaf2ffc8c1bedfdb",
+        "signature": "f9fa903904ffeb281735360391cea6da313bfa363913d6c06b3f43d63b9c23f1"
       },
       "/users/joseph/semasim/gateway/src/lib/misc/misc.ts": {
         "version": "a8dac5d7d1665035bd9be604ae8eb973a24d8aef82eaef90dec6d08c51a29d22",
@@ -311,7 +311,7 @@
       },
       "/users/joseph/semasim/gateway/src/lib/sipmessagesmonitor.ts": {
         "version": "95b8ac0bc378922dcbc74a77213cf4b79fade04e074b5b676838424822c5c541",
-        "signature": "b79f681f811ed427d2a57ae99ad3e7bf45c199a02c960efe6e5b17356fa56262"
+        "signature": "d82135b7e0036b1a9605e141080a6d3a49910310772587004c0770ec97e56206"
       },
       "/users/joseph/semasim/gateway/src/lib/misc/siprouting.ts": {
         "version": "0d7e610e27947be5f652eb4eecb9e544fb682121858e218646e7fff6b42f3cad",
@@ -358,7 +358,7 @@
         "signature": "d23e9a1961e8680f8027ba206940400e0e20fc3ede435ecbe769880b58424890"
       },
       "/users/joseph/semasim/gateway/src/lib/voicecallbridge.ts": {
-        "version": "32f9f281ecd96d0109960b8514331b7394730bf623b903009739d2d33ce30cb9",
+        "version": "3922f0da8614b503be59949e06c3df8d86011824ddf4cb077ea10c1899e1dc5c",
         "signature": "d01f1f4d09b8ceadaa0740e1e9c2a8c1cd888abe98b8b05936b0a2300c8f67bf"
       },
       "/users/joseph/semasim/gateway/src/lib/dbasterisk.ts": {
@@ -378,7 +378,7 @@
         "signature": "a862af88ffb7f937dd67c5553c849c14982b5638f036a7eee060d749b956ebfd"
       },
       "/users/joseph/semasim/gateway/src/lib/messagesdispatcher.ts": {
-        "version": "8bf5e9fbe247aa330c3984993cc29bbb9080cdaf4b0c948eaca102bb5d826e2e",
+        "version": "66dfa3628d3cb71358152e260c61fe6162343e2b5e32ad5c029314b670292477",
         "signature": "c833185be33ac13888d54773e88336724c3fbac2d0e557980750f66a93aac672"
       },
       "/users/joseph/semasim/gateway/src/lib/procasterisk.ts": {
@@ -398,7 +398,7 @@
         "signature": "bd6e782631646bbf903a436c829205de0aac962620d14604348ac0f6d3d507bc"
       },
       "/users/joseph/semasim/gateway/src/lib/launch.ts": {
-        "version": "8b42eb6f63f8478d648adf91f7562a6cb1c884450b74f1ccb1f8d3ebf80b11b9",
+        "version": "3a1f206c22f0021ea454f57833c4e2fd770ae729ab499ea2306ddc1b77e654ce",
         "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
       },
       "/users/joseph/semasim/gateway/src/bin/main.ts": {
@@ -410,27 +410,23 @@
         "signature": "8d62e7593f6165641411d6ce2c7a8654aeb994baeb8ecf61f4ce90fd53da9739"
       },
       "/users/joseph/semasim/gateway/src/lib/misc/sanitychecks.ts": {
-        "version": "c8b1a073138fcabdbbf26147902fba06d351147dad96b2bf8beb83a6adce4296",
+        "version": "9bc4eea29b6f9d5dbf4970dbefb8ad104b9df532ad795163de45aca9cc0dfcbe",
         "signature": "e8718f241c2e0b4e96d89d7ddf88dd709d62df021ee2a7e67286a8f77cb3c31f"
-      },
-      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": {
-        "version": "88b0b9965b5d9351d601361f5198afcb88d1e74bd329c038582a44c7464ab978",
-        "signature": "88b0b9965b5d9351d601361f5198afcb88d1e74bd329c038582a44c7464ab978"
-      },
-      "/users/joseph/semasim/gateway/src/test/bundleddata.ts": {
-        "version": "0eeece3fbc4b4054e603af2c01cc4192bf7f68c41316c88e3938ea291c130685",
-        "signature": "5b1c468aa25740e5d4d643db4892518b44ad241dc9f35de9048c66c065612495"
       },
       "/users/joseph/semasim/gateway/src/test/dbasterisk.ts": {
         "version": "0de6c05b115e46d6e389c0d88cb07aaf12181f3556f052d01899f324a1d63a7a",
         "signature": "36c87b2f17ce1bee5e20596f2598cf0164bd3a2abc60179b428b1b00213ed126"
       },
+      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": {
+        "version": "88b0b9965b5d9351d601361f5198afcb88d1e74bd329c038582a44c7464ab978",
+        "signature": "88b0b9965b5d9351d601361f5198afcb88d1e74bd329c038582a44c7464ab978"
+      },
       "/users/joseph/semasim/gateway/src/test/dbsemasim.ts": {
-        "version": "ca06f0394da7bec585f69b1f7772e9c42246286a160610115e2e4bcfaa69fb0a",
+        "version": "2b6295780a0ec2c01356dfc43bc4c61cfd30e224c798de6667ec33ee05889602",
         "signature": "967e1260b468da2adeb13ed5e0676303028623c838baca2afb9dddd284fc0ae5"
       },
       "/users/joseph/semasim/gateway/src/test/main.ts": {
-        "version": "7c52a36b66e28267d2060e6ba6b249963ad3a541b86e449aa6fead2a373f6a5f",
+        "version": "c13319ad313ff5a874c36af8a4992ddcec8e3a499807f5f77cc6fa03e6775901",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
       }
     },
@@ -1081,21 +1077,15 @@
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/test/bundleddata.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts",
-        "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
       "/users/joseph/semasim/gateway/src/test/dbasterisk.ts": [
         "/users/joseph/semasim/gateway/src/lib/dbasterisk.ts",
         "/users/joseph/semasim/gateway/src/lib/types.ts",
         "/users/joseph/semasim/gateway/src/lib/misc/sanitychecks.ts",
         "/users/joseph/semasim/gateway/src/lib/misc/siprouting.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -1110,7 +1100,6 @@
       "/users/joseph/semasim/gateway/src/test/main.ts": [
         "/users/joseph/semasim/gateway/src/test/dbasterisk.ts",
         "/users/joseph/semasim/gateway/src/test/dbsemasim.ts",
-        "/users/joseph/semasim/gateway/src/test/bundleddata.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ]
@@ -1192,56 +1181,6 @@
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/src/lib/tobackend/connection.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/tobackend/remoteapicaller.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/src/sip_api_declarations/backendtogateway.ts",
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/messagesdispatcher.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
-        "/users/joseph/semasim/gateway/src/lib/types.ts",
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/dbasterisk.ts": [
-        "/users/joseph/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/sipcontactsmonitor.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/toasterisk/connections.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/tobackend/router.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/tobackend/localapihandlers.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/toasterisk/router.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/dbsemasim.ts": [
-        "/users/joseph/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/src/lib/types.ts",
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/sipmessagesmonitor.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
       "/users/joseph/semasim/gateway/node_modules/@types/node/inspector.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
@@ -1251,176 +1190,118 @@
         "/users/joseph/semasim/gateway/node_modules/@types/node/inspector.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/src/lib/misc/sanitychecks.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      "/users/joseph/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/ini-extended/dist/lib/iniext.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/src/lib/misc/removeduplicatecontactinsiminternalstorage.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ini-extended/dist/lib/iniext.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/src/lib/misc/serializeduaobjectcarriedoversipcontactparameter.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/sip_api_declarations/gatewaytobackend.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/sip_api_declarations/backendtogateway.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/commander/typings/index.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/logger/dist/lib/index.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/src/lib/misc/siprouting.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/misc/workerthreadpoolid.ts": [
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/serializer.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/mapextended.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/crypto-lib/node_modules/minimal-polyfills/dist/lib/array.from.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbaseprotected.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/server.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbase.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbaseprotected.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbase.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/server.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/colors/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/iconnection.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/colors/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/colors/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/iconnection.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/node_modules/ts-events-extended/dist/lib/index.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
         "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/misc/bundleddata.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts",
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/stringtransform.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/serializer.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/src/lib/misc/misc.ts": [
-        "/users/joseph/semasim/gateway/src/lib/types.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/@types/async-lock/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/ami.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/amiapi.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/ami.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/trackablemap.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/credential.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/amiapi.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/mapextended.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/ami.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-async-agi/index.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/mapextended.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/trackablemap.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/node_modules/ts-events-extended/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-ami/node_modules/ts-events-extended/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/credential.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -1434,120 +1315,228 @@
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/credential.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/ami.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-async-agi/index.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/ts-ami/node_modules/ts-events-extended/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/ami.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/credential.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/amiapi.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts": [
+      "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/ami.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/agi.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-ami/dist/lib/amiapi.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/@types/async-lock/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/dbsemasim.ts": [
+        "/users/joseph/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/src/lib/types.ts",
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/misc/misc.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/serializer.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/stringtransform.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/misc/bundleddata.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts",
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/node_modules/ts-events-extended/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/iconnection.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/colors/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/iconnection.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/colors/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/server.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/colors/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/server.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/client.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/core.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/socket.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/misc.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/api/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/crypto-lib/node_modules/minimal-polyfills/dist/lib/array.from.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/types.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/serializer.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/misc/workerthreadpoolid.ts": [
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/sipmessagesmonitor.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/misc/siprouting.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/run-exclusive/dist/lib/runexclusive.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/phone-number/dist/lib/index.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/sip_api_declarations/backendtogateway.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/sip_api_declarations/gatewaytobackend.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/tobackend/localapihandlers.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/toasterisk/router.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/toasterisk/connections.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/tobackend/router.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/tobackend/connection.ts": [
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/tobackend/remoteapicaller.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/src/sip_api_declarations/backendtogateway.ts",
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/dbasterisk.ts": [
+        "/users/joseph/semasim/gateway/node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/misc/serializeduaobjectcarriedoversipcontactparameter.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/sipcontactsmonitor.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/src/lib/messagesdispatcher.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "/users/joseph/semasim/gateway/node_modules/@types/async-lock/index.d.ts",
+        "/users/joseph/semasim/gateway/src/lib/types.ts",
+        "/users/joseph/semasim/gateway/node_modules/crypto-lib/dist/async/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/node_modules/ts-events-extended/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
+      "/users/joseph/semasim/gateway/src/lib/misc/removeduplicatecontactinsiminternalstorage.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts": [
+        "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": [
+      "/users/joseph/semasim/gateway/src/lib/misc/sanitychecks.ts": [
+        "/users/joseph/semasim/gateway/src/lib/types.ts"
+      ],
+      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts": [
         "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
         "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/mapextended.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/trackablemap.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/trackablemap.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/mapextended.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/syncevent.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbase.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbase.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbaseprotected.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/synceventbaseprotected.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ts-events-extended/dist/lib/defs.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/trackable-map/dist/lib/mapextended.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/logger/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/commander/typings/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ini-extended/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/ini-extended/dist/lib/iniext.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/ini-extended/dist/lib/iniext.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/scripting-tools/dist/lib/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts",
-        "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "/users/joseph/semasim/gateway/node_modules/@types/node/ts3.2/index.d.ts": [
-        "/users/joseph/semasim/gateway/node_modules/@types/node/base.d.ts"
       ]
     },
     "semanticDiagnosticsPerFile": [
@@ -1650,15 +1639,14 @@
       "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
       "/users/joseph/semasim/gateway/src/lib/procchandongleextended.ts",
       "/users/joseph/semasim/gateway/src/lib/misc/removeduplicatecontactinsiminternalstorage.ts",
-      "/users/joseph/semasim/gateway/src/lib/launch.ts",
       "/users/joseph/semasim/gateway/src/bin/main.ts",
       "/users/joseph/semasim/gateway/node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts",
       "/users/joseph/semasim/gateway/src/lib/misc/sanitychecks.ts",
-      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts",
-      "/users/joseph/semasim/gateway/src/test/bundleddata.ts",
       "/users/joseph/semasim/gateway/src/test/dbasterisk.ts",
+      "/users/joseph/semasim/gateway/node_modules/transfer-tools/dist/lib/testing.d.ts",
       "/users/joseph/semasim/gateway/src/test/dbsemasim.ts",
-      "/users/joseph/semasim/gateway/src/test/main.ts"
+      "/users/joseph/semasim/gateway/src/test/main.ts",
+      "/users/joseph/semasim/gateway/src/lib/launch.ts"
     ]
   },
   "version": "3.5.3"

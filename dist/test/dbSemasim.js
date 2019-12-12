@@ -85,7 +85,7 @@ var generateUa = function (email) {
     if (email === void 0) { email = ttTesting.genHexStr(10) + "@foo.com"; }
     return ({
         "instance": "\"<urn:uuid:" + ttTesting.genHexStr(30) + ">\"",
-        "platform": Date.now() % 2 ? "android" : "iOS",
+        "platform": Date.now() % 2 ? "android" : "ios",
         "pushToken": ttTesting.genHexStr(60),
         "userEmail": email,
         "towardUserEncryptKeyStr": crypto.randomBytes(254).toString("binary")
@@ -233,7 +233,7 @@ function t2() {
                     if (!(i < 5)) return [3 /*break*/, 9];
                     message = {
                         "dateTime": Date.now(),
-                        "textB64": Buffer.from(ttTesting.genUtf8Str(300), "utf8").toString("base64"),
+                        "text": ttTesting.genUtf8Str(300),
                         "toNumber": ttTesting.genDigits(10),
                         "uaSim": {
                             imsi: imsi,
@@ -241,7 +241,7 @@ function t2() {
                         },
                         "appendPromotionalMessage": Date.now() % 2 === 0
                     };
-                    return [4 /*yield*/, db.onSipMessage(message.toNumber, Buffer.from(message.textB64, "base64").toString("utf8"), message.uaSim, new Date(message.dateTime), message.appendPromotionalMessage)];
+                    return [4 /*yield*/, db.onSipMessage(message.toNumber, message.text, message.uaSim, new Date(message.dateTime), message.appendPromotionalMessage)];
                 case 7:
                     _e.sent();
                     messagesTowardGsm.push(message);
@@ -297,7 +297,7 @@ function t2() {
                                                                 "type": "SEND REPORT",
                                                                 "messageTowardGsm": messageTowardGsm,
                                                                 "sendDateTime": sendDate === null ? null : sendDate.getTime(),
-                                                                "textB64": Buffer.from(sendDate ? checkMark : crossMark, "utf8").toString("base64")
+                                                                "text": sendDate ? checkMark : crossMark
                                                             }
                                                         });
                                                         return [4 /*yield*/, setSent()];
@@ -344,8 +344,7 @@ function t2() {
                                             "sendDateTime": statusReport.sendDate.getTime(),
                                             "status": statusReport.status
                                         },
-                                        "textB64": Buffer.from(statusReport.isDelivered ?
-                                            "" + checkMark + checkMark : crossMark, "utf8").toString("base64")
+                                        "text": statusReport.isDelivered ? "" + checkMark + checkMark : crossMark
                                     };
                                     __i = 0;
                                     return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
@@ -395,7 +394,7 @@ function t2() {
                                         "fromNumber": messageTowardGsm.toNumber,
                                         "dateTime": mts.dateTime,
                                         "isFromDongle": false,
-                                        "bundledData": __assign({}, bundledData, { "textB64": Buffer.from("Me: " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), "utf8").toString("base64") })
+                                        "bundledData": __assign({}, bundledData, { "text": "Me: " + messageTowardGsm.text })
                                     });
                                     return [4 /*yield*/, setSent()];
                                 case 10:
@@ -436,7 +435,7 @@ function t2() {
                                         "fromNumber": messageTowardGsm.toNumber,
                                         "dateTime": mts.dateTime,
                                         "isFromDongle": false,
-                                        "bundledData": __assign({}, bundledData, { "textB64": Buffer.from(messageTowardGsm.uaSim.ua.userEmail + ": " + Buffer.from(messageTowardGsm.textB64, "base64").toString("utf8"), "utf8").toString("base64") })
+                                        "bundledData": __assign({}, bundledData, { "text": messageTowardGsm.uaSim.ua.userEmail + ": " + messageTowardGsm.text })
                                     });
                                     return [4 /*yield*/, setSent()];
                                 case 19:
@@ -520,14 +519,14 @@ function t3() {
                         "bundledData": {
                             "type": "MESSAGE",
                             "pduDateTime": pduDate.getTime(),
-                            "textB64": Buffer.from(ttTesting.genUtf8Str(400), "utf8").toString("base64")
+                            "text": ttTesting.genUtf8Str(400)
                         },
                         "dateTime": pduDate.getTime(),
                         "fromNumber": ttTesting.genDigits(10),
                         "isFromDongle": true,
                     };
                     _c = assertSame;
-                    return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, Buffer.from(messageTowardSip.bundledData.textB64, "base64").toString("utf8"), new Date(messageTowardSip.dateTime), imsi)];
+                    return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.bundledData.text, new Date(messageTowardSip.dateTime), imsi)];
                 case 8:
                     _c.apply(void 0, [_k.sent(),
                         true]);
@@ -727,7 +726,7 @@ function t5() {
                         "bundledData": {
                             "type": "MISSED CALL",
                             "dateTime": messageTowardSip.dateTime,
-                            "textB64": Buffer.from("Missed call", "utf8").toString("base64")
+                            "text": "Missed call"
                         },
                         "dateTime": messageTowardSip.dateTime,
                         "fromNumber": missedCallNumber,
@@ -812,7 +811,7 @@ function t6() {
                             "type": "CALL ANSWERED BY",
                             "dateTime": messageTowardSip.dateTime,
                             "ua": answeringUa,
-                            "textB64": Buffer.from("Call answered by " + answeringUa.userEmail, "utf8").toString("base64")
+                            "text": "Call answered by " + answeringUa.userEmail
                         },
                         "dateTime": messageTowardSip.dateTime,
                         "fromNumber": number,
@@ -880,7 +879,7 @@ function t7() {
                     tasks = [];
                     _loop_2 = function (ua) {
                         tasks[tasks.length] = (function () { return __awaiter(_this, void 0, void 0, function () {
-                            var _a, o, _b, _c, messageTowardSip, textB64;
+                            var _a, o, _b, _c, messageTowardSip, text;
                             return __generator(this, function (_d) {
                                 switch (_d.label) {
                                     case 0:
@@ -894,7 +893,7 @@ function t7() {
                                         o = _d.sent();
                                         assertSame(o.length, 1);
                                         _b = __read(o, 1), _c = __read(_b[0], 1), messageTowardSip = _c[0];
-                                        textB64 = messageTowardSip.bundledData.textB64;
+                                        text = messageTowardSip.bundledData.text;
                                         assertSame(messageTowardSip, {
                                             "bundledData": {
                                                 "type": "FROM SIP CALL SUMMARY",
@@ -902,7 +901,7 @@ function t7() {
                                                 callRingingAfterMs: callRingingAfterMs,
                                                 callAnsweredAfterMs: callAnsweredAfterMs,
                                                 callTerminatedAfterMs: callTerminatedAfterMs,
-                                                textB64: textB64,
+                                                text: text,
                                                 "ua": uas[0]
                                             },
                                             "dateTime": messageTowardSip.dateTime,

@@ -469,6 +469,8 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
 
     })();
 
+    //TODO: Sometime contact is undefined here, find out how to reproduce.
+
     const call_id = (await _.getVariable("CHANNEL(pjsip,call-id)"))!;
 
     const number = channel.request.extension;
