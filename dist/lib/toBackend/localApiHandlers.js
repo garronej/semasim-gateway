@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -50,7 +51,6 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var apiDeclaration = require("../../sip_api_declarations/gatewayToBackend");
@@ -73,7 +73,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var dongle, _b, sipPassword, towardSimEncryptKeyStr;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
@@ -106,7 +106,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imei = _a.imei, pin = _a.pin;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
@@ -130,7 +130,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var dc, dongle, _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
@@ -166,7 +166,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var dc, dongle;
                 return __generator(this, function (_b) {
                     dc = chan_dongle_extended_client_1.DongleController.getInstance();
@@ -190,7 +190,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi, name = _a.name, number = _a.number;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var dc, dongle, contact, _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
@@ -231,7 +231,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi, mem_index = _a.mem_index, newName = _a.newName;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var dc, dongle, contact, _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
@@ -271,7 +271,7 @@ exports.handlers = {};
     var handler = {
         "handler": function (_a) {
             var imsi = _a.imsi, mem_index = _a.mem_index;
-            return __awaiter(_this, void 0, void 0, function () {
+            return __awaiter(void 0, void 0, void 0, function () {
                 var dc, dongle, _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {

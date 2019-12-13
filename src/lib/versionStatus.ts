@@ -8,9 +8,11 @@ function genIntegerInRange(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-export function genRetryDelay() {
+export function genRetryDelay(): number {
 
-    switch (getEnv()) {
+    const env = getEnv();
+
+    switch (env) {
         case "PROD":
             return genIntegerInRange(1000, 20 * 1000);
         case "DEV":

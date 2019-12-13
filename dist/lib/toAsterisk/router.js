@@ -40,7 +40,7 @@ function handle(socket, connectionId, prPlatform) {
                         }
                         //Adding a c line with the public address.
                         var parsedSdp = sip.parseSdp(sip.getPacketContent(sipPacketNextHop).toString("utf8"));
-                        parsedSdp["m"][0]["c"] = __assign({}, parsedSdp["c"], { "address": srvflx });
+                        parsedSdp["m"][0]["c"] = __assign(__assign({}, parsedSdp["c"]), { "address": srvflx });
                         sip.setPacketContent(sipPacketNextHop, sip.stringifySdp(parsedSdp));
                     }
                     default: break;

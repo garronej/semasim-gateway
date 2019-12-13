@@ -69,10 +69,15 @@ export namespace getEnv {
 }
 
 export function getBaseDomain(): "semasim.com" | "dev.semasim.com" {
-    switch (getEnv()) {
+
+    //TODO: Do not declare intermediate state in next typescript version. #34840
+    const env= getEnv();
+
+    switch (env) {
         case "DEV": return "dev.semasim.com";
         case "PROD": return "semasim.com";
     }
+
 }
 
 namespace github_releases {

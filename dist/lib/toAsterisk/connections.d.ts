@@ -6,12 +6,13 @@ declare namespace connections {
         imsi: string;
         connectionId: string;
     };
-    namespace Key {
+    export namespace Key {
         const stringify: (key: Key) => string;
     }
-    function set(key: Key, socket: sip.Socket): void;
-    function get(key: Key): sip.Socket | undefined;
-    function remove(key: Key): void;
+    export function set(key: Key, socket: sip.Socket): void;
+    export function get(key: Key): sip.Socket | undefined;
+    export function remove(key: Key): void;
+    export {};
 }
 export declare const get: typeof connections.get;
 export {};
