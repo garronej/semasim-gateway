@@ -28,7 +28,7 @@ var __read = (this && this.__read) || function (o, n) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sipLibrary = require("ts-sip");
-var ts_events_extended_1 = require("ts-events-extended");
+var ts_evt_1 = require("ts-evt");
 var sipRouting = require("./misc/sipRouting");
 var misc_1 = require("./misc/misc");
 var dbAsterisk = require("./dbAsterisk");
@@ -37,7 +37,7 @@ var crypto = require("crypto");
 var logger = require("logger");
 var debug = logger.debugFactory();
 //TODO: create proxy
-exports.evtContactRegistration = new ts_events_extended_1.SyncEvent();
+exports.evtContactRegistration = new ts_evt_1.Evt();
 function getContacts(imsi) {
     return contacts.get()
         .filter(function (_a) {
@@ -73,7 +73,7 @@ exports.discardContactsRegisteredToSim = discardContactsRegisteredToSim;
 var contacts;
 (function (contacts) {
     var map = new Map();
-    contacts.evtExpiredContact = new ts_events_extended_1.SyncEvent();
+    contacts.evtExpiredContact = new ts_evt_1.Evt();
     function _delete(contact) {
         var entry = map.get(contact);
         if (entry) {
@@ -197,7 +197,7 @@ function handleAsteriskSocket(asteriskSocket) {
             "ua": serializedUaObjectCarriedOverSipContactParameter.parseFromContactUriParams(sipLibrary.parseUri(sipLibrary.getContact(sipRequestRegister).uri).params)
         }
     }; });
-    var evtFirstRegistration = new ts_events_extended_1.VoidSyncEvent();
+    var evtFirstRegistration = new ts_evt_1.VoidEvt();
     asteriskSocket.evtPacketPreWrite.attach(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
         sipPacket.method === "REGISTER" &&
         sipPacket.headers["authorization"]); }, function (sipRequestRegister) {

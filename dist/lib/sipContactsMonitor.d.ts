@@ -1,7 +1,7 @@
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
-import { SyncEvent } from "ts-events-extended";
-export declare const evtContactRegistration: SyncEvent<types.Contact>;
+import { Evt } from "ts-evt";
+export declare const evtContactRegistration: Evt<types.Contact>;
 export declare function getContacts(imsi?: string): types.Contact[];
 /** Close all asteriskSocket that has a contact registered to a IMSI */
 export declare function discardContactsRegisteredToSim(imsi: string, asteriskSocketsDestroyReason: string): void;

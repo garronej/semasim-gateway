@@ -1,6 +1,6 @@
 
 import * as sip from "ts-sip";
-import { SyncEvent } from "ts-events-extended";
+import { Evt } from "ts-evt";
 import * as localApiHandlers from "./localApiHandlers";
 import * as logger from "logger";
 import * as tls from "tls";
@@ -28,7 +28,7 @@ let socketCurrent: sip.Socket | undefined = undefined;
 //TODO: Because of the load balancer even if the Backend is down
 //the connect event is posted. Maybe wait until we have a successful 
 //ping response before posting this.
-export const evtConnect = new SyncEvent<sip.Socket>();
+export const evtConnect = new Evt<sip.Socket>();
 
 export async function connect() {
 

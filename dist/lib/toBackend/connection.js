@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sip = require("ts-sip");
-var ts_events_extended_1 = require("ts-events-extended");
+var ts_evt_1 = require("ts-evt");
 var localApiHandlers = require("./localApiHandlers");
 var logger = require("logger");
 var tls = require("tls");
@@ -56,7 +56,7 @@ var socketCurrent = undefined;
 //TODO: Because of the load balancer even if the Backend is down
 //the connect event is posted. Maybe wait until we have a successful 
 //ping response before posting this.
-exports.evtConnect = new ts_events_extended_1.SyncEvent();
+exports.evtConnect = new ts_evt_1.Evt();
 function connect() {
     return __awaiter(this, void 0, void 0, function () {
         var socket;

@@ -67,7 +67,7 @@ var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var ts_ami_1 = require("ts-ami");
 var messagesDispatcher = require("./messagesDispatcher");
 var voiceCallBridge = require("./voiceCallBridge");
-var ts_events_extended_1 = require("ts-events-extended");
+var ts_evt_1 = require("ts-evt");
 var i = require("../bin/installer");
 var procAsterisk = require("./procAsterisk");
 var procChanDongleExtended = require("./procChanDongleExtended");
@@ -85,6 +85,7 @@ var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
 var removeDuplicateContactInSimInternalStorage_1 = require("./misc/removeDuplicateContactInSimInternalStorage");
 var memwatch = require("memwatch-next");
 var debug = logger.debugFactory();
+setImmediate;
 debug("Memory leak detection enabled");
 memwatch.on("leak", function (infos) { return debug("memory leak detected", infos); });
 memwatch.on("stats", function (stats) { return debug("mem stats", stats); });
@@ -399,7 +400,7 @@ function registerListeners() {
                 switch (_b.label) {
                     case 0:
                         debug("FROM DONGLE MESSAGE", { message: message, "time": message.date.getTime() });
-                        evtShouldSave = new ts_events_extended_1.SyncEvent();
+                        evtShouldSave = new ts_evt_1.Evt();
                         submitShouldSave(evtShouldSave.waitFor());
                         return [4 /*yield*/, dbSemasim.onDongleMessage(phone_number_1.phoneNumber.build(message.number, !!dongle.sim.country ? dongle.sim.country.iso : undefined), message.text, message.date, dongle.sim.imsi)];
                     case 1:

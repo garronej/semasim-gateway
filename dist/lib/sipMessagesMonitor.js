@@ -47,7 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var ts_events_extended_1 = require("ts-events-extended");
+var ts_evt_1 = require("ts-evt");
 var ts_ami_1 = require("ts-ami");
 var sipLibrary = require("ts-sip");
 var bundledData_1 = require("./misc/bundledData");
@@ -56,7 +56,7 @@ var dbSemasim = require("./dbSemasim");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
 var crypto = require("crypto");
 exports.dialplanContext = "from-sip-message";
-exports.evtMessage = new ts_events_extended_1.SyncEvent();
+exports.evtMessage = new ts_evt_1.Evt();
 function sendMessage(contact, fromNumber, headers) {
     return new Promise(function (resolve, reject) {
         var actionId = ts_ami_1.Ami.generateUniqueActionId();
@@ -91,7 +91,7 @@ function sendMessage(contact, fromNumber, headers) {
 }
 exports.sendMessage = sendMessage;
 (function (sendMessage) {
-    sendMessage.evtOutgoingMessage = new ts_events_extended_1.SyncEvent();
+    sendMessage.evtOutgoingMessage = new ts_evt_1.Evt();
 })(sendMessage = exports.sendMessage || (exports.sendMessage = {}));
 //From here functions are not exported outside sipProxy
 /**

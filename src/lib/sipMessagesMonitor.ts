@@ -1,4 +1,4 @@
-import { SyncEvent } from "ts-events-extended";
+import { Evt } from "ts-evt";
 import { Ami } from "ts-ami";
 
 import * as sipLibrary from "ts-sip";
@@ -12,7 +12,7 @@ import * as crypto from "crypto";
 
 export const dialplanContext = "from-sip-message";
 
-export const evtMessage = new SyncEvent<{
+export const evtMessage = new Evt<{
     fromContact: types.Contact;
     toNumber: string;
     bundledData: types.BundledData.ClientToServer;
@@ -85,7 +85,7 @@ export function sendMessage(
 
 export namespace sendMessage {
 
-    export const evtOutgoingMessage = new SyncEvent<{
+    export const evtOutgoingMessage = new Evt<{
         sipRequest: sipLibrary.Request;
         prSipResponse: Promise<void>
     }>();

@@ -1,4 +1,4 @@
-import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
+import { Evt, VoidEvt } from "ts-evt";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Ami, agi } from "ts-ami";
 //import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
@@ -246,7 +246,7 @@ async function fromDongle(channel: agi.AGIChannel) {
         !!dongle.sim.country ? dongle.sim.country.iso : undefined
     );
 
-    const evtReachableContact = new SyncEvent<types.Contact>();
+    const evtReachableContact = new Evt<types.Contact>();
 
     /*
     NOTE: evtContactRegistration is also posted when a contact refresh
@@ -285,7 +285,7 @@ async function fromDongle(channel: agi.AGIChannel) {
         state: "RINGING" | "REJECTED" | "ANSWERED"
     }>();
 
-    const evtAnsweredOrEnded = new VoidSyncEvent();
+    const evtAnsweredOrEnded = new VoidEvt();
 
     evtAnsweredOrEnded.attachOnce(async () => {
 

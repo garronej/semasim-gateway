@@ -1,15 +1,15 @@
-import { SyncEvent } from "ts-events-extended";
+import { Evt } from "ts-evt";
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
 export declare const dialplanContext = "from-sip-message";
-export declare const evtMessage: SyncEvent<{
+export declare const evtMessage: Evt<{
     fromContact: types.Contact;
     toNumber: string;
     bundledData: types.BundledData.ClientToServer.Message;
 }>;
 export declare function sendMessage(contact: types.Contact, fromNumber: string, headers: Record<string, string>): Promise<void>;
 export declare namespace sendMessage {
-    const evtOutgoingMessage: SyncEvent<{
+    const evtOutgoingMessage: Evt<{
         sipRequest: sipLibrary.Request;
         prSipResponse: Promise<void>;
     }>;

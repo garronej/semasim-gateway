@@ -52,7 +52,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var ts_events_extended_1 = require("ts-events-extended");
+var ts_evt_1 = require("ts-evt");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var ts_ami_1 = require("ts-ami");
 //import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
@@ -204,7 +204,7 @@ function fromDongle(channel) {
                         return [2 /*return*/];
                     }
                     number = phone_number_1.phoneNumber.build(channel.request.callerid, !!dongle.sim.country ? dongle.sim.country.iso : undefined);
-                    evtReachableContact = new ts_events_extended_1.SyncEvent();
+                    evtReachableContact = new ts_evt_1.Evt();
                     /*
                     NOTE: evtContactRegistration is also posted when a contact refresh
                     it's registration.
@@ -227,7 +227,7 @@ function fromDongle(channel) {
                         "reachableSipContactCallbackFn": function (contact) { return evtReachableContact.post(contact); }
                     });
                     channels = new Map();
-                    evtAnsweredOrEnded = new ts_events_extended_1.VoidSyncEvent();
+                    evtAnsweredOrEnded = new ts_evt_1.VoidEvt();
                     evtAnsweredOrEnded.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
                         var _a, answeredByContact;
                         return __generator(this, function (_b) {

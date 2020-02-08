@@ -2,7 +2,7 @@ import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-c
 import { Ami } from "ts-ami";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
-import { SyncEvent } from "ts-events-extended";
+import {  Evt } from "ts-evt";
 import * as i from "../bin/installer";
 import * as procAsterisk from "./procAsterisk";
 import * as procChanDongleExtended from "./procChanDongleExtended";
@@ -22,6 +22,8 @@ import { removeDuplicateContactInSimInternalStorage } from "./misc/removeDuplica
 import * as memwatch from "memwatch-next";
 
 const debug = logger.debugFactory();
+
+setImmediate
 
 debug("Memory leak detection enabled");
 
@@ -294,7 +296,7 @@ function registerListeners() {
 
             debug("FROM DONGLE MESSAGE", { message, "time": message.date.getTime() });
 
-            let evtShouldSave = new SyncEvent<"SAVE MESSAGE" | "DO NOT SAVE MESSAGE">();
+            let evtShouldSave = new Evt<"SAVE MESSAGE" | "DO NOT SAVE MESSAGE">();
 
             submitShouldSave(evtShouldSave.waitFor());
 

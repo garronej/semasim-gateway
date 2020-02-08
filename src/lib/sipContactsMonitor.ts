@@ -1,6 +1,6 @@
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
-import { SyncEvent, VoidSyncEvent } from "ts-events-extended";
+import { Evt, VoidEvt } from "ts-evt";
 import * as sipRouting from "./misc/sipRouting";
 import { areSameUaSims } from "./misc/misc"
 import * as dbAsterisk from "./dbAsterisk";
@@ -11,7 +11,7 @@ import * as logger from "logger";
 const debug = logger.debugFactory();
 
 //TODO: create proxy
-export const evtContactRegistration = new SyncEvent<types.Contact>();
+export const evtContactRegistration = new Evt<types.Contact>();
 
 export function getContacts(imsi?: string): types.Contact[] {
     return contacts.get()
@@ -40,7 +40,7 @@ namespace contacts {
 
     const map = new Map<types.Contact, { timer: NodeJS.Timer, asteriskSocket: sipLibrary.Socket; }>();
 
-    export const evtExpiredContact = new SyncEvent<{
+    export const evtExpiredContact = new Evt<{
         contact: types.Contact,
         asteriskSocket: sipLibrary.Socket
     }>();
@@ -166,7 +166,7 @@ function onContactRegistered(
 }
 
 /** should be called against every new asterisk socket */
-export function handleAsteriskSocket( asteriskSocket: sipLibrary.Socket): Promise<types.Contact> {
+export function handleAsteriskSocket(asteriskSocket: sipLibrary.Socket): Promise<types.Contact> {
 
     let imsi: string;
     let connectionId: string;
@@ -238,7 +238,7 @@ export function handleAsteriskSocket( asteriskSocket: sipLibrary.Socket): Promis
         }
     );
 
-    const evtFirstRegistration = new VoidSyncEvent();
+    const evtFirstRegistration = new VoidEvt();
 
     asteriskSocket.evtPacketPreWrite.attach(
         (sipPacket): sipPacket is sipLibrary.Request => (
