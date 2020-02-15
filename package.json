@@ -30,11 +30,11 @@
     "commander": "^2.11.0",
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
-    "run-exclusive": "github:garronej/run-exclusive",
+    "run-exclusive": "2.1.5",
     "scripting-tools": "github:garronej/scripting-tools",
     "sqlite-custom": "github:garronej/sqlite-custom",
     "ts-ami": "github:garronej/ts-ami",
-    "ts-evt": "^4.3.3",
+    "ts-evt": "^5.0.2",
     "ts-sip": "github:garronej/ts-sip",
     "typescript": "^3.5.1"
   }
