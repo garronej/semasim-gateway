@@ -1075,55 +1075,59 @@
       ]
     },
     "exportedModulesMap": {
-      "../node_modules/typescript/lib/lib.es5.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
+      "../src/lib/dbsemasim.ts": [
+        "../src/lib/types.ts"
       ],
-      "../node_modules/typescript/lib/lib.es2015.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
+      "../src/lib/misc/misc.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/misc/bundleddata.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/sipmessagesmonitor.ts": [
+        "../src/lib/types.ts",
+        "../node_modules/ts-evt/dist/lib/index.d.ts",
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/sip_api_declarations/backendtogateway.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/toasterisk/router.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/tobackend/remoteapicaller.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "../src/sip_api_declarations/backendtogateway.ts",
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/dbasterisk.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/misc/serializeduaobjectcarriedoversipcontactparameter.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/sipcontactsmonitor.ts": [
+        "../src/lib/types.ts",
+        "../node_modules/ts-evt/dist/lib/index.d.ts",
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/messagesdispatcher.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "../node_modules/@types/async-lock/index.d.ts",
+        "../src/lib/types.ts",
+        "../node_modules/crypto-lib/dist/async/index.d.ts"
+      ],
+      "../src/lib/misc/sanitychecks.ts": [
+        "../src/lib/types.ts"
       ],
       "../node_modules/typescript/lib/lib.es2016.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/typescript/lib/lib.es2017.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.core.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.collection.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.generator.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.iterable.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.promise.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.proxy.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.reflect.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.symbol.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -1151,56 +1155,6 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/tobackend/connection.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts",
-        "../node_modules/ts-evt/dist/lib/index.d.ts"
-      ],
-      "../src/lib/tobackend/remoteapicaller.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "../src/sip_api_declarations/backendtogateway.ts",
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": [
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/messagesdispatcher.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "../node_modules/@types/async-lock/index.d.ts",
-        "../src/lib/types.ts",
-        "../node_modules/crypto-lib/dist/async/index.d.ts"
-      ],
-      "../src/lib/dbasterisk.ts": [
-        "../node_modules/sqlite-custom/dist/lib/index.d.ts",
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/sipcontactsmonitor.ts": [
-        "../src/lib/types.ts",
-        "../node_modules/ts-evt/dist/lib/index.d.ts",
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/toasterisk/connections.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/tobackend/router.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/tobackend/localapihandlers.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/toasterisk/router.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts",
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/dbsemasim.ts": [
-        "../node_modules/sqlite-custom/dist/lib/index.d.ts",
-        "../src/lib/types.ts",
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
-      ],
-      "../src/lib/sipmessagesmonitor.ts": [
-        "../src/lib/types.ts",
-        "../node_modules/ts-evt/dist/lib/index.d.ts",
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
       "../node_modules/@types/node/inspector.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
@@ -1214,31 +1168,19 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/sanitychecks.ts": [
-        "../src/lib/types.ts"
-      ],
       "../node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts": [
         "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../src/lib/misc/removeduplicatecontactinsiminternalstorage.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
       ],
       "../node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
         "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/serializeduaobjectcarriedoversipcontactparameter.ts": [
-        "../src/lib/types.ts"
-      ],
-      "../src/sip_api_declarations/gatewaytobackend.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
-      ],
-      "../src/sip_api_declarations/backendtogateway.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "../src/lib/types.ts"
+      "../src/lib/tobackend/connection.ts": [
+        "../node_modules/ts-sip/dist/lib/index.d.ts",
+        "../node_modules/ts-evt/dist/lib/index.d.ts"
       ],
       "../node_modules/phone-number/dist/lib/index.d.ts": [
         "../node_modules/@types/node/base.d.ts",
@@ -1328,10 +1270,6 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/bundleddata.ts": [
-        "../src/lib/types.ts",
-        "../node_modules/crypto-lib/dist/sync/types.d.ts"
-      ],
       "../node_modules/transfer-tools/dist/lib/stringtransform.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
@@ -1344,9 +1282,6 @@
       "../node_modules/crypto-lib/dist/sync/types.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../src/lib/misc/misc.ts": [
-        "../src/lib/types.ts"
       ],
       "../node_modules/sqlite-custom/dist/lib/index.d.ts": [
         "../node_modules/@types/node/base.d.ts",
@@ -1492,6 +1427,19 @@
       ]
     },
     "semanticDiagnosticsPerFile": [
+      "../node_modules/typescript/lib/lib.es5.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.d.ts",
+      "../node_modules/typescript/lib/lib.es2016.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.core.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.collection.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.generator.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.iterable.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.promise.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.proxy.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.reflect.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.symbol.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
       "../src/web_api_declaration.ts",
       "../node_modules/@types/node/inspector.d.ts",
       "../node_modules/@types/node/base.d.ts",
@@ -1569,19 +1517,7 @@
       "../node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
       "../src/lib/procchandongleextended.ts",
       "../src/lib/misc/removeduplicatecontactinsiminternalstorage.ts",
-      [
-        "../src/lib/launch.ts",
-        [
-          {
-            "file": "../src/lib/launch.ts",
-            "start": 1120,
-            "length": 15,
-            "messageText": "Cannot find module 'memwatch-next'.",
-            "category": 1,
-            "code": 2307
-          }
-        ]
-      ],
+      "../src/lib/launch.ts",
       "../src/bin/main.ts",
       "../node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts",
       "../src/lib/misc/sanitychecks.ts",
@@ -1589,25 +1525,12 @@
       "../node_modules/transfer-tools/dist/lib/testing.d.ts",
       "../src/test/dbsemasim.ts",
       "../src/test/main.ts",
-      "../node_modules/typescript/lib/lib.es2015.d.ts",
-      "../node_modules/typescript/lib/lib.es2016.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.d.ts",
       "../node_modules/typescript/lib/lib.es2017.typedarrays.d.ts",
       "../node_modules/typescript/lib/lib.es2017.intl.d.ts",
       "../node_modules/typescript/lib/lib.es2017.string.d.ts",
       "../node_modules/typescript/lib/lib.es2017.sharedmemory.d.ts",
       "../node_modules/typescript/lib/lib.es2017.object.d.ts",
-      "../node_modules/typescript/lib/lib.es2016.array.include.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.symbol.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.reflect.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.proxy.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.promise.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.iterable.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.generator.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.collection.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.core.d.ts",
-      "../node_modules/typescript/lib/lib.es5.d.ts"
+      "../node_modules/typescript/lib/lib.es2016.array.include.d.ts"
     ]
   },
   "version": "3.7.5"
