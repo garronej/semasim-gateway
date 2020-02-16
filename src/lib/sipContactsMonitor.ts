@@ -244,7 +244,7 @@ export function handleAsteriskSocket(asteriskSocket: sipLibrary.Socket): Promise
         (sipPacket): sipPacket is sipLibrary.Request => (
             sipLibrary.matchRequest(sipPacket) &&
             sipPacket.method === "REGISTER" &&
-            sipPacket.headers["authorization"]!!
+            !!sipPacket.headers["authorization"]
         ),
         sipRequestRegister =>
             asteriskSocket.evtResponse.attachOnce(

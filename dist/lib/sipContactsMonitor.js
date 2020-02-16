@@ -200,7 +200,7 @@ function handleAsteriskSocket(asteriskSocket) {
     var evtFirstRegistration = new ts_evt_1.VoidEvt();
     asteriskSocket.evtPacketPreWrite.attach(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
         sipPacket.method === "REGISTER" &&
-        sipPacket.headers["authorization"]); }, function (sipRequestRegister) {
+        !!sipPacket.headers["authorization"]); }, function (sipRequestRegister) {
         return asteriskSocket.evtResponse.attachOnce(function (sipResponse) { return sipLibrary.isResponse(sipRequestRegister, sipResponse); }, function (sipResponse) {
             if (sipResponse.status !== 200) {
                 return;
