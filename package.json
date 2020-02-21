@@ -34,7 +34,7 @@
     "scripting-tools": "github:garronej/scripting-tools",
     "sqlite-custom": "github:garronej/sqlite-custom",
     "ts-ami": "github:garronej/ts-ami",
-    "ts-evt": "^5.0.2",
+    "ts-evt": "^6.0.0",
     "ts-sip": "github:garronej/ts-sip",
     "typescript": "^3.5.1"
   }
