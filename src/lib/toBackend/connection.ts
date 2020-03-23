@@ -1,6 +1,6 @@
 
 import * as sip from "ts-sip";
-import { Evt } from "ts-evt";
+import { Evt } from "evt";
 import * as localApiHandlers from "./localApiHandlers";
 import * as logger from "logger";
 import * as tls from "tls";

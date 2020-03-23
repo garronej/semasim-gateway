@@ -1,4 +1,4 @@
-import { Evt } from "ts-evt";
+import { Evt } from "evt";
 import { Ami } from "ts-ami";
 
 import * as sipLibrary from "ts-sip";

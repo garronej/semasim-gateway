@@ -67,7 +67,7 @@ var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var ts_ami_1 = require("ts-ami");
 var messagesDispatcher = require("./messagesDispatcher");
 var voiceCallBridge = require("./voiceCallBridge");
-var ts_evt_1 = require("ts-evt");
+var evt_1 = require("evt");
 var i = require("../bin/installer");
 var procAsterisk = require("./procAsterisk");
 var procChanDongleExtended = require("./procChanDongleExtended");
@@ -400,7 +400,7 @@ function registerListeners() {
                 switch (_b.label) {
                     case 0:
                         debug("FROM DONGLE MESSAGE", { message: message, "time": message.date.getTime() });
-                        evtShouldSave = new ts_evt_1.Evt();
+                        evtShouldSave = new evt_1.Evt();
                         submitShouldSave(evtShouldSave.waitFor());
                         return [4 /*yield*/, dbSemasim.onDongleMessage(phone_number_1.phoneNumber.build(message.number, !!dongle.sim.country ? dongle.sim.country.iso : undefined), message.text, message.date, dongle.sim.imsi)];
                     case 1:

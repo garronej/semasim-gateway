@@ -52,7 +52,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var ts_evt_1 = require("ts-evt");
+var evt_1 = require("evt");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var ts_ami_1 = require("ts-ami");
 //import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
@@ -204,7 +204,7 @@ function fromDongle(channel) {
                         return [2 /*return*/];
                     }
                     number = phone_number_1.phoneNumber.build(channel.request.callerid, !!dongle.sim.country ? dongle.sim.country.iso : undefined);
-                    evtReachableContact = new ts_evt_1.Evt();
+                    evtReachableContact = new evt_1.Evt();
                     /*
                     NOTE: evtContactRegistration is also posted when a contact refresh
                     it's registration.
@@ -221,13 +221,13 @@ function fromDongle(channel) {
                     sipContactsMonitor.evtContactRegistration.attach(function (_a) {
                         var uaSim = _a.uaSim;
                         return uaSim.imsi === imsi;
-                    }, evtReachableContact, function (contact) { return evtReachableContact.post(contact); });
+                    }, evt_1.Evt.getCtx(evtReachableContact), function (contact) { return evtReachableContact.post(contact); });
                     getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1.getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered({
                         imsi: imsi,
                         "reachableSipContactCallbackFn": function (contact) { return evtReachableContact.post(contact); }
                     });
                     channels = new Map();
-                    evtAnsweredOrEnded = new ts_evt_1.VoidEvt();
+                    evtAnsweredOrEnded = new evt_1.VoidEvt();
                     evtAnsweredOrEnded.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
                         var _a, answeredByContact;
                         return __generator(this, function (_b) {
@@ -235,7 +235,7 @@ function fromDongle(channel) {
                                 case 0:
                                     debug("evtEstablishedOrEnded");
                                     evtReachableContact.detach();
-                                    sipContactsMonitor.evtContactRegistration.detach(evtReachableContact);
+                                    sipContactsMonitor.evtContactRegistration.detach(evt_1.Evt.getCtx(evtReachableContact));
                                     Array.from(channels.values())
                                         .filter(function (_a) {
                                         var state = _a.state;
@@ -322,7 +322,7 @@ function fromDongle(channel) {
                         });
                     });
                     ami.evt.attachOnce(function (e) { return (e.event === "BridgeEnter" &&
-                        e["channel"] === dongleChannelName); }, channel, function () { return ongoingCall.resolvePrBridgeCall(); });
+                        e["channel"] === dongleChannelName); }, evt_1.Evt.getCtx(channel), function () { return ongoingCall.resolvePrBridgeCall(); });
                     return [4 /*yield*/, ami.evt.waitFor(function (_a) {
                             var event = _a.event, channel = _a.channel;
                             return (event === "Hangup" &&
@@ -330,7 +330,7 @@ function fromDongle(channel) {
                         })];
                 case 2:
                     _a.sent();
-                    ami.evt.detach(channel);
+                    ami.evt.detach(evt_1.Evt.getCtx(channel));
                     OngoingCall.deleteCall(ongoingCall);
                     /** no problem we can emit as long as we attach once */
                     evtAnsweredOrEnded.post();
@@ -445,11 +445,11 @@ function fromSip(channel) {
                         var event = _a.event, linkedid = _a.linkedid;
                         return (event === "Newchannel" &&
                             linkedid === channel.request.uniqueid);
-                    }, channel, function (_a) {
+                    }, evt_1.Evt.getCtx(channel), function (_a) {
                         var dongleChannelName = _a.channel;
                         var ongoingCall = new OngoingCall("SIP", contact.uaSim.imsi, number, dongleChannelName);
                         ami.evt.attachOnce(function (e) { return (e.event === "BridgeEnter" &&
-                            e["channel"] === channel.request.channel); }, channel, function () { return ongoingCall.resolvePrBridgeCall(); });
+                            e["channel"] === channel.request.channel); }, evt_1.Evt.getCtx(channel), function () { return ongoingCall.resolvePrBridgeCall(); });
                         ami.evt.attachOnce(function (e) { return (e.event === "Hangup" &&
                             e["channel"] === channel.request.channel); }, function () { return OngoingCall.removeUaFromCall(ongoingCall, contact.uaSim.ua); });
                         OngoingCall.addCall(ongoingCall);
@@ -464,14 +464,14 @@ function fromSip(channel) {
                         sendCallLogNotification_1 = function () { return dbSemasim.onCallFromSipTerminated(number, contact.uaSim.imsi, callPlacedAtDateTime_1, callRingingAfterMs_1, callAnsweredAfterMs_1, Date.now() - callPlacedAtDateTime_1, contact.uaSim.ua).then(function () { return messageDispatcher.notifyNewSipMessagesToSend(contact.uaSim.imsi); }); };
                         ami.evt.attachOnce(function (e) { return (e["event"] === "RTCPSent" &&
                             e["channelstatedesc"] === "Ring" &&
-                            e["channel"] === channel.request.channel); }, channel, function () {
+                            e["channel"] === channel.request.channel); }, evt_1.Evt.getCtx(channel), function () {
                             callRingingAfterMs_1 = Date.now() - callPlacedAtDateTime_1;
                             dbSemasim.onTargetGsmRinging(contact, number, call_id)
                                 .then(function () { return messageDispatcher.sendMessagesOfContact(contact); });
                         });
                         ami.evt.attachOnce(function (e) { return (e["event"] === "BridgeEnter" &&
                             e["channel"] !== channel.request.channel &&
-                            e["linkedid"] === channel.request.uniqueid); }, channel, function (_a) {
+                            e["linkedid"] === channel.request.uniqueid); }, evt_1.Evt.getCtx(channel), function (_a) {
                             var dongleChannelName = _a.channel;
                             if (callRingingAfterMs_1 === undefined) {
                                 callRingingAfterMs_1 = Date.now();
@@ -489,7 +489,7 @@ function fromSip(channel) {
                         });
                     }
                     ami.evt.attachOnce(function (e) { return (e["channel"] === channel.request.channel &&
-                        e["event"] === "Hangup"); }, function () { return ami.evt.detach(channel); });
+                        e["event"] === "Hangup"); }, function () { return ami.evt.detach(evt_1.Evt.getCtx(channel)); });
                     return [4 /*yield*/, setGainControlAndJitterBuffer()];
                 case 13:
                     _a.sent();

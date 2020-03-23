@@ -1,4 +1,4 @@
-import { Evt, VoidEvt } from "ts-evt";
+import { Evt, VoidEvt } from "evt";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Ami, agi } from "ts-ami";
 //import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
@@ -271,7 +271,7 @@ async function fromDongle(channel: agi.AGIChannel) {
 
     sipContactsMonitor.evtContactRegistration.attach(
         ({ uaSim }) => uaSim.imsi === imsi,
-        evtReachableContact,
+        Evt.getCtx(evtReachableContact),
         contact => evtReachableContact.post(contact)
     );
 
@@ -293,7 +293,9 @@ async function fromDongle(channel: agi.AGIChannel) {
 
         evtReachableContact.detach();
 
-        sipContactsMonitor.evtContactRegistration.detach(evtReachableContact);
+        sipContactsMonitor.evtContactRegistration.detach(
+            Evt.getCtx(evtReachableContact)
+        );
 
         Array.from(channels.values())
             .filter(({ state }) => state === "RINGING")
@@ -419,7 +421,7 @@ async function fromDongle(channel: agi.AGIChannel) {
             e.event === "BridgeEnter" &&
             e["channel"] === dongleChannelName
         ),
-        channel,
+        Evt.getCtx(channel),
         () => ongoingCall.resolvePrBridgeCall()
     );
 
@@ -430,7 +432,7 @@ async function fromDongle(channel: agi.AGIChannel) {
         )
     );
 
-    ami.evt.detach(channel);
+    ami.evt.detach(Evt.getCtx(channel));
 
     OngoingCall.deleteCall(ongoingCall);
 
@@ -547,7 +549,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
             event === "Newchannel" &&
             linkedid === channel.request.uniqueid
         ),
-        channel,
+        Evt.getCtx(channel),
         ({ channel: dongleChannelName }) => {
 
             const ongoingCall = new OngoingCall("SIP", contact.uaSim.imsi, number, dongleChannelName);
@@ -557,7 +559,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
                     e.event === "BridgeEnter" &&
                     e["channel"] === channel.request.channel
                 ),
-                channel,
+                Evt.getCtx(channel),
                 () => ongoingCall.resolvePrBridgeCall()
             );
 
@@ -605,7 +607,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
                 e["channelstatedesc"] === "Ring" &&
                 e["channel"] === channel.request.channel
             ),
-            channel,
+            Evt.getCtx( channel),
             () => {
 
                 callRingingAfterMs = Date.now() - callPlacedAtDateTime;
@@ -622,7 +624,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
                 e["channel"] !== channel.request.channel &&
                 e["linkedid"] === channel.request.uniqueid
             ),
-            channel,
+            Evt.getCtx(channel),
             ({ channel: dongleChannelName }) => {
 
                 if (callRingingAfterMs === undefined) {
@@ -667,7 +669,7 @@ async function fromSip(channel: agi.AGIChannel): Promise<void> {
             e["event"] === "Hangup"
 
         ),
-        () => ami.evt.detach(channel)
+        () => ami.evt.detach(Evt.getCtx(channel))
     );
 
     await setGainControlAndJitterBuffer();

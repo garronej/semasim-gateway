@@ -1,4 +1,4 @@
-import { Evt } from "ts-evt";
+import { Evt } from "evt";
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
 export declare const dialplanContext = "from-sip-message";

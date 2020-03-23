@@ -27,6 +27,7 @@
     "@types/node": "^8.9.1",
     "async-lock": "^1.0.0",
     "commander": "^2.11.0",
+    "evt": "^1.0.16",
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
     "memwatch-next": "^0.3.0",
@@ -34,7 +35,6 @@
     "scripting-tools": "github:garronej/scripting-tools",
     "sqlite-custom": "github:garronej/sqlite-custom",
     "ts-ami": "github:garronej/ts-ami",
-    "ts-evt": "^6.0.0",
     "ts-sip": "github:garronej/ts-sip",
     "typescript": "^3.5.1"
   }

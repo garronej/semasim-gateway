@@ -19,10 +19,10 @@ export declare namespace cid {
         remotePort: number;
     }, timestamp?: number): string;
     function parse(connectionId: string): {
-        "timestamp": number;
-        "uaSocket": {
-            "remoteAddress": string;
-            "remotePort": number;
+        timestamp: number;
+        uaSocket: {
+            remoteAddress: string;
+            remotePort: number;
         };
     };
     /**

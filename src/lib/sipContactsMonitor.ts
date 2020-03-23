@@ -1,6 +1,6 @@
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
-import { Evt, VoidEvt } from "ts-evt";
+import { Evt, VoidEvt } from "evt";
 import * as sipRouting from "./misc/sipRouting";
 import { areSameUaSims } from "./misc/misc"
 import * as dbAsterisk from "./dbAsterisk";

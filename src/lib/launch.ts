@@ -2,7 +2,7 @@ import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-c
 import { Ami } from "ts-ami";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
-import {  Evt } from "ts-evt";
+import {  Evt } from "evt";
 import * as i from "../bin/installer";
 import * as procAsterisk from "./procAsterisk";
 import * as procChanDongleExtended from "./procChanDongleExtended";
