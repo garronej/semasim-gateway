@@ -57,4 +57,5 @@ Object.assign(console, (function () {
         "warn": logProxy("warn")
     };
 })());
+process.on("warning", function (error) { return log("[process.emitWarning]", error); });
 exports.logger = __assign(__assign({}, logger_), { log: log, "debugFactory": logger_.debugFactory.bind(logger_, undefined, undefined, log) });

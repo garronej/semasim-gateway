@@ -13,6 +13,7 @@ const log: typeof logger_.log = (...args) => {
 
 }
 
+
 Object.assign(
     console,
     (() => {
@@ -31,6 +32,8 @@ Object.assign(
 
 
 );
+
+process.on("warning", error => log("[process.emitWarning]", error));
 
 export const logger = {
     ...logger_,

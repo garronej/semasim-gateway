@@ -126,7 +126,7 @@
         "signature": "8624292f17c9d511be87c1cc493e854fb0e2f8253bb8c15f394b77196a94665d"
       },
       "../src/tools/logger.ts": {
-        "version": "7eb756d888dc75e91881d6b4663746e2966ab42af7dfcf1f1c1b05a8b01fa228",
+        "version": "287be9f26c4fc1ffa2d6251b8df5598bf4cf21427ca8cda4d5d619a7ee1586cb",
         "signature": "757d8d3bb9d823172742a30e5bb682aef10c97ba749889e76028557d49fe1e9a"
       },
       "../node_modules/trackable-map/dist/lib/mapextended.d.ts": {
@@ -462,7 +462,7 @@
         "signature": "bd6e782631646bbf903a436c829205de0aac962620d14604348ac0f6d3d507bc"
       },
       "../src/lib/launch.ts": {
-        "version": "97c381a6856bdcee49c60a9b71de5e59baeda8f9ad3121c13693f56058960e99",
+        "version": "2f89982c23b4f46a512bde5f572a7a2722b7feea55505348864905d5e1660f2c",
         "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
       },
       "../src/bin/main.ts": {
@@ -1833,7 +1833,6 @@
       "../node_modules/commander/typings/index.d.ts",
       "../src/bin/installer.ts",
       "../node_modules/logger/dist/lib/index.d.ts",
-      "../src/tools/logger.ts",
       "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
       "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts",
       "../node_modules/evt/dist/lib/types/handler.d.ts",
@@ -1917,14 +1916,15 @@
       "../node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
       "../src/lib/procchandongleextended.ts",
       "../src/lib/misc/removeduplicatecontactinsiminternalstorage.ts",
-      "../src/lib/launch.ts",
+      "../src/bin/main.ts",
       "../node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts",
       "../src/lib/misc/sanitychecks.ts",
       "../src/test/dbasterisk.ts",
       "../node_modules/transfer-tools/dist/lib/testing.d.ts",
       "../src/test/dbsemasim.ts",
       "../src/test/main.ts",
-      "../src/bin/main.ts"
+      "../src/tools/logger.ts",
+      "../src/lib/launch.ts"
     ]
   },
   "version": "3.8.3"

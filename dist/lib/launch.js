@@ -88,6 +88,7 @@ var debug = logger_1.logger.debugFactory();
 debug("Memory leak detection enabled !");
 memwatch.on("leak", function (infos) { return debug("memory leak detected", infos); });
 memwatch.on("stats", function (stats) { return debug("mem stats", stats); });
+process.emitWarning(new Error("okokok"));
 function beforeExit() {
     return __awaiter(this, void 0, void 0, function () {
         var backendSocket;
