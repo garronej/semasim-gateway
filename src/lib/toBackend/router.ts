@@ -2,9 +2,6 @@
 import * as sip from "ts-sip";
 import * as sipRouting from "../misc/sipRouting";
 import * as asteriskConnections from "../toAsterisk/connections";
-//import * as logger from "logger";
-
-//const debug= logger.debugFactory();
 
 export function handle(socket: sip.Socket) {
 

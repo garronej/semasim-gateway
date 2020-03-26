@@ -6,7 +6,7 @@ import { areSameUaSims } from "./misc/misc"
 import * as dbAsterisk from "./dbAsterisk";
 import * as serializedUaObjectCarriedOverSipContactParameter from "./misc/serializedUaObjectCarriedOverSipContactParameter";
 import * as crypto from "crypto";
-import * as logger from "logger";
+import { logger } from "../tools/logger";
 
 const debug = logger.debugFactory();
 

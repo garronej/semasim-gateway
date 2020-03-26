@@ -36,8 +36,8 @@ var i = require("../bin/installer");
 var path = require("path");
 var fs = require("fs");
 var child_process = require("child_process");
-var logger = require("logger");
-var debug = logger.debugFactory();
+var logger_1 = require("../tools/logger");
+var debug = logger_1.logger.debugFactory();
 function doSpawn(args) {
     var home_path = path.join(i.ast_dir_path, "var", "lib", "asterisk");
     return child_process.spawn(i.ast_path, __spread(["-C", i.ast_main_conf_path], args), {
@@ -147,8 +147,8 @@ function spawnAsterisk() {
             resolve();
         });
     }); };
-    astProcess.stdout.on("data", function (data) { return logger.log("(asterisk) " + data.toString("utf8")); });
-    astProcess.stderr.on("data", function (data) { return logger.log("(asterisk) " + logger.colors.red(data.toString("utf8"))); });
+    astProcess.stdout.on("data", function (data) { return logger_1.logger.log("(asterisk) " + data.toString("utf8")); });
+    astProcess.stderr.on("data", function (data) { return logger_1.logger.log("(asterisk) " + logger_1.logger.colors.red(data.toString("utf8"))); });
     return prFullyBooted;
 }
 exports.spawnAsterisk = spawnAsterisk;

@@ -3,7 +3,7 @@ import * as sip from "ts-sip";
 import * as net from "net";
 import * as backendConnection from "../toBackend/connection";
 import * as i from "../../bin/installer";
-import * as logger from "logger";
+import { logger } from "../../tools/logger";
 import * as sipContactsMonitor from "../sipContactsMonitor";
 import * as sipMessagesMonitor from "../sipMessagesMonitor";
 import * as router from "./router";

@@ -7,7 +7,7 @@ import * as dbSemasim from "./dbSemasim";
 import * as types from "./types";
 import { generateUaSimId } from "./misc/misc";
 import { smuggleBundledDataInHeaders } from "./misc/bundledData";
-import * as logger from "logger";
+import { logger } from "../tools/logger";
 import * as sipMessagesMonitor from "./sipMessagesMonitor";
 import * as cryptoLib from "crypto-lib";
 import { workerThreadPoolId } from "./misc/workerThreadPoolId";

@@ -4,7 +4,7 @@ var sip = require("ts-sip");
 var net = require("net");
 var backendConnection = require("../toBackend/connection");
 var i = require("../../bin/installer");
-var logger = require("logger");
+var logger_1 = require("../../tools/logger");
 var sipContactsMonitor = require("../sipContactsMonitor");
 var sipMessagesMonitor = require("../sipMessagesMonitor");
 var router = require("./router");
@@ -37,7 +37,7 @@ function connect(connectionId, imsi) {
         "outgoingTraffic": false,
         "colorizedTraffic": "OUT",
         "ignoreApiTraffic": true
-    }, logger.log);
+    }, logger_1.logger.log);
     var prContact = sipContactsMonitor.handleAsteriskSocket(socket);
     sipMessagesMonitor.handleAsteriskSocket(socket, prContact);
     {

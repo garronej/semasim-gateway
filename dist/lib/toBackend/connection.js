@@ -39,17 +39,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var sip = require("ts-sip");
 var evt_1 = require("evt");
 var localApiHandlers = require("./localApiHandlers");
-var logger = require("logger");
+var logger_1 = require("../../tools/logger");
 var tls = require("tls");
 var versionStatus = require("../versionStatus");
 var router = require("./router");
 var i = require("../../bin/installer");
 //TODO: Implement before exit to close the socket.
-var debug = logger.debugFactory();
+var debug = logger_1.logger.debugFactory();
 var idString = "gatewayToBackend";
 var apiServer = new sip.api.Server(localApiHandlers.handlers, sip.api.Server.getDefaultLogger({
     idString: idString,
-    "log": logger.log,
+    "log": logger_1.logger.log,
     "hideKeepAlive": true
 }));
 var socketCurrent = undefined;
@@ -94,7 +94,7 @@ function connect() {
             sip.api.client.enableKeepAlive(socket, 10 * 60 * 1000);
             sip.api.client.enableErrorLogging(socket, sip.api.client.getDefaultErrorLogger({
                 idString: idString,
-                "log": logger.log
+                "log": logger_1.logger.log
             }));
             socket.enableLogger({
                 "socketId": idString,
@@ -107,7 +107,7 @@ function connect() {
                 "outgoingTraffic": true,
                 "colorizedTraffic": "IN",
                 "ignoreApiTraffic": true
-            }, logger.log);
+            }, logger_1.logger.log);
             socketCurrent = socket;
             socket.evtConnect.attachOnce(function () { return exports.evtConnect.post(socket); });
             router.handle(socket);

@@ -34,8 +34,8 @@ var misc_1 = require("./misc/misc");
 var dbAsterisk = require("./dbAsterisk");
 var serializedUaObjectCarriedOverSipContactParameter = require("./misc/serializedUaObjectCarriedOverSipContactParameter");
 var crypto = require("crypto");
-var logger = require("logger");
-var debug = logger.debugFactory();
+var logger_1 = require("../tools/logger");
+var debug = logger_1.logger.debugFactory();
 //TODO: create proxy
 exports.evtContactRegistration = new evt_1.Evt();
 function getContacts(imsi) {

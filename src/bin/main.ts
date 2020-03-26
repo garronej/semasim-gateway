@@ -5,10 +5,10 @@ scriptLib.createService({
 
         const [
             { node_path, pidfile_path, unix_user, srv_name, update, dongle },
-            logger,
+            { logger },
         ] = await Promise.all([
             import("./installer"),
-            import("logger")
+            import("../tools/logger")
         ]);
 
         const debug = logger.debugFactory();
@@ -23,10 +23,10 @@ scriptLib.createService({
             "preForkTask": async () => {
 
                 debug("Checking tty0tty...");
-                
+
                 await scriptLib.exec(`${dongle.installer_cmd} re-install-tty0tty-if-needed`);
 
-                debug("OK");
+                debug("...OK");
 
                 while (true) {
 
@@ -70,33 +70,22 @@ scriptLib.createService({
     },
     "daemonProcess": async () => {
 
-        const [
-            path,
-            fs,
-            { working_directory_path },
-            logger,
-            { launch, beforeExit }
-        ] = await Promise.all([
+        const [path, { logger }] = await Promise.all([
             import("path"),
-            import("fs"),
-            import("./installer"),
-            import("logger"),
-            import("../lib/launch")
-        ]).catch(error=> {
-            console.log(error);
-            throw error;
-        });
+            import("../tools/logger")
+        ]);
 
-        const logfile_path = path.join(working_directory_path, "log");
+        const logfile_path = path.join(
+            (await import("./installer")).working_directory_path,
+            "current.log"
+        );
+
+        logger.file.enable(logfile_path);
+
+        const { launch, beforeExit } = await import("../lib/launch");
 
         return {
-            "launch": () => {
-
-                logger.file.enable(logfile_path);
-
-                launch();
-
-            },
+            launch,
             "beforeExitTask": async error => {
 
                 if (!!error) {
@@ -106,21 +95,16 @@ scriptLib.createService({
                 }
 
                 await Promise.all([
-                    logger.file.terminate().then(() => {
-
-                        if (!!error) {
-
-                            scriptLib.execSync(
-                                `mv ${logfile_path} ${path.join(path.dirname(logfile_path), "previous_crash.log")}`
-                            );
-
-                        } else {
-
-                            fs.unlinkSync(logfile_path);
-
-                        }
-
-                    }),
+                    logger.file.terminate().then(() =>
+                        scriptLib.fs_move(
+                            "MOVE",
+                            logfile_path,
+                            path.join(
+                                path.dirname(logfile_path),
+                                `previous${!!error ? "_crash" : ""}.log`
+                            )
+                        )
+                    ),
                     beforeExit()
                 ]);
 

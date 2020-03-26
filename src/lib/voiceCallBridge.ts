@@ -7,7 +7,7 @@ import * as types from "./types";
 import * as dbSemasim from "./dbSemasim";
 import * as messageDispatcher from "./messagesDispatcher";
 import * as sip from "ts-sip";
-import * as logger from "logger";
+import { logger } from "../tools/logger";
 import * as sipContactsMonitor from "./sipContactsMonitor";
 import * as toBackendRemoteApiCaller from "./toBackend/remoteApiCaller";
 import { generateUaId } from "./misc/misc";

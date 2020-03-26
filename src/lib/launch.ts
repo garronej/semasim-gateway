@@ -2,12 +2,12 @@ import { DongleController as Dc, types as dcTypes } from "chan-dongle-extended-c
 import { Ami } from "ts-ami";
 import * as messagesDispatcher from "./messagesDispatcher";
 import * as voiceCallBridge from "./voiceCallBridge";
-import {  Evt } from "evt";
+import { Evt } from "evt";
 import * as i from "../bin/installer";
 import * as procAsterisk from "./procAsterisk";
 import * as procChanDongleExtended from "./procChanDongleExtended";
 import { safePr } from "scripting-tools";
-import * as logger from "logger";
+import { logger } from "../tools/logger";
 import * as dbSemasim from "./dbSemasim";
 import * as dbAsterisk from "./dbAsterisk";
 import * as backendConnection from "./toBackend/connection";
@@ -23,12 +23,10 @@ import * as memwatch from "memwatch-next";
 
 const debug = logger.debugFactory();
 
-setImmediate
+debug("Memory leak detection enabled !");
 
-debug("Memory leak detection enabled");
-
-memwatch.on("leak", infos => debug("memory leak detected", infos));
-memwatch.on("stats", stats=> debug("mem stats", stats));
+memwatch.on("leak", (infos: any) => debug("memory leak detected", infos));
+memwatch.on("stats", (stats: any) => debug("mem stats", stats));
 
 export async function beforeExit(): Promise<void> {
 
@@ -260,10 +258,10 @@ function registerListeners() {
     dc.dongles.evtDelete.attach(
         ([dongle]) => {
 
-            if( dcTypes.Dongle.Usable.match(dongle) ){
+            if (dcTypes.Dongle.Usable.match(dongle)) {
 
                 sipContactsMonitor.discardContactsRegisteredToSim(
-                    dongle.sim.imsi, 
+                    dongle.sim.imsi,
                     "SIM no longer usable"
                 );
 
@@ -366,7 +364,7 @@ function registerListeners() {
 
             const { text } = bundledData;
 
-            debug("FROM SIP MESSAGE", {"imsi": fromContact.uaSim.imsi, toNumber, text });
+            debug("FROM SIP MESSAGE", { "imsi": fromContact.uaSim.imsi, toNumber, text });
 
             const { uaSim } = fromContact;
 

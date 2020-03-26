@@ -38,8 +38,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var sipRouting = require("../misc/sipRouting");
 var asteriskConnections = require("../toAsterisk/connections");
-//import * as logger from "logger";
-//const debug= logger.debugFactory();
 function handle(socket) {
     var _this = this;
     socket.evtRequest.attach(function (sipRequest) { return __awaiter(_this, void 0, void 0, function () {

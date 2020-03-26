@@ -60,12 +60,12 @@ var phone_number_1 = require("phone-number");
 var dbSemasim = require("./dbSemasim");
 var messageDispatcher = require("./messagesDispatcher");
 var sip = require("ts-sip");
-var logger = require("logger");
+var logger_1 = require("../tools/logger");
 var sipContactsMonitor = require("./sipContactsMonitor");
 var toBackendRemoteApiCaller = require("./toBackend/remoteApiCaller");
 var misc_1 = require("./misc/misc");
 var getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1 = require("./misc/getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered");
-var debug = logger.debugFactory();
+var debug = logger_1.logger.debugFactory();
 var gain = "3000";
 //const volume= "11";
 /*

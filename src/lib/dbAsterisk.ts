@@ -1,7 +1,7 @@
 import * as sqliteCustom from "sqlite-custom";
 import * as types from "./types";
 import * as i from "../bin/installer";
-import * as logger from "logger";
+import { logger } from "../tools/logger";
 const debug = logger.debugFactory();
 import * as crypto from "crypto";
 import * as runExclusive from "run-exclusive";

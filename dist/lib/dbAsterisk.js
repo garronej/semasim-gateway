@@ -38,8 +38,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var sqliteCustom = require("sqlite-custom");
 var i = require("../bin/installer");
-var logger = require("logger");
-var debug = logger.debugFactory();
+var logger_1 = require("../tools/logger");
+var debug = logger_1.logger.debugFactory();
 var crypto = require("crypto");
 var runExclusive = require("run-exclusive");
 var voiceCallBridge_1 = require("./voiceCallBridge");

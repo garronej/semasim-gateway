@@ -4,7 +4,8 @@ import * as scriptLib from "scripting-tools";
 import * as i from "../bin/installer";
 import * as path from "path";
 import * as child_process from "child_process";
-import * as logger from "logger";
+import { logger } from "../tools/logger";
+
 
 const debug= logger.debugFactory();
 

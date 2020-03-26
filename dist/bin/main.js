@@ -60,10 +60,10 @@ scriptLib.createService({
             switch (_c.label) {
                 case 0: return [4 /*yield*/, Promise.all([
                         Promise.resolve().then(function () { return require("./installer"); }),
-                        Promise.resolve().then(function () { return require("logger"); })
+                        Promise.resolve().then(function () { return require("../tools/logger"); })
                     ])];
                 case 1:
-                    _a = __read.apply(void 0, [_c.sent(), 2]), _b = _a[0], node_path = _b.node_path, pidfile_path = _b.pidfile_path, unix_user = _b.unix_user, srv_name = _b.srv_name, update = _b.update, dongle = _b.dongle, logger = _a[1];
+                    _a = __read.apply(void 0, [_c.sent(), 2]), _b = _a[0], node_path = _b.node_path, pidfile_path = _b.pidfile_path, unix_user = _b.unix_user, srv_name = _b.srv_name, update = _b.update, dongle = _b.dongle, logger = _a[1].logger;
                     debug = logger.debugFactory();
                     return [2 /*return*/, {
                             pidfile_path: pidfile_path,
@@ -81,7 +81,7 @@ scriptLib.createService({
                                             return [4 /*yield*/, scriptLib.exec(dongle.installer_cmd + " re-install-tty0tty-if-needed")];
                                         case 1:
                                             _a.sent();
-                                            debug("OK");
+                                            debug("...OK");
                                             _a.label = 2;
                                         case 2:
                                             if (!true) return [3 /*break*/, 8];
@@ -120,27 +120,26 @@ scriptLib.createService({
         });
     }); },
     "daemonProcess": function () { return __awaiter(void 0, void 0, void 0, function () {
-        var _a, path, fs, working_directory_path, logger, _b, launch, beforeExit, logfile_path;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var _a, path, logger, logfile_path, _b, _c, _d, launch, beforeExit;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0: return [4 /*yield*/, Promise.all([
                         Promise.resolve().then(function () { return require("path"); }),
-                        Promise.resolve().then(function () { return require("fs"); }),
-                        Promise.resolve().then(function () { return require("./installer"); }),
-                        Promise.resolve().then(function () { return require("logger"); }),
-                        Promise.resolve().then(function () { return require("../lib/launch"); })
-                    ]).catch(function (error) {
-                        console.log(error);
-                        throw error;
-                    })];
+                        Promise.resolve().then(function () { return require("../tools/logger"); })
+                    ])];
                 case 1:
-                    _a = __read.apply(void 0, [_c.sent(), 5]), path = _a[0], fs = _a[1], working_directory_path = _a[2].working_directory_path, logger = _a[3], _b = _a[4], launch = _b.launch, beforeExit = _b.beforeExit;
-                    logfile_path = path.join(working_directory_path, "log");
+                    _a = __read.apply(void 0, [_e.sent(), 2]), path = _a[0], logger = _a[1].logger;
+                    _c = (_b = path).join;
+                    return [4 /*yield*/, Promise.resolve().then(function () { return require("./installer"); })];
+                case 2:
+                    logfile_path = _c.apply(_b, [(_e.sent()).working_directory_path,
+                        "current.log"]);
+                    logger.file.enable(logfile_path);
+                    return [4 /*yield*/, Promise.resolve().then(function () { return require("../lib/launch"); })];
+                case 3:
+                    _d = _e.sent(), launch = _d.launch, beforeExit = _d.beforeExit;
                     return [2 /*return*/, {
-                            "launch": function () {
-                                logger.file.enable(logfile_path);
-                                launch();
-                            },
+                            launch: launch,
                             "beforeExitTask": function (error) { return __awaiter(void 0, void 0, void 0, function () {
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
@@ -150,12 +149,7 @@ scriptLib.createService({
                                             }
                                             return [4 /*yield*/, Promise.all([
                                                     logger.file.terminate().then(function () {
-                                                        if (!!error) {
-                                                            scriptLib.execSync("mv " + logfile_path + " " + path.join(path.dirname(logfile_path), "previous_crash.log"));
-                                                        }
-                                                        else {
-                                                            fs.unlinkSync(logfile_path);
-                                                        }
+                                                        return scriptLib.fs_move("MOVE", logfile_path, path.join(path.dirname(logfile_path), "previous" + (!!error ? "_crash" : "") + ".log"));
                                                     }),
                                                     beforeExit()
                                                 ])];

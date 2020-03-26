@@ -68,12 +68,12 @@ var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var dbSemasim = require("./dbSemasim");
 var misc_1 = require("./misc/misc");
 var bundledData_1 = require("./misc/bundledData");
-var logger = require("logger");
+var logger_1 = require("../tools/logger");
 var sipMessagesMonitor = require("./sipMessagesMonitor");
 var cryptoLib = require("crypto-lib");
 var workerThreadPoolId_1 = require("./misc/workerThreadPoolId");
 var getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered_1 = require("./misc/getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered");
-var debug = logger.debugFactory();
+var debug = logger_1.logger.debugFactory();
 function sendMessagesOfDongle(dongle) {
     var _this = this;
     sendMessagesOfDongle.lock.acquire(dongle.imei, function () { return __awaiter(_this, void 0, void 0, function () {

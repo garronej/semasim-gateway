@@ -41,8 +41,8 @@ var scriptLib = require("scripting-tools");
 var i = require("../bin/installer");
 var path = require("path");
 var child_process = require("child_process");
-var logger = require("logger");
-var debug = logger.debugFactory();
+var logger_1 = require("../tools/logger");
+var debug = logger_1.logger.debugFactory();
 function beforeExit() {
     return beforeExit.impl();
 }
@@ -138,8 +138,8 @@ function spawnChanDongleExtended() {
             resolve();
         });
     }); };
-    dongleProcess.stdout.on("data", function (data) { return logger.log("(dongle) " + data.toString("utf8")); });
-    dongleProcess.stderr.on("data", function (data) { return logger.log("(dongle) " + logger.colors.red(data.toString("utf8"))); });
+    dongleProcess.stdout.on("data", function (data) { return logger_1.logger.log("(dongle) " + data.toString("utf8")); });
+    dongleProcess.stderr.on("data", function (data) { return logger_1.logger.log("(dongle) " + logger_1.logger.colors.red(data.toString("utf8"))); });
     return prDongleControllerInitialized;
 }
 exports.spawnChanDongleExtended = spawnChanDongleExtended;

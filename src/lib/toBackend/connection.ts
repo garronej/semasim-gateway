@@ -2,7 +2,7 @@
 import * as sip from "ts-sip";
 import { Evt } from "evt";
 import * as localApiHandlers from "./localApiHandlers";
-import * as logger from "logger";
+import { logger } from "../../tools/logger";
 import * as tls from "tls";
 import * as versionStatus from "../versionStatus";
 import * as router from "./router";
