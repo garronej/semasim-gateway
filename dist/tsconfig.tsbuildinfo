@@ -462,7 +462,7 @@
         "signature": "bd6e782631646bbf903a436c829205de0aac962620d14604348ac0f6d3d507bc"
       },
       "../src/lib/launch.ts": {
-        "version": "2f89982c23b4f46a512bde5f572a7a2722b7feea55505348864905d5e1660f2c",
+        "version": "a6f5a864f28da7270521fac722bf212e312b73037347771b5b2d82893b2d0c5d",
         "signature": "038b3c30d79bd670504ec5d1f339f5ca672d01c055025feb05510a05a63281c2"
       },
       "../src/bin/main.ts": {
@@ -1833,6 +1833,7 @@
       "../node_modules/commander/typings/index.d.ts",
       "../src/bin/installer.ts",
       "../node_modules/logger/dist/lib/index.d.ts",
+      "../src/tools/logger.ts",
       "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
       "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts",
       "../node_modules/evt/dist/lib/types/handler.d.ts",
@@ -1923,7 +1924,6 @@
       "../node_modules/transfer-tools/dist/lib/testing.d.ts",
       "../src/test/dbsemasim.ts",
       "../src/test/main.ts",
-      "../src/tools/logger.ts",
       "../src/lib/launch.ts"
     ]
   },

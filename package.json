@@ -30,7 +30,6 @@
     "evt": "^1.0.17",
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
-    "memwatch-next": "^0.3.0",
     "run-exclusive": "2.1.5",
     "scripting-tools": "github:garronej/scripting-tools",
     "sqlite-custom": "github:garronej/sqlite-custom",
