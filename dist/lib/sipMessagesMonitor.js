@@ -187,22 +187,20 @@ function onIncomingSipMessage(fromContact, sipRequest) {
         var _this = this;
         return __generator(this, function (_e) {
             switch (_e.label) {
-                case 0:
-                    console.log("===============> onIncomingSipMessage", { fromContact: fromContact, sipRequest: sipRequest });
-                    return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
-                            var prDecryptorMap, imsi, prDecryptor;
-                            return __generator(this, function (_a) {
-                                prDecryptorMap = onIncomingSipMessage.prDecryptorMap;
-                                imsi = fromContact.uaSim.imsi;
-                                prDecryptor = prDecryptorMap.get(imsi);
-                                if (prDecryptor === undefined) {
-                                    prDecryptor = dbSemasim.getTowardSimKeys(imsi)
-                                        .then(function (towardSimKeysStr) { return cryptoLib.rsa.decryptorFactory(cryptoLib.RsaKey.parse(towardSimKeysStr.decryptKeyStr), workerThreadPoolId_1.workerThreadPoolId); });
-                                    prDecryptorMap.set(imsi, prDecryptor);
-                                }
-                                return [2 /*return*/, prDecryptor];
-                            });
-                        }); })()];
+                case 0: return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
+                        var prDecryptorMap, imsi, prDecryptor;
+                        return __generator(this, function (_a) {
+                            prDecryptorMap = onIncomingSipMessage.prDecryptorMap;
+                            imsi = fromContact.uaSim.imsi;
+                            prDecryptor = prDecryptorMap.get(imsi);
+                            if (prDecryptor === undefined) {
+                                prDecryptor = dbSemasim.getTowardSimKeys(imsi)
+                                    .then(function (towardSimKeysStr) { return cryptoLib.rsa.decryptorFactory(cryptoLib.RsaKey.parse(towardSimKeysStr.decryptKeyStr), workerThreadPoolId_1.workerThreadPoolId); });
+                                prDecryptorMap.set(imsi, prDecryptor);
+                            }
+                            return [2 /*return*/, prDecryptor];
+                        });
+                    }); })()];
                 case 1:
                     decryptor = _e.sent();
                     _b = (_a = exports.evtMessage).post;

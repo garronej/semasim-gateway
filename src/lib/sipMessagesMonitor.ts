@@ -194,8 +194,6 @@ async function onIncomingSipMessage(
     sipRequest: sipLibrary.Request
 ) {
 
-    console.log("===============> onIncomingSipMessage", {fromContact, sipRequest });
-
     const decryptor = await (async () => {
 
         const { prDecryptorMap } = onIncomingSipMessage;

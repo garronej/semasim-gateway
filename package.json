@@ -27,7 +27,7 @@
     "@types/node": "^8.9.1",
     "async-lock": "^1.0.0",
     "commander": "^2.11.0",
-    "evt": "^1.0.17",
+    "evt": "^1.0.19",
     "ini-extended": "github:garronej/ini-extended",
     "logger": "github:garronej/logger",
     "run-exclusive": "2.1.5",

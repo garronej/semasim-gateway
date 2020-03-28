@@ -206,8 +206,8 @@
         "signature": "0072eeba252eab988da79ad35311573f29ec4cdce3b9564e2146ed84812de591"
       },
       "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts": {
-        "version": "b9a266f3f7547d2967aa823a74e14d0ee2d9cecc2a0126f0040e22d95a6f6eec",
-        "signature": "b9a266f3f7547d2967aa823a74e14d0ee2d9cecc2a0126f0040e22d95a6f6eec"
+        "version": "7595d59599c282270e2064a9abce83376bf0ce3f866f94c16fb89dcd18249713",
+        "signature": "7595d59599c282270e2064a9abce83376bf0ce3f866f94c16fb89dcd18249713"
       },
       "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts": {
         "version": "044cfc9b10e86f355d9b22ddbff8cd86e4dfe2647d21d44038c2b0c9dd9b6b48",
@@ -374,7 +374,7 @@
         "signature": "299385732f934784c153b2d72121affeb966ce5f2356cacea54ca9f4fd9ab302"
       },
       "../src/lib/sipmessagesmonitor.ts": {
-        "version": "ab9a96fe974490321bbf5457c76eae84910e08ecf1f1d1e04ad71246364fdeca",
+        "version": "aa9f1ae5cfb78c32a6b27984599ec05025505e75b8ea17dde91579e9c879e6ee",
         "signature": "6c707e72bb175343ff5c4529d76c5078caad0782a26d73fb085882c60a535187"
       },
       "../src/lib/misc/siprouting.ts": {
@@ -1895,7 +1895,6 @@
       "../node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
       "../node_modules/crypto-lib/dist/async/index.d.ts",
       "../src/lib/misc/workerthreadpoolid.ts",
-      "../src/lib/sipmessagesmonitor.ts",
       "../src/lib/misc/siprouting.ts",
       "../node_modules/run-exclusive/dist/lib/runexclusive.d.ts",
       "../node_modules/phone-number/dist/lib/index.d.ts",
@@ -1917,6 +1916,7 @@
       "../node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts",
       "../src/lib/procchandongleextended.ts",
       "../src/lib/misc/removeduplicatecontactinsiminternalstorage.ts",
+      "../src/lib/launch.ts",
       "../src/bin/main.ts",
       "../node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts",
       "../src/lib/misc/sanitychecks.ts",
@@ -1924,7 +1924,7 @@
       "../node_modules/transfer-tools/dist/lib/testing.d.ts",
       "../src/test/dbsemasim.ts",
       "../src/test/main.ts",
-      "../src/lib/launch.ts"
+      "../src/lib/sipmessagesmonitor.ts"
     ]
   },
   "version": "3.8.3"
