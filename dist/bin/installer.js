@@ -855,7 +855,8 @@ function installAsteriskPrereq() {
                         "libxml2",
                         "libsqlite3-0",
                         "unixodbc",
-                        "libtinfo5"
+                        "libtinfo5",
+                        "libxslt1.1"
                     ]), _b = _a.next();
                     _d.label = 1;
                 case 1:

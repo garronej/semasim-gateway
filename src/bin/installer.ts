@@ -957,7 +957,8 @@ async function installAsteriskPrereq() {
         "libxml2",
         "libsqlite3-0",
         "unixodbc",
-        "libtinfo5"
+        "libtinfo5",
+        "libxslt1.1"
     ]) {
 
         await scriptLib.apt_get_install(package_name);
