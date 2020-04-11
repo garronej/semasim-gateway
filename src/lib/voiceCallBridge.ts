@@ -1,4 +1,4 @@
-import { Evt, VoidEvt } from "evt";
+import { Evt } from "evt";
 import { DongleController as Dc } from "chan-dongle-extended-client";
 import { Ami, agi } from "ts-ami";
 //import * as dcMisc from "chan-dongle-extended-client/dist/lib/misc";
@@ -285,7 +285,7 @@ async function fromDongle(channel: agi.AGIChannel) {
         state: "RINGING" | "REJECTED" | "ANSWERED"
     }>();
 
-    const evtAnsweredOrEnded = new VoidEvt();
+    const evtAnsweredOrEnded = Evt.create();
 
     evtAnsweredOrEnded.attachOnce(async () => {
 

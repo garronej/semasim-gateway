@@ -1,6 +1,6 @@
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
-import { Evt, VoidEvt } from "evt";
+import { Evt } from "evt";
 import * as sipRouting from "./misc/sipRouting";
 import { areSameUaSims } from "./misc/misc"
 import * as dbAsterisk from "./dbAsterisk";
@@ -238,7 +238,7 @@ export function handleAsteriskSocket(asteriskSocket: sipLibrary.Socket): Promise
         }
     );
 
-    const evtFirstRegistration = new VoidEvt();
+    const evtFirstRegistration = Evt.create();
 
     asteriskSocket.evtPacketPreWrite.attach(
         (sipPacket): sipPacket is sipLibrary.Request => (

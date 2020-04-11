@@ -227,7 +227,7 @@ function fromDongle(channel) {
                         "reachableSipContactCallbackFn": function (contact) { return evtReachableContact.post(contact); }
                     });
                     channels = new Map();
-                    evtAnsweredOrEnded = new evt_1.VoidEvt();
+                    evtAnsweredOrEnded = evt_1.Evt.create();
                     evtAnsweredOrEnded.attachOnce(function () { return __awaiter(_this, void 0, void 0, function () {
                         var _a, answeredByContact;
                         return __generator(this, function (_b) {

@@ -197,7 +197,7 @@ function handleAsteriskSocket(asteriskSocket) {
             "ua": serializedUaObjectCarriedOverSipContactParameter.parseFromContactUriParams(sipLibrary.parseUri(sipLibrary.getContact(sipRequestRegister).uri).params)
         }
     }; });
-    var evtFirstRegistration = new evt_1.VoidEvt();
+    var evtFirstRegistration = evt_1.Evt.create();
     asteriskSocket.evtPacketPreWrite.attach(function (sipPacket) { return (sipLibrary.matchRequest(sipPacket) &&
         sipPacket.method === "REGISTER" &&
         !!sipPacket.headers["authorization"]); }, function (sipRequestRegister) {

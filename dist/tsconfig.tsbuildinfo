@@ -118,7 +118,7 @@
         "signature": "ce0594a0432dce2f4e9f6130d538a52d6292ca323e729b75d8e0febd9134dc65"
       },
       "../src/bin/installer.ts": {
-        "version": "c063ce8e548e3fa27679574c894ff151638ce87398e527bf608b15aa6012b9b0",
+        "version": "86878cb608eb1a43d342e2de8cb9335355bcd10aa1ec257c95d8ecb029e0c1fc",
         "signature": "e063042dbeb572bd31178ea6df0dc711f0805e329a483202bf55c011d9384b1b"
       },
       "../node_modules/logger/dist/lib/index.d.ts": {
@@ -129,111 +129,111 @@
         "version": "287be9f26c4fc1ffa2d6251b8df5598bf4cf21427ca8cda4d5d619a7ee1586cb",
         "signature": "757d8d3bb9d823172742a30e5bb682aef10c97ba749889e76028557d49fe1e9a"
       },
-      "../node_modules/trackable-map/dist/lib/mapextended.d.ts": {
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts": {
         "version": "d60c8d9d8062343ae38270d4c7ef5e498d4c678d7aa82712d4d4d09276870958",
         "signature": "d60c8d9d8062343ae38270d4c7ef5e498d4c678d7aa82712d4d4d09276870958"
       },
-      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": {
-        "version": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      },
-      "../node_modules/evt/dist/lib/types/handler.d.ts": {
-        "version": "282e55980c547e249a9df5860fa2577aa30cc2cae6a9ad6ed19090e5d55967f6",
-        "signature": "282e55980c547e249a9df5860fa2577aa30cc2cae6a9ad6ed19090e5d55967f6"
-      },
-      "../node_modules/evt/dist/lib/ctx.d.ts": {
-        "version": "a486a8ae0bb7872164aa0cec905869beef673b9a3ad96d2a44c33bf2b70608c1",
-        "signature": "a486a8ae0bb7872164aa0cec905869beef673b9a3ad96d2a44c33bf2b70608c1"
-      },
       "../node_modules/evt/dist/lib/types/operator.d.ts": {
-        "version": "a064a8c53ffa42494c70df8a2cf47816e1a54fed50767210cf6d268827678f56",
-        "signature": "a064a8c53ffa42494c70df8a2cf47816e1a54fed50767210cf6d268827678f56"
-      },
-      "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts": {
-        "version": "324c57679b036768f428959c1c03281a29c72178d4abc3054c71d4eeede54db0",
-        "signature": "324c57679b036768f428959c1c03281a29c72178d4abc3054c71d4eeede54db0"
+        "version": "41592f59d3ac992a7e70619d4242faeaf7bdf46cf2774b39b3ee0758b270421d",
+        "signature": "41592f59d3ac992a7e70619d4242faeaf7bdf46cf2774b39b3ee0758b270421d"
       },
       "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts": {
-        "version": "aa4865a90de47d49694a20d8ce3030a6cb6ffb32c39c418a1638c67c3136c30e",
-        "signature": "aa4865a90de47d49694a20d8ce3030a6cb6ffb32c39c418a1638c67c3136c30e"
+        "version": "1e5749801493b1d367d055cca3bd6676f37fe7daf7a9a95494b0e81ac163445c",
+        "signature": "1e5749801493b1d367d055cca3bd6676f37fe7daf7a9a95494b0e81ac163445c"
       },
-      "../node_modules/evt/dist/lib/util/merge.d.ts": {
-        "version": "f171ebef08e0e6928461e96cc2b69aa1f2e70b751625d2827ba30958e3d10b36",
-        "signature": "f171ebef08e0e6928461e96cc2b69aa1f2e70b751625d2827ba30958e3d10b36"
+      "../node_modules/evt/dist/lib/types/handler.d.ts": {
+        "version": "df37ba21572ce6e1ee349e243c916185ac1fcb20a9027f8608cead7f23c35b01",
+        "signature": "df37ba21572ce6e1ee349e243c916185ac1fcb20a9027f8608cead7f23c35b01"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts": {
+        "version": "a0204048e26eabf2db7373967ce5623b190033509334f0b1b70a47d2fe28f34a",
+        "signature": "a0204048e26eabf2db7373967ce5623b190033509334f0b1b70a47d2fe28f34a"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts": {
+        "version": "8b19c15d39337bd8bb5d784d274ca82b822d531767ed582815c7177a8708309a",
+        "signature": "8b19c15d39337bd8bb5d784d274ca82b822d531767ed582815c7177a8708309a"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts": {
+        "version": "b09521dbf05c4d39e7a5542d69fc02837e050a0a320d3032f2056538203b4484",
+        "signature": "b09521dbf05c4d39e7a5542d69fc02837e050a0a320d3032f2056538203b4484"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts": {
+        "version": "216be374240e95ecb99e0762d15c386e1ae9fbf39b7ab98540511dcdd11cf680",
+        "signature": "216be374240e95ecb99e0762d15c386e1ae9fbf39b7ab98540511dcdd11cf680"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts": {
+        "version": "c80793d022dc68024183044e2ee51e469734ca3305cd9f27cb77eb89907cbb35",
+        "signature": "c80793d022dc68024183044e2ee51e469734ca3305cd9f27cb77eb89907cbb35"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts": {
+        "version": "69fdb517e78d2bceffe8417666971ca23e4408362c0ea5e7a6453cb18180c0c9",
+        "signature": "69fdb517e78d2bceffe8417666971ca23e4408362c0ea5e7a6453cb18180c0c9"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts": {
+        "version": "7249dbb02e974e1378799b333465b1e8e23c367cee3d418f51ca9c1006ab213f",
+        "signature": "7249dbb02e974e1378799b333465b1e8e23c367cee3d418f51ca9c1006ab213f"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts": {
+        "version": "3639c4da28942839545665cdc88587ba745914a0403bc3d0c4d7870e3c3da028",
+        "signature": "3639c4da28942839545665cdc88587ba745914a0403bc3d0c4d7870e3c3da028"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/voidctx.d.ts": {
+        "version": "0a0019e594a8bf4080ae3762c85d4455257b26345b258f6e3fae93e24bbddb91",
+        "signature": "0a0019e594a8bf4080ae3762c85d4455257b26345b258f6e3fae93e24bbddb91"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/voidevt.d.ts": {
+        "version": "a5ab2e15e909deebeba94fa8cbfd6625bd1285e96cc50f03a7977334e7117c47",
+        "signature": "a5ab2e15e909deebeba94fa8cbfd6625bd1285e96cc50f03a7977334e7117c47"
+      },
+      "../node_modules/evt/dist/lib/types/interfaces/index.d.ts": {
+        "version": "4f2c4ff8251930a018df4750c78f3609aead660a81f58fae9381cf4039748939",
+        "signature": "4f2c4ff8251930a018df4750c78f3609aead660a81f58fae9381cf4039748939"
+      },
+      "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts": {
+        "version": "0bb5168f142918c69238c17b2375c830c32ef69548a02a16564416b36fd506b3",
+        "signature": "0bb5168f142918c69238c17b2375c830c32ef69548a02a16564416b36fd506b3"
+      },
+      "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts": {
+        "version": "23a770f959450e2743dd0b819b49b6755beef132e9c1ce79eafa06bf03d70736",
+        "signature": "23a770f959450e2743dd0b819b49b6755beef132e9c1ce79eafa06bf03d70736"
+      },
+      "../node_modules/evt/dist/lib/types/helper/topostableevt.d.ts": {
+        "version": "f2eaa5f14df99ecda1aad8a67bd03f62985688e62b0648f49a08124297d55a74",
+        "signature": "f2eaa5f14df99ecda1aad8a67bd03f62985688e62b0648f49a08124297d55a74"
+      },
+      "../node_modules/evt/dist/lib/types/helper/tononpostableevt.d.ts": {
+        "version": "2b9c5384eaee39d38f046732a2ad95aa629d0e81393bcef5632d92ce9e429c31",
+        "signature": "2b9c5384eaee39d38f046732a2ad95aa629d0e81393bcef5632d92ce9e429c31"
+      },
+      "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts": {
+        "version": "44640af941c5f16fe081099c5c5beb7f7e2cfb8a76ce01f990a262f2a63be102",
+        "signature": "44640af941c5f16fe081099c5c5beb7f7e2cfb8a76ce01f990a262f2a63be102"
+      },
+      "../node_modules/evt/dist/lib/types/helper/index.d.ts": {
+        "version": "4048d87f0ad689f5ccba8ee7cc212f0d36f831560bb6472aa6cb3f933ad81cc7",
+        "signature": "4048d87f0ad689f5ccba8ee7cc212f0d36f831560bb6472aa6cb3f933ad81cc7"
       },
       "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts": {
         "version": "f216259de546a4ecba7526be59f75ef20da1f61b11516c4eaee78f8cb0f30461",
         "signature": "f216259de546a4ecba7526be59f75ef20da1f61b11516c4eaee78f8cb0f30461"
       },
-      "../node_modules/evt/dist/lib/types/lib.dom.d.ts": {
-        "version": "9fcc9211d83abda8568637968319e1b4482a08120508f4c19786e83effe5e9d8",
-        "signature": "9fcc9211d83abda8568637968319e1b4482a08120508f4c19786e83effe5e9d8"
-      },
-      "../node_modules/evt/dist/lib/util/from.d.ts": {
-        "version": "32342199f81b593174644934e96233bb89f4c4a50e53840f557718b17a8eed6c",
-        "signature": "32342199f81b593174644934e96233bb89f4c4a50e53840f557718b17a8eed6c"
-      },
-      "../node_modules/evt/dist/lib/evt.d.ts": {
-        "version": "faed5789499fdedbdb130ac71cefedea166ef09f90b8c4fe0f30a6b11e8169ad",
-        "signature": "faed5789499fdedbdb130ac71cefedea166ef09f90b8c4fe0f30a6b11e8169ad"
-      },
       "../node_modules/evt/dist/lib/types/evterror.d.ts": {
         "version": "6a04e04da5aee2dc954d1eea83dd2b86ebb78a73685ad299b1f8fba54c423a10",
         "signature": "6a04e04da5aee2dc954d1eea83dd2b86ebb78a73685ad299b1f8fba54c423a10"
       },
-      "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts": {
-        "version": "5073eb841ac6284054cc9ed9e80e2e4ea0512ff2ada9eaee07ab7aee9e5fc24e",
-        "signature": "5073eb841ac6284054cc9ed9e80e2e4ea0512ff2ada9eaee07ab7aee9e5fc24e"
-      },
-      "../node_modules/evt/dist/lib/types/helper/index.d.ts": {
-        "version": "b18880e708139d6ca3dad2897b71491f5a36e468d42f6bc4fd8a38fc29e9b692",
-        "signature": "b18880e708139d6ca3dad2897b71491f5a36e468d42f6bc4fd8a38fc29e9b692"
+      "../node_modules/evt/dist/lib/types/lib.dom.d.ts": {
+        "version": "9fcc9211d83abda8568637968319e1b4482a08120508f4c19786e83effe5e9d8",
+        "signature": "9fcc9211d83abda8568637968319e1b4482a08120508f4c19786e83effe5e9d8"
       },
       "../node_modules/evt/dist/lib/types/index.d.ts": {
-        "version": "6d0aaf49f046531f059df98b8c85fd98d7d91ef895dd909f391c6b5e6b09f4ee",
-        "signature": "6d0aaf49f046531f059df98b8c85fd98d7d91ef895dd909f391c6b5e6b09f4ee"
+        "version": "8b00524306b8430aff26f1876f0cd522547675ed879772cbd8dad2ecb9eca565",
+        "signature": "8b00524306b8430aff26f1876f0cd522547675ed879772cbd8dad2ecb9eca565"
       },
-      "../node_modules/evt/dist/lib/observable.d.ts": {
-        "version": "73ecfd273a9e083726caf2bca7e63310674f7bff7d825d59da351f5a3fe8e696",
-        "signature": "73ecfd273a9e083726caf2bca7e63310674f7bff7d825d59da351f5a3fe8e696"
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/trackablemap.d.ts": {
+        "version": "1ffbaf52d4f35c44131ec2bd265d7c6fef8464de9176035612c443df9f771e76",
+        "signature": "1ffbaf52d4f35c44131ec2bd265d7c6fef8464de9176035612c443df9f771e76"
       },
-      "../node_modules/evt/dist/lib/util/genericoperators/scan.d.ts": {
-        "version": "3976c086e6b5c9da30f444a281e288c69d93a25d1a447e22f5285f0df9612a23",
-        "signature": "3976c086e6b5c9da30f444a281e288c69d93a25d1a447e22f5285f0df9612a23"
-      },
-      "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts": {
-        "version": "0072eeba252eab988da79ad35311573f29ec4cdce3b9564e2146ed84812de591",
-        "signature": "0072eeba252eab988da79ad35311573f29ec4cdce3b9564e2146ed84812de591"
-      },
-      "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts": {
-        "version": "7595d59599c282270e2064a9abce83376bf0ce3f866f94c16fb89dcd18249713",
-        "signature": "7595d59599c282270e2064a9abce83376bf0ce3f866f94c16fb89dcd18249713"
-      },
-      "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts": {
-        "version": "044cfc9b10e86f355d9b22ddbff8cd86e4dfe2647d21d44038c2b0c9dd9b6b48",
-        "signature": "044cfc9b10e86f355d9b22ddbff8cd86e4dfe2647d21d44038c2b0c9dd9b6b48"
-      },
-      "../node_modules/evt/dist/lib/util/compose.d.ts": {
-        "version": "25ac18e7de11fd6dc0e12594cc18df1bbe8af31e10c29baaf223a6d1165e537e",
-        "signature": "25ac18e7de11fd6dc0e12594cc18df1bbe8af31e10c29baaf223a6d1165e537e"
-      },
-      "../node_modules/evt/dist/lib/util/invokeoperator.d.ts": {
-        "version": "7b5c0f0fcb6dc24eb0237446168dbd4422bf786ee9870f46f7df30f7aeddffbd",
-        "signature": "7b5c0f0fcb6dc24eb0237446168dbd4422bf786ee9870f46f7df30f7aeddffbd"
-      },
-      "../node_modules/evt/dist/lib/util/index.d.ts": {
-        "version": "78e5b647b08df56885aee34758c0154bfcd97b05600410077d13413dbb5cf00d",
-        "signature": "78e5b647b08df56885aee34758c0154bfcd97b05600410077d13413dbb5cf00d"
-      },
-      "../node_modules/evt/dist/lib/index.d.ts": {
-        "version": "a731b67c7aaac21a0b582acdfb71452961654b742ddf86585b3f82fd73eaa5dc",
-        "signature": "a731b67c7aaac21a0b582acdfb71452961654b742ddf86585b3f82fd73eaa5dc"
-      },
-      "../node_modules/trackable-map/dist/lib/trackablemap.d.ts": {
-        "version": "71de17939147c04701f9b719241e062e9c57074dd8cd834b1f086bcee461f365",
-        "signature": "71de17939147c04701f9b719241e062e9c57074dd8cd834b1f086bcee461f365"
-      },
-      "../node_modules/trackable-map/dist/lib/index.d.ts": {
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/index.d.ts": {
         "version": "a962616fff067ab6bfe0a271ea7a30e8dc9c2b4b3acb4c67240cec15ae4e4d10",
         "signature": "a962616fff067ab6bfe0a271ea7a30e8dc9c2b4b3acb4c67240cec15ae4e4d10"
       },
@@ -245,9 +245,93 @@
         "version": "827beea819609471a0a48e237adff3e4a07a59db303f53c150360ed7c8c5add1",
         "signature": "827beea819609471a0a48e237adff3e4a07a59db303f53c150360ed7c8c5add1"
       },
+      "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts": {
+        "version": "0072eeba252eab988da79ad35311573f29ec4cdce3b9564e2146ed84812de591",
+        "signature": "0072eeba252eab988da79ad35311573f29ec4cdce3b9564e2146ed84812de591"
+      },
+      "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts": {
+        "version": "7595d59599c282270e2064a9abce83376bf0ce3f866f94c16fb89dcd18249713",
+        "signature": "7595d59599c282270e2064a9abce83376bf0ce3f866f94c16fb89dcd18249713"
+      },
+      "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts": {
+        "version": "927713feee41da9ade18a24d573dd4302fcf6ec64cd93b46ab0742f739eb5176",
+        "signature": "927713feee41da9ade18a24d573dd4302fcf6ec64cd93b46ab0742f739eb5176"
+      },
+      "../node_modules/evt/dist/lib/util/compose.d.ts": {
+        "version": "25ac18e7de11fd6dc0e12594cc18df1bbe8af31e10c29baaf223a6d1165e537e",
+        "signature": "25ac18e7de11fd6dc0e12594cc18df1bbe8af31e10c29baaf223a6d1165e537e"
+      },
+      "../node_modules/evt/dist/lib/util/invokeoperator.d.ts": {
+        "version": "7b5c0f0fcb6dc24eb0237446168dbd4422bf786ee9870f46f7df30f7aeddffbd",
+        "signature": "7b5c0f0fcb6dc24eb0237446168dbd4422bf786ee9870f46f7df30f7aeddffbd"
+      },
+      "../node_modules/evt/dist/lib/util/index.d.ts": {
+        "version": "3647bfc1c81919b7df91890e04d1526c6d0400f1b481d393b6886c529250dcb0",
+        "signature": "3647bfc1c81919b7df91890e04d1526c6d0400f1b481d393b6886c529250dcb0"
+      },
+      "../node_modules/evt/dist/lib/ctx.d.ts": {
+        "version": "4f9e2269f1f73e8c9a4413c713c6f7a98e49926c8ccc52d69677d4057bb575fd",
+        "signature": "4f9e2269f1f73e8c9a4413c713c6f7a98e49926c8ccc52d69677d4057bb575fd"
+      },
+      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": {
+        "version": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "../node_modules/evt/dist/lib/evt.create.d.ts": {
+        "version": "cc3e5882a5d2895acce5494e2fc8ee9a40641164b328c08036accc0d93028357",
+        "signature": "cc3e5882a5d2895acce5494e2fc8ee9a40641164b328c08036accc0d93028357"
+      },
+      "../node_modules/evt/dist/lib/evt.getctx.d.ts": {
+        "version": "a723f62079650f6833cf59e5bdee6a0dbfa543068e50a0ac1b31e5f676f848df",
+        "signature": "a723f62079650f6833cf59e5bdee6a0dbfa543068e50a0ac1b31e5f676f848df"
+      },
+      "../node_modules/evt/dist/lib/evt.factorize.d.ts": {
+        "version": "bef9489111014df94a93410fb62109d64614fdbaca680e1998acd24e59c3b601",
+        "signature": "bef9489111014df94a93410fb62109d64614fdbaca680e1998acd24e59c3b601"
+      },
+      "../node_modules/evt/dist/lib/evt.merge.d.ts": {
+        "version": "52f912536997025a54af2160cc990f2e3aeb0a1d1c8dee4d917f35ea6553c235",
+        "signature": "52f912536997025a54af2160cc990f2e3aeb0a1d1c8dee4d917f35ea6553c235"
+      },
+      "../node_modules/evt/dist/lib/evt.from.d.ts": {
+        "version": "d7303bd0c9188fed53d36af3b9b3771cab6625823dba88e7c43fe7c58c554b28",
+        "signature": "d7303bd0c9188fed53d36af3b9b3771cab6625823dba88e7c43fe7c58c554b28"
+      },
+      "../node_modules/evt/dist/lib/evt.useeffect.d.ts": {
+        "version": "641a6a3f991d6ebc0d8d734b8b0d9dbb86deafe4659ce93d0257f588267b9cfb",
+        "signature": "641a6a3f991d6ebc0d8d734b8b0d9dbb86deafe4659ce93d0257f588267b9cfb"
+      },
+      "../node_modules/evt/dist/lib/evt.newctx.d.ts": {
+        "version": "1d714d9a00fcab06be2b09dd1a3d38e8ea105ef44f33f6d73aa79b0231dc410a",
+        "signature": "1d714d9a00fcab06be2b09dd1a3d38e8ea105ef44f33f6d73aa79b0231dc410a"
+      },
+      "../node_modules/evt/dist/lib/evt.loosentype.d.ts": {
+        "version": "d10272ae6e4470c769450a5414326fac1b473bdb07a09e9372fda9f172ec5ab3",
+        "signature": "d10272ae6e4470c769450a5414326fac1b473bdb07a09e9372fda9f172ec5ab3"
+      },
+      "../node_modules/evt/dist/lib/evt.d.ts": {
+        "version": "5b2599dfd81710d38351b557a3043ea56279d4c3b50ac2669a5839765bf0acf2",
+        "signature": "5b2599dfd81710d38351b557a3043ea56279d4c3b50ac2669a5839765bf0acf2"
+      },
+      "../node_modules/evt/dist/tools/polyfill/object.is.d.ts": {
+        "version": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "../node_modules/evt/dist/lib/statefulevt.d.ts": {
+        "version": "5085836f8e34fc8377dae80fddb8481e6b588ebaa0db2b88473ff56f623f3b75",
+        "signature": "5085836f8e34fc8377dae80fddb8481e6b588ebaa0db2b88473ff56f623f3b75"
+      },
+      "../node_modules/evt/dist/tools/typesafety/matchvoid.d.ts": {
+        "version": "549f3bd8b575c5345ecafc490b17e3d356ce0b50fae87ffb795f9732920012b6",
+        "signature": "549f3bd8b575c5345ecafc490b17e3d356ce0b50fae87ffb795f9732920012b6"
+      },
+      "../node_modules/evt/dist/lib/index.d.ts": {
+        "version": "65968b137efb216789699104f52727bed7b9ac0f5d4b79a558732018094b6a35",
+        "signature": "65968b137efb216789699104f52727bed7b9ac0f5d4b79a558732018094b6a35"
+      },
       "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts": {
-        "version": "bbca57242d3cc7e2001986b7cd0a2533f08dbbabb93e67995034d0b715f20ef3",
-        "signature": "bbca57242d3cc7e2001986b7cd0a2533f08dbbabb93e67995034d0b715f20ef3"
+        "version": "44fd7d6594bc39f16d6b4398f3589d1cc1a8ff45b693607a4f979ca49534499b",
+        "signature": "44fd7d6594bc39f16d6b4398f3589d1cc1a8ff45b693607a4f979ca49534499b"
       },
       "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": {
         "version": "6d6ca69eb06f3b6a9ab9c47a8eb0bb2d1dd86f45619c60e861d41a1861806a2c",
@@ -258,10 +342,10 @@
         "signature": "4b2bf1cd9b7d5db96344f52464e197e6d4ba2bb7d809233bd980d220db8de638"
       },
       "../node_modules/ts-ami/dist/lib/amiapi.d.ts": {
-        "version": "f734ab38c87419f2d226cfab0ba03a54906c4c02fc347063441dc8477d389817",
-        "signature": "f734ab38c87419f2d226cfab0ba03a54906c4c02fc347063441dc8477d389817"
+        "version": "dd46cf27a431d9eb90192282ac07978407b5b42897785f00e7dcfeae8da3d39f",
+        "signature": "dd46cf27a431d9eb90192282ac07978407b5b42897785f00e7dcfeae8da3d39f"
       },
-      "../node_modules/ts-async-agi/index.d.ts": {
+      "../node_modules/ts-ami/node_modules/ts-async-agi/index.d.ts": {
         "version": "91c6521cd87b4931a36ceaedd7a50f6d19f70a91cfad5518692a7758961e59b3",
         "signature": "91c6521cd87b4931a36ceaedd7a50f6d19f70a91cfad5518692a7758961e59b3"
       },
@@ -270,8 +354,8 @@
         "signature": "5b518d0a32274f29ef7de63cc8b6ec784e666123976059069333fd87883588b8"
       },
       "../node_modules/ts-ami/dist/lib/ami.d.ts": {
-        "version": "05f416a42655f0a7a032a805008431fd078abbfec265db57f1f7722bb05c0a6b",
-        "signature": "05f416a42655f0a7a032a805008431fd078abbfec265db57f1f7722bb05c0a6b"
+        "version": "7c13870d112ae257940628beddd06f20743a3016642a4c6782d9d8579452f3a0",
+        "signature": "7c13870d112ae257940628beddd06f20743a3016642a4c6782d9d8579452f3a0"
       },
       "../node_modules/ts-ami/dist/lib/index.d.ts": {
         "version": "4dc0986f7e327c3aee52d371aba04210e9a9f2dfc8b26c7b8bd7e4ec8ee47be1",
@@ -334,8 +418,8 @@
         "signature": "a17e831d16c27cbe4d6f0bb238c1ded0d4a26c282009e431c68733be0b792f4f"
       },
       "../node_modules/ts-sip/dist/lib/socket.d.ts": {
-        "version": "dfc5bf80ca01817e0b070c6e4666f25585daeb900627d1ff693ae92216681d30",
-        "signature": "dfc5bf80ca01817e0b070c6e4666f25585daeb900627d1ff693ae92216681d30"
+        "version": "949df4ea80e4c26e6d82893729a9e2e36288dd5e569bcffc658411bc6b5b0691",
+        "signature": "949df4ea80e4c26e6d82893729a9e2e36288dd5e569bcffc658411bc6b5b0691"
       },
       "../node_modules/ts-sip/dist/lib/misc.d.ts": {
         "version": "8035f10dc68f2b26dc07a82ef887f6b985c27d599490d3bd0c80212c6cea952a",
@@ -375,7 +459,7 @@
       },
       "../src/lib/sipmessagesmonitor.ts": {
         "version": "aa9f1ae5cfb78c32a6b27984599ec05025505e75b8ea17dde91579e9c879e6ee",
-        "signature": "6c707e72bb175343ff5c4529d76c5078caad0782a26d73fb085882c60a535187"
+        "signature": "06c408142670eaafec3857d6f05dde75c95d11a5fc26dd72fb2d9c613354f278"
       },
       "../src/lib/misc/siprouting.ts": {
         "version": "0d7e610e27947be5f652eb4eecb9e544fb682121858e218646e7fff6b42f3cad",
@@ -415,14 +499,14 @@
       },
       "../src/lib/tobackend/connection.ts": {
         "version": "4b42bdf325696e1cb6585a55869f2d8bbf48ff5e6f1fb6887a12df1843dbdeb7",
-        "signature": "f939f673df1bc3ded2139eb90c39fb3e111a8c78344b352b43ba1eace1d82d77"
+        "signature": "745f70c8cb305ccecb0359fa2269675e2df91d59f84436c52f2a666a0860152a"
       },
       "../src/lib/tobackend/remoteapicaller.ts": {
         "version": "576ba18f4121ce196f822189a0c1ba517236308e2598b3cdd9afb939af6cd1a2",
         "signature": "d23e9a1961e8680f8027ba206940400e0e20fc3ede435ecbe769880b58424890"
       },
       "../src/lib/voicecallbridge.ts": {
-        "version": "8eee15dd5a4803a03266c5b14dd91ec63f4ec371ad3df60292a3d957cadf5f1a",
+        "version": "9e8143555592ef88f425bef452b78da59972d9cc34145f22b94f4988a8a56569",
         "signature": "d01f1f4d09b8ceadaa0740e1e9c2a8c1cd888abe98b8b05936b0a2300c8f67bf"
       },
       "../src/lib/dbasterisk.ts": {
@@ -434,8 +518,8 @@
         "signature": "a6114b55a9b058a00b160172d06c20b31312586d19b8b793014620a687e25c28"
       },
       "../src/lib/sipcontactsmonitor.ts": {
-        "version": "222b3c8f7c210273537921c7f0e0e4acd9bb680ba5500766abc8d3f475b8ce62",
-        "signature": "41df57b129ae3c0666a631769a2495021e357bba26b8d7f8fd144c1004d496d2"
+        "version": "57b68c4744b0b330a3e7f1def452941a8ee9cbb8540a12ee3fad5c50898f9b91",
+        "signature": "6193e062beb03650eb0d0704ddec6d9ab1e0e642a40f6aec67f18d61a064bab5"
       },
       "../src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": {
         "version": "a4ffe5d46207a0bdd990ea07bf3b7f244b372895d63d94c127a0522336bd689d",
@@ -656,47 +740,138 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/trackable-map/dist/lib/mapextended.d.ts": [
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": [
+      "../node_modules/evt/dist/lib/types/operator.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/evt/dist/lib/types/handler.d.ts": [
         "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/ctx.d.ts": [
-        "../node_modules/evt/dist/lib/types/handler.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/operator.d.ts": [
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/merge.d.ts": [
-        "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
         "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/voidctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/voidevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/voidctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/voidevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/topostableevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/tononpostableevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/topostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/tononpostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -704,60 +879,43 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/evt/dist/lib/types/lib.dom.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/from.d.ts": [
-        "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
-        "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/evt.d.ts": [
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/evt/dist/lib/util/merge.d.ts",
-        "../node_modules/evt/dist/lib/util/from.d.ts",
-        "../node_modules/evt/dist/lib/types/handler.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
       "../node_modules/evt/dist/lib/types/evterror.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts": [
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/index.d.ts": [
-        "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts",
+      "../node_modules/evt/dist/lib/types/lib.dom.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/evt/dist/lib/types/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/index.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
         "../node_modules/evt/dist/lib/types/evterror.d.ts",
         "../node_modules/evt/dist/lib/types/handler.d.ts",
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/index.d.ts",
         "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/evt/dist/lib/observable.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/trackablemap.d.ts": [
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/evt/dist/lib/util/genericoperators/scan.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/index.d.ts": [
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts",
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/trackablemap.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -772,7 +930,6 @@
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts": [
-        "../node_modules/evt/dist/lib/util/genericoperators/scan.d.ts",
         "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts",
         "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts",
         "../node_modules/@types/node/base.d.ts",
@@ -795,41 +952,104 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/evt/dist/lib/index.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
+      "../node_modules/evt/dist/lib/ctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.create.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.getctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.factorize.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.merge.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.from.d.ts": [
+        "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
+        "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.useeffect.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.newctx.d.ts": [
         "../node_modules/evt/dist/lib/ctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.loosentype.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.d.ts": [
+        "../node_modules/evt/dist/lib/evt.create.d.ts",
+        "../node_modules/evt/dist/lib/evt.getctx.d.ts",
+        "../node_modules/evt/dist/lib/evt.factorize.d.ts",
+        "../node_modules/evt/dist/lib/evt.merge.d.ts",
+        "../node_modules/evt/dist/lib/evt.from.d.ts",
+        "../node_modules/evt/dist/lib/evt.useeffect.d.ts",
+        "../node_modules/evt/dist/lib/evt.newctx.d.ts",
+        "../node_modules/evt/dist/lib/evt.loosentype.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/tools/polyfill/object.is.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/statefulevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/tools/typesafety/matchvoid.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/index.d.ts": [
         "../node_modules/evt/dist/lib/types/index.d.ts",
-        "../node_modules/evt/dist/lib/observable.d.ts",
         "../node_modules/evt/dist/lib/util/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/trackable-map/dist/lib/trackablemap.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/trackable-map/dist/lib/index.d.ts": [
-        "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
-        "../node_modules/trackable-map/dist/lib/trackablemap.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "../node_modules/evt/dist/lib/ctx.d.ts",
+        "../node_modules/evt/dist/lib/evt.d.ts",
+        "../node_modules/evt/dist/lib/statefulevt.d.ts",
+        "../node_modules/evt/dist/tools/typesafety/matchvoid.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts": [
-        "../node_modules/trackable-map/dist/lib/index.d.ts",
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/index.d.ts",
         "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
-        "../node_modules/evt/dist/lib/index.d.ts",
         "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/evt/dist/lib/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -844,18 +1064,18 @@
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/ts-ami/dist/lib/amiapi.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
         "../node_modules/ts-ami/dist/lib/ami.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/ts-async-agi/index.d.ts": [
+      "../node_modules/ts-ami/node_modules/ts-async-agi/index.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/ts-ami/dist/lib/agi.d.ts": [
         "../node_modules/ts-ami/dist/lib/ami.d.ts",
-        "../node_modules/ts-async-agi/index.d.ts",
+        "../node_modules/ts-ami/node_modules/ts-async-agi/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -864,6 +1084,7 @@
         "../node_modules/ts-ami/dist/lib/credential.d.ts",
         "../node_modules/ts-ami/dist/lib/amiapi.d.ts",
         "../node_modules/ts-ami/dist/lib/agi.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -945,10 +1166,11 @@
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
       "../node_modules/ts-sip/dist/lib/socket.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
         "../node_modules/ts-sip/dist/lib/types.d.ts",
         "../node_modules/ts-sip/dist/lib/iconnection.d.ts",
         "../node_modules/colors/index.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/evt/dist/lib/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -1345,6 +1567,56 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
+      "../src/lib/tobackend/connection.ts": [
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/tobackend/remoteapicaller.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "../src/sip_api_declarations/backendtogateway.ts",
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/messagesdispatcher.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "../node_modules/@types/async-lock/index.d.ts",
+        "../src/lib/types.ts",
+        "../node_modules/crypto-lib/dist/async/index.d.ts"
+      ],
+      "../src/lib/dbasterisk.ts": [
+        "../node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/sipcontactsmonitor.ts": [
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../src/lib/types.ts",
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/toasterisk/connections.ts": [
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/tobackend/router.ts": [
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/tobackend/localapihandlers.ts": [
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/toasterisk/router.ts": [
+        "../node_modules/ts-sip/dist/lib/index.d.ts",
+        "../src/lib/types.ts"
+      ],
+      "../src/lib/dbsemasim.ts": [
+        "../node_modules/sqlite-custom/dist/lib/index.d.ts",
+        "../src/lib/types.ts",
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "../src/lib/sipmessagesmonitor.ts": [
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../src/lib/types.ts",
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
       "../node_modules/@types/node/inspector.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
@@ -1354,336 +1626,62 @@
         "../node_modules/@types/node/inspector.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/@types/node/ts3.2/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts"
-      ],
-      "../node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts": [
+      "../node_modules/transfer-tools/dist/lib/testing.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/scripting-tools/dist/lib/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ini-extended/dist/lib/iniext.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ini-extended/dist/lib/index.d.ts": [
-        "../node_modules/ini-extended/dist/lib/iniext.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/commander/typings/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/logger/dist/lib/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../src/tools/logger.ts": [
-        "../node_modules/logger/dist/lib/index.d.ts"
-      ],
-      "../node_modules/trackable-map/dist/lib/mapextended.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/handler.d.ts": [
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/ctx.d.ts": [
-        "../node_modules/evt/dist/lib/types/handler.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/operator.d.ts": [
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/merge.d.ts": [
-        "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/lib.dom.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/from.d.ts": [
-        "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
-        "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/evt.d.ts": [
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/evt/dist/lib/util/merge.d.ts",
-        "../node_modules/evt/dist/lib/util/from.d.ts",
-        "../node_modules/evt/dist/lib/types/handler.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/evterror.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts": [
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/helper/index.d.ts": [
-        "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/types/index.d.ts": [
-        "../node_modules/evt/dist/lib/types/evterror.d.ts",
-        "../node_modules/evt/dist/lib/types/handler.d.ts",
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/index.d.ts",
-        "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/observable.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/genericoperators/scan.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts": [
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts": [
-        "../node_modules/evt/dist/lib/util/genericoperators/scan.d.ts",
-        "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts",
-        "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/compose.d.ts": [
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/invokeoperator.d.ts": [
-        "../node_modules/evt/dist/lib/types/operator.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/util/index.d.ts": [
-        "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts",
-        "../node_modules/evt/dist/lib/util/compose.d.ts",
-        "../node_modules/evt/dist/lib/util/invokeoperator.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/evt/dist/lib/index.d.ts": [
-        "../node_modules/evt/dist/lib/evt.d.ts",
-        "../node_modules/evt/dist/lib/ctx.d.ts",
-        "../node_modules/evt/dist/lib/types/index.d.ts",
-        "../node_modules/evt/dist/lib/observable.d.ts",
-        "../node_modules/evt/dist/lib/util/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/trackable-map/dist/lib/trackablemap.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/trackable-map/dist/lib/index.d.ts": [
-        "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
-        "../node_modules/trackable-map/dist/lib/trackablemap.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts": [
-        "../node_modules/trackable-map/dist/lib/index.d.ts",
-        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts",
-        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-ami/dist/lib/credential.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-ami/dist/lib/amiapi.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/ts-ami/dist/lib/ami.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-async-agi/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-ami/dist/lib/agi.d.ts": [
-        "../node_modules/ts-ami/dist/lib/ami.d.ts",
-        "../node_modules/ts-async-agi/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-ami/dist/lib/ami.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/ts-ami/dist/lib/credential.d.ts",
-        "../node_modules/ts-ami/dist/lib/amiapi.d.ts",
-        "../node_modules/ts-ami/dist/lib/agi.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-ami/dist/lib/index.d.ts": [
-        "../node_modules/ts-ami/dist/lib/ami.d.ts",
-        "../node_modules/ts-ami/dist/lib/agi.d.ts",
-        "../node_modules/ts-ami/dist/lib/amiapi.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/@types/async-lock/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/sqlite-custom/dist/lib/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../src/lib/dbsemasim.ts": [
-        "../node_modules/sqlite-custom/dist/lib/index.d.ts",
-        "../src/lib/types.ts",
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
-      ],
-      "../src/lib/misc/misc.ts": [
+      "../src/lib/misc/sanitychecks.ts": [
         "../src/lib/types.ts"
       ],
-      "../node_modules/crypto-lib/dist/sync/types.d.ts": [
+      "../node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/crypto-lib/dist/async/serializer.d.ts": [
+      "../src/lib/misc/removeduplicatecontactinsiminternalstorage.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../src/lib/misc/serializeduaobjectcarriedoversipcontactparameter.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../src/sip_api_declarations/gatewaytobackend.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      ],
+      "../src/sip_api_declarations/backendtogateway.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
+        "../src/lib/types.ts"
+      ],
+      "../node_modules/phone-number/dist/lib/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/run-exclusive/dist/lib/runexclusive.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../src/lib/misc/siprouting.ts": [
+        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      ],
+      "../src/lib/misc/workerthreadpoolid.ts": [
+        "../node_modules/crypto-lib/dist/async/index.d.ts"
+      ],
+      "../node_modules/crypto-lib/dist/async/index.d.ts": [
         "../node_modules/crypto-lib/dist/sync/types.d.ts",
+        "../node_modules/crypto-lib/dist/async/serializer.d.ts",
+        "../node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/transfer-tools/dist/lib/stringtransform.d.ts": [
+      "../node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/bundleddata.ts": [
-        "../src/lib/types.ts",
-        "../node_modules/crypto-lib/dist/sync/types.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/types.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/core.d.ts": [
-        "../node_modules/ts-sip/dist/lib/types.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/iconnection.d.ts": [
-        "../node_modules/ts-sip/dist/lib/types.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/colors/index.d.ts": [
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/socket.d.ts": [
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/ts-sip/dist/lib/types.d.ts",
-        "../node_modules/ts-sip/dist/lib/iconnection.d.ts",
-        "../node_modules/colors/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/misc.d.ts": [
-        "../node_modules/ts-sip/dist/lib/types.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/api/server.d.ts": [
-        "../node_modules/ts-sip/dist/lib/socket.d.ts",
-        "../node_modules/ts-sip/dist/lib/types.d.ts",
-        "../node_modules/colors/index.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/api/client.d.ts": [
-        "../node_modules/ts-sip/dist/lib/socket.d.ts",
-        "../node_modules/ts-sip/dist/lib/types.d.ts",
-        "../node_modules/@types/node/base.d.ts",
-        "../node_modules/@types/node/ts3.2/index.d.ts"
-      ],
-      "../node_modules/ts-sip/dist/lib/api/index.d.ts": [
-        "../node_modules/ts-sip/dist/lib/api/server.d.ts",
-        "../node_modules/ts-sip/dist/lib/api/client.d.ts",
+      "../node_modules/minimal-polyfills/dist/lib/array.from.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
@@ -1696,131 +1694,474 @@
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/minimal-polyfills/dist/lib/array.from.d.ts": [
+      "../node_modules/ts-sip/dist/lib/api/index.d.ts": [
+        "../node_modules/ts-sip/dist/lib/api/server.d.ts",
+        "../node_modules/ts-sip/dist/lib/api/client.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts": [
+      "../node_modules/ts-sip/dist/lib/api/client.d.ts": [
+        "../node_modules/ts-sip/dist/lib/socket.d.ts",
+        "../node_modules/ts-sip/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/crypto-lib/dist/async/index.d.ts": [
+      "../node_modules/ts-sip/dist/lib/api/server.d.ts": [
+        "../node_modules/ts-sip/dist/lib/socket.d.ts",
+        "../node_modules/ts-sip/dist/lib/types.d.ts",
+        "../node_modules/colors/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-sip/dist/lib/misc.d.ts": [
+        "../node_modules/ts-sip/dist/lib/types.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-sip/dist/lib/socket.d.ts": [
+        "../node_modules/ts-sip/dist/lib/types.d.ts",
+        "../node_modules/ts-sip/dist/lib/iconnection.d.ts",
+        "../node_modules/colors/index.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/evt/dist/lib/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/colors/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-sip/dist/lib/iconnection.d.ts": [
+        "../node_modules/ts-sip/dist/lib/types.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-sip/dist/lib/core.d.ts": [
+        "../node_modules/ts-sip/dist/lib/types.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-sip/dist/lib/types.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../src/lib/misc/bundleddata.ts": [
+        "../src/lib/types.ts",
+        "../node_modules/crypto-lib/dist/sync/types.d.ts"
+      ],
+      "../node_modules/transfer-tools/dist/lib/stringtransform.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/crypto-lib/dist/async/serializer.d.ts": [
         "../node_modules/crypto-lib/dist/sync/types.d.ts",
-        "../node_modules/crypto-lib/dist/async/serializer.d.ts",
-        "../node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/workerthreadpoolid.ts": [
-        "../node_modules/crypto-lib/dist/async/index.d.ts"
+      "../node_modules/crypto-lib/dist/sync/types.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/sipmessagesmonitor.ts": [
-        "../src/lib/types.ts",
+      "../src/lib/misc/misc.ts": [
+        "../src/lib/types.ts"
+      ],
+      "../node_modules/sqlite-custom/dist/lib/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/@types/async-lock/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-ami/dist/lib/index.d.ts": [
+        "../node_modules/ts-ami/dist/lib/ami.d.ts",
+        "../node_modules/ts-ami/dist/lib/agi.d.ts",
+        "../node_modules/ts-ami/dist/lib/amiapi.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ts-ami/dist/lib/ami.d.ts": [
         "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/misc/siprouting.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../node_modules/run-exclusive/dist/lib/runexclusive.d.ts": [
+        "../node_modules/ts-ami/dist/lib/credential.d.ts",
+        "../node_modules/ts-ami/dist/lib/amiapi.d.ts",
+        "../node_modules/ts-ami/dist/lib/agi.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/phone-number/dist/lib/index.d.ts": [
+      "../node_modules/ts-ami/dist/lib/agi.d.ts": [
+        "../node_modules/ts-ami/dist/lib/ami.d.ts",
+        "../node_modules/ts-ami/node_modules/ts-async-agi/index.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/sip_api_declarations/backendtogateway.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "../src/lib/types.ts"
+      "../node_modules/ts-ami/dist/lib/amiapi.d.ts": [
+        "../node_modules/ts-ami/dist/lib/ami.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/sip_api_declarations/gatewaytobackend.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      "../node_modules/ts-ami/node_modules/ts-async-agi/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/tobackend/localapihandlers.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
+      "../node_modules/ts-ami/dist/lib/credential.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/toasterisk/router.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts",
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/toasterisk/connections.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/tobackend/router.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/tobackend/connection.ts": [
-        "../node_modules/ts-sip/dist/lib/index.d.ts",
-        "../node_modules/evt/dist/lib/index.d.ts"
-      ],
-      "../src/lib/tobackend/remoteapicaller.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "../src/sip_api_declarations/backendtogateway.ts",
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/dbasterisk.ts": [
-        "../node_modules/sqlite-custom/dist/lib/index.d.ts",
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/misc/serializeduaobjectcarriedoversipcontactparameter.ts": [
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/sipcontactsmonitor.ts": [
-        "../src/lib/types.ts",
-        "../node_modules/evt/dist/lib/index.d.ts",
-        "../node_modules/ts-sip/dist/lib/index.d.ts"
-      ],
-      "../src/lib/misc/getreachablesipcontactsandwakeupuasthatarenotcurrentlyregistered.ts": [
-        "../src/lib/types.ts"
-      ],
-      "../src/lib/messagesdispatcher.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
-        "../node_modules/@types/async-lock/index.d.ts",
-        "../src/lib/types.ts",
-        "../node_modules/crypto-lib/dist/async/index.d.ts"
-      ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/misc.d.ts": [
+      "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts": [
+        "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts",
         "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/removeduplicatecontactinsiminternalstorage.ts": [
-        "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts"
+      "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts": [
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/index.d.ts",
+        "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+        "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/evt/dist/lib/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../node_modules/chan-dongle-extended-client/dist/lib/sanitychecks.d.ts": [
+      "../node_modules/evt/dist/lib/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/evt/dist/lib/util/index.d.ts",
+        "../node_modules/evt/dist/lib/ctx.d.ts",
+        "../node_modules/evt/dist/lib/evt.d.ts",
+        "../node_modules/evt/dist/lib/statefulevt.d.ts",
+        "../node_modules/evt/dist/tools/typesafety/matchvoid.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts": [
+        "../node_modules/evt/dist/lib/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts": [
+        "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts",
+        "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/util/index.d.ts": [
+        "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts",
+        "../node_modules/evt/dist/lib/util/compose.d.ts",
+        "../node_modules/evt/dist/lib/util/invokeoperator.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/tools/typesafety/matchvoid.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/statefulevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/tools/polyfill/object.is.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.d.ts": [
+        "../node_modules/evt/dist/lib/evt.create.d.ts",
+        "../node_modules/evt/dist/lib/evt.getctx.d.ts",
+        "../node_modules/evt/dist/lib/evt.factorize.d.ts",
+        "../node_modules/evt/dist/lib/evt.merge.d.ts",
+        "../node_modules/evt/dist/lib/evt.from.d.ts",
+        "../node_modules/evt/dist/lib/evt.useeffect.d.ts",
+        "../node_modules/evt/dist/lib/evt.newctx.d.ts",
+        "../node_modules/evt/dist/lib/evt.loosentype.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.loosentype.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.newctx.d.ts": [
+        "../node_modules/evt/dist/lib/ctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.useeffect.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.from.d.ts": [
+        "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
+        "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.merge.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.factorize.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.getctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/evt.create.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/ctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/util/invokeoperator.d.ts": [
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/util/compose.d.ts": [
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts": [
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts": [
         "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
       ],
-      "../src/lib/misc/sanitychecks.ts": [
-        "../src/lib/types.ts"
-      ],
-      "../node_modules/transfer-tools/dist/lib/testing.d.ts": [
+      "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts": [
         "../node_modules/@types/node/base.d.ts",
         "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/index.d.ts": [
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts",
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/trackablemap.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/trackablemap.d.ts": [
+        "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts",
+        "../node_modules/evt/dist/lib/types/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/index.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
+        "../node_modules/evt/dist/lib/types/evterror.d.ts",
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/lib.dom.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/evterror.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/topostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/tononpostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/tononpostableevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/topostableevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/index.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/voidctx.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/voidevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/handler.d.ts": [
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/voidctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/voidevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/operator.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts",
+        "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts": [
+        "../node_modules/evt/dist/lib/types/handler.d.ts",
+        "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/operator.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts": [
+        "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../src/tools/logger.ts": [
+        "../node_modules/logger/dist/lib/index.d.ts"
+      ],
+      "../node_modules/logger/dist/lib/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/commander/typings/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ini-extended/dist/lib/index.d.ts": [
+        "../node_modules/ini-extended/dist/lib/iniext.d.ts",
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/ini-extended/dist/lib/iniext.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/scripting-tools/dist/lib/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/scripting-tools/dist/lib/get_caller_file_path.d.ts": [
+        "../node_modules/@types/node/base.d.ts",
+        "../node_modules/@types/node/ts3.2/index.d.ts"
+      ],
+      "../node_modules/@types/node/ts3.2/index.d.ts": [
+        "../node_modules/@types/node/base.d.ts"
       ]
     },
     "semanticDiagnosticsPerFile": [
-      "../node_modules/typescript/lib/lib.es5.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.d.ts",
-      "../node_modules/typescript/lib/lib.es2016.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.core.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.collection.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.generator.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.iterable.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.promise.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.proxy.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.reflect.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.symbol.d.ts",
-      "../node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
-      "../node_modules/typescript/lib/lib.es2016.array.include.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.object.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.sharedmemory.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.string.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.intl.d.ts",
-      "../node_modules/typescript/lib/lib.es2017.typedarrays.d.ts",
       "../src/web_api_declaration.ts",
       "../node_modules/@types/node/inspector.d.ts",
       "../node_modules/@types/node/base.d.ts",
@@ -1834,40 +2175,61 @@
       "../src/bin/installer.ts",
       "../node_modules/logger/dist/lib/index.d.ts",
       "../src/tools/logger.ts",
-      "../node_modules/trackable-map/dist/lib/mapextended.d.ts",
-      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts",
-      "../node_modules/evt/dist/lib/types/handler.d.ts",
-      "../node_modules/evt/dist/lib/ctx.d.ts",
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/mapextended.d.ts",
       "../node_modules/evt/dist/lib/types/operator.d.ts",
-      "../node_modules/evt/dist/lib/types/helper/nonpostable.d.ts",
       "../node_modules/evt/dist/lib/types/helper/unpackevt.d.ts",
-      "../node_modules/evt/dist/lib/util/merge.d.ts",
-      "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
-      "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
-      "../node_modules/evt/dist/lib/util/from.d.ts",
-      "../node_modules/evt/dist/lib/evt.d.ts",
-      "../node_modules/evt/dist/lib/types/evterror.d.ts",
+      "../node_modules/evt/dist/lib/types/handler.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/postable.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/ctxlike.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/statefulreadonlyevt.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/statefulpostable.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/statefulevt.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/nonpostableevt.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/evt.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/ctx.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/voidctx.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/voidevt.d.ts",
+      "../node_modules/evt/dist/lib/types/interfaces/index.d.ts",
+      "../node_modules/evt/dist/lib/types/helper/swapevttype.d.ts",
+      "../node_modules/evt/dist/lib/types/helper/factorizeevt.d.ts",
+      "../node_modules/evt/dist/lib/types/helper/topostableevt.d.ts",
+      "../node_modules/evt/dist/lib/types/helper/tononpostableevt.d.ts",
       "../node_modules/evt/dist/lib/types/helper/unpackctx.d.ts",
       "../node_modules/evt/dist/lib/types/helper/index.d.ts",
+      "../node_modules/evt/dist/lib/types/eventtargetlike.d.ts",
+      "../node_modules/evt/dist/lib/types/evterror.d.ts",
+      "../node_modules/evt/dist/lib/types/lib.dom.d.ts",
       "../node_modules/evt/dist/lib/types/index.d.ts",
-      "../node_modules/evt/dist/lib/observable.d.ts",
-      "../node_modules/evt/dist/lib/util/genericoperators/scan.d.ts",
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/trackablemap.d.ts",
+      "../node_modules/chan-dongle-extended-client/node_modules/trackable-map/dist/lib/index.d.ts",
+      "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
+      "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
       "../node_modules/evt/dist/lib/util/genericoperators/throttletime.d.ts",
       "../node_modules/evt/dist/lib/util/genericoperators/to.d.ts",
       "../node_modules/evt/dist/lib/util/genericoperators/index.d.ts",
       "../node_modules/evt/dist/lib/util/compose.d.ts",
       "../node_modules/evt/dist/lib/util/invokeoperator.d.ts",
       "../node_modules/evt/dist/lib/util/index.d.ts",
+      "../node_modules/evt/dist/lib/ctx.d.ts",
+      "../node_modules/minimal-polyfills/dist/lib/array.prototype.find.d.ts",
+      "../node_modules/evt/dist/lib/evt.create.d.ts",
+      "../node_modules/evt/dist/lib/evt.getctx.d.ts",
+      "../node_modules/evt/dist/lib/evt.factorize.d.ts",
+      "../node_modules/evt/dist/lib/evt.merge.d.ts",
+      "../node_modules/evt/dist/lib/evt.from.d.ts",
+      "../node_modules/evt/dist/lib/evt.useeffect.d.ts",
+      "../node_modules/evt/dist/lib/evt.newctx.d.ts",
+      "../node_modules/evt/dist/lib/evt.loosentype.d.ts",
+      "../node_modules/evt/dist/lib/evt.d.ts",
+      "../node_modules/evt/dist/tools/polyfill/object.is.d.ts",
+      "../node_modules/evt/dist/lib/statefulevt.d.ts",
+      "../node_modules/evt/dist/tools/typesafety/matchvoid.d.ts",
       "../node_modules/evt/dist/lib/index.d.ts",
-      "../node_modules/trackable-map/dist/lib/trackablemap.d.ts",
-      "../node_modules/trackable-map/dist/lib/index.d.ts",
-      "../node_modules/chan-dongle-extended-client/dist/lib/types.d.ts",
-      "../node_modules/chan-dongle-extended-client/dist/lib/apideclaration.d.ts",
       "../node_modules/chan-dongle-extended-client/dist/lib/donglecontroller.d.ts",
       "../node_modules/chan-dongle-extended-client/dist/lib/index.d.ts",
       "../node_modules/ts-ami/dist/lib/credential.d.ts",
       "../node_modules/ts-ami/dist/lib/amiapi.d.ts",
-      "../node_modules/ts-async-agi/index.d.ts",
+      "../node_modules/ts-ami/node_modules/ts-async-agi/index.d.ts",
       "../node_modules/ts-ami/dist/lib/agi.d.ts",
       "../node_modules/ts-ami/dist/lib/ami.d.ts",
       "../node_modules/ts-ami/dist/lib/index.d.ts",
@@ -1895,6 +2257,7 @@
       "../node_modules/crypto-lib/dist/sync/utils/tobuffer.d.ts",
       "../node_modules/crypto-lib/dist/async/index.d.ts",
       "../src/lib/misc/workerthreadpoolid.ts",
+      "../src/lib/sipmessagesmonitor.ts",
       "../src/lib/misc/siprouting.ts",
       "../node_modules/run-exclusive/dist/lib/runexclusive.d.ts",
       "../node_modules/phone-number/dist/lib/index.d.ts",
@@ -1924,7 +2287,25 @@
       "../node_modules/transfer-tools/dist/lib/testing.d.ts",
       "../src/test/dbsemasim.ts",
       "../src/test/main.ts",
-      "../src/lib/sipmessagesmonitor.ts"
+      "../node_modules/typescript/lib/lib.es2015.d.ts",
+      "../node_modules/typescript/lib/lib.es2016.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.typedarrays.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.intl.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.string.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.sharedmemory.d.ts",
+      "../node_modules/typescript/lib/lib.es2017.object.d.ts",
+      "../node_modules/typescript/lib/lib.es2016.array.include.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.symbol.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.reflect.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.proxy.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.promise.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.iterable.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.generator.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.collection.d.ts",
+      "../node_modules/typescript/lib/lib.es2015.core.d.ts",
+      "../node_modules/typescript/lib/lib.es5.d.ts"
     ]
   },
   "version": "3.8.3"
