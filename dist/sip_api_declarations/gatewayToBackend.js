@@ -1,6 +1,7 @@
 "use strict";
 //TODO: move in semasim-gateway
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteContact = exports.updateContactName = exports.createContact = exports.reNotifySimOnline = exports.rebootDongle = exports.unlockSim = exports.getDongleSipPasswordAndTowardSimEncryptKeyStr = exports.getDongle = void 0;
 var getDongle;
 (function (getDongle) {
     getDongle.methodName = "getDongle";

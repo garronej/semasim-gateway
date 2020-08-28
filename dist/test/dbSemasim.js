@@ -78,6 +78,7 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.testDbSemasim = void 0;
 var assert = require("assert");
 var db = require("../lib/dbSemasim");
 var crypto = require("crypto");
@@ -153,24 +154,20 @@ function t1() {
                     _a = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 2:
-                    _a.apply(void 0, [_j.sent(),
-                        {}]);
+                    _a.apply(void 0, [_j.sent(), {}]);
                     _b = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 3:
-                    _b.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": true }]);
+                    _b.apply(void 0, [_j.sent(), { "isFirstUaForSim": true }]);
                     _c = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 4:
-                    _c.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": false }]);
+                    _c.apply(void 0, [_j.sent(), { "isFirstUaForSim": false }]);
                     uaSim.ua.pushToken = ttTesting.genHexStr(60);
                     _d = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSim)];
                 case 5:
-                    _d.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": false }]);
+                    _d.apply(void 0, [_j.sent(), { "isFirstUaForSim": false }]);
                     imsi2 = "123456789123456";
                     _e = assertSame;
                     return [4 /*yield*/, db.addUaSim({
@@ -178,8 +175,7 @@ function t1() {
                             "ua": uaSim.ua
                         })];
                 case 6:
-                    _e.apply(void 0, [_j.sent(),
-                        { "isFirstUaForSim": true }]);
+                    _e.apply(void 0, [_j.sent(), { "isFirstUaForSim": true }]);
                     _f = assertSame;
                     return [4 /*yield*/, db.lastMessageReceivedDateBySim()];
                 case 7:
@@ -190,8 +186,7 @@ function t1() {
                     _g = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardGsm(uaSim.imsi)];
                 case 8:
-                    _g.apply(void 0, [_j.sent(),
-                        []]);
+                    _g.apply(void 0, [_j.sent(), []]);
                     console.log("ADD UA PASS");
                     return [2 /*return*/];
             }
@@ -220,8 +215,7 @@ function t2() {
                     _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _a.apply(void 0, [_e.sent(),
-                        { "isFirstUaForSim": i === 0 }]);
+                    _a.apply(void 0, [_e.sent(), { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _e.label = 4;
                 case 4:
@@ -271,8 +265,7 @@ function t2() {
                                     _a = assertSame;
                                     return [4 /*yield*/, db.getUnsentMessagesTowardGsm(imsi)];
                                 case 1:
-                                    _a.apply(void 0, [(_p.sent()).map(function (v) { return v[0]; }),
-                                        messagesTowardGsm]);
+                                    _a.apply(void 0, [(_p.sent()).map(function (v) { return v[0]; }), messagesTowardGsm]);
                                     return [4 /*yield*/, db.getUnsentMessagesTowardGsm(imsi)];
                                 case 2:
                                     _b = __read.apply(void 0, [(_p.sent())[0], 2]), messageTowardGsm = _b[0], _c = _b[1], onSent = _c.onSent, onStatusReport = _c.onStatusReport;
@@ -490,8 +483,7 @@ function t3() {
                     _a = assertSame;
                     return [4 /*yield*/, db.onDongleMessage(ttTesting.genDigits(10), ttTesting.genUtf8Str(100), new Date(), ttTesting.genDigits(15))];
                 case 2:
-                    _a.apply(void 0, [_k.sent(),
-                        false]);
+                    _a.apply(void 0, [_k.sent(), false]);
                     imsi = ttTesting.genDigits(15);
                     email = ttTesting.genHexStr(10) + "@foo.com";
                     uas = [];
@@ -503,8 +495,7 @@ function t3() {
                     _b = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 4:
-                    _b.apply(void 0, [_k.sent(),
-                        { "isFirstUaForSim": i === 0 }]);
+                    _b.apply(void 0, [_k.sent(), { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _k.label = 5;
                 case 5:
@@ -530,8 +521,7 @@ function t3() {
                     _c = assertSame;
                     return [4 /*yield*/, db.onDongleMessage(messageTowardSip.fromNumber, messageTowardSip.bundledData.text, new Date(messageTowardSip.dateTime), imsi)];
                 case 8:
-                    _c.apply(void 0, [_k.sent(),
-                        true]);
+                    _c.apply(void 0, [_k.sent(), true]);
                     messagesTowardSipSrc.push(messageTowardSip);
                     _k.label = 9;
                 case 9:
@@ -557,8 +547,7 @@ function t3() {
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 14:
                     _e.apply(void 0, [(_k.sent())
-                            .map(function (v) { return v[0]; }),
-                        messagesTowardSip]);
+                            .map(function (v) { return v[0]; }), messagesTowardSip]);
                     _k.label = 15;
                 case 15: return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 16:
@@ -609,8 +598,7 @@ function t4() {
                     _a = assertSame;
                     return [4 /*yield*/, db.addUaSim(uaSimExt)];
                 case 2:
-                    _a.apply(void 0, [_d.sent(),
-                        { "isFirstUaForSim": true }]);
+                    _a.apply(void 0, [_d.sent(), { "isFirstUaForSim": true }]);
                     imsi = ttTesting.genDigits(15);
                     allowedUas = [];
                     i = 0;
@@ -624,8 +612,7 @@ function t4() {
                     _b = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 4:
-                    _b.apply(void 0, [_d.sent(),
-                        { "isFirstUaForSim": allowedUas.length === 1 }]);
+                    _b.apply(void 0, [_d.sent(), { "isFirstUaForSim": allowedUas.length === 1 }]);
                     _d.label = 5;
                 case 5:
                     i++;
@@ -696,8 +683,7 @@ function t5() {
                     _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _a.apply(void 0, [_f.sent(),
-                        { "isFirstUaForSim": i === 0 }]);
+                    _a.apply(void 0, [_f.sent(), { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _f.label = 4;
                 case 4:
@@ -719,8 +705,7 @@ function t5() {
                     _b = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 9:
-                    _b.apply(void 0, [(_f.sent()).length,
-                        1]);
+                    _b.apply(void 0, [(_f.sent()).length, 1]);
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 10:
                     _c = __read.apply(void 0, [_f.sent(), 1]), _d = __read(_c[0], 1), messageTowardSip = _d[0];
@@ -776,8 +761,7 @@ function t6() {
                     _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _a.apply(void 0, [_h.sent(),
-                        { "isFirstUaForSim": i === 0 }]);
+                    _a.apply(void 0, [_h.sent(), { "isFirstUaForSim": i === 0 }]);
                     ringingUas.push(ua);
                     _h.label = 4;
                 case 4:
@@ -803,8 +787,7 @@ function t6() {
                     _d = assertSame;
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 9:
-                    _d.apply(void 0, [(_h.sent()).length,
-                        1]);
+                    _d.apply(void 0, [(_h.sent()).length, 1]);
                     return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                 case 10:
                     _e = __read.apply(void 0, [_h.sent(), 1]), _f = __read(_e[0], 1), messageTowardSip = _f[0];
@@ -862,8 +845,7 @@ function t7() {
                     _a = assertSame;
                     return [4 /*yield*/, db.addUaSim({ imsi: imsi, ua: ua })];
                 case 3:
-                    _a.apply(void 0, [_c.sent(),
-                        { "isFirstUaForSim": i === 0 }]);
+                    _a.apply(void 0, [_c.sent(), { "isFirstUaForSim": i === 0 }]);
                     uas.push(ua);
                     _c.label = 4;
                 case 4:
@@ -888,8 +870,7 @@ function t7() {
                                         _a = assertSame;
                                         return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                                     case 1:
-                                        _a.apply(void 0, [(_d.sent()).length,
-                                            1]);
+                                        _a.apply(void 0, [(_d.sent()).length, 1]);
                                         return [4 /*yield*/, db.getUnsentMessagesTowardSip({ imsi: imsi, ua: ua })];
                                     case 2:
                                         o = _d.sent();
@@ -999,8 +980,7 @@ function t8() {
                     _c = assertSame;
                     return [4 /*yield*/, db.getUas(imsi)];
                 case 15:
-                    _c.apply(void 0, [_f.sent(),
-                        uas]);
+                    _c.apply(void 0, [_f.sent(), uas]);
                     _f.label = 16;
                 case 16:
                     _b = _a.next();

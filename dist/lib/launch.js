@@ -63,6 +63,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.launch = exports.beforeExit = void 0;
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var ts_ami_1 = require("ts-ami");
 var messagesDispatcher = require("./messagesDispatcher");

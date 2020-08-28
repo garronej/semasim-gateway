@@ -63,6 +63,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getUas = exports.onCallFromSipTerminated = exports.onTargetGsmRinging = exports.lastMessageReceivedDateBySim = exports.getUnsentMessagesTowardGsm = exports.getUnsentMessagesTowardSip = exports.messageTowardSipUnsentCount = exports.onCallAnswered = exports.onMissedCall = exports.onDongleMessage = exports.onSipMessage = exports.removeUaSim = exports.addUaSim = exports.setTowardSimKeys = exports.getTowardSimKeys = exports.flush = exports.launch = exports.beforeExit = exports._ = void 0;
 var sqliteCustom = require("sqlite-custom");
 var i = require("../bin/installer");
 function beforeExit() {

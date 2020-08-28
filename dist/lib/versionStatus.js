@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getVersion = exports.Version = exports.genRetryDelay = void 0;
 var installer_1 = require("../bin/installer");
 var path = require("path");
 var scriptLib = require("scripting-tools");

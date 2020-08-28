@@ -27,6 +27,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.handleAsteriskSocket = exports.discardContactsRegisteredToSim = exports.getContacts = exports.evtContactRegistration = void 0;
 var sipLibrary = require("ts-sip");
 var evt_1 = require("evt");
 var sipRouting = require("./misc/sipRouting");

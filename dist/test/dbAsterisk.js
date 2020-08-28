@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.testDbAsterisk = void 0;
 var db = require("../lib/dbAsterisk");
 var sanityChecks_1 = require("../lib/misc/sanityChecks");
 var sipRouting = require("../lib/misc/sipRouting");

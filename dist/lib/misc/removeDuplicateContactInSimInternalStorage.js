@@ -47,6 +47,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeDuplicateContactInSimInternalStorage = void 0;
 var phone_number_1 = require("phone-number");
 /** two contact are considered duplicated when they have the same number
  * regardless of the name of the contact */

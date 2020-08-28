@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getReachableSipContactsAndWakeUpUasThatAreNotCurrentlyRegistered = void 0;
 var sipContactsMonitor = require("../sipContactsMonitor");
 var toBackendRemoteApiCaller = require("../toBackend/remoteApiCaller");
 var dbSemasim = require("../dbSemasim");

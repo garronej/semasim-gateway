@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendWakeUpPushNotifications = exports.seeIfSipContactIsReachableElseSendWakeUpPushNotification = exports.notifyOngoingCall = exports.notifyDongleOffline = exports.notifyLockedDongle = exports.notifyCellSignalStrengthChange = exports.notifyGsmConnectivityChange = exports.notifySimOnline = void 0;
 var notifySimOnline;
 (function (notifySimOnline) {
     notifySimOnline.methodName = "notifySimOnline";

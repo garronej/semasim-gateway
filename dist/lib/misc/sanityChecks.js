@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isValidEmail = exports.sanityChecks = void 0;
 var dcSanityChecks = require("chan-dongle-extended-client/dist/lib/sanityChecks");
 //TODO: rename sanityCheck.
 var sanityChecks;

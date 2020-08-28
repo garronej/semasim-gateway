@@ -67,6 +67,7 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.dongle = exports.update = exports.getBaseDomain = exports.getEnv = exports.get_ld_library_path_for_asterisk = exports.ast_sip_port = exports.pidfile_path = exports.host_pem_path = exports.ca_crt_path = exports.semasim_db_path = exports.ast_db_path = exports.ast_main_conf_path = exports.ast_etc_dir_path = exports.dongle_bin_dir_path = exports.dongle_node_path = exports.dongle_dir_path = exports.ast_path = exports.ast_dir_path = exports.node_path = exports.working_directory_path = exports.srv_name = exports.unix_user = exports.module_dir_path = void 0;
 var fs = require("fs");
 var path = require("path");
 var assert = require("assert");

@@ -31,6 +31,7 @@ var __values = (this && this.__values) || function(o) {
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.spawnAsterisk = exports.beforeExit = void 0;
 var scriptLib = require("scripting-tools");
 var i = require("../bin/installer");
 var path = require("path");

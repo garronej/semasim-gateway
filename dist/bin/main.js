@@ -132,8 +132,7 @@ scriptLib.createService({
                     _c = (_b = path).join;
                     return [4 /*yield*/, Promise.resolve().then(function () { return require("./installer"); })];
                 case 2:
-                    logfile_path = _c.apply(_b, [(_e.sent()).working_directory_path,
-                        "current.log"]);
+                    logfile_path = _c.apply(_b, [(_e.sent()).working_directory_path, "current.log"]);
                     logger.file.enable(logfile_path);
                     return [4 /*yield*/, Promise.resolve().then(function () { return require("../lib/launch"); })];
                 case 3:

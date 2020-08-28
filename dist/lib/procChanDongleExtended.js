@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.spawnChanDongleExtended = exports.beforeExit = void 0;
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var scriptLib = require("scripting-tools");
 var i = require("../bin/installer");

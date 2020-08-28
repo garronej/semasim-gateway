@@ -63,6 +63,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendMessagesOfContact = exports.notifyNewSipMessagesToSend = exports.sendMessagesOfDongle = void 0;
 var AsyncLock = require("async-lock");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var dbSemasim = require("./dbSemasim");

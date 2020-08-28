@@ -17,6 +17,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.cid = exports.readImsi = void 0;
 var urlSafeBase64encoderDecoder_1 = require("./urlSafeBase64encoderDecoder");
 //NOTE: Transpiled to ES5
 var sipLibrary = require("ts-sip");

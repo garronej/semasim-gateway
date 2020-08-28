@@ -11,6 +11,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.handle = void 0;
 var sip = require("ts-sip");
 var sipRouting = require("../misc/sipRouting");
 var backendConnection = require("../toBackend/connection");

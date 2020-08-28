@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.get = exports.connect = exports.evtConnect = void 0;
 var sip = require("ts-sip");
 var evt_1 = require("evt");
 var localApiHandlers = require("./localApiHandlers");

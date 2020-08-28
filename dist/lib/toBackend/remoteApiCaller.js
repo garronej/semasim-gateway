@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendWakeUpPushNotifications = exports.seeIfSipContactIsReachableElseSendWakeUpPushNotification = exports.notifyOngoingCall = exports.notifyDongleOffline = exports.notifyLockedDongle = exports.notifyCellSignalStrengthChange = exports.notifyGsmConnectivityChange = exports.notifySimOnline = void 0;
 var sip = require("ts-sip");
 var apiDeclaration = require("../../sip_api_declarations/backendToGateway");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
@@ -211,8 +212,7 @@ function sendRequest(methodName, params, retry) {
                     _c.trys.push([0, 3, , 4]);
                     _b = (_a = sip.api.client).sendRequest;
                     return [4 /*yield*/, backendConnection.get()];
-                case 1: return [4 /*yield*/, _b.apply(_a, [_c.sent(),
-                        methodName,
+                case 1: return [4 /*yield*/, _b.apply(_a, [_c.sent(), methodName,
                         params,
                         { "timeout": 5 * 1000 }])];
                 case 2:

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.parseFromContactUriParams = exports.buildParameter = void 0;
 var urlSafeBase64encoderDecoder_1 = require("./urlSafeBase64encoderDecoder");
 var key = "ua";
 /**

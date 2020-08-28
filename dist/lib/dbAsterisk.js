@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.createEndpointIfNeededOptionallyReplacePasswordAndReturnPassword = exports.generateSipEndpointPassword = exports.deleteContact = exports.flush = exports.launch = exports.beforeExit = exports.buildInsertOrUpdateQueries = exports.buildInsertQuery = exports.esc = exports.queryRetryUntilSuccess = void 0;
 var sqliteCustom = require("sqlite-custom");
 var i = require("../bin/installer");
 var logger_1 = require("../tools/logger");

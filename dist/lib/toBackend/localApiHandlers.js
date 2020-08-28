@@ -52,6 +52,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.handlers = void 0;
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var apiDeclaration = require("../../sip_api_declarations/gatewayToBackend");
 var remoteApi = require("./remoteApiCaller");

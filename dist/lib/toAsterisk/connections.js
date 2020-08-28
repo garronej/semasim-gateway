@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.get = exports.connect = void 0;
 var sip = require("ts-sip");
 var net = require("net");
 var backendConnection = require("../toBackend/connection");

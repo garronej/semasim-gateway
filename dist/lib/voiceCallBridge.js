@@ -52,6 +52,7 @@ var __read = (this && this.__read) || function (o, n) {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.initAgi = exports.sipCallContext = void 0;
 var evt_1 = require("evt");
 var chan_dongle_extended_client_1 = require("chan-dongle-extended-client");
 var ts_ami_1 = require("ts-ami");

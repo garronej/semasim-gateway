@@ -1,6 +1,7 @@
 "use strict";
 /* NOTE: Used in the browser. */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.extractBundledDataFromHeaders = exports.BundledDataSipHeaders = exports.smuggleBundledDataInHeaders = void 0;
 var serializer_1 = require("crypto-lib/dist/async/serializer");
 var urlSafeBase64encoderDecoder_1 = require("./urlSafeBase64encoderDecoder");
 //NOTE: Transpiled to ES3.

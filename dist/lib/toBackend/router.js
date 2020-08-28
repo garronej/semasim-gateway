@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.handle = void 0;
 var sipRouting = require("../misc/sipRouting");
 var asteriskConnections = require("../toAsterisk/connections");
 function handle(socket) {

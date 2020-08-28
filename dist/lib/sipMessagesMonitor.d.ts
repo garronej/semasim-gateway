@@ -1,14 +1,14 @@
 import * as sipLibrary from "ts-sip";
 import * as types from "./types";
 export declare const dialplanContext = "from-sip-message";
-export declare const evtMessage: import("evt/dist/lib/types").Evt<{
+export declare const evtMessage: import("evt/lib/types").Evt<{
     fromContact: types.Contact;
     toNumber: string;
-    bundledData: types.BundledData.ClientToServer.Message;
+    bundledData: types.BundledData.ClientToServer;
 }>;
 export declare function sendMessage(contact: types.Contact, fromNumber: string, headers: Record<string, string>): Promise<void>;
 export declare namespace sendMessage {
-    const evtOutgoingMessage: import("evt/dist/lib/types").Evt<{
+    const evtOutgoingMessage: import("evt/lib/types").Evt<{
         sipRequest: sipLibrary.Request;
         prSipResponse: Promise<void>;
     }>;
